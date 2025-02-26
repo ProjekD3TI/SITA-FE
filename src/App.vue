@@ -1,33 +1,34 @@
 <template>
-  <div class="h-screen flex flex-col bg-cover bg-center relative" style="background-image: url('/src/assets/images/background.jpg');">
-    <!-- Overlay untuk meningkatkan kontras -->
-    <div class="absolute inset-0 bg-black opacity-50"></div>
-
+  <div class="h-screen flex flex-col bg-white">
     <!-- Header -->
     <Header />
-
     <!-- Landing Page Content -->
     <div class="flex-grow flex items-center justify-center">
-      <div class="container mx-auto px-4 flex flex-col md:flex-row items-center relative z-10">
+      <div class="container mx-auto px-4 flex flex-col md:flex-row items-center">
         <!-- Teks di sebelah kiri -->
         <div class="md:w-1/2 text-left mb-8 md:mb-0">
-          <h1 class="text-4xl font-bold mb-4 text-white">Portal D3 Teknik Informatika UNS</h1>
-          <p class="text-lg text-white">
-            Selamat datang di portal resmi program studi D3 Teknik Informatika Universitas Sebelas Maret.
+          <h1 class="text-4xl font-bold mb-4 text-gray-800">Welcome to the D3 Informatics Engineering Portal</h1>
+          <p class="text-lg text-gray-600">
+            To access more features, please login or create your account.          
           </p>
+          <router-link :to="{ name: 'registerpelapor' }">
+              <button
+                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md shadow-md text-sm mt-4"
+              >
+                Get Started!
+              </button>
+          </router-link>
         </div>
-
         <!-- Gambar di sebelah kanan dengan animasi -->
         <div class="md:w-1/2 relative">
           <img
-            src="/src/assets/images/5514.jpg"
+            src="/src/assets/images/image_landing.png"
             alt="D3 Teknik Informatika UNS"
-            class="w-full rounded-lg shadow-lg animate-fade-in"
+            class="w-3/4 mx-auto rounded-lg shadow-lg animate-fade-in"
           />
         </div>
       </div>
     </div>
-
     <!-- Footer -->
     <Footer />
   </div>
@@ -58,7 +59,6 @@ export default {
     transform: translateY(0);
   }
 }
-
 .animate-fade-in {
   animation: fadeIn 1s ease-in-out;
 }
@@ -66,10 +66,5 @@ export default {
 /* Styling tambahan */
 .container {
   max-width: 1200px;
-}
-
-/* Pastikan overlay berada di atas background */
-.relative {
-  position: relative;
 }
 </style>
