@@ -3,10 +3,24 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 //define a routes
 const routes = [
+    { path: '/', 
+        name: 'Landing',
+        component: () => import('../views/Landing/Landing.vue')
+    },
     {
-        path: '/login',
-        name: 'login',
-        component: () => import( /* webpackChunkName: "login" */ '../views/auth/Login.vue')
+        path: '/loginmhs',
+        name: 'loginmhs',
+        component: () => import( /* webpackChunkName: "login" */ '../views/auth/LoginMhs.vue')
+    },
+    {
+        path: '/logindosen',
+        name: 'logindosen',
+        component: () => import( /* webpackChunkName: "login" */ '../views/auth/LoginDosen.vue')
+    },
+    {
+        path: '/register',
+        name: 'register',
+        component: () => import( /* webpackChunkName: "login" */ '../views/auth/Register.vue')
     },
     {
         path: '/404',

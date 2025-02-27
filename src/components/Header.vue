@@ -62,14 +62,14 @@
 
           <!-- Login and Register Buttons -->
           <div class="flex items-center space-x-3">
-            <router-link :to="{ name: 'login' }">
+            <router-link :to="{ name: 'loginmhs' }">
               <button
                 class="border border-blue-500 bg-white text-blue-500 hover:bg-blue-500 hover:text-white px-4 py-2 rounded-md shadow-md text-sm"
               >
                 Login
               </button>
             </router-link>
-            <router-link :to="{ name: '404' }">
+            <router-link :to="{ name: 'register' }">
               <button
                 class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md shadow-md text-sm"
               >
