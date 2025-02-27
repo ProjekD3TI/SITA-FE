@@ -11,7 +11,7 @@
           <p class="text-lg text-gray-600">
             To access more features, please login or create your account.          
           </p>
-          <router-link :to="{ name: 'registerpelapor' }">
+          <router-link :to="{ name: '404' }">
               <button
                 class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md shadow-md text-sm mt-4"
               >
@@ -43,6 +43,9 @@ export default {
   components: {
     Header,
     Footer,
+  },
+  mounted() {
+    console.log('Routing is working!');
   },
 };
 </script>
