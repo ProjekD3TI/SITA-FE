@@ -29,7 +29,7 @@
 
       <!-- Copyright -->
       <div class="container mx-auto p-2">
-        <p class="text-gray-600 text-sm">Copyright &copy; 2025</p>
+        <p class="text-gray-600 text-sm">Copyright TCA &copy; 2025</p>
       </div>
     </footer>
   </div>

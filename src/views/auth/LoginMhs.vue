@@ -72,7 +72,7 @@
               />
               <label for="rememberMe" class="ml-2 block text-sm text-gray-900">Remember me</label>
             </div>
-            <a href="#" class="text-sm text-indigo-600 hover:text-indigo-500">Forgot password?</a>
+            <a href="/forgotpassword" class="text-sm text-indigo-600 hover:text-indigo-500">Forgot password?</a>
           </div>
 
           <!-- Tombol Login -->
@@ -87,7 +87,7 @@
         <!-- Register Link -->
         <p class="mt-4 text-sm text-gray-600 text-center">
           Don't have an account?
-          <a href="#" class="text-[#F78052] hover:text-indigo-500">Register here</a>
+          <a href="/register" class="text-[#F78052] hover:text-indigo-500">Register here</a>
         </p>
       </div>
     </div>
