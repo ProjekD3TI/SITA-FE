@@ -2,12 +2,18 @@
   <div>
     <!-- Header -->
     <header>
-      <div class="bg-[rgba(223,245,255,0.5)] text-gray-800 fixed inset-x-0 top-0 z-10 shadow-md">
+      <div
+        class="bg-[rgba(223,245,255,0.5)] text-gray-800 fixed inset-x-0 top-0 z-10 shadow-md"
+      >
         <div class="container mx-auto flex items-center justify-between p-3">
           <!-- Logo -->
           <div class="flex items-center">
             <div class="mr-3">
-              <img src="/src/assets/images/d3ti-logo.png" alt="D3TI UNS Logo" class="h-10 w-auto" />
+              <img
+                src="/src/assets/images/d3ti-logo.png"
+                alt="D3TI UNS Logo"
+                class="h-10 w-auto"
+              />
             </div>
           </div>
 
@@ -33,10 +39,17 @@
           </button>
 
           <!-- Navigation Menu (Hidden on Mobile) -->
-          <nav :class="{ 'hidden': !isMenuOpen, 'block': isMenuOpen }" class="md:flex space-x-6 relative">
-            <router-link to="/404" class="hover:text-gray-600">Home</router-link>
+          <nav
+            :class="{ hidden: !isMenuOpen, block: isMenuOpen }"
+            class="md:flex space-x-6 relative"
+          >
+            <router-link to="/404" class="hover:text-gray-600"
+              >Home</router-link
+            >
             <router-link to="/404" class="hover:text-gray-600">TA</router-link>
-            <router-link to="/404" class="hover:text-gray-600">Ruang dan Inventaris</router-link>
+            <router-link to="/404" class="hover:text-gray-600"
+              >Ruang dan Inventaris</router-link
+            >
             <!-- Dropdown Menu for "Lapor!" -->
             <div class="relative group">
               <span class="hover:text-gray-600 cursor-pointer">Pelaporan</span>
@@ -85,7 +98,7 @@
 
 <script>
 export default {
-  name: 'HeaderComponent',
+  name: "HeaderComponent",
   data() {
     return {
       isMenuOpen: false, // State untuk mengontrol tampilan menu

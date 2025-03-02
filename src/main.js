@@ -1,29 +1,22 @@
-import { createApp } from 'vue'
-import App from './App.vue'
+import { createApp } from "vue";
+import App from "./App.vue";
 
-/**
- * import Toastr
- */
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
+import axios from "axios";
 
-/**
- * Tailwind CSS
-*/
-import './style.css';
+import "./style.css";
 
-/**
- * Vue Router
- */
-import router from './router';
+import VueCookies from "vue-cookies";
+import router from "./router";
 
-//create App Vue
-const app = createApp(App)
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
+axios.defaults.withCredentials = true;
 
-//gunakan "Toast" di Vue Js dengan plugin "use"
-app.use(Toast)
+const app = createApp(App);
 
-//gunakan "router" di Vue Js dengan plugin "use"
-app.use(router)
+app.use(Toast);
+app.use(router);
+app.use(VueCookies);
 
-app.mount('#app')
+app.mount("#app");
