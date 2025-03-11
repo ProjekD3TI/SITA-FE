@@ -30,6 +30,11 @@ const routes = [
     component: () => import("../views/Landing/LaKej.vue"),
   },
   {
+    path: "/landing-login",
+    name: "LandingLogin",
+    component: () => import("../views/Landing/LandingLogin.vue"),
+  },
+  {
     path: "/mahasiswa/forgot-password",
     name: "ForgotPasswordMahasiswa",
     component: () =>
