@@ -30,11 +30,6 @@ const routes = [
     component: () => import("../views/Landing/LaKej.vue"),
   },
   {
-    path: "/landing-login",
-    name: "LandingLogin",
-    component: () => import("../views/Landing/LandingLogin.vue"),
-  },
-  {
     path: "/mahasiswa/forgot-password",
     name: "ForgotPasswordMahasiswa",
     component: () =>
@@ -120,6 +115,13 @@ const routes = [
         /* webpackChunkName: "login" */ "../views/Pelaporan/LaporKekerasanSeksual.vue"
       ),
   },
+  {
+    path: "/dashboard",
+    name: "dashboard-login",
+    component: () => import("../views/Landing/LandingLogin.vue"),
+    meta: { requiresAuth: true },
+  },
+
 
   // Mahasiswa
   {

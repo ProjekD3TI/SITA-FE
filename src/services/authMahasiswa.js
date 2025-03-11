@@ -49,7 +49,7 @@ export function authMahasiswa() {
         VueCookies.set("user_session", encryptedUserData, "4h");
 
         toast.success(response.data.message || "Login Mahasiswa berhasil!");
-        router.push("/mahasiswa/dashboard");
+        router.push("/dashboard");
       } else {
         toast.error(response.data.message || "Login gagal");
       }
