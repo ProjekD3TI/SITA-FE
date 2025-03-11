@@ -124,13 +124,32 @@
 <script setup>
 import { ref } from "vue";
 import { authMahasiswa } from "../../services/authMahasiswa";
+import { useRouter } from "vue-router";
 
 const email = ref("");
 const password = ref("");
+const loading = ref(false);
+const errorMessage = ref("");
+const router = useRouter();
+
 const { loginMahasiswa } = authMahasiswa();
 
-const handleLogin = () => {
-  loginMahasiswa(email.value, password.value);
+const handleLogin = async () => {
+  try {
+    loading.value = true;
+    errorMessage.value = "";
+    
+    // Call the login service
+    const result = await loginMahasiswa(email.value, password.value);
+    
+    // If login is successful, redirect to landing-login
+    router.push("/landing-login");
+  } catch (error) {
+    // Handle login error
+    errorMessage.value = error.message || "Failed to login. Please check your credentials.";
+  } finally {
+    loading.value = false;
+  }
 };
 </script>
 

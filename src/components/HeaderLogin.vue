@@ -82,7 +82,7 @@
                 @click="toggleProfileDropdown"
                 class="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-full shadow-md text-sm"
               >
-                <span class="mr-2">My Account</span>
+                <span class="mr-2">{{ username || 'My Account' }}</span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="h-4 w-4"
@@ -126,22 +126,22 @@
                   </div>
                 </router-link>
                 <button
-                  @click="logout"
+                  @click="handleLogout"
                   class="block w-full text-left px-4 py-2 hover:bg-gray-100"
                 >
-                  <div class="flex items-center">
+                  <div class="flex items-center text-red-600 hover:text-red-800">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      class="h-5 w-5 mr-2"
                       fill="none"
                       viewBox="0 0 24 24"
+                      stroke-width="1.5"
                       stroke="currentColor"
+                      class="w-5 h-5 mr-2"
                     >
                       <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                        d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
                       />
                     </svg>
                     Logout
@@ -157,8 +157,50 @@
 </template>
 
 <script>
+import { ref, onMounted } from 'vue';
+import { useRouter } from "vue-router";
+import { useToast } from "vue-toastification";
+import { authMahasiswa } from '../services/authMahasiswa';
+
 export default {
   name: "HeaderComponent",
+  setup() {
+    const router = useRouter();
+    const toast = useToast();
+    const { logout } = authMahasiswa();
+    const username = ref('');
+
+    onMounted(() => {
+      // Get username from cookies or localStorage if available
+      // This is a placeholder - adjust based on how you store user info
+      try {
+        const userInfo = JSON.parse(localStorage.getItem('user'));
+        if (userInfo && userInfo.username) {
+          username.value = userInfo.username;
+        } else if (userInfo && userInfo.email) {
+          // If no username, use email or first part of email
+          username.value = userInfo.email.split('@')[0];
+        }
+      } catch (error) {
+        console.log('No user data found');
+      }
+    });
+
+    const handleLogout = () => {
+      try {
+        logout();
+        toast.success("Berhasil Logout!");
+        router.push('/');
+      } catch (error) {
+        toast.error("Terjadi kesalahan saat logout.");
+      }
+    };
+
+    return {
+      username,
+      handleLogout
+    };
+  },
   data() {
     return {
       isMenuOpen: false, // State untuk mengontrol tampilan menu
@@ -179,19 +221,6 @@ export default {
     toggleProfileDropdown(event) {
       event.stopPropagation();
       this.isProfileDropdownOpen = !this.isProfileDropdownOpen;
-    },
-    logout() {
-      // Implement logout functionality here
-      console.log('Logging out...');
-      
-      // Example logout implementation:
-      // this.$store.dispatch('auth/logout');
-      
-      // Redirect to landing page after successful logout
-      this.$router.push('/');
-      
-      // Close the dropdown
-      this.isProfileDropdownOpen = false;
     },
     closeDropdownOnClickOutside(event) {
       const dropdown = document.querySelector('.relative');
