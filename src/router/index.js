@@ -15,6 +15,21 @@ const routes = [
     component: () => import("../views/Landing/Landing.vue"),
   },
   {
+    path: "/informasi-ta",
+    name: "InformasiTA",
+    component: () => import("../views/Landing/TA.vue"),
+  },
+  {
+    path: "/informasi-inventaris-peminjaman",
+    name: "InformasiInvPin",
+    component: () => import("../views/Landing/InvPin.vue"),
+  },
+  {
+    path: "/informasi-lapor-kejadian",
+    name: "InformasiLaKej",
+    component: () => import("../views/Landing/LaKej.vue"),
+  },
+  {
     path: "/mahasiswa/forgot-password",
     name: "ForgotPasswordMahasiswa",
     component: () =>

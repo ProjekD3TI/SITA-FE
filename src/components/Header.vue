@@ -43,22 +43,24 @@
             :class="{ hidden: !isMenuOpen, block: isMenuOpen }"
             class="md:flex space-x-6 relative"
           >
-            <router-link to="/404" class="hover:text-gray-600"
+            <router-link to="/" class="hover:text-gray-600"
               >Home</router-link
             >
-            <router-link to="/404" class="hover:text-gray-600">TA</router-link>
-            <router-link to="/404" class="hover:text-gray-600"
+            <router-link to="/informasi-ta" class="hover:text-gray-600">TA</router-link>
+            <router-link to="/informasi-inventaris-peminjaman" class="hover:text-gray-600"
               >Ruang dan Inventaris</router-link
             >
-            <!-- Dropdown Menu for "Lapor!" -->
+            <!-- Dropdown Menu for "Pelaporan" -->
             <div class="relative group">
               <span class="hover:text-gray-600 cursor-pointer">Pelaporan</span>
               <!-- Sub-navbar (Dropdown) -->
               <div
-                class="absolute top-full left-0 mt-2 bg-gray-800 text-white rounded-lg shadow-lg py-2 w-48 opacity-0 group-hover:opacity-100 transition-opacity duration-300 invisible group-hover:visible"
+                class="absolute top-full left-0 mt-2 bg-gray-800 text-white rounded-lg shadow-lg py-2 w-48 
+                opacity-0 group-hover:opacity-100 transition-opacity duration-500 invisible group-hover:visible z-10"
+                v-on:mouseleave="e => setTimeout(() => e.target.classList.remove('group-hover:visible'), 500)"
               >
                 <router-link
-                  to="/404"
+                  to="/informasi-lapor-kejadian"
                   class="block px-4 py-2 hover:bg-gray-700"
                 >
                   Lapor Kejadian
