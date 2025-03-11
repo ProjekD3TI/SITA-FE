@@ -52,12 +52,12 @@
             >
             <!-- Dropdown Menu for "Pelaporan" -->
             <div class="relative group">
-              <span class="hover:text-gray-600 cursor-pointer">Pelaporan</span>
+              <span class="hover:text-gray-600 cursor-pointer px-4 py-2">Pelaporan</span>
               <!-- Sub-navbar (Dropdown) -->
               <div
                 class="absolute top-full left-0 mt-2 bg-gray-800 text-white rounded-lg shadow-lg py-2 w-48 
-                opacity-0 group-hover:opacity-100 transition-opacity duration-500 invisible group-hover:visible z-10"
-                v-on:mouseleave="e => setTimeout(() => e.target.classList.remove('group-hover:visible'), 500)"
+                opacity-0 group-hover:opacity-100 transition-opacity duration-800 invisible group-hover:visible z-10"
+                v-on:mouseleave="e => setTimeout(() => e.target.classList.remove('group-hover:visible'), 1500)"
               >
                 <router-link
                   to="/informasi-lapor-kejadian"
