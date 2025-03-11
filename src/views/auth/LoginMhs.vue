@@ -143,7 +143,7 @@ const handleLogin = async () => {
     const result = await loginMahasiswa(email.value, password.value);
     
     // If login is successful, redirect to landing-login
-    router.push("/landing-login");
+    router.push("/mahasiswa/dashboard");
   } catch (error) {
     // Handle login error
     errorMessage.value = error.message || "Failed to login. Please check your credentials.";
