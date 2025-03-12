@@ -72,7 +72,7 @@
                             <!-- Tambah Laporan Button -->
                             <button 
                                 class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
-                                @click="showModal = true"
+                                @click="addNewReport"
                             >
                                 <i class="fas fa-plus mr-2"></i> Tambah Laporan
                             </button>
@@ -190,9 +190,6 @@
                                         <button class="text-blue-600 hover:text-blue-800 mr-2" @click="lihatDetail(laporan.id)">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <button class="text-yellow-600 hover:text-yellow-800" @click="editLaporan(laporan.id)">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -266,9 +263,10 @@
 
 <script>
 import { ref, computed, watch } from 'vue';
-import Header from '../Pelaporan/Header.vue';
-import Sidebar from '../Pelaporan/Sidebar.vue';
-import Footer from '../Pelaporan/Footer.vue';
+import Header from '../components/Header.vue';
+import Sidebar from '../components/Sidebar.vue';
+import Footer from '../components/Footer.vue';
+import { useRouter } from 'vue-router';
 
 export default {
     name: 'PelaporanKejadian',
@@ -466,7 +464,10 @@ export default {
         
         const lihatDetail = (id) => {
             console.log(`Melihat detail laporan dengan ID: ${id}`);
-            // Implement navigation to detail page
+            router.push({
+                name: 'DetailPelaporanKejadian',
+                query: { id: id }
+            });
         };
         
         const editLaporan = (id) => {
@@ -498,6 +499,12 @@ export default {
         const dalamProses = computed(() => daftarLaporan.value.filter(laporan => laporan.status === 'Dalam Proses').length);
         const selesai = computed(() => daftarLaporan.value.filter(laporan => laporan.status === 'Selesai').length);
         
+        const router = useRouter();
+        
+        const addNewReport = () => {
+            router.push('/pelaporan/add-pelaporan-kejadian');
+        };
+        
         return {
             showModal,
             daftarLaporan,
@@ -523,7 +530,8 @@ export default {
             lihatDetail,
             editLaporan,
             formatDate,
-            getStatusClass
+            getStatusClass,
+            addNewReport
         };
     }
 };

@@ -294,7 +294,17 @@ const routes = [
       {
         path: "pelaporan-kejadian",
         name: "PelaporanKejadian",
-        component: () => import("../views/Pelaporan/PelaporanKejadian.vue"),
+        component: () => import("../views/Pelaporan/Kejadian/PelaporanKejadian.vue"),
+      },
+      {
+        path: "add-pelaporan-kejadian",
+        name: "AddPelaporanKejadian",
+        component: () => import("../views/Pelaporan/Kejadian/AddPelaporanKejadian.vue"),
+      },
+      {
+        path: "detail-pelaporan-kejadian",
+        name: "DetailPelaporanKejadian",
+        component: () => import("../views/Pelaporan/Kejadian/DetailPelaporanKejadian.vue"),
       },
       // route mahasiswa yg laenya
     ],

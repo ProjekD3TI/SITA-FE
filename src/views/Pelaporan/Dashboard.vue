@@ -224,9 +224,9 @@
   
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
-import Sidebar from "../../views/Pelaporan/Sidebar.vue";
-import Header from "../../views/Pelaporan/Header.vue";
-import Footer from "../../views/Pelaporan/Footer.vue";
+import Sidebar from "./components/Sidebar.vue";
+import Header from "./components/Header.vue";
+import Footer from "./components/Footer.vue";
 import { decryptData } from "../../services/encrypt";
 import VueCookies from "vue-cookies";
   
