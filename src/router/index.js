@@ -281,6 +281,25 @@ const routes = [
     ],
   },
 
+  //Pelaporan
+  {
+    path: "/pelaporan",
+    meta: { requiresAuth: true, userType: "mahasiswa" },
+    children: [
+      {
+        path: "dashboard",
+        name: "DashboardPelaporan",
+        component: () => import("../views/Pelaporan/Dashboard.vue"),
+      },
+      {
+        path: "pelaporan-kejadian",
+        name: "PelaporanKejadian",
+        component: () => import("../views/Pelaporan/PelaporanKejadian.vue"),
+      },
+      // route mahasiswa yg laenya
+    ],
+  },
+
   // {
   //   path: "/admin-pengelola/dashboard",
   //   name: "DashboardAdminPengelola",
