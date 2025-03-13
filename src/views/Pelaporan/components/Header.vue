@@ -6,7 +6,7 @@
                     <h1>Pelaporan D3 TI SV UNS</h1>
                 </div>
                 <div class="header__user">
-                    <span class="username">{{ username }}</span>
+                    <span class="username">{{ userData?.name || "Mahasiswa" }}</span>
                     <button @click="logout" class="btn-logout">Keluar</button>
                 </div>
             </div>

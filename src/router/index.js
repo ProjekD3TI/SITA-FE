@@ -306,7 +306,21 @@ const routes = [
         name: "DetailPelaporanKejadian",
         component: () => import("../views/Pelaporan/Kejadian/DetailPelaporanKejadian.vue"),
       },
-      // route mahasiswa yg laenya
+      {
+        path: "kekerasan-seksual",
+        name: "KekekerasanSeksual",
+        component: () => import("../views/Pelaporan/KekerasanSeksual/KekerasanSeksual.vue"),
+      },
+      {
+        path: "add-kekerasan-seksual",
+        name: "AddKekekerasanSeksual",
+        component: () => import("../views/Pelaporan/KekerasanSeksual/AddKekerasanSeksual.vue"),
+      },
+      {
+        path: "detail-kekerasan-seksual",
+        name: "DetailKekekerasanSeksual",
+        component: () => import("../views/Pelaporan/KekerasanSeksual/DetailKekerasanSeksual.vue"),
+      },
     ],
   },
 
