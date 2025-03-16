@@ -14,6 +14,40 @@ export function authDosen() {
   const toast = useToast();
   const isLoading = ref(false);
 
+  const setupAxiosInterceptors = () => {
+    axios.interceptors.request.use(
+      (config) => {
+        const authToken = VueCookies.get("auth_token");
+        if (authToken) {
+          config.headers["Authorization"] = `Bearer ${authToken}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    axios.interceptors.response.use(
+      (response) => {
+        return response;
+      },
+      (error) => {
+        if (error.response?.status === 401) {
+          VueCookies.remove("auth_token");
+          VueCookies.remove("user_session");
+
+          const currentPath = router.currentRoute.value.path;
+          if (!currentPath.includes("/login")) {
+            toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
+            router.push("/dosen/login");
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+  };
+
   const loginDosen = async (email, password) => {
     try {
       isLoading.value = true;
@@ -50,6 +84,10 @@ export function authDosen() {
           },
         });
 
+        axios.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${token.value}`;
+
         toast.success(response.data.message || "Login Dosen berhasil!");
 
         return redirectByJabatan(currentJabatan.value.name);
@@ -72,7 +110,7 @@ export function authDosen() {
             "Gagal melakukan login. Silakan coba lagi."
         );
       }
-      console.error("Login error:", error.response?.data);
+      // console.error("Login error:", error.response?.data);
     } finally {
       isLoading.value = false;
     }
@@ -130,14 +168,14 @@ export function authDosen() {
         }, 100);
         toast.success(response.data.message || "Berhasil mengganti jabatan");
 
-        console.log("Switched to jabatan:", newJabatan);
-        console.log(userData);
+        // console.log("Switched to jabatan:", newJabatan);
+        // console.log(userData);
         return true;
       }
 
       return false;
     } catch (error) {
-      console.error("Switch jabatan error:", error);
+      // console.error("Switch jabatan error:", error);
       return false;
     } finally {
       isLoading.value = false;
@@ -170,12 +208,13 @@ export function authDosen() {
         return "/dosen/dashboard";
     }
   };
+
   const redirectByJabatan = (jabatanName) => {
     const route = jabatanRoute(jabatanName);
 
     router.push(route).catch((err) => {
       if (err.name !== "NavigationDuplicated") {
-        console.error("Navigation error:", err);
+        // console.error("Navigation error:", err);
         window.location.href = route;
       }
     });
@@ -247,16 +286,48 @@ export function authDosen() {
     }
   };
 
-  const logout = () => {
-    user.value = null;
-    token.value = null;
-    currentJabatan.value = null;
-    availableJabatan.value = [];
+  const logout = async () => {
+    try {
+      await axios.post("/api/logout", null, {
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+        },
+      });
+    } catch (error) {
+      // console.error("Logout error:", error);
+    } finally {
+      user.value = null;
+      token.value = null;
+      currentJabatan.value = null;
+      availableJabatan.value = [];
 
-    VueCookies.remove("auth_token");
-    VueCookies.remove("user_session");
+      VueCookies.remove("auth_token");
+      VueCookies.remove("user_session");
 
-    router.push({ name: "logindosen" });
+      delete axios.defaults.headers.common["Authorization"];
+
+      router.push({ name: "logindosen" });
+    }
+  };
+
+  const checkAuth = () => {
+    const storedToken = VueCookies.get("auth_token");
+    const userData = getUserData();
+
+    if (storedToken && userData && userData.type === "dosen") {
+      token.value = storedToken;
+      axios.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
+
+      if (userData.jabatan) {
+        currentJabatan.value = {
+          id: userData.jabatanId || 0,
+          name: userData.jabatan,
+        };
+      }
+
+      return true;
+    }
+    return false;
   };
 
   const initializeFromCookies = async () => {
@@ -265,6 +336,7 @@ export function authDosen() {
 
     if (savedToken && userData && userData.type === "dosen") {
       token.value = savedToken;
+      axios.defaults.headers.common["Authorization"] = `Bearer ${savedToken}`;
 
       if (userData.jabatan) {
         currentJabatan.value = {
@@ -283,8 +355,14 @@ export function authDosen() {
     }
   };
 
-  onMounted(() => {
+  const initializeAuth = () => {
+    setupAxiosInterceptors();
     initializeFromCookies();
+    return checkAuth();
+  };
+
+  onMounted(() => {
+    initializeAuth();
   });
 
   return {
@@ -298,14 +376,23 @@ export function authDosen() {
     getUserJabatan,
     logout,
     redirectByJabatan,
+    checkAuth,
+    initializeAuth,
   };
 }
 
 export function getUserData() {
   const encryptedUserData = VueCookies.get("user_session");
   if (encryptedUserData) {
-    const userData = decryptData(encryptedUserData);
-    return userData;
+    try {
+      const userData = decryptData(encryptedUserData);
+      return userData;
+    } catch (error) {
+      // console.error("Error decrypting user data:", error);
+      VueCookies.remove("auth_token");
+      VueCookies.remove("user_session");
+      return null;
+    }
   }
   return null;
 }
