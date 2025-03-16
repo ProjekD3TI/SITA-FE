@@ -12,6 +12,40 @@ export function authAdmin() {
   const router = useRouter();
   const toast = useToast();
 
+  const setupAxiosInterceptors = () => {
+    axios.interceptors.request.use(
+      (config) => {
+        const authToken = VueCookies.get("auth_token");
+        if (authToken) {
+          config.headers["Authorization"] = `Bearer ${authToken}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    axios.interceptors.response.use(
+      (response) => {
+        return response;
+      },
+      (error) => {
+        if (error.response?.status === 401) {
+          VueCookies.remove("auth_token");
+          VueCookies.remove("user_session");
+
+          const currentPath = router.currentRoute.value.path;
+          if (!currentPath.includes("/login")) {
+            toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
+            router.push("/admin/login");
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+  };
+
   const loginAdmin = async (email, password) => {
     try {
       const response = await axios.post(
@@ -46,6 +80,10 @@ export function authAdmin() {
         const encryptedUserData = encryptData(userData);
         VueCookies.set("user_session", encryptedUserData, "4h");
 
+        axios.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${token.value}`;
+
         toast.success(response.data.message || "Login Admin berhasil!");
         router.push("/admin/dashboard");
       } else {
@@ -63,39 +101,75 @@ export function authAdmin() {
     }
   };
 
-  const logout = () => {
-    user.value = null;
-    token.value = null;
-    role.value = null;
+  const logout = async () => {
+    try {
+      await axios.post("/api/logout", null, {
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+        },
+      });
+    } catch (error) {
+      // console.error("Logout error:", error);
+    } finally {
+      user.value = null;
+      token.value = null;
+      role.value = null;
 
-    VueCookies.remove("auth_token");
-    VueCookies.remove("user_session");
+      VueCookies.remove("auth_token");
+      VueCookies.remove("user_session");
 
-    router.push({ name: "LoginAdmin" });
+      delete axios.defaults.headers.common["Authorization"];
+
+      router.push({ name: "LoginAdmin" });
+    }
   };
 
   const getUserRole = () => {
     const encryptedUserData = VueCookies.get("user_session");
     if (encryptedUserData) {
-      const userData = decryptData(encryptedUserData);
-      if (userData && userData.role) {
-        role.value = userData.role;
-        return userData.role;
+      try {
+        const userData = decryptData(encryptedUserData);
+        if (userData && userData.role) {
+          role.value = userData.role;
+          return userData.role;
+        }
+      } catch (error) {
+        // console.error("Error decrypting user data:", error);
+        VueCookies.remove("auth_token");
+        VueCookies.remove("user_session");
+        return null;
       }
     }
     return null;
   };
 
-  const initializeAuth = () => {
+  const checkAuth = () => {
     const storedToken = VueCookies.get("auth_token");
     if (storedToken) {
       token.value = storedToken;
-      getUserRole();
+      axios.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
+      return getUserRole() !== null;
     }
+    return false;
   };
+
+  const initializeAuth = () => {
+    setupAxiosInterceptors();
+    return checkAuth();
+  };
+
   onMounted(() => {
     initializeAuth();
   });
 
-  return { user, token, role, loginAdmin, logout, getUserRole };
+  return {
+    user,
+    token,
+    role,
+    loginAdmin,
+    logout,
+    getUserRole,
+    checkAuth,
+    initializeAuth,
+  };
 }
