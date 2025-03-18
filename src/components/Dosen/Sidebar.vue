@@ -225,6 +225,51 @@
           </div>
         </div>
 
+        <div class="mt-2" v-if="hasAccess(['Kalab', 'Petugas'])">
+          <button
+            class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+            @click="handleDropdownClick(3)"
+          >
+            <div class="flex items-center">
+              <i class="fas fa-exclamation-triangle text-xl"></i>
+              <span class="ml-3" :class="{ hidden: isCollapsed && !isMobile }"
+                >Pelaporan</span
+              >
+            </div>
+            <i
+              class="fas"
+              :class="[
+                dropdownStates[2] ? 'fa-chevron-up' : 'fa-chevron-down',
+                { hidden: isCollapsed && !isMobile },
+              ]"
+            ></i>
+          </button>
+
+          <div v-if="dropdownStates[3]" class="pl-4 mt-1 space-y-1">
+            <router-link
+              :to="getRouteByJabatan('ruang')"
+              class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+              @click.native="closeSidebar"
+            >
+              <span>Pelaporan Kejadian</span>
+            </router-link>
+            <router-link
+              :to="getRouteByJabatan('pinjamruang')"
+              class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+              @click.native="closeSidebar"
+            >
+              <span>Pelaporan Kekerasan Seksual</span>
+            </router-link>
+            <router-link
+              :to="getRouteByJabatan('kembalikanruang')"
+              class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+              @click.native="closeSidebar"
+            >
+              <span>Kembalikan</span>
+            </router-link>
+          </div>
+        </div>
+
         <div class="mt-2" v-if="hasAccess(['Kaprodi'])">
           <button
             class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
