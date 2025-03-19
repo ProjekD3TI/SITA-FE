@@ -184,6 +184,21 @@ const routes = [
         name: "DashboardKalab",
         component: () => import("../views/Dosen/Kalab/Dashboard.vue"),
       },
+      {
+        path: "kategoripelaporan",
+        name: "KatPelaporan",
+        component: () => import("../views/Dosen/Kalab/Pelaporan/Kategori/Index.vue"),
+      },
+      {
+        path: "addkategoripelaporan",
+        name: "AddKatPelaporan",
+        component: () => import("../views/Dosen/Kalab/Pelaporan/Kategori/AddKategori.vue"),
+      },
+      {
+        path: "editkategoripelaporan",
+        name: "EditKatPelaporan",
+        component: () => import("../views/Dosen/Kalab/Pelaporan/Kategori/EditKategori.vue"),
+      },
       // route yg laen
     ],
   },
