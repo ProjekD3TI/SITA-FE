@@ -1,7 +1,7 @@
 <template>
     <div class="container mx-auto px-4 py-8">
       <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">Categories</h1>
+        <h1 class="text-4xl font-bold">Kategori Laporan</h1>
         <button
           @click="$router.push({ path: '/kalab/addkategoripelaporan' })"
           class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md"

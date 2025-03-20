@@ -187,7 +187,7 @@ const routes = [
       {
         path: "kategoripelaporan",
         name: "KatPelaporan",
-        component: () => import("../views/Dosen/Kalab/Pelaporan/Kategori/Index.vue"),
+        component: () => import("../views/Dosen/Kalab/Pelaporan/Kategori/DashboardCategory.vue"),
       },
       {
         path: "addkategoripelaporan",
@@ -198,6 +198,16 @@ const routes = [
         path: "editkategoripelaporan",
         name: "EditKatPelaporan",
         component: () => import("../views/Dosen/Kalab/Pelaporan/Kategori/EditKategori.vue"),
+      },
+      {
+        path: "pelaporankejadiankalab",
+        name: "PelaporanKejadianKalab",
+        component: () => import("../views/Dosen/Kalab/Pelaporan/PelaporanKejadian/DashboardPK.vue"),
+      },
+      {
+        path: "pelaporankekerasanseksual",
+        name: "PelaporanKekerasanSeksual",
+        component: () => import("../views/Dosen/Kalab/Pelaporan/KekerasanSeksual/DashboardKS.vue"),
       },
       // route yg laen
     ],
