@@ -1,195 +1,230 @@
 <template>
-    <div class="container mx-auto px-4 py-8">
-      <h1 class="text-2xl font-bold mb-6">Edit Category</h1>
+  <div>
+    <div class="container mx-auto p-4">
+      <h1 class="text-2xl font-bold mb-4">Edit Category</h1>
       
-      <div v-if="loading" class="flex justify-center my-8">
-        <p>Loading category data...</p>
-      </div>
+      <div v-if="loading" class="text-blue-500">Loading...</div>
+      <div v-if="errorMessage" class="text-red-500 my-2">{{ errorMessage }}</div>
+      <div v-if="successMessage" class="text-green-500 my-2">{{ successMessage }}</div>
       
-      <div v-else class="bg-white shadow-md rounded-lg p-6">
-        <div v-if="errorMessage" class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-          {{ errorMessage }}
+      <form v-if="!loading" @submit.prevent="handleSubmit" class="bg-white p-6 rounded shadow-md">
+        <div class="mb-4">
+          <label class="block text-gray-700 mb-2">Category Name</label>
+          <input 
+            v-model="kategori.nama" 
+            type="text" 
+            class="w-full border p-2 rounded" 
+            required
+          />
         </div>
         
-        <form @submit.prevent="updateKategori">
-          <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="nama">
-              Category Name
-            </label>
-            <input 
-              id="nama"
-              v-model="kategori.nama"
-              type="text" 
-              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              required
-            >
-          </div>
-          
-          <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="image">
-              Category Image
-            </label>
-            <input 
-              id="image"
-              type="file"
-              @change="handleImageChange"
-              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              accept="image/*"
-            >
-            
-            <div v-if="imagePreview || (kategori.image_path && !newImageSelected)" class="mt-2">
-              <p class="text-sm text-gray-600 mb-1">Current Image:</p>
-              <img 
-                :src="imagePreview || `http://localhost:8000/storage/category/${kategori.image_path}`"
-                class="h-24 w-24 object-cover rounded"
-                alt="Category image"
-              />
-            </div>
-          </div>
-          
-          <div class="flex items-center justify-between">
-            <button 
-              type="submit" 
-              class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-              :disabled="submitting"
-            >
-              {{ submitting ? 'Updating...' : 'Update Category' }}
-            </button>
-            <button 
-              type="button" 
-              @click="$router.push('/kalab/kategoripelaporan')"
-              class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
+        <div class="mb-4">
+          <label class="block text-gray-700 mb-2">Category Image</label>
+          <img 
+            v-if="kategori.image_path && !newImageSelected" 
+            :src="`http://localhost:8000/storage/category/${kategori.image_path}`" 
+            alt="Category Image" 
+            class="h-32 w-32 object-cover mb-2"
+          />
+          <img 
+            v-if="imagePreview" 
+            :src="imagePreview" 
+            alt="New Category Image" 
+            class="h-32 w-32 object-cover mb-2"
+          />
+          <input 
+            type="file" 
+            @change="handleImageChange" 
+            class="w-full border p-2 rounded"
+          />
+        </div>
+        
+        <div class="flex">
+          <button 
+            type="submit" 
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            :disabled="loading"
+          >
+            Update Category
+          </button>
+          <button 
+            type="button" 
+            @click="goBack" 
+            class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
     </div>
-  </template>
-  
-  <script>
-  import axios from 'axios';
-  
-  export default {
-    data() {
-      return {
-        kategori: {
-          nama: '',
-          image_path: null
-        },
-        newImage: null,
-        newImageSelected: false,
-        imagePreview: null,
-        loading: true,
-        submitting: false,
-        errorMessage: ''
-      };
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+import Swal from 'sweetalert2';
+
+export default {
+  data() {
+    return {
+      kategori: {
+        nama: '',
+        image_path: ''
+      },
+      categoryId: null,
+      loading: true,
+      errorMessage: '',
+      successMessage: '',
+      newImage: null,
+      newImageSelected: false,
+      imagePreview: null
+    };
+  },
+  // Use mounted instead of created to ensure DOM is ready
+  mounted() {
+    console.log("Component mounted");
+    this.parseAndSetCategoryData();
+
+    // Add a global unhandled error handler to catch any errors
+    window.addEventListener('error', this.handleGlobalError);
+  },
+  beforeDestroy() {
+    window.removeEventListener('error', this.handleGlobalError);
+  },
+  methods: {
+    handleGlobalError(event) {
+      console.error("Global error caught:", event.error);
     },
-    created() {
-      // Try to parse category data from query params first
+    parseAndSetCategoryData() {
+      console.log("Route query:", this.$route.query);
+      
       if (this.$route.query.data) {
         try {
           const categoryData = JSON.parse(this.$route.query.data);
-          this.kategori = {
-            nama: categoryData.nama,
-            image_path: categoryData.image_path
-          };
+          console.log("Successfully parsed category data:", categoryData);
+          
+          // Store ID explicitly
+          this.categoryId = categoryData.category_id;
+          console.log("Set categoryId to:", this.categoryId);
+          
+          // Set form data
+          this.kategori.nama = categoryData.nama;
+          this.kategori.image_path = categoryData.image_path;
+          
           this.loading = false;
-        } catch (e) {
-          // If parsing fails, fetch from API
-          this.fetchKategori();
+        } catch (error) {
+          console.error("Error parsing category data:", error);
+          this.errorMessage = "Invalid category data format";
+          this.loading = false;
         }
       } else {
-        // No query data, fetch from API
-        this.fetchKategori();
+        console.error("No data found in route query");
+        this.errorMessage = "Category data not found";
+        this.loading = false;
       }
     },
-    methods: {
-      fetchKategori() {
-        const id = this.$route.query.id;
-        if (!id) {
-          this.errorMessage = "Category ID not found";
-          this.loading = false;
+    handleImageChange(event) {
+      const file = event.target.files[0];
+      if (file) {
+        this.newImage = file;
+        this.newImageSelected = true;
+        
+        // Create image preview
+        const reader = new FileReader();
+        reader.onload = e => {
+          this.imagePreview = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        this.newImage = null;
+        this.newImageSelected = false;
+        this.imagePreview = null;
+      }
+    },
+    handleSubmit() {
+      try {
+        console.log("Submit triggered");
+        
+        if (!this.kategori.nama) {
+          this.errorMessage = "Category name is required";
           return;
         }
         
-        axios.get(`http://localhost:8000/api/category/${id}`)
-          .then(response => {
-            this.kategori = {
-              nama: response.data.nama,
-              image_path: response.data.image_path
-            };
-            this.loading = false;
-          })
-          .catch(error => {
-            console.error('Error fetching category:', error);
-            this.errorMessage = 'Failed to load category details';
-            this.loading = false;
-          });
-      },
-      handleImageChange(event) {
-        const file = event.target.files[0];
-        if (file) {
-          this.newImage = file;
-          this.newImageSelected = true;
+        if (!this.categoryId) {
+          if (this.$route.query.data) {
+            try {
+              const categoryData = JSON.parse(this.$route.query.data);
+              this.categoryId = categoryData.category_id;
+              console.log("Re-parsed categoryId:", this.categoryId);
+            } catch (error) {
+              console.error("Error re-parsing data:", error);
+            }
+          }
           
-          // Create image preview
-          const reader = new FileReader();
-          reader.onload = e => {
-            this.imagePreview = e.target.result;
-          };
-          reader.readAsDataURL(file);
-        } else {
-          this.newImage = null;
-          this.newImageSelected = false;
-          this.imagePreview = null;
+          if (!this.categoryId) {
+            this.errorMessage = "Category ID not found";
+            return;
+          }
         }
-      },
-      updateKategori() {
-        this.submitting = true;
+        
+        this.loading = true;
         this.errorMessage = '';
         
-        const id = this.$route.query.id;
-        if (!id) {
-          this.errorMessage = "Category ID not found";
-          this.submitting = false;
-          return;
+        const formData = new FormData();
+        formData.append('nama', this.kategori.nama);
+        formData.append('_method', 'PUT');
+        
+        if (this.newImage) {
+          formData.append('image_path', this.newImage);
         }
         
         const token = localStorage.getItem('auth_token');
         if (!token) {
-          this.errorMessage = 'Authentication token not found';
-          this.submitting = false;
+          this.errorMessage = "Authentication token not found";
+          this.loading = false;
           return;
         }
-  
-        // Create form data
-        const formData = new FormData();
-        formData.append('_method', 'PUT'); // Method override for PUT
-        formData.append('nama', this.kategori.nama); // Use nama instead of name
         
-        // Only append image if a new one was selected
-        if (this.newImage) {
-          formData.append('image', this.newImage);
-        }
-  
-        axios.post(`http://localhost:8000/api/category/update/${id}`, formData, {
+        axios.post(`http://localhost:8000/api/category/update/${this.categoryId}`, formData, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
           }
         })
         .then(response => {
-          // Navigate back to the category list page
-          this.$router.push('/kalab/kategoripelaporan');
+          console.log("Update successful:", response.data);
+          this.loading = false;
+          
+          // Use SweetAlert for success message
+          Swal.fire({
+            title: 'Success!',
+            text: 'Kategori berhasil diedit',
+            icon: 'success',
+            confirmButtonText: 'OK',
+            position: 'top-end',  // Position in top-right corner
+            toast: true,  // Make it a toast notification
+            timer: 3000,  // Auto close after 3 seconds
+            timerProgressBar: true,  // Show progress bar
+            showConfirmButton: false  // Remove the confirm button
+          }).then(() => {
+            // Navigate back after SweetAlert closes
+            this.goBack();
+          });
         })
         .catch(error => {
           console.error('Error updating category:', error);
           this.errorMessage = error.response?.data?.message || 'Failed to update category';
-          this.submitting = false;
+          this.loading = false;
         });
+      } catch (e) {
+        console.error("Exception in handleSubmit:", e);
+        this.errorMessage = "An unexpected error occurred";
+        this.loading = false;
       }
+    },
+    goBack() {
+      this.$router.push('/kalab/kategoripelaporan');
     }
-  };
-  </script>
+  }
+};
+</script>

@@ -26,36 +26,38 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 No.
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Image
+              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Icon Image
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
+              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Nama Kategori
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="(category, index) in paginatedCategories" :key="category.category_id">
-              <td class="px-6 py-4 whitespace-nowrap">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <img 
-                  v-if="category.image_path"
-                  :src="`http://localhost:8000/storage/category/${category.image_path}`" 
-                  :alt="category.nama"
-                  class="h-10 w-10 rounded-full object-cover"
-                />
-                <div v-else class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                  <span class="text-gray-500 text-xs">No image</span>
+              <td class="px-6 py-4 whitespace-nowrap text-center">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-center">
+                <div class="flex justify-center">
+                  <img 
+                    v-if="category.image_path"
+                    :src="getCategoryImageUrl(category.image_path)" 
+                    :alt="category.nama"
+                    class="max-h-20 max-w-20 object-contain rounded-md"
+                  />
+                  <div v-else class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                    <span class="text-gray-500 text-xs">No image</span>
+                  </div>
                 </div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">{{ category.nama }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td class="px-6 py-4 whitespace-nowrap text-center">{{ category.nama }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-center">
                 <button 
                   @click="editCategory(category)"
                   class="text-blue-500 hover:text-blue-700 mr-2"
@@ -267,7 +269,11 @@
                 });
             }
         });
-      }
+      },
+      getCategoryImageUrl(image_path) {
+        if (!image_path) return "";
+        return `${import.meta.env.VITE_API_BASE_URL}/storage/category/${image_path}`;
+      },
     },
     created() {
       this.fetchCategories();
