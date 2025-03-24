@@ -81,6 +81,7 @@ export function authDosen() {
             nik: response.data.data.dosen.nik,
             email: email,
             dosenId: user.value.id,
+            no_telp: response.data.data.dosen.no_telp,
           },
         });
 

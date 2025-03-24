@@ -36,8 +36,11 @@
     
     <!-- Table with search, filters and pagination -->
     <div class="incident-table-container">
-      <div class="table-header">
+      <div class="table-actions">
         <h2>Daftar Kejadian</h2>
+      </div>
+      
+      <div class="table-header">
         <div class="search-container">
           <input 
             type="text" 
@@ -47,6 +50,12 @@
             @input="handleSearch"
           >
           <i class="fas fa-search search-icon"></i>
+        </div>
+        
+        <div class="action-buttons">
+          <button class="btn-add-report" @click="addNewReport">
+            <i class="fas fa-plus"></i> Tambah Laporan
+          </button>
         </div>
       </div>
       
@@ -307,6 +316,12 @@ export default {
     viewDetail(id) {
       // Navigate to detail page or show modal
       console.log('View detail for incident ID:', id);
+    },
+    addNewReport() {
+      // Navigate to form page or show modal for adding a new report
+      console.log('Add new incident report');
+      // For example:
+      // this.$router.push('/tambah-laporan');
     }
   }
 };
@@ -320,7 +335,12 @@ export default {
 .page-title {
   margin-bottom: 30px;
   color: #2c3e50;
+  font-weight: 700;
+  font-size: 2.2rem;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
 }
+
 
 .statistics-cards {
   display: flex;
@@ -371,15 +391,53 @@ export default {
   padding: 20px;
 }
 
-.table-header {
+/* Table actions and add button */
+.table-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 }
 
+.btn-add-report {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+  box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
+}
+
+.btn-add-report:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-add-report i {
+  font-size: 12px;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
 .search-container {
-  position: relative;
+  position: relative; /* Add this line */
+  flex: 1;
+  max-width: 400px;
+}
+
+.action-buttons {
+  margin-left: 15px;
 }
 
 .search-input {
@@ -396,6 +454,7 @@ export default {
   top: 50%;
   transform: translateY(-50%);
   color: #7f8c8d;
+  z-index: 1; /* Add this to ensure icon appears above input */
 }
 
 /* Filter styles */
@@ -567,6 +626,21 @@ export default {
 @media (max-width: 768px) {
   .statistics-cards {
     flex-direction: column;
+  }
+  
+  .table-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .action-buttons {
+    width: 100%;
+  }
+  
+  .btn-add-report {
+    width: 100%;
+    justify-content: center;
   }
   
   .filter-group {

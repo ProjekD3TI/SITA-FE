@@ -14,7 +14,7 @@
       </div>
       
       <div class="stats-card">
-        <div class="stats-icon">
+        <div class="stats-icon-procces">
           <i class="fas fa-check-circle"></i>
         </div>
         <div class="stats-content">
@@ -24,7 +24,7 @@
       </div>
       
       <div class="stats-card">
-        <div class="stats-icon">
+        <div class="stats-icon-done">
           <i class="fas fa-clock"></i>
         </div>
         <div class="stats-content">
@@ -38,11 +38,6 @@
     <div class="incident-table-container">
       <div class="table-actions">
         <h2>Daftar Kejadian</h2>
-        <div class="action-buttons">
-          <button class="btn-add-report" @click="addNewReport">
-            <i class="fas fa-plus"></i> Tambah Laporan
-          </button>
-        </div>
       </div>
       
       <div class="table-header">
@@ -55,6 +50,12 @@
             @input="handleSearch"
           >
           <i class="fas fa-search search-icon"></i>
+        </div>
+        
+        <div class="action-buttons">
+          <button class="btn-add-report" @click="addNewReport">
+            <i class="fas fa-plus"></i> Tambah Laporan
+          </button>
         </div>
       </div>
       
@@ -320,7 +321,7 @@ export default {
       // Navigate to form page or show modal for adding a new report
       console.log('Add new incident report');
       // For example:
-      // this.$router.push('/tambah-laporan');
+      this.$router.push('/kalab/addpelaporankejadiankalab');
     }
   }
 };
@@ -334,6 +335,10 @@ export default {
 .page-title {
   margin-bottom: 30px;
   color: #2c3e50;
+  font-weight: 700;
+  font-size: 2.2rem;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
 }
 
 .statistics-cards {
@@ -362,6 +367,32 @@ export default {
   border-radius: 50%;
   background: #f0f4f8;
   color: #3498db;
+}
+
+.stats-icon-procces {
+  font-size: 24px;
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #f0f4f8;
+  color: #d97706;
+}
+
+.stats-icon-done {
+  font-size: 24px;
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #f0f4f8;
+  color: #16a34a;
 }
 
 .stats-content h3 {
@@ -421,11 +452,17 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .search-container {
-  position: relative;
+  position: relative; /* Add this line */
+  flex: 1;
+  max-width: 400px;
+}
+
+.action-buttons {
+  margin-left: 15px;
 }
 
 .search-input {
@@ -442,6 +479,7 @@ export default {
   top: 50%;
   transform: translateY(-50%);
   color: #7f8c8d;
+  z-index: 1; /* Add this to ensure icon appears above input */
 }
 
 /* Filter styles */
