@@ -110,30 +110,32 @@
         </div>
       </div>
       
-      <table class="incident-table">
+      <table class="data-table">
         <thead>
           <tr>
             <th>No</th>
-            <th>Tanggal</th>
-            <th>Jenis Kejadian</th>
-            <th>Lokasi</th>
+            <th>Nomor Laporan</th>
+            <th>Judul</th>
+            <th>Kategori</th>
+            <th>Nama Pelapor</th>
             <th>Status</th>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(incident, index) in paginatedIncidents" :key="incident.id">
+          <tr v-for="(laporan, index) in paginatedLaporan" :key="laporan.laporan_id">
             <td>{{ startIndex + index + 1 }}</td>
-            <td>{{ incident.tanggal }}</td>
-            <td>{{ incident.jenisKejadian }}</td>
-            <td>{{ incident.lokasi }}</td>
+            <td>{{ laporan.nomor_laporan }}</td>
+            <td>{{ laporan.judul }}</td>
+            <td>{{ getCategoryName(laporan.category_id) }}</td>
+            <td>{{ laporan.nama_pelapor }}</td>
             <td>
-              <span :class="['status-badge', incident.status.toLowerCase()]">
-                {{ incident.status }}
+              <span :class="['status-badge', laporan.status.toLowerCase()]">
+                {{ formatStatus(laporan.status) }}
               </span>
             </td>
             <td>
-              <button class="btn-detail" @click="viewDetail(incident.id)">
+              <button class="btn-detail" @click="viewDetail(laporan.laporan_id)">
                 <i class="fas fa-eye"></i> Detail
               </button>
             </td>
@@ -141,13 +143,13 @@
         </tbody>
       </table>
       
-      <div v-if="filteredIncidents.length === 0" class="no-data">
+      <div v-if="filteredLaporan.length === 0" class="no-data">
         <p>Tidak ada data yang sesuai dengan kriteria pencarian dan filter.</p>
       </div>
       
       <div class="pagination-container">
         <div class="pagination-info-total">
-          Total: {{ filteredIncidents.length }} kejadian
+          Total: {{ filteredLaporan.length }} laporan
         </div>
         
         <div class="pagination-controls">
@@ -183,6 +185,8 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: 'DashboardPelaporanKejadian',
   data() {
@@ -196,133 +200,135 @@ export default {
         startDate: '',
         endDate: ''
       },
-      incidents: [
-        { id: 1, tanggal: '2023-05-01', jenisKejadian: 'Kebakaran', lokasi: 'Jl. Sudirman No. 45', status: 'Selesai' },
-        { id: 2, tanggal: '2023-05-03', jenisKejadian: 'Banjir', lokasi: 'Kp. Melayu', status: 'Selesai' },
-        { id: 3, tanggal: '2023-05-05', jenisKejadian: 'Pohon Tumbang', lokasi: 'Jl. Gatot Subroto', status: 'Proses' },
-        { id: 4, tanggal: '2023-05-07', jenisKejadian: 'Kebakaran', lokasi: 'Psr. Minggu', status: 'Selesai' },
-        { id: 5, tanggal: '2023-05-10', jenisKejadian: 'Kecelakaan', lokasi: 'Tol Dalam Kota', status: 'Selesai' },
-        { id: 6, tanggal: '2023-05-12', jenisKejadian: 'Bangunan Runtuh', lokasi: 'Tanah Abang', status: 'Proses' },
-        { id: 7, tanggal: '2023-05-15', jenisKejadian: 'Kebakaran', lokasi: 'Kemayoran', status: 'Selesai' },
-        { id: 8, tanggal: '2023-05-18', jenisKejadian: 'Banjir', lokasi: 'Kampung Melayu', status: 'Proses' },
-        { id: 9, tanggal: '2023-05-20', jenisKejadian: 'Kebakaran', lokasi: 'Jl. Diponegoro', status: 'Selesai' },
-        { id: 10, tanggal: '2023-05-22', jenisKejadian: 'Longsor', lokasi: 'Puncak', status: 'Proses' },
-        { id: 11, tanggal: '2023-05-25', jenisKejadian: 'Kebakaran', lokasi: 'Kelapa Gading', status: 'Selesai' },
-        { id: 12, tanggal: '2023-05-28', jenisKejadian: 'Kecelakaan', lokasi: 'Jl. Rasuna Said', status: 'Proses' },
-        { id: 13, tanggal: '2023-06-01', jenisKejadian: 'Banjir', lokasi: 'Manggarai', status: 'Selesai' },
-        { id: 14, tanggal: '2023-06-05', jenisKejadian: 'Longsor', lokasi: 'Sentul', status: 'Proses' },
-        { id: 15, tanggal: '2023-06-10', jenisKejadian: 'Pohon Tumbang', lokasi: 'Jl. Thamrin', status: 'Selesai' },
-      ]
+      laporan: [], // This will store API data
+      categories: {},
+      selectedStatus: 'all',
+      itemsPerPage: 10,
+      loading: true, // Start with loading true
+      error: null
     };
   },
+  
   computed: {
-    uniqueJenisKejadian() {
-      // Get unique jenis kejadian for filter dropdown
-      return [...new Set(this.incidents.map(item => item.jenisKejadian))];
-    },
-    filteredIncidents() {
-      // First apply search filter
-      let result = this.incidents;
+    filteredLaporan() {
+      let result = this.laporan;
       
+      // Apply search filter
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase();
-        result = result.filter(incident => 
-          incident.jenisKejadian.toLowerCase().includes(query) ||
-          incident.lokasi.toLowerCase().includes(query) ||
-          incident.status.toLowerCase().includes(query) ||
-          incident.tanggal.includes(query)
+        result = result.filter(item => 
+          (item.judul && item.judul.toLowerCase().includes(query)) || 
+          (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(query))
         );
       }
       
-      // Then apply dropdown filters
+      // Apply status filter
+      if (this.selectedStatus !== 'all') {
+        result = result.filter(item => item.status === this.selectedStatus);
+      }
+      
+      // Apply jenisKejadian filter (category)
       if (this.filters.jenisKejadian) {
-        result = result.filter(incident => 
-          incident.jenisKejadian === this.filters.jenisKejadian
-        );
+        result = result.filter(item => item.category_id == this.filters.jenisKejadian);
       }
       
-      if (this.filters.status) {
-        result = result.filter(incident => 
-          incident.status === this.filters.status
-        );
-      }
-      
-      // Apply date range filter
+      // Apply date filters if needed
       if (this.filters.startDate && this.filters.endDate) {
-        const startDate = new Date(this.filters.startDate);
-        const endDate = new Date(this.filters.endDate);
-        endDate.setDate(endDate.getDate() + 1); // Include the end date
-        
-        result = result.filter(incident => {
-          const incidentDate = new Date(incident.tanggal);
-          return incidentDate >= startDate && incidentDate < endDate;
+        result = result.filter(item => {
+          const itemDate = new Date(item.tanggal_kejadian);
+          const startDate = new Date(this.filters.startDate);
+          const endDate = new Date(this.filters.endDate);
+          return itemDate >= startDate && itemDate <= endDate;
         });
-      } else if (this.filters.startDate) {
-        const startDate = new Date(this.filters.startDate);
-        result = result.filter(incident => 
-          new Date(incident.tanggal) >= startDate
-        );
-      } else if (this.filters.endDate) {
-        const endDate = new Date(this.filters.endDate);
-        endDate.setDate(endDate.getDate() + 1); // Include the end date
-        result = result.filter(incident => 
-          new Date(incident.tanggal) < endDate
-        );
       }
       
       return result;
     },
+    
+    paginatedLaporan() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.filteredLaporan.slice(start, end);
+    },
+    
     totalPages() {
-      return Math.ceil(this.filteredIncidents.length / this.pageSize);
+      return Math.ceil(this.filteredLaporan.length / this.itemsPerPage);
     },
-    paginatedIncidents() {
-      const startIndex = (this.currentPage - 1) * this.pageSize;
-      const endIndex = startIndex + this.pageSize;
-      return this.filteredIncidents.slice(startIndex, endIndex);
-    },
+    
     startIndex() {
-      return (this.currentPage - 1) * this.pageSize;
+      return (this.currentPage - 1) * this.itemsPerPage;
     }
   },
+  
   methods: {
-    handleSearch() {
-      this.currentPage = 1; // Reset to first page when searching
+    async fetchData() {
+      this.loading = true;
+      try {
+        // Fetch categories first
+        const categoriesResponse = await axios.get('http://localhost:8000/api/category');
+        // Transform categories array to an object with id as key for easy lookup
+        this.categories = categoriesResponse.data.reduce((acc, category) => {
+          acc[category.category_id] = category.nama;
+          return acc;
+        }, {});
+        
+        // Then fetch laporan data
+        const laporanResponse = await axios.get('http://localhost:8000/api/laporan');
+        this.laporan = laporanResponse.data;
+        
+        console.log('Laporan data loaded:', this.laporan); // Debug log
+        console.log('Categories loaded:', this.categories); // Debug log
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        this.error = 'Gagal memuat data. Silakan coba lagi nanti.';
+      } finally {
+        this.loading = false;
+      }
     },
-    applyFilters() {
-      this.currentPage = 1; // Reset to first page when applying filters
+    
+    getCategoryName(categoryId) {
+      return this.categories[categoryId] || `Kategori ${categoryId}`;
     },
-    resetFilters() {
-      this.filters = {
-        jenisKejadian: '',
-        status: '',
-        startDate: '',
-        endDate: ''
+    
+    formatStatus(status) {
+      const statusMap = {
+        'unverified': 'Belum Diverifikasi',
+        'verified': 'Diverifikasi',
+        'processed': 'Diproses',
+        'completed': 'Selesai',
+        'rejected': 'Ditolak'
       };
-      this.currentPage = 1;
+      
+      return statusMap[status] || status;
     },
+    
+    viewDetail(id) {
+      // Navigate to detail page or show modal
+      this.$router.push(`/laporan/${id}`);
+    },
+    
+    // Pagination methods
+    goToPage(page) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.currentPage = page;
+      }
+    },
+    
     prevPage() {
       if (this.currentPage > 1) {
         this.currentPage--;
       }
     },
+    
     nextPage() {
       if (this.currentPage < this.totalPages) {
         this.currentPage++;
       }
-    },
-    resetPage() {
-      this.currentPage = 1;
-    },
-    viewDetail(id) {
-      // Navigate to detail page or show modal
-      console.log('View detail for incident ID:', id);
-    },
-    addNewReport() {
-      // Navigate to form page or show modal for adding a new report
-      console.log('Add new incident report');
-      // For example:
-      this.$router.push('/kalab/addpelaporankejadiankalab');
     }
+  },
+  
+  mounted() {
+    this.fetchData();
   }
 };
 </script>
@@ -686,5 +692,266 @@ export default {
   .search-input {
     width: 100%;
   }
+}
+</style>
+
+<style scoped>
+/* Table styling for proper spacing and layout */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px 16px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.data-table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Column widths to maintain consistent spacing */
+.data-table th:nth-child(1),
+.data-table td:nth-child(1) {
+  width: 5%;
+  text-align: center;
+}
+
+.data-table th:nth-child(2),
+.data-table td:nth-child(2) {
+  width: 15%;
+}
+
+.data-table th:nth-child(3),
+.data-table td:nth-child(3) {
+  width: 20%;
+}
+
+.data-table th:nth-child(4),
+.data-table td:nth-child(4) {
+  width: 15%;
+}
+
+.data-table th:nth-child(5),
+.data-table td:nth-child(5) {
+  width: 15%;
+}
+
+.data-table th:nth-child(6),
+.data-table td:nth-child(6) {
+  width: 15%;
+}
+
+.data-table th:nth-child(7),
+.data-table td:nth-child(7) {
+  width: 15%;
+  text-align: center;
+}
+
+/* Status badge styling */
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  min-width: 100px;
+}
+
+.unverified {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.verified {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.processed {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.completed {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.rejected {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+
+/* Button styling */
+.btn-detail {
+  background-color: #e6f7ff;
+  color: #0ea5e9;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-detail:hover {
+  background-color: #0ea5e9;
+  color: #e6f7ff;
+}
+
+.btn-detail i {
+  font-size: 14px;
+}
+
+/* Loading & error states */
+.loading-indicator, 
+.error-message, 
+.no-data {
+  text-align: center;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 8px;
+  margin: 1rem 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.loading-indicator {
+  color: #4b5563;
+}
+
+.error-message {
+  color: #dc2626;
+}
+
+.no-data {
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Container styling */
+.dashboard-container {
+  padding: 1.5rem;
+  background-color: #f9fafb;
+  min-height: calc(100vh - 64px); /* Adjust based on your header height */
+}
+
+/* Pagination styling */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  background-color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.pagination-info-total {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pagination-button {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  font-size: 14px;
+  padding: 4px 8px;
+  min-width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #f3f4f6;
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-button.active {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+</style>
+
+<style>
+/* You can keep your existing styles and add these if needed */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.unverified {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.verified {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.processed {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.completed {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.rejected {
+  background-color: #fee2e2;
+  color: #dc2626;
 }
 </style>

@@ -243,7 +243,7 @@
         formData.append('tanggal_kejadian', this.formData.tanggal_kejadian);
         formData.append('image_path', this.formData.image_path);
   
-        axios.post('http://localhost:8000/api/laporan', formData, {
+        axios.post('http://localhost:8000/api/laporan/add_laporan', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
@@ -288,7 +288,7 @@
       closeModal() {
         this.showModal = false;
         if (this.isSuccess) {
-          this.$router.push('/dashboard');
+          this.$router.push('/kalab/pelaporankejadiankalab');
         }
       }
     }
