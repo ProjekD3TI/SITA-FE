@@ -4,8 +4,9 @@
             <div class="back-button" @click="goBack">
                 <i class="fas fa-arrow-left"></i> Kembali
             </div>
-            <h1 class="page-title">Detail Pelaporan Kejadian</h1>
         </div>
+
+        <h1 class="page-title">Detail Pelaporan Kejadian</h1>
 
         <div v-if="loading" class="loading-container">
             <div class="spinner"></div>
