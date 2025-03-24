@@ -5,7 +5,7 @@
       <div class="max-w-5xl mx-auto bg-white p-6 rounded-lg shadow-lg">
         <h2 class="text-2xl font-bold text-center mb-6">Laporan Kekerasan Seksual</h2>
 
-        <form @submit.prevent="submitForm" class="space-y-6">
+        <form @submit.prevent="submitReport" class="space-y-6">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Left Column -->
             <div>
@@ -23,20 +23,20 @@
 
               <!-- Kategori -->
               <div class="mb-4">
-                <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-                <select
-                  id="category"
-                  v-model="report.category"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
-                  required
-                >
-                  <option value="">Pilih Kategori</option>
-                  <option value="pelecehan_verbal">Pelecehan Verbal</option>
-                  <option value="pelecehan_fisik">Pelecehan Fisik</option>
-                  <option value="pelecehan_online">Pelecehan Online</option>
-                  <option value="intimidasi_seksual">Intimidasi Seksual</option>
-                  <option value="lainnya">Lainnya</option>
-                </select>
+                <label for="category" class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
+                <div class="relative">
+                  <select 
+                    v-model="report.category" 
+                    id="category"
+                    class="block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 text-sm"
+                    required
+                  >
+                    <option value="" disabled>Pilih Kategori</option>
+                    <option v-for="category in categories" :key="category.category_id" :value="category.category_id">
+                      {{ category.nama }}
+                    </option>
+                  </select>
+                </div>
               </div>
 
               <!-- Bukti Laporan (File Input) -->
@@ -102,9 +102,9 @@
               </div>
 
               <div class="mb-4">
-                <label for="incidentDate" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Kejadian</label>
+                <label for="incidentDate" class="block text-sm font-medium text-gray-700 mb-1">Tanggal dan Waktu Kejadian</label>
                 <input
-                  type="date"
+                  type="datetime-local"
                   id="incidentDate"
                   v-model="report.incidentDate"
                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
@@ -131,7 +131,9 @@
 </template>
 
 <script>
-import Header from "../../components/Header.vue";
+import axios from 'axios';
+import Swal from 'sweetalert2';
+import Header from '../../components/Header.vue'
 import Footer from "../../components/Footer.vue";
 
 export default {
@@ -151,20 +153,42 @@ export default {
         phone: '',
         incidentDate: '',
         evidenceFile: null
-      }
+      },
+      categories: [],
+      isSubmitting: false
     };
   },
+
+  mounted() {
+    this.fetchCategories();
+  },
+
   methods: {
-    handleFileUpload(event) {
-      this.report.evidenceFile = event.target.files[0];
+    fetchCategories() {
+      axios.get('http://localhost:8000/api/category')
+        .then(response => {
+          // Check if response.data is an array directly
+          if (Array.isArray(response.data)) {
+            this.categories = response.data;
+          } 
+          // Otherwise check if it has a data property containing the array (as originally expected)
+          else if (response.data && response.data.data) {
+            this.categories = response.data.data;
+          } 
+          // Handle unexpected formats
+          else {
+            console.error('Unexpected API response structure:', response.data);
+            this.categories = [];
+          }
+          console.log('Categories loaded:', this.categories);
+        })
+        .catch(error => {
+          console.error('Error fetching categories:', error);
+          // If you have a notification system
+          // this.showNotification('Error', 'Gagal memuat kategori laporan.', false);
+        });
     },
-    submitForm() {
-      // Handle form submission here
-      console.log('Form submitted:', this.report);
-      // Add API call or other logic to submit the report
-      alert('Laporan berhasil dikirim!');
-      this.resetForm();
-    },
+    
     resetForm() {
       this.report = {
         title: '',
@@ -176,8 +200,70 @@ export default {
         incidentDate: '',
         evidenceFile: null
       };
-      // Reset file input
-      document.getElementById('evidence').value = '';
+      // Reset file input if you have one
+      const fileInput = document.getElementById('evidence');
+      if (fileInput) fileInput.value = '';
+    },
+    
+    handleFileUpload(event) {
+      this.report.evidenceFile = event.target.files[0];
+    },
+    
+    async submitReport() {
+      try {
+        // Basic validation
+        if (!this.report.title || !this.report.category || !this.report.description) {
+          alert('Please fill in all required fields');
+          return;
+        }
+        
+        // Create FormData object to handle file upload
+        const formData = new FormData();
+        formData.append('judul', this.report.title);
+        formData.append('category_id', this.report.category);
+        formData.append('deskripsi', this.report.description);
+        formData.append('nama_pelapor', this.report.reporterName);
+        formData.append('nim_pelapor', this.report.nim);
+        formData.append('nomor_telepon', this.report.phone);
+        formData.append('tanggal_kejadian', this.report.incidentDate);
+        
+        if (this.report.evidenceFile) {
+          formData.append('image_path', this.report.evidenceFile);
+        }
+        
+        // Show loading state
+        this.isSubmitting = true;
+        
+        // Submit the data to the API
+        const response = await axios.post('http://localhost:8000/api/laporan_kekerasan/add_laporan', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        
+        // Handle success
+        Swal.fire({
+          icon: 'success',
+          title: 'Success!',
+          text: 'Report submitted successfully',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'OK'
+        });
+        this.resetForm();
+        
+      } catch (error) {
+        // Handle error
+        console.error('Error submitting report:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: 'Failed to submit report. Please try again.',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'OK'
+        });
+      } finally {
+        this.isSubmitting = false;
+      }
     }
   }
 };

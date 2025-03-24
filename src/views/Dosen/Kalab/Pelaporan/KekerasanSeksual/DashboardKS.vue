@@ -1,51 +1,53 @@
 <template>
   <div class="dashboard-pelaporan-kejadian">
-    <h1 class="page-title">Dashboard Pelaporan Kekerasan Seksual</h1>
+    <h1 class="page-title">Dashboard Kekerasan Seksual</h1>
     
+    <!-- Statistics Cards -->
     <div class="statistics-cards">
       <div class="stats-card">
         <div class="stats-icon">
           <i class="fas fa-exclamation-triangle"></i>
         </div>
         <div class="stats-content">
-          <h3>Total Kejadian</h3>
-          <p class="stats-number">24</p>
+          <h3>Total Laporan</h3>
+          <p class="stats-number">{{ laporan.length }}</p>
         </div>
       </div>
       
       <div class="stats-card">
-        <div class="stats-icon">
-          <i class="fas fa-check-circle"></i>
-        </div>
-        <div class="stats-content">
-          <h3>Dalam Proses</h3>
-          <p class="stats-number">18</p>
-        </div>
-      </div>
-      
-      <div class="stats-card">
-        <div class="stats-icon">
+        <div class="stats-icon-procces">
           <i class="fas fa-clock"></i>
         </div>
         <div class="stats-content">
-          <h3>Selesai Ditangani</h3>
-          <p class="stats-number">6</p>
+          <h3>Pending</h3>
+          <p class="stats-number">{{ pendingCount }}</p>
+        </div>
+      </div>
+      
+      <div class="stats-card">
+        <div class="stats-icon-done">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stats-content">
+          <h3>Ditanggapi</h3>
+          <p class="stats-number">{{ respondedCount }}</p>
         </div>
       </div>
     </div>
-    
-    <!-- Table with search, filters and pagination -->
+
+    <!-- Table Container -->
     <div class="incident-table-container">
       <div class="table-actions">
-        <h2>Daftar Kejadian</h2>
+        <h2>Daftar Laporan Kekerasan Seksual</h2>
       </div>
-      
+
+      <!-- Search and Action Buttons -->
       <div class="table-header">
         <div class="search-container">
           <input 
             type="text" 
             v-model="searchQuery" 
-            placeholder="Cari kejadian..." 
+            placeholder="Cari laporan..." 
             class="search-input"
             @input="handleSearch"
           >
@@ -58,18 +60,18 @@
           </button>
         </div>
       </div>
-      
-      <!-- Filter controls -->
+
+      <!-- Filters -->
       <div class="filter-container">
         <div class="filter-group">
           <label>Filter berdasarkan:</label>
           
           <div class="filter-select">
-            <label for="jenisKejadianFilter">Jenis Kejadian:</label>
-            <select id="jenisKejadianFilter" v-model="filters.jenisKejadian" @change="applyFilters">
+            <label for="categoryFilter">Kategori:</label>
+            <select id="categoryFilter" v-model="filters.category_id" @change="applyFilters">
               <option value="">Semua</option>
-              <option v-for="jenis in uniqueJenisKejadian" :key="jenis" :value="jenis">
-                {{ jenis }}
+              <option v-for="(name, id) in categories" :key="id" :value="id">
+                {{ name }}
               </option>
             </select>
           </div>
@@ -78,8 +80,9 @@
             <label for="statusFilter">Status:</label>
             <select id="statusFilter" v-model="filters.status" @change="applyFilters">
               <option value="">Semua</option>
-              <option value="Selesai">Selesai</option>
-              <option value="Proses">Dalam Proses</option>
+              <option value="unverified">Belum Diverifikasi</option>
+              <option value="verified">Diverifikasi</option>
+              <option value="rejected">Ditolak</option>
             </select>
           </div>
           
@@ -91,7 +94,6 @@
                 id="startDate" 
                 v-model="filters.startDate" 
                 @change="applyFilters"
-                placeholder="Tanggal Mulai"
               >
               <span>s/d</span>
               <input 
@@ -99,7 +101,6 @@
                 id="endDate" 
                 v-model="filters.endDate" 
                 @change="applyFilters"
-                placeholder="Tanggal Akhir"
               >
             </div>
           </div>
@@ -109,45 +110,49 @@
           </button>
         </div>
       </div>
-      
-      <table class="incident-table">
-        <thead>
-          <tr>
-            <th>No</th>
-            <th>Tanggal</th>
-            <th>Jenis Kejadian</th>
-            <th>Lokasi</th>
-            <th>Status</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(incident, index) in paginatedIncidents" :key="incident.id">
-            <td>{{ startIndex + index + 1 }}</td>
-            <td>{{ incident.tanggal }}</td>
-            <td>{{ incident.jenisKejadian }}</td>
-            <td>{{ incident.lokasi }}</td>
-            <td>
-              <span :class="['status-badge', incident.status.toLowerCase()]">
-                {{ incident.status }}
-              </span>
-            </td>
-            <td>
-              <button class="btn-detail" @click="viewDetail(incident.id)">
-                <i class="fas fa-eye"></i> Detail
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      
-      <div v-if="filteredIncidents.length === 0" class="no-data">
-        <p>Tidak ada data yang sesuai dengan kriteria pencarian dan filter.</p>
+
+      <!-- Table -->
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Nomor Laporan</th>
+              <th>Judul</th>
+              <th>Kategori</th>
+              <th>Nama Pelapor</th>
+              <th>Tanggal Kejadian</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, index) in paginatedLaporan" :key="item.laporan_kekerasan_id">
+              <td>{{ startIndex + index + 1 }}</td>
+              <td>{{ item.nomor_laporan_kekerasan }}</td>
+              <td>{{ item.judul }}</td>
+              <td>{{ getCategoryName(item.category_id) }}</td>
+              <td>{{ item.nama_pelapor }}</td>
+              <td>{{ new Date(item.tanggal_kejadian).toLocaleDateString() }}</td>
+              <td>
+                <span :class="['status-badge', getStatusClass(item)]">
+                  {{ item.tanggapan ? 'Ditanggapi' : 'Pending' }}
+                </span>
+              </td>
+              <td>
+                <button class="btn-detail" @click="viewDetail(item)">
+                  <i class="fas fa-eye"></i> Detail
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      
+
+      <!-- Pagination -->
       <div class="pagination-container">
         <div class="pagination-info-total">
-          Total: {{ filteredIncidents.length }} kejadian
+          Total: {{ filteredLaporan.length }} laporan
         </div>
         
         <div class="pagination-controls">
@@ -160,22 +165,16 @@
           </button>
           
           <span class="pagination-info">
-            Halaman {{ currentPage }} dari {{ totalPages || 1 }}
+            Halaman {{ currentPage }} dari {{ totalPages }}
           </span>
           
           <button 
             class="pagination-btn" 
             @click="nextPage" 
-            :disabled="currentPage === totalPages || totalPages === 0"
+            :disabled="currentPage >= totalPages"
           >
             <i class="fas fa-chevron-right"></i>
           </button>
-          
-          <select v-model="pageSize" class="page-size-select" @change="resetPage">
-            <option :value="5">5 per halaman</option>
-            <option :value="10">10 per halaman</option>
-            <option :value="20">20 per halaman</option>
-          </select>
         </div>
       </div>
     </div>
@@ -183,148 +182,147 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
-  name: 'DashboardPelaporanKejadian',
+  name: 'DashboardKS',
   data() {
     return {
-      searchQuery: '',
+      laporan: [],
+      categories: {},
+      loading: false,
+      error: null,
       currentPage: 1,
-      pageSize: 10,
+      itemsPerPage: 10,
+      searchQuery: '',
+      filterCategory: 'all',
+      selectedReport: null,
       filters: {
-        jenisKejadian: '',
+        category_id: '',
         status: '',
         startDate: '',
         endDate: ''
-      },
-      incidents: [
-        { id: 1, tanggal: '2023-05-01', jenisKejadian: 'Kebakaran', lokasi: 'Jl. Sudirman No. 45', status: 'Selesai' },
-        { id: 2, tanggal: '2023-05-03', jenisKejadian: 'Banjir', lokasi: 'Kp. Melayu', status: 'Selesai' },
-        { id: 3, tanggal: '2023-05-05', jenisKejadian: 'Pohon Tumbang', lokasi: 'Jl. Gatot Subroto', status: 'Proses' },
-        { id: 4, tanggal: '2023-05-07', jenisKejadian: 'Kebakaran', lokasi: 'Psr. Minggu', status: 'Selesai' },
-        { id: 5, tanggal: '2023-05-10', jenisKejadian: 'Kecelakaan', lokasi: 'Tol Dalam Kota', status: 'Selesai' },
-        { id: 6, tanggal: '2023-05-12', jenisKejadian: 'Bangunan Runtuh', lokasi: 'Tanah Abang', status: 'Proses' },
-        { id: 7, tanggal: '2023-05-15', jenisKejadian: 'Kebakaran', lokasi: 'Kemayoran', status: 'Selesai' },
-        { id: 8, tanggal: '2023-05-18', jenisKejadian: 'Banjir', lokasi: 'Kampung Melayu', status: 'Proses' },
-        { id: 9, tanggal: '2023-05-20', jenisKejadian: 'Kebakaran', lokasi: 'Jl. Diponegoro', status: 'Selesai' },
-        { id: 10, tanggal: '2023-05-22', jenisKejadian: 'Longsor', lokasi: 'Puncak', status: 'Proses' },
-        { id: 11, tanggal: '2023-05-25', jenisKejadian: 'Kebakaran', lokasi: 'Kelapa Gading', status: 'Selesai' },
-        { id: 12, tanggal: '2023-05-28', jenisKejadian: 'Kecelakaan', lokasi: 'Jl. Rasuna Said', status: 'Proses' },
-        { id: 13, tanggal: '2023-06-01', jenisKejadian: 'Banjir', lokasi: 'Manggarai', status: 'Selesai' },
-        { id: 14, tanggal: '2023-06-05', jenisKejadian: 'Longsor', lokasi: 'Sentul', status: 'Proses' },
-        { id: 15, tanggal: '2023-06-10', jenisKejadian: 'Pohon Tumbang', lokasi: 'Jl. Thamrin', status: 'Selesai' },
-      ]
-    };
-  },
-  computed: {
-    uniqueJenisKejadian() {
-      // Get unique jenis kejadian for filter dropdown
-      return [...new Set(this.incidents.map(item => item.jenisKejadian))];
-    },
-    filteredIncidents() {
-      // First apply search filter
-      let result = this.incidents;
-      
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
-        result = result.filter(incident => 
-          incident.jenisKejadian.toLowerCase().includes(query) ||
-          incident.lokasi.toLowerCase().includes(query) ||
-          incident.status.toLowerCase().includes(query) ||
-          incident.tanggal.includes(query)
-        );
       }
-      
-      // Then apply dropdown filters
-      if (this.filters.jenisKejadian) {
-        result = result.filter(incident => 
-          incident.jenisKejadian === this.filters.jenisKejadian
-        );
-      }
-      
-      if (this.filters.status) {
-        result = result.filter(incident => 
-          incident.status === this.filters.status
-        );
-      }
-      
-      // Apply date range filter
-      if (this.filters.startDate && this.filters.endDate) {
-        const startDate = new Date(this.filters.startDate);
-        const endDate = new Date(this.filters.endDate);
-        endDate.setDate(endDate.getDate() + 1); // Include the end date
-        
-        result = result.filter(incident => {
-          const incidentDate = new Date(incident.tanggal);
-          return incidentDate >= startDate && incidentDate < endDate;
-        });
-      } else if (this.filters.startDate) {
-        const startDate = new Date(this.filters.startDate);
-        result = result.filter(incident => 
-          new Date(incident.tanggal) >= startDate
-        );
-      } else if (this.filters.endDate) {
-        const endDate = new Date(this.filters.endDate);
-        endDate.setDate(endDate.getDate() + 1); // Include the end date
-        result = result.filter(incident => 
-          new Date(incident.tanggal) < endDate
-        );
-      }
-      
-      return result;
-    },
-    totalPages() {
-      return Math.ceil(this.filteredIncidents.length / this.pageSize);
-    },
-    paginatedIncidents() {
-      const startIndex = (this.currentPage - 1) * this.pageSize;
-      const endIndex = startIndex + this.pageSize;
-      return this.filteredIncidents.slice(startIndex, endIndex);
-    },
-    startIndex() {
-      return (this.currentPage - 1) * this.pageSize;
     }
   },
+
+  computed: {
+    filteredLaporan() {
+      return this.laporan.filter(item => {
+        const matchesSearch = 
+          item.judul.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          item.nomor_laporan_kekerasan.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          item.nama_pelapor.toLowerCase().includes(this.searchQuery.toLowerCase());
+        
+        const matchesCategory = this.filterCategory === 'all' || 
+          item.category_id === parseInt(this.filterCategory);
+        
+        return matchesSearch && matchesCategory;
+      });
+    },
+    
+    paginatedLaporan() {
+      return this.filteredLaporan.slice(
+        this.startIndex,
+        this.startIndex + this.itemsPerPage
+      );
+    },
+    
+    totalPages() {
+      return Math.ceil(this.filteredLaporan.length / this.itemsPerPage);
+    },
+    
+    startIndex() {
+      return (this.currentPage - 1) * this.itemsPerPage;
+    },
+
+    pendingCount() {
+      return this.laporan.filter(item => !item.tanggapan).length;
+    },
+
+    respondedCount() {
+      return this.laporan.filter(item => item.tanggapan).length;
+    }
+  },
+
   methods: {
-    handleSearch() {
-      this.currentPage = 1; // Reset to first page when searching
+    async fetchData() {
+      this.loading = true;
+      try {
+        const [categoriesResponse, laporanResponse] = await Promise.all([
+          axios.get('http://localhost:8000/api/category'),
+          axios.get('http://localhost:8000/api/laporan_kekerasan')
+        ]);
+
+        this.categories = categoriesResponse.data.reduce((acc, category) => {
+          acc[category.category_id] = category.nama;
+          return acc;
+        }, {});
+        
+        this.laporan = laporanResponse.data;
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        this.error = 'Gagal memuat data. Silakan coba lagi nanti.';
+      } finally {
+        this.loading = false;
+      }
     },
-    applyFilters() {
-      this.currentPage = 1; // Reset to first page when applying filters
+
+    getCategoryName(categoryId) {
+      return this.categories[categoryId] || `Kategori ${categoryId}`;
     },
-    resetFilters() {
-      this.filters = {
-        jenisKejadian: '',
-        status: '',
-        startDate: '',
-        endDate: ''
+
+    getStatusClass(item) {
+      return {
+        'badge bg-success': item.tanggapan,
+        'badge bg-warning': !item.tanggapan
       };
-      this.currentPage = 1;
     },
-    prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-      }
+
+    getImageUrl(imagePath) {
+      return `http://localhost:8000/storage/laporankekerasan/${imagePath}`;
     },
-    nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++;
-      }
+
+    viewReport(report) {
+      this.selectedReport = report;
+      const modal = new bootstrap.Modal(document.getElementById('viewModal'));
+      modal.show();
     },
-    resetPage() {
-      this.currentPage = 1;
-    },
+
     viewDetail(id) {
       // Navigate to detail page or show modal
-      console.log('View detail for incident ID:', id);
+      this.$router.push(`/laporan_kekerasan/${id}`);
+    },
+
+    handleSearch() {
+      // Implement search logic
+      this.applyFilters()
     },
     addNewReport() {
       // Navigate to form page or show modal for adding a new report
       console.log('Add new incident report');
       // For example:
-      // this.$router.push('/tambah-laporan');
+      this.$router.push('/kalab/addpelaporankskalab');
+    },
+    applyFilters() {
+      // Implement filter logic
+    },
+    resetFilters() {
+      this.filters = {
+        category_id: '',
+        status: '',
+        startDate: '',
+        endDate: ''
+      }
+      this.searchQuery = ''
+      this.applyFilters()
     }
+  },
+
+  mounted() {
+    this.fetchData();
   }
-};
+}
 </script>
 
 <style scoped>
@@ -340,7 +338,6 @@ export default {
   letter-spacing: -0.5px;
   line-height: 1.2;
 }
-
 
 .statistics-cards {
   display: flex;
@@ -368,6 +365,32 @@ export default {
   border-radius: 50%;
   background: #f0f4f8;
   color: #3498db;
+}
+
+.stats-icon-procces {
+  font-size: 24px;
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #f0f4f8;
+  color: #d97706;
+}
+
+.stats-icon-done {
+  font-size: 24px;
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #f0f4f8;
+  color: #16a34a;
 }
 
 .stats-content h3 {
@@ -400,7 +423,7 @@ export default {
 }
 
 .btn-add-report {
-  background-color: #2563eb;
+  background-color: #eb2525;
   color: white;
   border: none;
   border-radius: 6px;
@@ -412,11 +435,11 @@ export default {
   align-items: center;
   gap: 8px;
   transition: background-color 0.2s;
-  box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 2px 5px rgba(235, 37, 37, 0.2);
 }
 
 .btn-add-report:hover {
-  background-color: #1d4ed8;
+  background-color: #d81d1d;
 }
 
 .btn-add-report i {
@@ -661,5 +684,266 @@ export default {
   .search-input {
     width: 100%;
   }
+}
+</style>
+
+<style scoped>
+/* Table styling for proper spacing and layout */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px 16px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.data-table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Column widths to maintain consistent spacing */
+.data-table th:nth-child(1),
+.data-table td:nth-child(1) {
+  width: 5%;
+  text-align: center;
+}
+
+.data-table th:nth-child(2),
+.data-table td:nth-child(2) {
+  width: 15%;
+}
+
+.data-table th:nth-child(3),
+.data-table td:nth-child(3) {
+  width: 20%;
+}
+
+.data-table th:nth-child(4),
+.data-table td:nth-child(4) {
+  width: 15%;
+}
+
+.data-table th:nth-child(5),
+.data-table td:nth-child(5) {
+  width: 15%;
+}
+
+.data-table th:nth-child(6),
+.data-table td:nth-child(6) {
+  width: 15%;
+}
+
+.data-table th:nth-child(7),
+.data-table td:nth-child(7) {
+  width: 15%;
+  text-align: center;
+}
+
+/* Status badge styling */
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  min-width: 100px;
+}
+
+.unverified {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.verified {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.processed {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.completed {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.rejected {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+
+/* Button styling */
+.btn-detail {
+  background-color: #e6f7ff;
+  color: #0ea5e9;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-detail:hover {
+  background-color: #0ea5e9;
+  color: #e6f7ff;
+}
+
+.btn-detail i {
+  font-size: 14px;
+}
+
+/* Loading & error states */
+.loading-indicator, 
+.error-message, 
+.no-data {
+  text-align: center;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 8px;
+  margin: 1rem 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.loading-indicator {
+  color: #4b5563;
+}
+
+.error-message {
+  color: #dc2626;
+}
+
+.no-data {
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Container styling */
+.dashboard-container {
+  padding: 1.5rem;
+  background-color: #f9fafb;
+  min-height: calc(100vh - 64px); /* Adjust based on your header height */
+}
+
+/* Pagination styling */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  background-color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.pagination-info-total {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pagination-button {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  font-size: 14px;
+  padding: 4px 8px;
+  min-width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #f3f4f6;
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-button.active {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+</style>
+
+<style>
+/* You can keep your existing styles and add these if needed */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.unverified {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.verified {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.processed {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.completed {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.rejected {
+  background-color: #fee2e2;
+  color: #dc2626;
 }
 </style>

@@ -65,11 +65,11 @@
           <label>Filter berdasarkan:</label>
           
           <div class="filter-select">
-            <label for="jenisKejadianFilter">Jenis Kejadian:</label>
-            <select id="jenisKejadianFilter" v-model="filters.jenisKejadian" @change="applyFilters">
+            <label for="categoryFilter">Jenis Kejadian:</label>
+            <select id="categoryFilter" v-model="filters.category_id" @change="applyFilters">
               <option value="">Semua</option>
-              <option v-for="jenis in uniqueJenisKejadian" :key="jenis" :value="jenis">
-                {{ jenis }}
+              <option v-for="(name, id) in categories" :key="id" :value="id">
+                {{ name }}
               </option>
             </select>
           </div>
@@ -78,8 +78,9 @@
             <label for="statusFilter">Status:</label>
             <select id="statusFilter" v-model="filters.status" @change="applyFilters">
               <option value="">Semua</option>
-              <option value="Selesai">Selesai</option>
-              <option value="Proses">Dalam Proses</option>
+              <option value="Selesai">Belum Diverifikasi</option>
+              <option value="Proses">Diverifikasi</option>
+              <option value="Proses">Ditolak</option>
             </select>
           </div>
           
@@ -195,7 +196,7 @@ export default {
       currentPage: 1,
       pageSize: 10,
       filters: {
-        jenisKejadian: '',
+        category_id: '', // Changed from jenisKejadian
         status: '',
         startDate: '',
         endDate: ''
@@ -294,8 +295,6 @@ export default {
       const statusMap = {
         'unverified': 'Belum Diverifikasi',
         'verified': 'Diverifikasi',
-        'processed': 'Diproses',
-        'completed': 'Selesai',
         'rejected': 'Ditolak'
       };
       

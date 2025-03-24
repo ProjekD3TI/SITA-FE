@@ -219,6 +219,16 @@ const routes = [
         name: "PelaporanKekerasanSeksual",
         component: () => import("../views/Dosen/Kalab/Pelaporan/KekerasanSeksual/DashboardKS.vue"),
       },
+      {
+        path: "addpelaporankskalab",
+        name: "AddPelaporanKSKalab",
+        component: () => import("../views/Dosen/Kalab/Pelaporan/KekerasanSeksual/AddKS.vue"),
+      },
+      {
+        path: "/laporan_kekerasan/:id",
+        name: "DetailKS",
+        component: () => import("../views/Dosen/Kalab/Pelaporan/KekerasanSeksual/DetailKS.vue"),
+      },
       // route yg laen
     ],
   },
