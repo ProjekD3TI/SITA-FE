@@ -301,6 +301,13 @@ export default {
       
       return statusMap[status] || status;
     },
+
+    addNewReport() {
+      // Navigate to form page or show modal for adding a new report
+      console.log('Add new incident report');
+      // For example:
+      this.$router.push('/kalab/addpelaporankejadiankalab');
+    },
     
     viewDetail(id) {
       // Navigate to detail page or show modal
