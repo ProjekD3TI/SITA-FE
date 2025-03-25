@@ -9,27 +9,27 @@
         </div>
         <div class="stats-content">
           <h3>Total Kejadian</h3>
-          <p class="stats-number">24</p>
+          <p class="stats-number">{{ laporan.length }}</p>
         </div>
       </div>
       
       <div class="stats-card">
         <div class="stats-icon-procces">
-          <i class="fas fa-check-circle"></i>
+          <i class="fas fa-clock"></i>
         </div>
         <div class="stats-content">
           <h3>Dalam Proses</h3>
-          <p class="stats-number">18</p>
+          <p class="stats-number">{{ unverifiedCount }}</p>
         </div>
       </div>
       
       <div class="stats-card">
         <div class="stats-icon-done">
-          <i class="fas fa-clock"></i>
+          <i class="fas fa-check-circle"></i>
         </div>
         <div class="stats-content">
           <h3>Selesai Ditangani</h3>
-          <p class="stats-number">6</p>
+          <p class="stats-number">{{ verifiedCount }}</p>
         </div>
       </div>
     </div>
@@ -258,6 +258,14 @@ export default {
     
     startIndex() {
       return (this.currentPage - 1) * this.itemsPerPage;
+    },
+    
+    unverifiedCount() {
+      return this.laporan.filter(item => item.status === 'unverified').length;
+    },
+    
+    verifiedCount() {
+      return this.laporan.filter(item => item.status === 'verified').length;
     }
   },
   
@@ -308,9 +316,12 @@ export default {
       this.$router.push('/kalab/addpelaporankejadiankalab');
     },
     
-    viewDetail(id) {
-      // Navigate to detail page or show modal
-      this.$router.push(`/laporan/${id}`);
+    viewDetail(laporanId) {
+      // Explicitly use the correct route name with parameter
+      this.$router.push({ 
+        name: 'DetailPK', 
+        params: { id: laporanId } 
+      });
     },
     
     // Pagination methods

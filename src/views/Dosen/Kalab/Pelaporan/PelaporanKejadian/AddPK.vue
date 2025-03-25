@@ -75,12 +75,10 @@
               <div v-if="errors.deskripsi" class="invalid-feedback">{{ errors.deskripsi[0] }}</div>
             </div>
   
-            
-  
             <div class="form-group">
-              <label for="tanggal_kejadian">Tanggal Kejadian <span class="required">*</span></label>
+              <label for="tanggal_kejadian">Tanggal & Waktu Kejadian <span class="required">*</span></label>
               <input
-                type="date"
+                type="datetime-local"
                 id="tanggal_kejadian"
                 v-model="formData.tanggal_kejadian"
                 class="form-control"
@@ -158,6 +156,7 @@
   import axios from 'axios';
   import { decryptData } from '../../../../../services/encrypt';
   import VueCookies from "vue-cookies";
+  import Swal from 'sweetalert2';
   
   export default {
     name: 'AddPK',
@@ -250,7 +249,17 @@
         })
           .then(response => {
             this.loading = false;
-            this.showNotification('Berhasil', 'Laporan berhasil ditambahkan.', true);
+            Swal.fire({
+              title: 'Berhasil!',
+              text: 'Laporan berhasil ditambahkan.',
+              icon: 'success',
+              timer: 2000,                // Auto-close after 2 seconds (2000ms)
+              timerProgressBar: true,     // Show a progress bar counting down
+              showConfirmButton: false    // Hide the confirmation button
+            }).then(() => {
+              // After the timer finishes or alert is closed
+              this.$router.push('/kalab/pelaporankejadiankalab');
+            });
             this.resetForm();
           })
           .catch(error => {

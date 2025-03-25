@@ -86,16 +86,10 @@
             </div>
 
             <div class="action-buttons">
-                <button class="btn-primary" @click="updateStatus('verified')" v-if="laporan.status === 'unverified'">
+                <button class="btn-primary" @click="verifyReport" v-if="laporan.status === 'unverified'">
                     <i class="fas fa-check"></i> Verifikasi Laporan
                 </button>
-                <button class="btn-primary" @click="updateStatus('processed')" v-if="laporan.status === 'verified'">
-                    <i class="fas fa-cog"></i> Proses Laporan
-                </button>
-                <button class="btn-success" @click="updateStatus('completed')" v-if="laporan.status === 'processed'">
-                    <i class="fas fa-check-circle"></i> Selesaikan Laporan
-                </button>
-                <button class="btn-danger" @click="updateStatus('rejected')" v-if="laporan.status === 'unverified'">
+                <button class="btn-danger" @click="rejectReport" v-if="laporan.status === 'unverified'">
                     <i class="fas fa-times"></i> Tolak Laporan
                 </button>
                 <button class="btn-secondary" @click="showTanggapanModal = true">
@@ -133,24 +127,52 @@
                 </div>
             </div>
         </div>
+
+        <!-- Verification confirmation modal -->
+        <div class="modal-overlay" v-if="showVerificationModal">
+            <div class="modal-container" @click.stop>
+                <div class="modal-header">
+                    <h3>Konfirmasi Verifikasi</h3>
+                    <button class="close-button" @click="showVerificationModal = false" :disabled="isVerifying">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Apakah Anda yakin ingin memverifikasi laporan ini? Pastikan semua data sudah benar.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" @click="showVerificationModal = false" :disabled="isVerifying">Batal</button>
+                    <button class="btn-primary" @click="confirmVerification" :disabled="isVerifying">
+                        <span v-if="isVerifying">
+                            <i class="fas fa-spinner fa-spin"></i> Memproses...
+                        </span>
+                        <span v-else>
+                            <i class="fas fa-check"></i> Yakin, Verifikasi
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
 <script>
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 export default {
     name: 'DetailPK',
     data() {
         return {
             laporanId: null,
-            laporan: {},
+            laporan: null,
             categories: {},
-            loading: true,
+            loading: false,
+            loadingAction: false,
             error: null,
             showFullImage: false,
             showTanggapanModal: false,
             tanggapanText: '',
+            showVerificationModal: false,
+            isVerifying: false,
         };
     },
     
@@ -229,26 +251,96 @@ export default {
         
         async updateStatus(newStatus) {
             try {
-                this.loading = true;
+                if (!this.laporanId) {
+                    throw new Error('Laporan ID tidak ditemukan');
+                }
                 
-                const response = await axios.put(`http://localhost:8000/api/laporan/${this.laporanId}/status`, {
-                    status: newStatus
+                // Log what we're sending to help debug
+                console.log('Updating status:', {
+                    laporanId: this.laporanId,
+                    newStatus: newStatus
                 });
                 
+                // Make the API call using POST with _method: PUT
+                const formData = new FormData();
+                formData.append('_method', 'PUT');
+                formData.append('status', newStatus);
+
+                const response = await axios.post(`http://localhost:8000/api/laporan/update_status/${this.laporanId}`, formData);
+                                
+                // Check if response has data
+                console.log('Response:', response);
+                
+                // Just proceed if we get a 2xx response
                 this.laporan.status = newStatus;
-                this.$notify({
-                    type: 'success',
-                    text: `Status laporan berhasil diperbarui menjadi ${this.formatStatus(newStatus)}`
-                });
+                this.$toast.success('Status berhasil diperbarui');
+                
+                // Refresh data
+                await this.fetchLaporanDetail();
+                
             } catch (error) {
                 console.error('Error updating status:', error);
-                this.$notify({
-                    type: 'error',
-                    text: 'Gagal memperbarui status laporan'
-                });
-            } finally {
-                this.loading = false;
+                // Safely access error message with optional chaining
+                const errorMessage = error.response?.data?.message || 'Gagal memperbarui status';
+                this.$toast.error(`Gagal memperbarui status: ${errorMessage}`);
             }
+        },
+
+        // Add specific methods for verification and rejection
+        verifyReport() {
+            this.showVerificationModal = true;
+        },
+
+        async confirmVerification() {
+            this.isVerifying = true;
+            
+            try {
+                // Your verification API call
+                await axios.put(`http://localhost:8000/api/laporan/update_status/${this.laporanId}`, {
+                    status: 'verified'
+                });
+                
+                // Update local data after successful verification
+                this.laporan.status = 'verified';
+                
+                // Show success message (optional)
+                this.$toast.success('Laporan berhasil diverifikasi');
+            } catch (error) {
+                console.error('Verification failed:', error);
+                // Show error message (optional)
+                this.$toast.error('Gagal memverifikasi laporan');
+            } finally {
+                this.isVerifying = false;
+                this.showVerificationModal = false; // Close the modal after processing
+            }
+        },
+
+        rejectReport() {
+            this.updateStatus('rejected')
+                .then(() => {
+                    // Show success notification using SweetAlert2 toast
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Berhasil menolak laporan',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                })
+                .catch((error) => {
+                    console.error('Error rejecting report:', error);
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Gagal menolak laporan',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                });
         },
         
         async saveTanggapan() {
