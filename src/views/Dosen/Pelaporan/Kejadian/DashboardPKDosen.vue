@@ -1,0 +1,963 @@
+<template>
+  <div class="dashboard-pelaporan-kejadian">
+    <h1 class="page-title">Dashboard Pelaporan Kejadian</h1>
+    
+    <div class="statistics-cards">
+      <div class="stats-card">
+        <div class="stats-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="stats-content">
+          <h3>Total Kejadian</h3>
+          <p class="stats-number">24</p>
+        </div>
+      </div>
+      
+      <div class="stats-card">
+        <div class="stats-icon-procces">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stats-content">
+          <h3>Dalam Proses</h3>
+          <p class="stats-number">18</p>
+        </div>
+      </div>
+      
+      <div class="stats-card">
+        <div class="stats-icon-done">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stats-content">
+          <h3>Selesai Ditangani</h3>
+          <p class="stats-number">6</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Table with search, filters and pagination -->
+    <div class="incident-table-container">
+      <div class="table-actions">
+        <h2>Daftar Kejadian</h2>
+      </div>
+      
+      <div class="table-header">
+        <div class="search-container">
+          <input 
+            type="text" 
+            v-model="searchQuery" 
+            placeholder="Cari kejadian..." 
+            class="search-input"
+            @input="handleSearch"
+          >
+          <i class="fas fa-search search-icon"></i>
+        </div>
+        
+        <div class="action-buttons">
+          <button class="btn-add-report" @click="addNewReport">
+            <i class="fas fa-plus"></i> Tambah Laporan
+          </button>
+        </div>
+      </div>
+      
+      <!-- Filter controls -->
+      <div class="filter-container">
+        <div class="filter-group">
+          <label>Filter berdasarkan:</label>
+          
+          <div class="filter-select">
+            <label for="categoryFilter">Jenis Kejadian:</label>
+            <select id="categoryFilter" v-model="filters.category_id" @change="applyFilters">
+              <option value="">Semua</option>
+              <option v-for="(name, id) in categories" :key="id" :value="id">
+                {{ name }}
+              </option>
+            </select>
+          </div>
+          
+          <div class="filter-select">
+            <label for="statusFilter">Status:</label>
+            <select id="statusFilter" v-model="filters.status" @change="applyFilters">
+              <option value="">Semua</option>
+              <option value="Selesai">Belum Diverifikasi</option>
+              <option value="Proses">Diverifikasi</option>
+              <option value="Proses">Ditolak</option>
+            </select>
+          </div>
+          
+          <div class="filter-date">
+            <label for="dateFilter">Periode:</label>
+            <div class="date-inputs">
+              <input 
+                type="date" 
+                id="startDate" 
+                v-model="filters.startDate" 
+                @change="applyFilters"
+                placeholder="Tanggal Mulai"
+              >
+              <span>s/d</span>
+              <input 
+                type="date" 
+                id="endDate" 
+                v-model="filters.endDate" 
+                @change="applyFilters"
+                placeholder="Tanggal Akhir"
+              >
+            </div>
+          </div>
+          
+          <button class="btn-reset-filter" @click="resetFilters">
+            <i class="fas fa-undo"></i> Reset Filter
+          </button>
+        </div>
+      </div>
+      
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nomor Laporan</th>
+            <th>Judul</th>
+            <th>Kategori</th>
+            <th>Nama Pelapor</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(laporan, index) in paginatedLaporan" :key="laporan.laporan_id">
+            <td>{{ startIndex + index + 1 }}</td>
+            <td>{{ laporan.nomor_laporan }}</td>
+            <td>{{ laporan.judul }}</td>
+            <td>{{ getCategoryName(laporan.category_id) }}</td>
+            <td>{{ laporan.nama_pelapor }}</td>
+            <td>
+              <span :class="['status-badge', laporan.status.toLowerCase()]">
+                {{ formatStatus(laporan.status) }}
+              </span>
+            </td>
+            <td>
+              <button class="btn-detail" @click="viewDetail(laporan.laporan_id)">
+                <i class="fas fa-eye"></i> Detail
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div v-if="filteredLaporan.length === 0" class="no-data">
+        <p>Tidak ada data yang sesuai dengan kriteria pencarian dan filter.</p>
+      </div>
+      
+      <div class="pagination-container">
+        <div class="pagination-info-total">
+          Total: {{ filteredLaporan.length }} laporan
+        </div>
+        
+        <div class="pagination-controls">
+          <button 
+            class="pagination-btn" 
+            @click="prevPage" 
+            :disabled="currentPage === 1"
+          >
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          
+          <span class="pagination-info">
+            Halaman {{ currentPage }} dari {{ totalPages || 1 }}
+          </span>
+          
+          <button 
+            class="pagination-btn" 
+            @click="nextPage" 
+            :disabled="currentPage === totalPages || totalPages === 0"
+          >
+            <i class="fas fa-chevron-right"></i>
+          </button>
+          
+          <select v-model="pageSize" class="page-size-select" @change="resetPage">
+            <option :value="5">5 per halaman</option>
+            <option :value="10">10 per halaman</option>
+            <option :value="20">20 per halaman</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+
+export default {
+  name: 'DashboardPelaporanKejadian',
+  data() {
+    return {
+      searchQuery: '',
+      currentPage: 1,
+      pageSize: 10,
+      filters: {
+        category_id: '', // Changed from jenisKejadian
+        status: '',
+        startDate: '',
+        endDate: ''
+      },
+      laporan: [], // This will store API data
+      categories: {},
+      selectedStatus: 'all',
+      itemsPerPage: 10,
+      loading: true, // Start with loading true
+      error: null
+    };
+  },
+  
+  computed: {
+    filteredLaporan() {
+      let result = this.laporan;
+      
+      // Apply search filter
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        result = result.filter(item => 
+          (item.judul && item.judul.toLowerCase().includes(query)) || 
+          (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(query))
+        );
+      }
+      
+      // Apply status filter
+      if (this.selectedStatus !== 'all') {
+        result = result.filter(item => item.status === this.selectedStatus);
+      }
+      
+      // Apply jenisKejadian filter (category)
+      if (this.filters.jenisKejadian) {
+        result = result.filter(item => item.category_id == this.filters.jenisKejadian);
+      }
+      
+      // Apply date filters if needed
+      if (this.filters.startDate && this.filters.endDate) {
+        result = result.filter(item => {
+          const itemDate = new Date(item.tanggal_kejadian);
+          const startDate = new Date(this.filters.startDate);
+          const endDate = new Date(this.filters.endDate);
+          return itemDate >= startDate && itemDate <= endDate;
+        });
+      }
+      
+      return result;
+    },
+    
+    paginatedLaporan() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.filteredLaporan.slice(start, end);
+    },
+    
+    totalPages() {
+      return Math.ceil(this.filteredLaporan.length / this.itemsPerPage);
+    },
+    
+    startIndex() {
+      return (this.currentPage - 1) * this.itemsPerPage;
+    }
+  },
+  
+  methods: {
+    async fetchData() {
+      this.loading = true;
+      try {
+        // Fetch categories first
+        const categoriesResponse = await axios.get('http://localhost:8000/api/category');
+        // Transform categories array to an object with id as key for easy lookup
+        this.categories = categoriesResponse.data.reduce((acc, category) => {
+          acc[category.category_id] = category.nama;
+          return acc;
+        }, {});
+        
+        // Then fetch laporan data
+        const laporanResponse = await axios.get('http://localhost:8000/api/laporan');
+        this.laporan = laporanResponse.data;
+        
+        console.log('Laporan data loaded:', this.laporan); // Debug log
+        console.log('Categories loaded:', this.categories); // Debug log
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        this.error = 'Gagal memuat data. Silakan coba lagi nanti.';
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    getCategoryName(categoryId) {
+      return this.categories[categoryId] || `Kategori ${categoryId}`;
+    },
+    
+    formatStatus(status) {
+      const statusMap = {
+        'unverified': 'Belum Diverifikasi',
+        'verified': 'Diverifikasi',
+        'rejected': 'Ditolak'
+      };
+      
+      return statusMap[status] || status;
+    },
+
+    addNewReport() {
+      // Navigate to form page or show modal for adding a new report
+      console.log('Add new incident report');
+      // For example:
+      this.$router.push('/kalab/addpelaporankejadiankalab');
+    },
+    
+    viewDetail(id) {
+      // Navigate to detail page or show modal
+      this.$router.push(`/laporan/${id}`);
+    },
+    
+    // Pagination methods
+    goToPage(page) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.currentPage = page;
+      }
+    },
+    
+    prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+      }
+    },
+    
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+      }
+    }
+  },
+  
+  mounted() {
+    this.fetchData();
+  }
+};
+</script>
+
+<style scoped>
+.dashboard-pelaporan-kejadian {
+  padding: 20px;
+}
+
+.page-title {
+  margin-bottom: 30px;
+  color: #2c3e50;
+  font-weight: 700;
+  font-size: 2.2rem;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+.statistics-cards {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stats-card {
+  flex: 1;
+  display: flex;
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.stats-icon {
+  font-size: 24px;
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #f0f4f8;
+  color: #3498db;
+}
+
+.stats-icon-procces {
+  font-size: 24px;
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #f0f4f8;
+  color: #d97706;
+}
+
+.stats-icon-done {
+  font-size: 24px;
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #f0f4f8;
+  color: #16a34a;
+}
+
+.stats-content h3 {
+  font-size: 16px;
+  margin: 0 0 5px 0;
+  color: #7f8c8d;
+}
+
+.stats-number {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 0;
+  color: #2c3e50;
+}
+
+/* Table styles */
+.incident-table-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+/* Table actions and add button */
+.table-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.btn-add-report {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+  box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
+}
+
+.btn-add-report:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-add-report i {
+  font-size: 12px;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.search-container {
+  position: relative; /* Add this line */
+  flex: 1;
+  max-width: 400px;
+}
+
+.action-buttons {
+  margin-left: 15px;
+}
+
+.search-input {
+  padding: 10px 15px 10px 40px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 300px;
+  font-size: 14px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #7f8c8d;
+  z-index: 1; /* Add this to ensure icon appears above input */
+}
+
+/* Filter styles */
+.filter-container {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid #edf2f7;
+}
+
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 15px;
+}
+
+.filter-group > label {
+  font-weight: 600;
+  margin-right: 5px;
+  color: #4a5568;
+}
+
+.filter-select, .filter-date {
+  display: flex;
+  align-items: center;
+}
+
+.filter-select label, .filter-date label {
+  margin-right: 8px;
+  font-size: 14px;
+  color: #4a5568;
+}
+
+.filter-select select, .filter-date input {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+}
+
+.date-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-inputs span {
+  color: #718096;
+  font-size: 14px;
+}
+
+.btn-reset-filter {
+  background-color: #edf2f7;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.btn-reset-filter:hover {
+  background-color: #e2e8f0;
+}
+
+.incident-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.incident-table th,
+.incident-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.incident-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-badge.selesai {
+  background-color: #d4f9e2;
+  color: #16a34a;
+}
+
+.status-badge.proses {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.btn-detail {
+  background-color: #e6f7ff;
+  color: #0ea5e9;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-detail:hover {
+  background-color: #d1eeff;
+}
+
+.no-data {
+  text-align: center;
+  padding: 30px;
+  color: #7f8c8d;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.pagination-info-total {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+}
+
+.pagination-btn {
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin: 0 5px;
+  cursor: pointer;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  margin: 0 15px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.page-size-select {
+  margin-left: 15px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .statistics-cards {
+    flex-direction: column;
+  }
+  
+  .table-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .action-buttons {
+    width: 100%;
+  }
+  
+  .btn-add-report {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .filter-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .filter-select, .filter-date {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  
+  .pagination-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .search-input {
+    width: 100%;
+  }
+}
+</style>
+
+<style scoped>
+/* Table styling for proper spacing and layout */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px 16px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.data-table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Column widths to maintain consistent spacing */
+.data-table th:nth-child(1),
+.data-table td:nth-child(1) {
+  width: 5%;
+  text-align: center;
+}
+
+.data-table th:nth-child(2),
+.data-table td:nth-child(2) {
+  width: 15%;
+}
+
+.data-table th:nth-child(3),
+.data-table td:nth-child(3) {
+  width: 20%;
+}
+
+.data-table th:nth-child(4),
+.data-table td:nth-child(4) {
+  width: 15%;
+}
+
+.data-table th:nth-child(5),
+.data-table td:nth-child(5) {
+  width: 15%;
+}
+
+.data-table th:nth-child(6),
+.data-table td:nth-child(6) {
+  width: 15%;
+}
+
+.data-table th:nth-child(7),
+.data-table td:nth-child(7) {
+  width: 15%;
+  text-align: center;
+}
+
+/* Status badge styling */
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  min-width: 100px;
+}
+
+.unverified {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.verified {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.processed {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.completed {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.rejected {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+
+/* Button styling */
+.btn-detail {
+  background-color: #e6f7ff;
+  color: #0ea5e9;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-detail:hover {
+  background-color: #0ea5e9;
+  color: #e6f7ff;
+}
+
+.btn-detail i {
+  font-size: 14px;
+}
+
+/* Loading & error states */
+.loading-indicator, 
+.error-message, 
+.no-data {
+  text-align: center;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 8px;
+  margin: 1rem 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.loading-indicator {
+  color: #4b5563;
+}
+
+.error-message {
+  color: #dc2626;
+}
+
+.no-data {
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Container styling */
+.dashboard-container {
+  padding: 1.5rem;
+  background-color: #f9fafb;
+  min-height: calc(100vh - 64px); /* Adjust based on your header height */
+}
+
+/* Pagination styling */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  background-color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.pagination-info-total {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pagination-button {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  font-size: 14px;
+  padding: 4px 8px;
+  min-width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #f3f4f6;
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-button.active {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+</style>
+
+<style>
+/* You can keep your existing styles and add these if needed */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.unverified {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.verified {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.processed {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.completed {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.rejected {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+</style>
