@@ -1,5 +1,5 @@
 <template>
-    <div class="detail-pk-container">
+    <div class="detail-ks-container">
         <div class="detail-header">
             <div class="back-button" @click="goBack">
                 <i class="fas fa-arrow-left"></i> Kembali
@@ -140,7 +140,7 @@
 import axios from 'axios';
 
 export default {
-    name: 'DetailPK',
+    name: 'DetailKS',
     data() {
         return {
             laporanId: null,
@@ -155,7 +155,31 @@ export default {
     },
     
     created() {
-        this.laporanId = this.$route.params.id;
+        // Extract the ID from the route params
+        const routeParam = this.$route.params.id;
+        console.log('Route param received:', routeParam, typeof routeParam);
+        
+        // Handle different formats of the ID parameter
+        if (typeof routeParam === 'object') {
+            // If it's an object, try to extract the ID
+            if (routeParam.id) {
+                this.laporanId = routeParam.id;
+            } else {
+                // Try to find the ID in the object
+                const keys = Object.keys(routeParam);
+                if (keys.length > 0) {
+                    this.laporanId = routeParam[keys[0]];
+                } else {
+                    console.error('Could not extract ID from object');
+                    this.error = 'Invalid report ID';
+                    return;
+                }
+            }
+        } else {
+            this.laporanId = routeParam;
+        }
+        
+        console.log('Extracted ID:', this.laporanId);
         this.fetchCategories();
         this.fetchLaporanDetail();
     },
@@ -163,28 +187,43 @@ export default {
     methods: {
         async fetchCategories() {
             try {
-                const response = await axios.get('http://localhost:8000/api/category');
-                this.categories = response.data.reduce((acc, category) => {
-                    acc[category.category_id] = category.nama;
-                    return acc;
-                }, {});
+                const token = localStorage.getItem('token'); // Or however you store your auth token
+                const response = await axios.get('http://localhost:8000/api/category', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                this.categories = response.data;
             } catch (error) {
                 console.error('Error fetching categories:', error);
+                this.error = 'Failed to load categories';
             }
         },
         
         async fetchLaporanDetail() {
-            this.loading = true;
-            this.error = null;
-            
             try {
-                const response = await axios.get(`http://localhost:8000/api/laporan_kekerasan/${this.laporanId}`);
+                if (!this.laporanId) {
+                  this.error = 'No valid ID provided';
+                  this.loading = false;
+                  return;
+                }
+                
+                this.loading = true;
+                const token = localStorage.getItem('token'); // Make sure this matches your storage key
+                
+                console.log('Fetching with ID:', this.laporanId, typeof this.laporanId);
+                
+                const response = await axios.get(`http://localhost:8000/api/laporan_kekerasan/${this.laporanId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
                 this.laporan = response.data;
-                this.tanggapanText = this.laporan.tanggapan || '';
+                this.loading = false;
             } catch (error) {
                 console.error('Error fetching laporan detail:', error);
-                this.error = 'Gagal memuat data laporan. Silakan coba lagi.';
-            } finally {
+                this.error = 'Failed to load laporan detail';
                 this.loading = false;
             }
         },
@@ -224,14 +263,14 @@ export default {
         },
         
         getImageUrl(imagePath) {
-            return `http://localhost:8000/storage/laporan/${imagePath}`;
+            return `http://localhost:8000/storage/laporankekerasan/${imagePath}`;
         },
         
         async updateStatus(newStatus) {
             try {
                 this.loading = true;
                 
-                const response = await axios.put(`http://localhost:8000/api/laporan/${this.laporanId}/status`, {
+                const response = await axios.put(`http://localhost:8000/api/laporan_kekerasan/${this.laporanId}/status`, {
                     status: newStatus
                 });
                 
@@ -253,27 +292,21 @@ export default {
         
         async saveTanggapan() {
             try {
-                this.loading = true;
-                
-                const response = await axios.put(`http://localhost:8000/api/laporan/${this.laporanId}/tanggapan`, {
+                const token = localStorage.getItem('token');
+                await axios.post(`http://localhost:8000/api/tanggapan`, {
+                    laporan_id: this.laporanId,
                     tanggapan: this.tanggapanText
+                }, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
                 
-                this.laporan.tanggapan = this.tanggapanText;
                 this.showTanggapanModal = false;
-                
-                this.$notify({
-                    type: 'success',
-                    text: 'Tanggapan berhasil disimpan'
-                });
+                this.tanggapanText = '';
+                this.fetchLaporanDetail(); // Refresh data after saving
             } catch (error) {
                 console.error('Error saving tanggapan:', error);
-                this.$notify({
-                    type: 'error',
-                    text: 'Gagal menyimpan tanggapan'
-                });
-            } finally {
-                this.loading = false;
             }
         }
     }
@@ -281,7 +314,7 @@ export default {
 </script>
 
 <style scoped>
-.detail-pk-container {
+.detail-ks-container {
     padding: 24px;
     max-width: 1200px;
     margin: 0 auto;

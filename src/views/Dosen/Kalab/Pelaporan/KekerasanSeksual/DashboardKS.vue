@@ -290,8 +290,36 @@ export default {
     },
 
     viewDetail(id) {
-      // Navigate to detail page or show modal
-      this.$router.push(`/laporan_kekerasan/${id}`);
+      // Check what properties are available in the object
+      console.log('ID being passed:', id, typeof id);
+      
+      // Extract the correct ID - it's laporan_kekerasan_id, not id
+      let actualId;
+      if (typeof id === 'object') {
+        // First check for laporan_kekerasan_id
+        if (id.laporan_kekerasan_id) {
+          actualId = id.laporan_kekerasan_id;
+        } 
+        // Then try id as fallback
+        else if (id.id) {
+          actualId = id.id;
+        } 
+        // Log the object structure if we can't find the ID
+        else {
+          console.error('Cannot find ID in object:', Object.keys(id));
+          return; // Don't navigate without a valid ID
+        }
+      } else {
+        actualId = id;
+      }
+      
+      console.log('Actual ID to use:', actualId);
+      
+      if (actualId) {
+        this.$router.push(`/laporan_kekerasan/${actualId}`);
+      } else {
+        console.error('Cannot navigate: No valid ID found');
+      }
     },
 
     handleSearch() {
