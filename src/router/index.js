@@ -139,6 +139,36 @@ const routes = [
         name: "ProfileMahasiswa",
         component: () => import("../views/Mahasiswa/Profile.vue"),
       },
+      {
+        path: "dashboardpkmhs",
+        name: "DashboardPKMhs",
+        component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/DashboardPKMhs.vue"),
+      },
+      {
+        path: "addpkmhs",
+        name: "AddPKMhs",
+        component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/AddPKMhs.vue"),
+      },
+      {
+        path: "/laporan/:id",
+        name: "DetailPKMhs",
+        component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/DetailPKMhs.vue"),
+      },
+      {
+        path: "dashboardksmhs",
+        name: "DashboardKSMhs",
+        component: () => import("../views/Mahasiswa/Pelaporan/KekerasanSeksual/DashboardKSMhs.vue"),
+      },
+      {
+        path: "addpelaporanksmhs",
+        name: "AddPelaporanKSMhs",
+        component: () => import("../views/Mahasiswa/Pelaporan/KekerasanSeksual/AddKSMhs.vue"),
+      },
+      {
+        path: "/laporan_kekerasan/:id",
+        name: "DetailKSMhs",
+        component: () => import("../views/Mahasiswa/Pelaporan/KekerasanSeksual/DetailKSMhs.vue"),
+      },
       // route mahasiswa yg laenya
     ],
   },
@@ -168,6 +198,36 @@ const routes = [
         path: "dashboard",
         name: "DashboardDosen",
         component: () => import("../views/Dosen/Dashboard.vue"),
+      },
+      {
+        path: "dashboardpkdosen",
+        name: "DashboardPKDosen",
+        component: () => import("../views/Dosen/Pelaporan/Kejadian/DashboardPKDosen.vue"),
+      },
+      {
+        path: "addpkdosen",
+        name: "AddPKDosen",
+        component: () => import("../views/Dosen/Pelaporan/Kejadian/AddPKDosen.vue"),
+      },
+      {
+        path: "/laporan/:id",
+        name: "DetailPKDosen",
+        component: () => import("../views/Dosen/Pelaporan/Kejadian/DetailPKDosen.vue"),
+      },
+      {
+        path: "dashboardksdosen",
+        name: "DashboardKSDosen",
+        component: () => import("../views/Dosen/Pelaporan/KekerasanSeksual/DashboardKSDosen.vue"),
+      },
+      {
+        path: "addpelaporanksdosen",
+        name: "AddPelaporanKSDosen",
+        component: () => import("../views/Dosen/Pelaporan/KekerasanSeksual/AddKSDosen.vue"),
+      },
+      {
+        path: "/laporan_kekerasan/:id",
+        name: "DetailKSDosen",
+        component: () => import("../views/Dosen/Pelaporan/KekerasanSeksual/DetailKSDosen.vue"),
       },
       // route yg laen
     ],
