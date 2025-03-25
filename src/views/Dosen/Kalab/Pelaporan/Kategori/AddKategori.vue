@@ -2,7 +2,7 @@
     <div class="container mt-4">
       <div class="card">
         <div class="card-header">
-          <h5 class="mb-0">Tambah Kategori</h5>
+          <h2 class="mb-0 font-weight-bold">Tambah Kategori</h2>
         </div>
         <div class="card-body">
           <!-- Display any validation errors -->
@@ -52,8 +52,18 @@
             </div>
             
             <!-- Submit Button -->
-            <div class="d-flex justify-content-end">
-              <button type="submit" class="btn btn-primary">Simpan</button>
+            <div class="flex mt-3">
+              <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              >
+                Simpan
+              </button>
+              <button 
+                type="button" 
+                class="bg-gray-500 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
+                @click="$router.push({ path: '/kalab/kategoripelaporan' })"
+              >
+                Batal
+              </button>
             </div>
           </form>
         </div>
@@ -230,15 +240,29 @@
   }
   
   .btn-primary {
-    background-color: #8a2be2;
-    border-color: #8a2be2;
+    background-color: #2b53e2;
+    border-color: #2b53e2;
   }
   
   .btn-primary:hover {
-    background-color: #7526c0;
-    border-color: #7526c0;
+    background-color: #2638c0;
+    border-color: #2638c0;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(138, 43, 226, 0.2);
+  }
+
+  .btn-secondary {
+    background-color: #c0c0c0;
+    border-color: #f8f9fa;
+    color: #565b60;
+  }
+
+  .btn-secondary:hover {
+    background-color: #e9ecef;
+    border-color: #e9ecef;
+    color: #6c757d;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
   
   .required-label::after {

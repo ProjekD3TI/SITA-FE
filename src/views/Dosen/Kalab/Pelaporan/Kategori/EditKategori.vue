@@ -42,7 +42,7 @@
         <div class="flex">
           <button 
             type="submit" 
-            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            class="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded focus:outline-none focus:shadow-outline"
             :disabled="loading"
           >
             Update Category
@@ -50,7 +50,7 @@
           <button 
             type="button" 
             @click="goBack" 
-            class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
+            class="bg-gray-500 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
           >
             Cancel
           </button>

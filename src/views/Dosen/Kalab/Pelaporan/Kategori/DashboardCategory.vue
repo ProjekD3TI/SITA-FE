@@ -1,164 +1,180 @@
 <template>
     <div class="container mx-auto px-4 py-8">
-      <div class="flex justify-between items-center mb-6">
-        <h1 class="text-4xl font-bold">Kategori Laporan</h1>
-        <button
-          @click="$router.push({ path: '/kalab/addkategoripelaporan' })"
-          class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md"
-        >
-          <i class="fas fa-plus mr-1"></i> Add New Category
-        </button>
-      </div>
-  
-      <!-- Search and filter options -->
-      <div class="mb-4 flex items-center">
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Search categories..."
-          class="border rounded-md px-4 py-2 w-64"
-          @input="handleSearch"
-        />
-      </div>
-  
-      <!-- Categories Table -->
-      <div class="bg-white rounded-lg shadow overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                No.
-              </th>
-              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Icon Image
-              </th>
-              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Nama Kategori
-              </th>
-              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="(category, index) in paginatedCategories" :key="category.category_id">
-              <td class="px-6 py-4 whitespace-nowrap text-center">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-center">
-                <div class="flex justify-center">
-                  <img 
-                    v-if="category.image_path"
-                    :src="getCategoryImageUrl(category.image_path)" 
-                    :alt="category.nama"
-                    class="max-h-20 max-w-20 object-contain rounded-md"
-                  />
-                  <div v-else class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                    <span class="text-gray-500 text-xs">No image</span>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-center">{{ category.nama }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-center">
-                <button 
-                  @click="editCategory(category)"
-                  class="text-blue-500 hover:text-blue-700 mr-2"
-                >
-                  Edit
-                </button>
-                <button 
-                  @click="deleteCategory(category.category_id)" 
-                  class="text-red-500 hover:text-red-700"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-            <tr v-if="paginatedCategories.length === 0 && !loading">
-              <td colspan="4" class="px-6 py-4 text-center text-gray-500">
-                No categories found.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        
-        <!-- Pagination controls -->
-        <div v-if="filteredCategories.length > 0" class="px-6 py-4 flex items-center justify-between border-t border-gray-200">
-          <!-- Mobile pagination controls -->
-          <div class="flex-1 flex justify-between sm:hidden">
-            <button 
-              @click="currentPage--" 
-              :disabled="currentPage <= 1" 
-              class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <button 
-              @click="currentPage++" 
-              :disabled="currentPage >= totalPages" 
-              class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              Next
-            </button>
+      <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h1 class="text-4xl font-bold">Kategori Laporan</h1>
+        </div>
+    
+        <!-- Search and Add Category section -->
+        <div class="flex justify-between items-center mb-4">
+          <div class="relative w-64">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <!-- Search icon (SVG) -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              v-model="search"
+              type="text"
+              placeholder="Cari Kategori..."
+              class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
           </div>
           
-          <!-- Desktop pagination controls -->
-          <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p class="text-sm text-gray-700">
-                Showing
-                <span class="font-medium">{{ filteredCategories.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0 }}</span>
-                to
-                <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, filteredCategories.length) }}</span>
-                of
-                <span class="font-medium">{{ filteredCategories.length }}</span>
-                results
-              </p>
+          <button
+            @click="$router.push({ path: '/kalab/addkategoripelaporan' })"
+            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md"
+          >
+          <i class="fas fa-plus mr-1"></i> Tambah Kategori
+          </button>
+        </div>
+    
+        <!-- Categories Table -->
+        <div class="bg-white rounded-lg shadow overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider font-bold">
+                  No.
+                </th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider font-bold">
+                  Icon Image
+                </th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider font-bold">
+                  Nama Kategori
+                </th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider font-bold">
+                  Aksi
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-for="(category, index) in paginatedCategories" :key="category.category_id">
+                <td class="px-6 py-4 whitespace-nowrap text-center">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <div class="flex justify-center">
+                    <img 
+                      v-if="category.image_path"
+                      :src="getCategoryImageUrl(category.image_path)" 
+                      :alt="category.nama"
+                      class="max-h-20 max-w-20 object-contain rounded-md"
+                    />
+                    <div v-else class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                      <span class="text-gray-500 text-xs">No image</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">{{ category.nama }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <button 
+                    @click="editCategory(category)"
+                    class="text-blue-500 hover:text-blue-700 mr-3 inline-flex items-center"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                  </button>
+                  <button 
+                    @click="deleteCategory(category.category_id)" 
+                    class="text-red-500 hover:text-red-700 inline-flex items-center"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Hapus
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="paginatedCategories.length === 0 && !loading">
+                <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                  No categories found.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <!-- Pagination controls -->
+          <div v-if="filteredCategories.length > 0" class="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+            <!-- Mobile pagination controls -->
+            <div class="flex-1 flex justify-between sm:hidden">
+              <button 
+                @click="currentPage--" 
+                :disabled="currentPage <= 1" 
+                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+              >
+                Sebelum
+              </button>
+              <button 
+                @click="currentPage++" 
+                :disabled="currentPage >= totalPages" 
+                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+              >
+                Selanjutnya
+              </button>
             </div>
-            <div>
-              <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                <button 
-                  @click="currentPage = 1" 
-                  :disabled="currentPage <= 1" 
-                  class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  <span class="sr-only">First</span>
-                  &laquo;
-                </button>
-                <button 
-                  @click="currentPage--" 
-                  :disabled="currentPage <= 1" 
-                  class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  <span class="sr-only">Previous</span>
-                  &lsaquo;
-                </button>
-                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-                  Page {{ currentPage }} of {{ totalPages || 1 }}
-                </span>
-                <button 
-                  @click="currentPage++" 
-                  :disabled="currentPage >= totalPages" 
-                  class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  <span class="sr-only">Next</span>
-                  &rsaquo;
-                </button>
-                <button 
-                  @click="currentPage = totalPages" 
-                  :disabled="currentPage >= totalPages" 
-                  class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  <span class="sr-only">Last</span>
-                  &raquo;
-                </button>
-              </nav>
+            
+            <!-- Desktop pagination controls -->
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p class="text-sm text-gray-700">
+                  Menampilkan
+                  <span class="font-medium">{{ filteredCategories.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0 }}</span>
+                  -
+                  <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, filteredCategories.length) }}</span>
+                  dari
+                  <span class="font-medium">{{ filteredCategories.length }}</span>
+                  kategori
+                </p>
+              </div>
+              <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <button 
+                    @click="currentPage = 1" 
+                    :disabled="currentPage <= 1" 
+                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    <span class="sr-only">First</span>
+                    &laquo;
+                  </button>
+                  <button 
+                    @click="currentPage--" 
+                    :disabled="currentPage <= 1" 
+                    class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    <span class="sr-only">Previous</span>
+                    &lsaquo;
+                  </button>
+                  <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                    Halaman {{ currentPage }} dari {{ totalPages || 1 }}
+                  </span>
+                  <button 
+                    @click="currentPage++" 
+                    :disabled="currentPage >= totalPages" 
+                    class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    <span class="sr-only">Next</span>
+                    &rsaquo;
+                  </button>
+                  <button 
+                    @click="currentPage = totalPages" 
+                    :disabled="currentPage >= totalPages" 
+                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    <span class="sr-only">Last</span>
+                    &raquo;
+                  </button>
+                </nav>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-  
-      <!-- Loading indicator -->
-      <div v-if="loading" class="flex justify-center my-8">
-        <p>Loading categories...</p>
+    
+        <!-- Loading indicator -->
+        <div v-if="loading" class="flex justify-center my-8">
+          <p>Loading categories...</p>
+        </div>
       </div>
     </div>
   </template>
