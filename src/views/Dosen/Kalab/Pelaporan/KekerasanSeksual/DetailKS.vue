@@ -51,13 +51,15 @@
                         <div class="info-value">{{ laporan.nama_pelapor }}</div>
                         
                         <div class="info-label">NI Pelapor:</div>
-                        <div class="info-value">{{ laporan.ni_pelapor }}</div>
-                        
-                        <div class="info-label">Email:</div>
-                        <div class="info-value">{{ laporan.email }}</div>
+                        <div class="info-value">{{ laporan.nim_pelapor }}</div>
                         
                         <div class="info-label">No. Telepon:</div>
-                        <div class="info-value">{{ laporan.nomor_telepon }}</div>
+                        <div class="info-value">
+                            {{ laporan.nomor_telepon || 'Tidak ada' }}
+                            <button class="chat-icon-button" @click="startChat" title="Chat dengan pengguna">
+                                <i class="fas fa-comment"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -78,29 +80,6 @@
                         <div class="info-value">{{ formatDate(laporan.updated_at) }}</div>
                     </div>
                 </div>
-            </div>
-
-            <div class="detail-card" v-if="laporan.tanggapan">
-                <h3 class="detail-section-title"><i class="fas fa-comment-alt"></i> Tanggapan</h3>
-                <p class="tanggapan-text">{{ laporan.tanggapan }}</p>
-            </div>
-
-            <div class="action-buttons">
-                <button class="btn-primary" @click="updateStatus('verified')" v-if="laporan.status === 'unverified'">
-                    <i class="fas fa-check"></i> Verifikasi Laporan
-                </button>
-                <button class="btn-primary" @click="updateStatus('processed')" v-if="laporan.status === 'verified'">
-                    <i class="fas fa-cog"></i> Proses Laporan
-                </button>
-                <button class="btn-success" @click="updateStatus('completed')" v-if="laporan.status === 'processed'">
-                    <i class="fas fa-check-circle"></i> Selesaikan Laporan
-                </button>
-                <button class="btn-danger" @click="updateStatus('rejected')" v-if="laporan.status === 'unverified'">
-                    <i class="fas fa-times"></i> Tolak Laporan
-                </button>
-                <button class="btn-secondary" @click="showTanggapanModal = true">
-                    <i class="fas fa-comment"></i> Tambah Tanggapan
-                </button>
             </div>
         </div>
 
@@ -286,40 +265,35 @@ export default {
                 this.loading = false;
             }
         },
-        
-        async saveTanggapan() {
-            try {
-                const token = localStorage.getItem('token');
-                await axios.post(`http://localhost:8000/api/tanggapan`, {
-                    laporan_id: this.laporanId,
-                    tanggapan: this.tanggapanText
-                }, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+
+        startChat() {
+            // Get the phone number from the laporan data
+            let phoneNumber = this.laporan.nomor_telepon;
+            
+            // Validate and format the phone number
+            if (phoneNumber) {
+                // Remove any non-digit characters
+                phoneNumber = phoneNumber.replace(/\D/g, '');
                 
-                this.showTanggapanModal = false;
-                this.tanggapanText = '';
-                this.fetchLaporanDetail(); // Refresh data after saving
-            } catch (error) {
-                console.error('Error saving tanggapan:', error);
+                // Add country code if not present (assuming Indonesia +62)
+                if (phoneNumber.startsWith('0')) {
+                    phoneNumber = '62' + phoneNumber.substring(1);
+                } else if (!phoneNumber.startsWith('62')) {
+                    phoneNumber = '62' + phoneNumber;
+                }
+                
+                // Create WhatsApp URL
+                const whatsappUrl = `https://wa.me/${phoneNumber}`;
+                
+                // Open WhatsApp in a new tab
+                window.open(whatsappUrl, '_blank');
+            } else {
+                this.$notify({
+                    type: 'error',
+                    text: 'Nomor telepon tidak tersedia'
+                });
             }
         },
-        openWhatsApp(phoneNumber) {
-            // Clean the phone number (remove spaces, dashes, etc.)
-            const cleanNumber = phoneNumber.replace(/[\s-\(\)]/g, '');
-            
-            // Check if the number starts with '0', replace with '62'
-            let formattedNumber = cleanNumber;
-            if (formattedNumber.startsWith('0')) {
-                formattedNumber = '62' + formattedNumber.substring(1);
-            }
-            
-            // Generate WhatsApp URL and open in new tab
-            const whatsappUrl = `https://wa.me/${formattedNumber}`;
-            window.open(whatsappUrl, '_blank');
-        }
     }
 };
 </script>
@@ -781,5 +755,66 @@ export default {
         width: 100%;
         justify-content: center;
     }
+}
+
+.phone-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #4B5563;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.chat-button:hover {
+  background-color: #374151;
+}
+
+.field-row {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.field-label {
+  font-weight: 500;
+  width: 150px;
+  flex-shrink: 0;
+}
+
+.field-value {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chat-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #4B5563;
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 8px;
+  transition: background-color 0.2s;
+}
+
+.chat-icon-button:hover {
+  background-color: #374151;
 }
 </style>
