@@ -315,32 +315,72 @@ export default {
             }
         },
 
-        rejectReport() {
-            this.updateStatus('rejected')
-                .then(() => {
-                    // Show success notification using SweetAlert2 toast
+        async rejectReport() {
+            try {
+                if (!this.laporanId) {
                     Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        icon: 'success',
-                        title: 'Berhasil menolak laporan',
-                        showConfirmButton: false,
-                        timer: 3000,
-                        timerProgressBar: true
-                    });
-                })
-                .catch((error) => {
-                    console.error('Error rejecting report:', error);
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
                         icon: 'error',
-                        title: 'Gagal menolak laporan',
+                        title: 'Error',
+                        text: 'Laporan ID tidak ditemukan',
+                        toast: true,
+                        position: 'top-end',
                         showConfirmButton: false,
-                        timer: 3000,
-                        timerProgressBar: true
+                        timer: 3000
                     });
+                    return;
+                }
+                
+                // Log what we're sending to help debug
+                console.log('Rejecting report:', {
+                    laporanId: this.laporanId
                 });
+                
+                // Make the API call using POST with _method: PUT
+                const formData = new FormData();
+                formData.append('_method', 'PUT');
+                formData.append('status', 'rejected');
+
+                const response = await axios.post(
+                    `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+                    formData
+                );
+                                
+                // Check if response has data
+                console.log('Response:', response);
+                
+                // Update local data after successful rejection
+                this.laporan.status = 'rejected';
+                
+                // Show success message with Swal instead of toast
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Laporan berhasil ditolak',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+                
+                // Refresh data
+                await this.fetchLaporanDetail();
+                
+            } catch (error) {
+                console.error('Error rejecting report:', error);
+                // Safely access error message with optional chaining
+                const errorMessage = error.response?.data?.message || 'Gagal menolak laporan';
+                
+                // Show error message with Swal
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: `Gagal menolak laporan: ${errorMessage}`,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            }
         },
         
         async saveTanggapan() {
