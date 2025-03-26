@@ -187,16 +187,13 @@ export default {
     methods: {
         async fetchCategories() {
             try {
-                const token = localStorage.getItem('token'); // Or however you store your auth token
-                const response = await axios.get('http://localhost:8000/api/category', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                this.categories = response.data;
+                const response = await axios.get('http://localhost:8000/api/category');
+                this.categories = response.data.reduce((acc, category) => {
+                    acc[category.category_id] = category.nama;
+                    return acc;
+                }, {});
             } catch (error) {
                 console.error('Error fetching categories:', error);
-                this.error = 'Failed to load categories';
             }
         },
         
@@ -308,6 +305,20 @@ export default {
             } catch (error) {
                 console.error('Error saving tanggapan:', error);
             }
+        },
+        openWhatsApp(phoneNumber) {
+            // Clean the phone number (remove spaces, dashes, etc.)
+            const cleanNumber = phoneNumber.replace(/[\s-\(\)]/g, '');
+            
+            // Check if the number starts with '0', replace with '62'
+            let formattedNumber = cleanNumber;
+            if (formattedNumber.startsWith('0')) {
+                formattedNumber = '62' + formattedNumber.substring(1);
+            }
+            
+            // Generate WhatsApp URL and open in new tab
+            const whatsappUrl = `https://wa.me/${formattedNumber}`;
+            window.open(whatsappUrl, '_blank');
         }
     }
 };

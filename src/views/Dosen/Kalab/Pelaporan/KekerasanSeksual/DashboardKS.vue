@@ -316,9 +316,11 @@ export default {
       console.log('Actual ID to use:', actualId);
       
       if (actualId) {
-        this.$router.push(`/laporan_kekerasan/${actualId}`);
-      } else {
-        console.error('Cannot navigate: No valid ID found');
+        // Use named route approach
+        this.$router.push({ 
+          name: 'DetailKS', // Make sure this matches the exact route name in your router config
+          params: { id: actualId } 
+        });
       }
     },
 

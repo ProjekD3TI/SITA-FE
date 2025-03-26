@@ -384,101 +384,101 @@ export default {
         },
         
         async saveTanggapan() {
-    try {
-        if (!this.laporanId) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Laporan ID tidak ditemukan',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000
-            });
-            return;
-        }
-        
-        console.log('Sending tanggapan:', {
-            laporanId: this.laporanId,
-            tanggapan: this.tanggapanText
-        });
-        
-        // Make the API call using POST with _method: PUT
-        // Include both the status (preserving current status) and tanggapan
-        const formData = new FormData();
-        formData.append('_method', 'PUT');
-        formData.append('tanggapan', this.tanggapanText);
-        
-        // Include the current status to maintain it
-        // The API might be expecting status to always be present
-        if (this.laporan && this.laporan.status) {
-            formData.append('status', this.laporan.status);
-        } else {
-            // Provide a default status if none exists
-            formData.append('status', 'pending');
-        }
+            try {
+                if (!this.laporanId) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Laporan ID tidak ditemukan',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                    return;
+                }
+                
+                console.log('Sending tanggapan:', {
+                    laporanId: this.laporanId,
+                    tanggapan: this.tanggapanText
+                });
+                
+                // Make the API call using POST with _method: PUT
+                // Include both the status (preserving current status) and tanggapan
+                const formData = new FormData();
+                formData.append('_method', 'PUT');
+                formData.append('tanggapan', this.tanggapanText);
+                
+                // Include the current status to maintain it
+                // The API might be expecting status to always be present
+                if (this.laporan && this.laporan.status) {
+                    formData.append('status', this.laporan.status);
+                } else {
+                    // Provide a default status if none exists
+                    formData.append('status', 'pending');
+                }
 
-        // For debugging, log the FormData
-        for (let pair of formData.entries()) {
-            console.log(pair[0] + ': ' + pair[1]);
-        }
+                // For debugging, log the FormData
+                for (let pair of formData.entries()) {
+                    console.log(pair[0] + ': ' + pair[1]);
+                }
 
-        const response = await axios.post(
-            `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
-            formData
-        );
-        
-        console.log('Response:', response);
-        
-        // Update local data after successful submission
-        if (this.laporan) {
-            this.laporan.tanggapan = this.tanggapanText;
-        }
-        
-        // Show success message
-        Swal.fire({
-            icon: 'success',
-            title: 'Berhasil!',
-            text: 'Tanggapan berhasil disimpan',
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000
-        });
-        
-        // Reset and close modal
-        this.tanggapanText = '';
-        this.showTanggapanModal = false;
-        
-        // Refresh data
-        await this.fetchLaporanDetail();
-        
-    } catch (error) {
-        console.error('Error saving tanggapan:', error);
-        
-        // More detailed error logging for debugging
-        if (error.response) {
-            console.error('Error response data:', error.response.data);
-            console.error('Error response status:', error.response.status);
-            console.error('Error response headers:', error.response.headers);
-        }
-        
-        // Try to get a more specific error message
-        const errorMessage = error.response?.data?.message || 
-                           error.response?.data?.error || 
-                           'Gagal menyimpan tanggapan';
-        
-        Swal.fire({
-            icon: 'error',
-            title: 'Gagal!',
-            text: `Gagal menyimpan tanggapan: ${errorMessage}`,
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000
-        });
-    }
-},
+                const response = await axios.post(
+                    `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+                    formData
+                );
+                
+                console.log('Response:', response);
+                
+                // Update local data after successful submission
+                if (this.laporan) {
+                    this.laporan.tanggapan = this.tanggapanText;
+                }
+                
+                // Show success message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Tanggapan berhasil disimpan',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+                
+                // Reset and close modal
+                this.tanggapanText = '';
+                this.showTanggapanModal = false;
+                
+                // Refresh data
+                await this.fetchLaporanDetail();
+                
+            } catch (error) {
+                console.error('Error saving tanggapan:', error);
+                
+                // More detailed error logging for debugging
+                if (error.response) {
+                    console.error('Error response data:', error.response.data);
+                    console.error('Error response status:', error.response.status);
+                    console.error('Error response headers:', error.response.headers);
+                }
+                
+                // Try to get a more specific error message
+                const errorMessage = error.response?.data?.message || 
+                                error.response?.data?.error || 
+                                'Gagal menyimpan tanggapan';
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: `Gagal menyimpan tanggapan: ${errorMessage}`,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            }
+        },
     }
 };
 </script>
