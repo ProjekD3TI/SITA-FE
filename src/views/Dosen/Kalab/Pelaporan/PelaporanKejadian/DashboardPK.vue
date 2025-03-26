@@ -65,10 +65,10 @@
           <label>Filter berdasarkan:</label>
           
           <div class="filter-select">
-            <label for="categoryFilter">Jenis Kejadian:</label>
+            <label for="categoryFilter">Kategori:</label>
             <select id="categoryFilter" v-model="filters.category_id" @change="applyFilters">
               <option value="">Semua</option>
-              <option v-for="(name, id) in categories" :key="id" :value="id">
+              <option v-for="(name, id) in filteredCategories" :key="id" :value="id">
                 {{ name }}
               </option>
             </select>
@@ -295,7 +295,20 @@ export default {
     
     totalPages() {
       return Math.ceil(this.filteredLaporan.length / this.itemsPerPage);
+    },
+
+    filteredCategories() {
+    const filtered = {};
+    
+    // Loop through the categories object and exclude those starting with "Kekerasan"
+    for (const [id, name] of Object.entries(this.categories)) {
+      if (!name.startsWith('Kekerasan')) {
+        filtered[id] = name;
+      }
     }
+    
+    return filtered;
+  },
   },
   
   methods: {
