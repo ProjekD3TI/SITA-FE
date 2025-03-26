@@ -298,17 +298,17 @@ export default {
     },
 
     filteredCategories() {
-    const filtered = {};
-    
-    // Loop through the categories object and exclude those starting with "Kekerasan"
-    for (const [id, name] of Object.entries(this.categories)) {
-      if (!name.startsWith('Kekerasan')) {
-        filtered[id] = name;
+      const filtered = {};
+      
+      // Loop through the categories object and exclude those starting with "Kekerasan"
+      for (const [id, name] of Object.entries(this.categories)) {
+        if (!name.startsWith('Kekerasan')) {
+          filtered[id] = name;
+        }
       }
-    }
-    
-    return filtered;
-  },
+      
+      return filtered;
+    },
   },
   
   methods: {
