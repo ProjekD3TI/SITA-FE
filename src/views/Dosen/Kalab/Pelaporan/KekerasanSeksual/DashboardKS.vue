@@ -70,7 +70,7 @@
             <label for="categoryFilter">Kategori:</label>
             <select id="categoryFilter" v-model="filters.category_id" @change="applyFilters">
               <option value="">Semua</option>
-              <option v-for="(name, id) in categories" :key="id" :value="id">
+              <option v-for="(name, id) in filteredCategories" :key="id" :value="id">
                 {{ name }}
               </option>
             </select>
@@ -207,18 +207,76 @@ export default {
   },
 
   computed: {
+    filteredCategories() {
+      const filtered = {};
+      
+      // Loop through the categories object and include only those starting with "Kekerasan"
+      for (const [id, name] of Object.entries(this.categories)) {
+        if (name.startsWith('Kekerasan')) {
+          filtered[id] = name;
+        }
+      }
+      
+      return filtered;
+    },
+
     filteredLaporan() {
-      return this.laporan.filter(item => {
-        const matchesSearch = 
-          item.judul.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          item.nomor_laporan_kekerasan.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          item.nama_pelapor.toLowerCase().includes(this.searchQuery.toLowerCase());
+      let result = this.laporan;
+      
+      // Apply search filter
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        result = result.filter(item => 
+          (item.judul && item.judul.toLowerCase().includes(query)) || 
+          (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(query))
+        );
+      }
+      
+      // Apply category filter
+      if (this.filters.category_id) {
+        result = result.filter(item => 
+          String(item.category_id) === String(this.filters.category_id)
+        );
+      }
+      
+      // Apply status filter
+      if (this.filters.status) {
+        // Map frontend status labels to actual status values in the data
+        const statusMap = {
+          'Belum Diverifikasi': 'unverified',
+          'Diverifikasi': 'verified',
+          'Ditolak': 'rejected'
+        };
         
-        const matchesCategory = this.filterCategory === 'all' || 
-          item.category_id === parseInt(this.filterCategory);
-        
-        return matchesSearch && matchesCategory;
-      });
+        const statusValue = statusMap[this.filters.status] || this.filters.status;
+        result = result.filter(item => item.status === statusValue);
+      }
+      
+      // Apply date range filter
+      if (this.filters.startDate || this.filters.endDate) {
+        result = result.filter(item => {
+          // Convert to Date objects for comparison
+          const itemDate = new Date(item.created_at || item.tanggal);
+          
+          // Check start date if specified
+          if (this.filters.startDate) {
+            const startDate = new Date(this.filters.startDate);
+            startDate.setHours(0, 0, 0, 0);
+            if (itemDate < startDate) return false;
+          }
+          
+          // Check end date if specified
+          if (this.filters.endDate) {
+            const endDate = new Date(this.filters.endDate);
+            endDate.setHours(23, 59, 59, 999);
+            if (itemDate > endDate) return false;
+          }
+          
+          return true;
+        });
+      }
+      
+      return result;
     },
     
     paginatedLaporan() {
@@ -335,17 +393,39 @@ export default {
       this.$router.push('/kalab/addpelaporankskalab');
     },
     applyFilters() {
-      // Implement filter logic
+      console.log('Applying filters:', this.filters);
+      
+      // The filtering logic is now in the computed property
+      // Just reset page when filters change
+      this.currentPage = 1;
     },
+
     resetFilters() {
       this.filters = {
         category_id: '',
         status: '',
         startDate: '',
         endDate: ''
+      };
+      this.searchQuery = '';
+      this.currentPage = 1;
+      console.log('Filters reset');
+    },
+
+    prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
       }
-      this.searchQuery = ''
-      this.applyFilters()
+    },
+
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+      }
+    },
+
+    resetPage() {
+      this.currentPage = 1;
     }
   },
 
