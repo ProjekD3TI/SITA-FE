@@ -78,9 +78,9 @@
             <label for="statusFilter">Status:</label>
             <select id="statusFilter" v-model="filters.status" @change="applyFilters">
               <option value="">Semua</option>
-              <option value="Selesai">Belum Diverifikasi</option>
-              <option value="Proses">Diverifikasi</option>
-              <option value="Proses">Ditolak</option>
+              <option value="Belum Diverifikasi">Belum Diverifikasi</option>
+              <option value="Diverifikasi">Diverifikasi</option>
+              <option value="Ditolak">Ditolak</option>
             </select>
           </div>
           
@@ -124,22 +124,25 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(laporan, index) in paginatedLaporan" :key="laporan.laporan_id">
+          <tr v-for="(item, index) in displayedLaporan" :key="item.id">
             <td>{{ startIndex + index + 1 }}</td>
-            <td>{{ laporan.nomor_laporan }}</td>
-            <td>{{ laporan.judul }}</td>
-            <td>{{ getCategoryName(laporan.category_id) }}</td>
-            <td>{{ laporan.nama_pelapor }}</td>
+            <td>{{ item.nomor_laporan }}</td>
+            <td>{{ item.judul }}</td>
+            <td>{{ getCategoryName(item.category_id) }}</td>
+            <td>{{ item.nama_pelapor }}</td>
             <td>
-              <span :class="['status-badge', laporan.status.toLowerCase()]">
-                {{ formatStatus(laporan.status) }}
+              <span :class="['status-badge', item.status.toLowerCase()]">
+                {{ formatStatus(item.status) }}
               </span>
             </td>
             <td>
-              <button class="btn-detail" @click="viewDetail(laporan.laporan_id)">
+              <button class="btn-detail" @click="viewDetail(item.laporan_id)">
                 <i class="fas fa-eye"></i> Detail
               </button>
             </td>
+          </tr>
+          <tr v-if="displayedLaporan.length === 0">
+            <td colspan="7" class="no-data">Tidak ada data yang ditampilkan</td>
           </tr>
         </tbody>
       </table>
@@ -206,7 +209,8 @@ export default {
       selectedStatus: 'all',
       itemsPerPage: 10,
       loading: true, // Start with loading true
-      error: null
+      error: null,
+      filteredLaporan: [] // New property to hold filtered results
     };
   },
   
@@ -230,7 +234,21 @@ export default {
       
       // Apply jenisKejadian filter (category)
       if (this.filters.jenisKejadian) {
-        result = result.filter(item => item.category_id == this.filters.jenisKejadian);
+        console.log('Filtering by category:', this.filters.jenisKejadian);
+        
+        // Convert the filter value to number since your category IDs appear to be numeric
+        const filterCategoryId = parseInt(this.filters.jenisKejadian, 10);
+        
+        // Check if we have a valid number after conversion
+        if (!isNaN(filterCategoryId)) {
+          result = result.filter(item => {
+            // Convert item category_id to number as well for consistent comparison
+            const itemCategoryId = parseInt(item.category_id, 10);
+            return itemCategoryId === filterCategoryId;
+          });
+        }
+        
+        console.log('After filter items count:', result.length);
       }
       
       // Apply date filters if needed
@@ -266,6 +284,17 @@ export default {
     
     verifiedCount() {
       return this.laporan.filter(item => item.status === 'verified').length;
+    },
+
+    // Display data should be based on filteredLaporan instead of laporan directly
+    displayedLaporan() {
+      const start = this.startIndex;
+      const end = start + this.itemsPerPage;
+      return this.filteredLaporan.slice(start, end);
+    },
+    
+    totalPages() {
+      return Math.ceil(this.filteredLaporan.length / this.itemsPerPage);
     }
   },
   
@@ -285,6 +314,9 @@ export default {
         const laporanResponse = await axios.get('http://localhost:8000/api/laporan');
         this.laporan = laporanResponse.data;
         
+        // Initialize filteredLaporan with all data
+        this.filteredLaporan = [...this.laporan];
+        
         console.log('Laporan data loaded:', this.laporan); // Debug log
         console.log('Categories loaded:', this.categories); // Debug log
       } catch (error) {
@@ -296,7 +328,7 @@ export default {
     },
     
     getCategoryName(categoryId) {
-      return this.categories[categoryId] || `Kategori ${categoryId}`;
+      return this.categories[categoryId] || 'Tidak ada kategori';
     },
     
     formatStatus(status) {
@@ -341,6 +373,82 @@ export default {
       if (this.currentPage < this.totalPages) {
         this.currentPage++;
       }
+    },
+
+    // New filtering method
+    applyFilters() {
+      console.log('Applying filters:', this.filters); // Debug log
+      
+      // Start with all data
+      let filtered = [...this.laporan];
+      
+      // Apply category filter
+      if (this.filters.category_id) {
+        console.log('Filtering by category:', this.filters.category_id);
+        filtered = filtered.filter(item => 
+          String(item.category_id) === String(this.filters.category_id)
+        );
+      }
+      
+      // Apply status filter
+      if (this.filters.status) {
+        console.log('Filtering by status:', this.filters.status);
+        // Map frontend status labels to actual status values in the data
+        const statusMap = {
+          'Belum Diverifikasi': 'unverified',
+          'Diverifikasi': 'verified',
+          'Ditolak': 'rejected'
+        };
+        
+        const statusValue = statusMap[this.filters.status] || this.filters.status;
+        filtered = filtered.filter(item => item.status === statusValue);
+      }
+      
+      // Apply date range filter
+      if (this.filters.startDate || this.filters.endDate) {
+        console.log('Filtering by date range:', this.filters.startDate, 'to', this.filters.endDate);
+        
+        filtered = filtered.filter(item => {
+          // Convert to Date objects for comparison
+          const itemDate = new Date(item.created_at || item.tanggal); // Adjust field name as needed
+          
+          // Check start date if specified
+          if (this.filters.startDate) {
+            const startDate = new Date(this.filters.startDate);
+            startDate.setHours(0, 0, 0, 0);
+            if (itemDate < startDate) return false;
+          }
+          
+          // Check end date if specified
+          if (this.filters.endDate) {
+            const endDate = new Date(this.filters.endDate);
+            endDate.setHours(23, 59, 59, 999);
+            if (itemDate > endDate) return false;
+          }
+          
+          return true;
+        });
+      }
+      
+      // Update filtered data
+      this.filteredLaporan = filtered;
+      
+      // Reset to first page when filters change
+      this.currentPage = 1;
+      
+      console.log('Filtered results:', this.filteredLaporan.length); // Debug log
+    },
+    
+    resetFilters() {
+      this.filters = {
+        category_id: '',
+        status: '',
+        startDate: '',
+        endDate: ''
+      };
+      this.filteredLaporan = [...this.laporan];
+      this.currentPage = 1;
+      console.log('Filters reset');
     }
   },
   
