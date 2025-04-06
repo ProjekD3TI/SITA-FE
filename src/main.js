@@ -4,6 +4,8 @@ import App from "./App.vue";
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
 import axios from "axios";
+import Vue3EasyDataTable from "vue3-easy-data-table";
+import "vue3-easy-data-table/dist/style.css";
 
 import "./style.css";
 
@@ -18,5 +20,6 @@ const app = createApp(App);
 app.use(Toast);
 app.use(router);
 app.use(VueCookies);
+app.component("EasyDataTable", Vue3EasyDataTable);
 
 app.mount("#app");

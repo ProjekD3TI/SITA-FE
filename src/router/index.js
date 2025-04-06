@@ -101,6 +101,13 @@ const routes = [
       ),
   },
 
+  {
+    path: "/dashboard",
+    name: "LandingLogin",
+    component: () => import("../views/Landing/Landing.vue"),
+    meta: { requiresAuth: true },
+  },
+
   // Mahasiswa
   {
     path: "/mahasiswa",
@@ -255,6 +262,270 @@ const routes = [
         path: "dashboard",
         name: "DashboardAdminPengelola",
         component: () => import("../views/Admin/AdminPengelola/Dashboard.vue"),
+      },
+      // BHP
+      //CRUD BHP
+      {
+        path: "bhp",
+        name: "ListBhp",
+        component: () => import("../views/Admin/AdminPengelola/Bhp/List.vue"),
+      },
+      {
+        path: "bhp/create",
+        name: "CreateBhp",
+        component: () => import("../views/Admin/AdminPengelola/Bhp/Create.vue"),
+      },
+      {
+        path: "bhp/detail/:id",
+        name: "DetailBhp",
+        component: () => import("../views/Admin/AdminPengelola/Bhp/Detail.vue"),
+      },
+      {
+        path: "bhp/edit/:id",
+        name: "EditBhp",
+        component: () => import("../views/Admin/AdminPengelola/Bhp/Edit.vue"),
+      },
+
+      // INVENTARIS
+      //CRUD Tipe
+      {
+        path: "tipe",
+        name: "ListTipe",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Inventaris/Tipe/List.vue"),
+      },
+      {
+        path: "tipe/create",
+        name: "CreateTipe",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Inventaris/Tipe/Create.vue"),
+      },
+      {
+        path: "tipe/edit/:id",
+        name: "EditTipe",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Inventaris/Tipe/Edit.vue"),
+      },
+      //CRUD merk
+      {
+        path: "merk",
+        name: "ListMerk",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Inventaris/Merk/List.vue"),
+      },
+      {
+        path: "merk/create",
+        name: "CreateMerk",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Inventaris/Merk/Create.vue"),
+      },
+      {
+        path: "merk/edit/:id",
+        name: "EditMerk",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Inventaris/Merk/Edit.vue"),
+      },
+      //CRUD Jenis Inventaris
+      {
+        path: "jenis-inventaris",
+        name: "ListJenisInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Inventaris/JenisInventaris/List.vue"
+          ),
+      },
+      {
+        path: "jenis-inventaris/create",
+        name: "CreateJenisInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Inventaris/JenisInventaris/Create.vue"
+          ),
+      },
+      {
+        path: "jenis-inventaris/edit/:id",
+        name: "EditJenisInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Inventaris/JenisInventaris/Edit.vue"
+          ),
+      },
+      {
+        path: "jenis-inventaris/detail/:id",
+        name: "DetailJenisInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Inventaris/JenisInventaris/Detail.vue"
+          ),
+      },
+      //CRUD  Inventaris
+      {
+        path: "inventaris",
+        name: "ListInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Inventaris/Inventaris/List.vue"
+          ),
+      },
+      {
+        path: "inventaris/create",
+        name: "CreateInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Inventaris/Inventaris/Create.vue"
+          ),
+      },
+      {
+        path: "inventaris/edit/:id",
+        name: "EditInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Inventaris/Inventaris/Edit.vue"
+          ),
+      },
+      {
+        path: "inventaris/detail/:id",
+        name: "DetailInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Inventaris/Inventaris/Detail.vue"
+          ),
+      },
+      // RUANG
+      // CRUD Lantai
+      {
+        path: "lantai",
+        name: "ListLantai",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Lantai/List.vue"),
+      },
+      {
+        path: "lantai/create",
+        name: "CreateLantai",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Lantai/Create.vue"),
+      },
+      {
+        path: "lantai/edit/:id",
+        name: "EditLantai",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Lantai/Edit.vue"),
+      },
+      // CRUD Gedung
+      {
+        path: "gedung",
+        name: "ListGedung",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Gedung/List.vue"),
+      },
+      {
+        path: "gedung/create",
+        name: "CreateGedung",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Gedung/Create.vue"),
+      },
+      {
+        path: "gedung/edit/:id",
+        name: "EditGedung",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Gedung/Edit.vue"),
+      },
+      // CRUD Ruang
+      {
+        path: "ruang",
+        name: "ListRuang",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Ruang/List.vue"),
+      },
+      {
+        path: "ruang/create",
+        name: "CreateRuang",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Ruang/Create.vue"),
+      },
+      {
+        path: "ruang/edit/:id",
+        name: "EditRuang",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Ruang/Edit.vue"),
+      },
+      {
+        path: "ruang/detail/:id",
+        name: "DetailRuang",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Ruang/Detail.vue"),
+      },
+      //peminjaman bhp
+      {
+        path: "peminjaman-bhp",
+        name: "ListPeminjamanBhp",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Bhp/ListPeminjaman.vue"
+          ),
+      },
+      {
+        path: "peminjaman-bhp/create",
+        name: "CreatePeminjamanBhp",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Peminjaman/Bhp/Peminjaman.vue"),
+      },
+      {
+        path: "peminjaman-bhp/detail/:id",
+        name: "DetailPeminjamanBhp",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Bhp/DetailPeminjaman.vue"
+          ),
+      },
+      {
+        path: "peminjaman-bhp/edit/:id",
+        name: "EditPeminjamanBhp",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Bhp/EditPeminjaman.vue"
+          ),
+      },
+      {
+        path: "peminjaman-bhp/kembalikan/:id",
+        name: "KembalikanPeminjamanBhp",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Bhp/KembalikanPeminjaman.vue"
+          ),
+      },
+      //peminjaman inventaris
+      {
+        path: "peminjaman-inventaris/create",
+        name: "CreatePeminjamanInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Inventaris/Peminjaman.vue"
+          ),
+      },
+      {
+        path: "peminjaman-inventaris",
+        name: "ListPeminjamanInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Inventaris/ListPeminjaman.vue"
+          ),
+      },
+      {
+        path: "peminjaman-inventaris/detail/:referensi",
+        name: "DetailPeminjamanInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Inventaris/DetailPeminjaman.vue"
+          ),
+      },
+      {
+        path: "peminjaman-inventaris/kembalikan/:referensi",
+        name: "KembalikanPeminjamanInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Inventaris/KembalikanPeminjaman.vue"
+          ),
       },
     ],
   },
