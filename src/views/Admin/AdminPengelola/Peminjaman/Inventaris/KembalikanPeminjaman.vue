@@ -239,7 +239,7 @@ const availableItems = computed(() => {
     .map((item) => ({
       id_inventaris: item.id_inventaris,
       no_inventaris: `${item.inventaris?.no_inventaris || "Unknown"} (${
-        item.inventaris?.nama || "No Name"
+        item.inventaris?.nama_inventaris || "No Name"
       })`,
     }));
 });
@@ -347,7 +347,7 @@ const handleSubmit = async () => {
     };
 
     const response = await axios.post(
-      "/api/admin_pengelola/peminjaman_inventaris",
+      "/api/admin_pengelola/peminjaman_inventaris/return",
       submission
     );
 
