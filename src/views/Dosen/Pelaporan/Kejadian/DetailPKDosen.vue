@@ -84,24 +84,6 @@
                 <h3 class="detail-section-title"><i class="fas fa-comment-alt"></i> Tanggapan</h3>
                 <p class="tanggapan-text">{{ laporan.tanggapan }}</p>
             </div>
-
-            <div class="action-buttons">
-                <button class="btn-primary" @click="updateStatus('verified')" v-if="laporan.status === 'unverified'">
-                    <i class="fas fa-check"></i> Verifikasi Laporan
-                </button>
-                <button class="btn-primary" @click="updateStatus('processed')" v-if="laporan.status === 'verified'">
-                    <i class="fas fa-cog"></i> Proses Laporan
-                </button>
-                <button class="btn-success" @click="updateStatus('completed')" v-if="laporan.status === 'processed'">
-                    <i class="fas fa-check-circle"></i> Selesaikan Laporan
-                </button>
-                <button class="btn-danger" @click="updateStatus('rejected')" v-if="laporan.status === 'unverified'">
-                    <i class="fas fa-times"></i> Tolak Laporan
-                </button>
-                <button class="btn-secondary" @click="showTanggapanModal = true">
-                    <i class="fas fa-comment"></i> Tambah Tanggapan
-                </button>
-            </div>
         </div>
 
         <!-- Modal for full image view -->
@@ -112,24 +94,26 @@
             </div>
         </div>
 
-        <!-- Modal for adding tanggapan -->
-        <div class="modal-overlay" v-if="showTanggapanModal">
+        <!-- Verification confirmation modal -->
+        <div class="modal-overlay" v-if="showVerificationModal">
             <div class="modal-container" @click.stop>
                 <div class="modal-header">
-                    <h3>Tambah Tanggapan</h3>
-                    <button class="close-button" @click="showTanggapanModal = false">&times;</button>
+                    <h3>Konfirmasi Verifikasi</h3>
+                    <button class="close-button" @click="showVerificationModal = false" :disabled="isVerifying">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <textarea 
-                        v-model="tanggapanText" 
-                        placeholder="Masukkan tanggapan anda di sini..." 
-                        rows="5"
-                        class="tanggapan-textarea">
-                    </textarea>
+                    <p>Apakah Anda yakin ingin memverifikasi laporan ini? Pastikan semua data sudah benar.</p>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn-cancel" @click="showTanggapanModal = false">Batal</button>
-                    <button class="btn-save" @click="saveTanggapan">Simpan Tanggapan</button>
+                    <button class="btn-secondary" @click="showVerificationModal = false" :disabled="isVerifying">Batal</button>
+                    <button class="btn-primary" @click="confirmVerification" :disabled="isVerifying">
+                        <span v-if="isVerifying">
+                            <i class="fas fa-spinner fa-spin"></i> Memproses...
+                        </span>
+                        <span v-else>
+                            <i class="fas fa-check"></i> Yakin, Verifikasi
+                        </span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -138,19 +122,23 @@
 
 <script>
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 export default {
     name: 'DetailPK',
     data() {
         return {
             laporanId: null,
-            laporan: {},
+            laporan: null,
             categories: {},
-            loading: true,
+            loading: false,
+            loadingAction: false,
             error: null,
             showFullImage: false,
             showTanggapanModal: false,
             tanggapanText: '',
+            showVerificationModal: false,
+            isVerifying: false,
         };
     },
     
@@ -211,8 +199,6 @@ export default {
             const statusMap = {
                 'unverified': 'Belum Diverifikasi',
                 'verified': 'Diverifikasi',
-                'processed': 'Diproses',
-                'completed': 'Selesai',
                 'rejected': 'Ditolak'
             };
             
@@ -229,53 +215,234 @@ export default {
         
         async updateStatus(newStatus) {
             try {
-                this.loading = true;
+                if (!this.laporanId) {
+                    throw new Error('Laporan ID tidak ditemukan');
+                }
                 
-                const response = await axios.put(`http://localhost:8000/api/laporan/${this.laporanId}/status`, {
-                    status: newStatus
+                // Log what we're sending to help debug
+                console.log('Updating status:', {
+                    laporanId: this.laporanId,
+                    newStatus: newStatus
                 });
                 
+                // Make the API call using POST with _method: PUT
+                const formData = new FormData();
+                formData.append('_method', 'PUT');
+                formData.append('status', newStatus);
+
+                const response = await axios.post(`http://localhost:8000/api/laporan/update_status/${this.laporanId}`, formData);
+                                
+                // Check if response has data
+                console.log('Response:', response);
+                
+                // Just proceed if we get a 2xx response
                 this.laporan.status = newStatus;
-                this.$notify({
-                    type: 'success',
-                    text: `Status laporan berhasil diperbarui menjadi ${this.formatStatus(newStatus)}`
-                });
+                this.$toast.success('Status berhasil diperbarui');
+                
+                // Refresh data
+                await this.fetchLaporanDetail();
+                
             } catch (error) {
                 console.error('Error updating status:', error);
-                this.$notify({
-                    type: 'error',
-                    text: 'Gagal memperbarui status laporan'
+                // Safely access error message with optional chaining
+                const errorMessage = error.response?.data?.message || 'Gagal memperbarui status';
+                this.$toast.error(`Gagal memperbarui status: ${errorMessage}`);
+            }
+        },
+
+        // Add specific methods for verification and rejection
+        verifyReport() {
+            this.showVerificationModal = true;
+        },
+
+        async confirmVerification() {
+            this.isVerifying = true;
+            
+            try {
+                // Your verification API call
+                await axios.put(`http://localhost:8000/api/laporan/update_status/${this.laporanId}`, {
+                    status: 'verified'
                 });
+                
+                // Update local data after successful verification
+                this.laporan.status = 'verified';
+                
+                // Show success message (optional)
+                this.$toast.success('Laporan berhasil diverifikasi');
+            } catch (error) {
+                console.error('Verification failed:', error);
+                // Show error message (optional)
+                this.$toast.error('Gagal memverifikasi laporan');
             } finally {
-                this.loading = false;
+                this.isVerifying = false;
+                this.showVerificationModal = false; // Close the modal after processing
+            }
+        },
+
+        async rejectReport() {
+            try {
+                if (!this.laporanId) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Laporan ID tidak ditemukan',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                    return;
+                }
+                
+                // Log what we're sending to help debug
+                console.log('Rejecting report:', {
+                    laporanId: this.laporanId
+                });
+                
+                // Make the API call using POST with _method: PUT
+                const formData = new FormData();
+                formData.append('_method', 'PUT');
+                formData.append('status', 'rejected');
+
+                const response = await axios.post(
+                    `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+                    formData
+                );
+                                
+                // Check if response has data
+                console.log('Response:', response);
+                
+                // Update local data after successful rejection
+                this.laporan.status = 'rejected';
+                
+                // Show success message with Swal instead of toast
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Laporan berhasil ditolak',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+                
+                // Refresh data
+                await this.fetchLaporanDetail();
+                
+            } catch (error) {
+                console.error('Error rejecting report:', error);
+                // Safely access error message with optional chaining
+                const errorMessage = error.response?.data?.message || 'Gagal menolak laporan';
+                
+                // Show error message with Swal
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: `Gagal menolak laporan: ${errorMessage}`,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
             }
         },
         
         async saveTanggapan() {
             try {
-                this.loading = true;
+                if (!this.laporanId) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Laporan ID tidak ditemukan',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                    return;
+                }
                 
-                const response = await axios.put(`http://localhost:8000/api/laporan/${this.laporanId}/tanggapan`, {
+                console.log('Sending tanggapan:', {
+                    laporanId: this.laporanId,
                     tanggapan: this.tanggapanText
                 });
                 
-                this.laporan.tanggapan = this.tanggapanText;
+                // Make the API call using POST with _method: PUT
+                // Include both the status (preserving current status) and tanggapan
+                const formData = new FormData();
+                formData.append('_method', 'PUT');
+                formData.append('tanggapan', this.tanggapanText);
+                
+                // Include the current status to maintain it
+                // The API might be expecting status to always be present
+                if (this.laporan && this.laporan.status) {
+                    formData.append('status', this.laporan.status);
+                } else {
+                    // Provide a default status if none exists
+                    formData.append('status', 'pending');
+                }
+
+                // For debugging, log the FormData
+                for (let pair of formData.entries()) {
+                    console.log(pair[0] + ': ' + pair[1]);
+                }
+
+                const response = await axios.post(
+                    `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+                    formData
+                );
+                
+                console.log('Response:', response);
+                
+                // Update local data after successful submission
+                if (this.laporan) {
+                    this.laporan.tanggapan = this.tanggapanText;
+                }
+                
+                // Show success message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Tanggapan berhasil disimpan',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+                
+                // Reset and close modal
+                this.tanggapanText = '';
                 this.showTanggapanModal = false;
                 
-                this.$notify({
-                    type: 'success',
-                    text: 'Tanggapan berhasil disimpan'
-                });
+                // Refresh data
+                await this.fetchLaporanDetail();
+                
             } catch (error) {
                 console.error('Error saving tanggapan:', error);
-                this.$notify({
-                    type: 'error',
-                    text: 'Gagal menyimpan tanggapan'
+                
+                // More detailed error logging for debugging
+                if (error.response) {
+                    console.error('Error response data:', error.response.data);
+                    console.error('Error response status:', error.response.status);
+                    console.error('Error response headers:', error.response.headers);
+                }
+                
+                // Try to get a more specific error message
+                const errorMessage = error.response?.data?.message || 
+                                error.response?.data?.error || 
+                                'Gagal menyimpan tanggapan';
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: `Gagal menyimpan tanggapan: ${errorMessage}`,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
                 });
-            } finally {
-                this.loading = false;
             }
-        }
+        },
     }
 };
 </script>

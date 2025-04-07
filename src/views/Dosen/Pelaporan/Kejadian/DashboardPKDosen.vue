@@ -52,17 +52,26 @@
                       <!-- Search Bar and Button Container -->
                       <div class="mt-3 md:mt-0 flex items-center space-x-2">
                           <!-- Search Bar -->
-                          <div class="relative">
-                              <input
-                                  type="text"
-                                  v-model="searchQuery"
-                                  placeholder="Cari laporan..."
-                                  class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                  @input="handleSearch"
-                              />
-                              <div class="absolute left-3 top-2.5 text-gray-400">
-                                  <i class="fas fa-search"></i>
+                          <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Cari Laporan</label>
+                            <div class="relative">
+                              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
                               </div>
+                              <input
+                                v-model="searchQuery"
+                                type="text"
+                                placeholder="Cari berdasarkan judul atau deskripsi"
+                                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                              <button 
+                                v-if="searchQuery || filters.status || filters.jenisKejadian"
+                                @click="resetFilters" 
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-700 hover:text-gray-900"
+                              >
+                                <i class="fas fa-times"></i>
+                              </button>
+                            </div>
                           </div>
                           
                           <!-- Tambah Laporan Button -->
@@ -302,6 +311,9 @@ export default {
       
       // Add this to your data() section
       userData: null,
+
+      // Add these to your data() function
+      reports: [], // Array to store all reports
     };
   },
   
@@ -426,6 +438,27 @@ export default {
     endIndex() {
       const end = this.startIndex + this.itemsPerPage;
       return Math.min(end, this.filteredLaporan.length);
+    },
+
+    // Add this computed property
+    filteredReports() {
+      return this.reports.filter(report => {
+        // Check if report matches search query
+        const matchesSearch = this.searchQuery === '' || 
+          (report.judul && report.judul.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+          (report.deskripsi && report.deskripsi.toLowerCase().includes(this.searchQuery.toLowerCase()));
+        
+        // Check if report matches selected status
+        const matchesStatus = this.filters.status === '' || 
+          report.status === this.filters.status;
+        
+        // Check if report matches selected incident type
+        const matchesType = this.filters.jenisKejadian === '' || 
+          report.jenisKejadian === this.filters.jenisKejadian;
+        
+        // Return true only if all conditions are met
+        return matchesSearch && matchesStatus && matchesType;
+      });
     }
   },
   
@@ -572,11 +605,15 @@ export default {
     addNewReport() {
       this.showModal = true;
       // Alternatively, use router to navigate to form page
-      // this.$router.push('/dosen/addpelaporankejadian');
+      this.$router.push('/dosen/addpkdosen');
     },
     
-    lihatDetail(id) {
-      this.$router.push({ name: 'DetailPK', params: { id } });
+    lihatDetail(laporanId) {
+      // Explicitly use the correct route name with parameter
+      this.$router.push({ 
+        name: 'DetailPKDosen', 
+        params: { id: laporanId } 
+      });
     },
     
     // Add this to your methods
@@ -591,12 +628,31 @@ export default {
         console.error("Error getting user data:", error);
       }
     },
+
+    // Add or update these methods
+    // Method to fetch reports from API
+    async fetchReports() {
+      try {
+        // Replace with your actual API endpoint
+        const response = await axios.get('/api/reports');
+        this.reports = response.data;
+        
+        // Update counters
+        this.totalLaporan = this.reports.length;
+        this.dalamProses = this.reports.filter(r => r.status === 'Dalam Proses').length;
+      } catch (error) {
+        console.error('Error fetching reports:', error);
+      }
+    },
   },
   
   mounted() {
     this.fetchData();
     // Add this to your mounted() method
     this.getCurrentUser();
+
+    // Add to created or mounted lifecycle hook
+    this.fetchReports();
   }
 };
 </script>
