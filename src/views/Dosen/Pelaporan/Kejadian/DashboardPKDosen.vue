@@ -1,284 +1,482 @@
 <template>
-  <div class="dashboard-pelaporan-kejadian">
-    <h1 class="page-title">Dashboard Pelaporan Kejadian</h1>
-    
-    <div class="statistics-cards">
-      <div class="stats-card">
-        <div class="stats-icon">
-          <i class="fas fa-exclamation-triangle"></i>
-        </div>
-        <div class="stats-content">
-          <h3>Total Kejadian</h3>
-          <p class="stats-number">24</p>
-        </div>
-      </div>
-      
-      <div class="stats-card">
-        <div class="stats-icon-procces">
-          <i class="fas fa-check-circle"></i>
-        </div>
-        <div class="stats-content">
-          <h3>Dalam Proses</h3>
-          <p class="stats-number">18</p>
-        </div>
-      </div>
-      
-      <div class="stats-card">
-        <div class="stats-icon-done">
-          <i class="fas fa-clock"></i>
-        </div>
-        <div class="stats-content">
-          <h3>Selesai Ditangani</h3>
-          <p class="stats-number">6</p>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Table with search, filters and pagination -->
-    <div class="incident-table-container">
-      <div class="table-actions">
-        <h2>Daftar Kejadian</h2>
-      </div>
-      
-      <div class="table-header">
-        <div class="search-container">
-          <input 
-            type="text" 
-            v-model="searchQuery" 
-            placeholder="Cari kejadian..." 
-            class="search-input"
-            @input="handleSearch"
-          >
-          <i class="fas fa-search search-icon"></i>
-        </div>
-        
-        <div class="action-buttons">
-          <button class="btn-add-report" @click="addNewReport">
-            <i class="fas fa-plus"></i> Tambah Laporan
-          </button>
-        </div>
-      </div>
-      
-      <!-- Filter controls -->
-      <div class="filter-container">
-        <div class="filter-group">
-          <label>Filter berdasarkan:</label>
-          
-          <div class="filter-select">
-            <label for="categoryFilter">Jenis Kejadian:</label>
-            <select id="categoryFilter" v-model="filters.category_id" @change="applyFilters">
-              <option value="">Semua</option>
-              <option v-for="(name, id) in categories" :key="id" :value="id">
-                {{ name }}
-              </option>
-            </select>
+          <div class="p-4">
+              <div class="bg-white shadow rounded-lg p-6 mb-4">
+                  <h1 class="text-2xl font-semibold text-gray-800">Pelaporan Kejadian</h1>
+                  <p class="text-gray-600 mt-2">Sistem pencatatan dan manajemen laporan kejadian yang terjadi di D3 TI SV UNS. Gunakan halaman ini untuk mengirim, memantau, dan mengelola laporan kejadian.</p>
+              </div>
+
+              <!-- Dashboard Cards -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <div class="bg-white shadow rounded-lg p-4">
+                  <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                      <i class="fas fa-file-alt text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                      <p class="text-sm text-gray-500">Total Laporan</p>
+                      <p class="text-lg font-semibold">{{ totalLaporan || 0 }}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="bg-white shadow rounded-lg p-4">
+                  <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                      <i class="fas fa-hourglass-half text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                      <p class="text-sm text-gray-500">Dalam Proses</p>
+                      <p class="text-lg font-semibold">{{ dalamProses || 0 }}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="bg-white shadow rounded-lg p-4">
+                  <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                      <i class="fas fa-check-circle text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                      <p class="text-sm text-gray-500">Selesai</p>
+                      <p class="text-lg font-semibold">{{ selesai || 0 }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Laporan Kejadian with Search, Filters and Pagination -->
+              <div class="bg-white shadow rounded-lg p-6">
+                  <div class="flex flex-col md:flex-row md:items-center justify-between mb-4">
+                      <h2 class="text-lg font-semibold text-gray-800">Daftar Laporan Kejadian</h2>
+                      
+                      <!-- Search Bar and Button Container -->
+                      <div class="mt-3 md:mt-0 flex items-center space-x-2">
+                          <!-- Search Bar -->
+                          <div class="relative">
+                              <input
+                                  type="text"
+                                  v-model="searchQuery"
+                                  placeholder="Cari laporan..."
+                                  class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  @input="handleSearch"
+                              />
+                              <div class="absolute left-3 top-2.5 text-gray-400">
+                                  <i class="fas fa-search"></i>
+                              </div>
+                          </div>
+                          
+                          <!-- Tambah Laporan Button -->
+                          <button 
+                              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+                              @click="addNewReport"
+                          >
+                              <i class="fas fa-plus mr-2"></i> Tambah Laporan
+                          </button>
+                      </div>
+                  </div>
+                  
+                  <!-- Filters Section -->
+                  <div class="mb-4 flex flex-wrap gap-3">
+                      <!-- Status Filter -->
+                      <div class="flex-1 min-w-[200px]">
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                          <select 
+                              v-model="filters.status" 
+                              class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                              <option value="">Semua Status</option>
+                              <option value="Selesai">Selesai</option>
+                              <option value="Dalam Proses">Dalam Proses</option>
+                          </select>
+                      </div>
+                      
+                      <!-- Type Filter -->
+                      <div class="flex-1 min-w-[200px]">
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Kejadian</label>
+                          <select 
+                              v-model="filters.jenisKejadian" 
+                              class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                              <option value="">Semua Jenis</option>
+                              <option v-for="jenis in jenisKejadianList" :key="jenis" :value="jenis">{{ jenis }}</option>
+                          </select>
+                      </div>
+                      
+                      <!-- Date Range Filter -->
+                      <div class="flex-1 min-w-[200px]">
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Periode</label>
+                          <select 
+                              v-model="filters.period" 
+                              class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                              <option value="">Semua Waktu</option>
+                              <option value="week">7 Hari Terakhir</option>
+                              <option value="month">30 Hari Terakhir</option>
+                              <option value="quarter">90 Hari Terakhir</option>
+                          </select>
+                      </div>
+                      
+                      <!-- Reset Filters Button -->
+                      <div class="self-end mb-1 min-w-[100px]">
+                          <button 
+                              @click="resetFilters" 
+                              class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors w-full"
+                          >
+                              Reset Filter
+                          </button>
+                      </div>
+                  </div>
+                  
+                  <div v-if="filteredLaporan && filteredLaporan.length > 0" class="overflow-x-auto">
+                      <!-- Within your table section, replace the table header and body with this: -->
+                      <table class="min-w-full divide-y divide-gray-200">
+                          <thead>
+                              <tr>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      No
+                                  </th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      <div class="flex items-center cursor-pointer" @click="sortBy('nomor_laporan')">
+                                          Nomor Laporan
+                                          <span class="ml-1">
+                                              <i class="fas" :class="getSortIcon('nomor_laporan')"></i>
+                                          </span>
+                                      </div>
+                                  </th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      <div class="flex items-center cursor-pointer" @click="sortBy('judul')">
+                                          Judul
+                                          <span class="ml-1">
+                                              <i class="fas" :class="getSortIcon('judul')"></i>
+                                          </span>
+                                      </div>
+                                  </th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      <div class="flex items-center cursor-pointer" @click="sortBy('category_id')">
+                                          Kategori
+                                          <span class="ml-1">
+                                              <i class="fas" :class="getSortIcon('category_id')"></i>
+                                          </span>
+                                      </div>
+                                  </th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Nama Pelapor
+                                  </th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      <div class="flex items-center cursor-pointer" @click="sortBy('status')">
+                                          Status
+                                          <span class="ml-1">
+                                              <i class="fas" :class="getSortIcon('status')"></i>
+                                          </span>
+                                      </div>
+                                  </th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                              </tr>
+                          </thead>
+                          <tbody class="bg-white divide-y divide-gray-200">
+                              <tr v-for="(laporan, index) in paginatedLaporan" :key="laporan.laporan_id" class="hover:bg-gray-50">
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ startIndex + index + 1 }}</td>
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.nomor_laporan }}</td>
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.judul }}</td>
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ getCategoryName(laporan.category_id) }}</td>
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.nama_pelapor }}</td>
+                                  <td class="px-6 py-4 whitespace-nowrap">
+                                      <span :class="getStatusClass(formatStatus(laporan.status))">{{ formatStatus(laporan.status) }}</span>
+                                  </td>
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                      <button class="text-blue-600 hover:text-blue-800 mr-2" @click="lihatDetail(laporan.laporan_id)">
+                                          <i class="fas fa-eye"></i>
+                                      </button>
+                                  </td>
+                              </tr>
+                          </tbody>
+                      </table>
+                  </div>
+                  <div v-else class="text-center py-4 text-gray-500">
+                      {{ searchQuery || Object.values(filters).some(f => f !== '') ? 'Tidak ada hasil yang ditemukan' : 'Belum ada laporan yang dibuat' }}
+                  </div>
+                  
+                  <!-- Pagination -->
+                  <div class="flex items-center justify-between mt-4 border-t pt-4">
+                      <div class="flex items-center text-sm text-gray-500">
+                          Menampilkan {{ filteredLaporan.length ? startIndex + 1 : 0 }}-{{ endIndex }} dari {{ filteredLaporan.length }} laporan
+                      </div>
+                      
+                      <div class="flex space-x-2">
+                          <button 
+                              @click="prevPage" 
+                              :disabled="currentPage === 1" 
+                              :class="[
+                                  'px-3 py-1 rounded border', 
+                                  currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'
+                              ]"
+                          >
+                              <i class="fas fa-chevron-left"></i>
+                          </button>
+                          
+                          <button 
+                              @click="nextPage" 
+                              :disabled="currentPage >= totalPages" 
+                              :class="[
+                                  'px-3 py-1 rounded border',
+                                  currentPage >= totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'
+                              ]"
+                          >
+                              <i class="fas fa-chevron-right"></i>
+                          </button>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- Modal untuk tambah laporan (hidden by default) -->
+              <div v-if="showModal" class="fixed inset-0 z-10 overflow-y-auto">
+                  <div class="flex items-center justify-center min-h-screen px-4">
+                      <div class="fixed inset-0 bg-black opacity-30"></div>
+                      <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                          <div class="flex justify-between items-center mb-4">
+                              <h3 class="text-lg font-medium text-gray-900">Tambah Laporan Kejadian</h3>
+                              <button @click="showModal = false" class="text-gray-400 hover:text-gray-500">
+                                  <span class="text-2xl">&times;</span>
+                              </button>
+                          </div>
+                          <!-- Form will go here -->
+                          <div class="mt-4">
+                              <!-- Form fields would go here -->
+                              <button 
+                                  class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+                                  @click="showModal = false"
+                              >
+                                  Simpan
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+              </div>
           </div>
-          
-          <div class="filter-select">
-            <label for="statusFilter">Status:</label>
-            <select id="statusFilter" v-model="filters.status" @change="applyFilters">
-              <option value="">Semua</option>
-              <option value="Selesai">Belum Diverifikasi</option>
-              <option value="Proses">Diverifikasi</option>
-              <option value="Proses">Ditolak</option>
-            </select>
-          </div>
-          
-          <div class="filter-date">
-            <label for="dateFilter">Periode:</label>
-            <div class="date-inputs">
-              <input 
-                type="date" 
-                id="startDate" 
-                v-model="filters.startDate" 
-                @change="applyFilters"
-                placeholder="Tanggal Mulai"
-              >
-              <span>s/d</span>
-              <input 
-                type="date" 
-                id="endDate" 
-                v-model="filters.endDate" 
-                @change="applyFilters"
-                placeholder="Tanggal Akhir"
-              >
-            </div>
-          </div>
-          
-          <button class="btn-reset-filter" @click="resetFilters">
-            <i class="fas fa-undo"></i> Reset Filter
-          </button>
-        </div>
-      </div>
-      
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>No</th>
-            <th>Nomor Laporan</th>
-            <th>Judul</th>
-            <th>Kategori</th>
-            <th>Nama Pelapor</th>
-            <th>Status</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(laporan, index) in paginatedLaporan" :key="laporan.laporan_id">
-            <td>{{ startIndex + index + 1 }}</td>
-            <td>{{ laporan.nomor_laporan }}</td>
-            <td>{{ laporan.judul }}</td>
-            <td>{{ getCategoryName(laporan.category_id) }}</td>
-            <td>{{ laporan.nama_pelapor }}</td>
-            <td>
-              <span :class="['status-badge', laporan.status.toLowerCase()]">
-                {{ formatStatus(laporan.status) }}
-              </span>
-            </td>
-            <td>
-              <button class="btn-detail" @click="viewDetail(laporan.laporan_id)">
-                <i class="fas fa-eye"></i> Detail
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      
-      <div v-if="filteredLaporan.length === 0" class="no-data">
-        <p>Tidak ada data yang sesuai dengan kriteria pencarian dan filter.</p>
-      </div>
-      
-      <div class="pagination-container">
-        <div class="pagination-info-total">
-          Total: {{ filteredLaporan.length }} laporan
-        </div>
-        
-        <div class="pagination-controls">
-          <button 
-            class="pagination-btn" 
-            @click="prevPage" 
-            :disabled="currentPage === 1"
-          >
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          
-          <span class="pagination-info">
-            Halaman {{ currentPage }} dari {{ totalPages || 1 }}
-          </span>
-          
-          <button 
-            class="pagination-btn" 
-            @click="nextPage" 
-            :disabled="currentPage === totalPages || totalPages === 0"
-          >
-            <i class="fas fa-chevron-right"></i>
-          </button>
-          
-          <select v-model="pageSize" class="page-size-select" @change="resetPage">
-            <option :value="5">5 per halaman</option>
-            <option :value="10">10 per halaman</option>
-            <option :value="20">20 per halaman</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script>
 import axios from 'axios';
+import VueCookies from 'vue-cookies';
+import { decryptData } from '../../../../services/encrypt';
 
 export default {
-  name: 'DashboardPelaporanKejadian',
+  name: 'DashboardPKDosen',
   data() {
     return {
-      searchQuery: '',
-      currentPage: 1,
-      pageSize: 10,
-      filters: {
-        category_id: '', // Changed from jenisKejadian
-        status: '',
-        startDate: '',
-        endDate: ''
-      },
-      laporan: [], // This will store API data
+      // Data for stats cards
+      totalLaporan: 0,
+      dalamProses: 0,
+      selesai: 0,
+      
+      // Table data and filtering
+      laporan: [],
+      filteredLaporan: [],
       categories: {},
-      selectedStatus: 'all',
+      
+      // Pagination
+      currentPage: 1,
       itemsPerPage: 10,
-      loading: true, // Start with loading true
-      error: null
+      
+      // Search and filters
+      searchQuery: '',
+      filters: {
+        status: '',
+        jenisKejadian: '',
+        period: ''
+      },
+      
+      // Sorting
+      sortField: 'id',
+      sortDirection: 'desc',
+      
+      // Modal state
+      showModal: false,
+      
+      // For API data
+      loading: true,
+      error: null,
+      
+      // Jenis kejadian list for filtering
+      jenisKejadianList: [],
+      
+      // Add this to your data() section
+      userData: null,
     };
   },
   
   computed: {
+    // Calculate filtered data based on search query and filters
     filteredLaporan() {
-      let result = this.laporan;
+      if (!this.laporan || !this.laporan.length) return [];
       
-      // Apply search filter
+      let result = [...this.laporan];
+      
+      // Filter by current user if userData is available
+      if (this.userData) {
+        result = result.filter(item => 
+          (item.nama_pelapor && item.nama_pelapor === this.userData.name) || 
+          (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))
+        );
+      }
+      
+      // Apply search filter (keep your existing code)
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase();
         result = result.filter(item => 
           (item.judul && item.judul.toLowerCase().includes(query)) || 
-          (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(query))
+          (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(query)) ||
+          (item.nama_pelapor && item.nama_pelapor.toLowerCase().includes(query))
         );
       }
       
-      // Apply status filter
-      if (this.selectedStatus !== 'all') {
-        result = result.filter(item => item.status === this.selectedStatus);
+      // Apply status filter (keep your existing code)
+      if (this.filters.status) {
+        const statusValue = this.filters.status === 'Selesai' ? 'verified' : 
+                          this.filters.status === 'Dalam Proses' ? 'unverified' : null;
+        
+        if (statusValue) {
+          result = result.filter(item => item.status === statusValue);
+        }
       }
       
-      // Apply jenisKejadian filter (category)
+      // Apply jenis kejadian filter (keep your existing code)
       if (this.filters.jenisKejadian) {
-        result = result.filter(item => item.category_id == this.filters.jenisKejadian);
+        result = result.filter(item =>
+          this.getCategoryName(item.category_id) === this.filters.jenisKejadian
+        );
       }
       
-      // Apply date filters if needed
-      if (this.filters.startDate && this.filters.endDate) {
-        result = result.filter(item => {
-          const itemDate = new Date(item.tanggal_kejadian);
-          const startDate = new Date(this.filters.startDate);
-          const endDate = new Date(this.filters.endDate);
-          return itemDate >= startDate && itemDate <= endDate;
-        });
+      // Apply period filter
+      if (this.filters.period) {
+        const now = new Date();
+        let startDate;
+        
+        switch(this.filters.period) {
+          case 'week':
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case 'month':
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+          case 'quarter':
+            startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+            break;
+        }
+        
+        if (startDate) {
+          result = result.filter(item => {
+            const itemDate = new Date(item.created_at);
+            return itemDate >= startDate;
+          });
+        }
       }
+      
+      // Apply sorting
+      result.sort((a, b) => {
+        let fieldA, fieldB;
+        
+        // Handle special fields
+        if (this.sortField === 'id') {
+          fieldA = a.laporan_id;
+          fieldB = b.laporan_id;
+        } else if (this.sortField === 'tanggal') {
+          fieldA = new Date(a.created_at);
+          fieldB = new Date(b.created_at);
+        } else if (this.sortField === 'jenisKejadian') {
+          fieldA = this.getCategoryName(a.category_id);
+          fieldB = this.getCategoryName(b.category_id);
+        } else if (this.sortField === 'status') {
+          fieldA = a.status;
+          fieldB = b.status;
+        } else {
+          fieldA = a[this.sortField];
+          fieldB = b[this.sortField];
+        }
+        
+        let comparison = 0;
+        if (fieldA > fieldB) {
+          comparison = 1;
+        } else if (fieldA < fieldB) {
+          comparison = -1;
+        }
+        
+        return this.sortDirection === 'asc' ? comparison : -comparison;
+      });
       
       return result;
     },
     
+    // Paginated data for display
     paginatedLaporan() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
       return this.filteredLaporan.slice(start, end);
     },
     
+    // Calculate pagination values
     totalPages() {
       return Math.ceil(this.filteredLaporan.length / this.itemsPerPage);
     },
     
     startIndex() {
       return (this.currentPage - 1) * this.itemsPerPage;
+    },
+    
+    endIndex() {
+      const end = this.startIndex + this.itemsPerPage;
+      return Math.min(end, this.filteredLaporan.length);
     }
   },
   
   methods: {
+    // Fetch data from API
     async fetchData() {
       this.loading = true;
       try {
         // Fetch categories first
         const categoriesResponse = await axios.get('http://localhost:8000/api/category');
+        
         // Transform categories array to an object with id as key for easy lookup
         this.categories = categoriesResponse.data.reduce((acc, category) => {
           acc[category.category_id] = category.nama;
           return acc;
         }, {});
         
-        // Then fetch laporan data
-        const laporanResponse = await axios.get('http://localhost:8000/api/laporan');
-        this.laporan = laporanResponse.data;
+        // Extract category names for filter dropdown
+        this.jenisKejadianList = categoriesResponse.data.map(category => category.nama);
         
-        console.log('Laporan data loaded:', this.laporan); // Debug log
-        console.log('Categories loaded:', this.categories); // Debug log
+        // Get user data from cookie
+        const encryptedUserData = VueCookies.get("user_session");
+        let userData = null;
+        if (encryptedUserData) {
+          userData = decryptData(encryptedUserData);
+        }
+        
+        // Then fetch all laporan data
+        const laporanResponse = await axios.get('http://localhost:8000/api/laporan');
+        
+        // Filter laporan for the current user only
+        if (userData && userData.name) {
+          this.laporan = laporanResponse.data.filter(item => 
+            (item.nama_pelapor && item.nama_pelapor.trim() === userData.name.trim()) || 
+            (item.ni_pelapor && (item.ni_pelapor === userData.nim || item.ni_pelapor === userData.nik))
+          );
+          console.log(`Filtered to ${this.laporan.length} reports for user: ${userData.name}`);
+        } else {
+          this.laporan = laporanResponse.data;
+          console.warn('User data not available for filtering, showing all reports');
+        }
+        
+        // Initialize filteredLaporan with all data
+        this.filteredLaporan = [...this.laporan];
+        
+        // Calculate summary statistics
+        this.totalLaporan = this.laporan.length;
+        this.dalamProses = this.laporan.filter(item => item.status === 'unverified').length;
+        this.selesai = this.laporan.filter(item => item.status === 'verified').length;
+        
+        console.log('Data loaded successfully:', this.laporan);
       } catch (error) {
         console.error('Error fetching data:', error);
         this.error = 'Gagal memuat data. Silakan coba lagi nanti.';
@@ -287,10 +485,20 @@ export default {
       }
     },
     
+    // Helper to get category name by ID
     getCategoryName(categoryId) {
-      return this.categories[categoryId] || `Kategori ${categoryId}`;
+      return this.categories[categoryId] || 'Tidak ada kategori';
     },
     
+    // Format date for display
+    formatDate(dateString) {
+      if (!dateString) return '';
+      
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return new Date(dateString).toLocaleDateString('id-ID', options);
+    },
+    
+    // Format status for display
     formatStatus(status) {
       const statusMap = {
         'unverified': 'Belum Diverifikasi',
@@ -300,26 +508,43 @@ export default {
       
       return statusMap[status] || status;
     },
-
-    addNewReport() {
-      // Navigate to form page or show modal for adding a new report
-      console.log('Add new incident report');
-      // For example:
-      this.$router.push('/kalab/addpelaporankejadiankalab');
+    
+    // Handle search input with debounce
+    handleSearch() {
+      clearTimeout(this.searchTimeout);
+      this.searchTimeout = setTimeout(() => {
+        this.currentPage = 1;
+      }, 300);
     },
     
-    viewDetail(id) {
-      // Navigate to detail page or show modal
-      this.$router.push(`/laporan/${id}`);
-    },
-    
-    // Pagination methods
-    goToPage(page) {
-      if (page >= 1 && page <= this.totalPages) {
-        this.currentPage = page;
+    // Sort table by field
+    sortBy(field) {
+      if (this.sortField === field) {
+        this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        this.sortField = field;
+        this.sortDirection = 'asc';
       }
     },
     
+    // Get sort icon class based on current sort
+    getSortIcon(field) {
+      if (this.sortField !== field) return 'fa-sort';
+      return this.sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+    },
+    
+    // Get status badge class
+    getStatusClass(status) {
+      const classMap = {
+        'Selesai': 'px-2 py-1 text-xs rounded-full bg-green-100 text-green-800',
+        'Dalam Proses': 'px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800',
+        'Ditolak': 'px-2 py-1 text-xs rounded-full bg-red-100 text-red-800'
+      };
+      
+      return classMap[status] || 'px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800';
+    },
+    
+    // Pagination methods
     prevPage() {
       if (this.currentPage > 1) {
         this.currentPage--;
@@ -330,634 +555,48 @@ export default {
       if (this.currentPage < this.totalPages) {
         this.currentPage++;
       }
-    }
+    },
+    
+    // Reset all filters
+    resetFilters() {
+      this.filters = {
+        status: '',
+        jenisKejadian: '',
+        period: ''
+      };
+      this.searchQuery = '';
+      this.currentPage = 1;
+    },
+    
+    // Event handlers
+    addNewReport() {
+      this.showModal = true;
+      // Alternatively, use router to navigate to form page
+      // this.$router.push('/dosen/addpelaporankejadian');
+    },
+    
+    lihatDetail(id) {
+      this.$router.push({ name: 'DetailPK', params: { id } });
+    },
+    
+    // Add this to your methods
+    getCurrentUser() {
+      try {
+        const encryptedUserData = VueCookies.get("user_session");
+        if (encryptedUserData) {
+          this.userData = decryptData(encryptedUserData);
+          console.log("Current user loaded:", this.userData.name);
+        }
+      } catch (error) {
+        console.error("Error getting user data:", error);
+      }
+    },
   },
   
   mounted() {
     this.fetchData();
+    // Add this to your mounted() method
+    this.getCurrentUser();
   }
 };
 </script>
-
-<style scoped>
-.dashboard-pelaporan-kejadian {
-  padding: 20px;
-}
-
-.page-title {
-  margin-bottom: 30px;
-  color: #2c3e50;
-  font-weight: 700;
-  font-size: 2.2rem;
-  letter-spacing: -0.5px;
-  line-height: 1.2;
-}
-
-.statistics-cards {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.stats-card {
-  flex: 1;
-  display: flex;
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.stats-icon {
-  font-size: 24px;
-  margin-right: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #f0f4f8;
-  color: #3498db;
-}
-
-.stats-icon-procces {
-  font-size: 24px;
-  margin-right: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #f0f4f8;
-  color: #d97706;
-}
-
-.stats-icon-done {
-  font-size: 24px;
-  margin-right: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #f0f4f8;
-  color: #16a34a;
-}
-
-.stats-content h3 {
-  font-size: 16px;
-  margin: 0 0 5px 0;
-  color: #7f8c8d;
-}
-
-.stats-number {
-  font-size: 28px;
-  font-weight: bold;
-  margin: 0;
-  color: #2c3e50;
-}
-
-/* Table styles */
-.incident-table-container {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-}
-
-/* Table actions and add button */
-.table-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.btn-add-report {
-  background-color: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: background-color 0.2s;
-  box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
-}
-
-.btn-add-report:hover {
-  background-color: #1d4ed8;
-}
-
-.btn-add-report i {
-  font-size: 12px;
-}
-
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.search-container {
-  position: relative; /* Add this line */
-  flex: 1;
-  max-width: 400px;
-}
-
-.action-buttons {
-  margin-left: 15px;
-}
-
-.search-input {
-  padding: 10px 15px 10px 40px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  width: 300px;
-  font-size: 14px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #7f8c8d;
-  z-index: 1; /* Add this to ensure icon appears above input */
-}
-
-/* Filter styles */
-.filter-container {
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  padding: 15px;
-  margin-bottom: 20px;
-  border: 1px solid #edf2f7;
-}
-
-.filter-group {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 15px;
-}
-
-.filter-group > label {
-  font-weight: 600;
-  margin-right: 5px;
-  color: #4a5568;
-}
-
-.filter-select, .filter-date {
-  display: flex;
-  align-items: center;
-}
-
-.filter-select label, .filter-date label {
-  margin-right: 8px;
-  font-size: 14px;
-  color: #4a5568;
-}
-
-.filter-select select, .filter-date input {
-  padding: 8px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  background-color: white;
-  font-size: 14px;
-}
-
-.date-inputs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.date-inputs span {
-  color: #718096;
-  font-size: 14px;
-}
-
-.btn-reset-filter {
-  background-color: #edf2f7;
-  color: #4a5568;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-
-.btn-reset-filter:hover {
-  background-color: #e2e8f0;
-}
-
-.incident-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.incident-table th,
-.incident-table td {
-  padding: 12px 15px;
-  text-align: left;
-  border-bottom: 1px solid #eee;
-}
-
-.incident-table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-}
-
-.status-badge {
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.status-badge.selesai {
-  background-color: #d4f9e2;
-  color: #16a34a;
-}
-
-.status-badge.proses {
-  background-color: #fef3c7;
-  color: #d97706;
-}
-
-.btn-detail {
-  background-color: #e6f7ff;
-  color: #0ea5e9;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.btn-detail:hover {
-  background-color: #d1eeff;
-}
-
-.no-data {
-  text-align: center;
-  padding: 30px;
-  color: #7f8c8d;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 20px;
-}
-
-.pagination-info-total {
-  font-size: 14px;
-  color: #64748b;
-}
-
-.pagination-controls {
-  display: flex;
-  align-items: center;
-}
-
-.pagination-btn {
-  background: #f8f9fa;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 8px 12px;
-  margin: 0 5px;
-  cursor: pointer;
-}
-
-.pagination-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination-info {
-  margin: 0 15px;
-  font-size: 14px;
-  color: #64748b;
-}
-
-.page-size-select {
-  margin-left: 15px;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-@media (max-width: 768px) {
-  .statistics-cards {
-    flex-direction: column;
-  }
-  
-  .table-actions {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-  
-  .action-buttons {
-    width: 100%;
-  }
-  
-  .btn-add-report {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .filter-group {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .filter-select, .filter-date {
-    width: 100%;
-    margin-bottom: 10px;
-  }
-  
-  .pagination-container {
-    flex-direction: column;
-    gap: 15px;
-  }
-  
-  .search-input {
-    width: 100%;
-  }
-}
-</style>
-
-<style scoped>
-/* Table styling for proper spacing and layout */
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  background-color: white;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.data-table th,
-.data-table td {
-  padding: 12px 16px;
-  text-align: left;
-  vertical-align: middle;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.data-table th {
-  background-color: #f9fafb;
-  font-weight: 600;
-  color: #374151;
-  text-transform: uppercase;
-  font-size: 12px;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-}
-
-.data-table tr:last-child td {
-  border-bottom: none;
-}
-
-.data-table tbody tr:hover {
-  background-color: #f9fafb;
-}
-
-/* Column widths to maintain consistent spacing */
-.data-table th:nth-child(1),
-.data-table td:nth-child(1) {
-  width: 5%;
-  text-align: center;
-}
-
-.data-table th:nth-child(2),
-.data-table td:nth-child(2) {
-  width: 15%;
-}
-
-.data-table th:nth-child(3),
-.data-table td:nth-child(3) {
-  width: 20%;
-}
-
-.data-table th:nth-child(4),
-.data-table td:nth-child(4) {
-  width: 15%;
-}
-
-.data-table th:nth-child(5),
-.data-table td:nth-child(5) {
-  width: 15%;
-}
-
-.data-table th:nth-child(6),
-.data-table td:nth-child(6) {
-  width: 15%;
-}
-
-.data-table th:nth-child(7),
-.data-table td:nth-child(7) {
-  width: 15%;
-  text-align: center;
-}
-
-/* Status badge styling */
-.status-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 16px;
-  font-size: 12px;
-  font-weight: 500;
-  text-align: center;
-  min-width: 100px;
-}
-
-.unverified {
-  background-color: #f3f4f6;
-  color: #4b5563;
-}
-
-.verified {
-  background-color: #dbeafe;
-  color: #2563eb;
-}
-
-.processed {
-  background-color: #fef3c7;
-  color: #d97706;
-}
-
-.completed {
-  background-color: #d1fae5;
-  color: #059669;
-}
-
-.rejected {
-  background-color: #fee2e2;
-  color: #dc2626;
-}
-
-
-/* Button styling */
-.btn-detail {
-  background-color: #e6f7ff;
-  color: #0ea5e9;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  transition: background-color 0.2s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.btn-detail:hover {
-  background-color: #0ea5e9;
-  color: #e6f7ff;
-}
-
-.btn-detail i {
-  font-size: 14px;
-}
-
-/* Loading & error states */
-.loading-indicator, 
-.error-message, 
-.no-data {
-  text-align: center;
-  padding: 2rem;
-  background-color: white;
-  border-radius: 8px;
-  margin: 1rem 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.loading-indicator {
-  color: #4b5563;
-}
-
-.error-message {
-  color: #dc2626;
-}
-
-.no-data {
-  color: #6b7280;
-  font-style: italic;
-}
-
-/* Container styling */
-.dashboard-container {
-  padding: 1.5rem;
-  background-color: #f9fafb;
-  min-height: calc(100vh - 64px); /* Adjust based on your header height */
-}
-
-/* Pagination styling */
-.pagination-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 1rem;
-  background-color: white;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.pagination-info-total {
-  font-size: 14px;
-  color: #6b7280;
-}
-
-.pagination-controls {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.pagination-button {
-  background-color: white;
-  border: 1px solid #d1d5db;
-  color: #374151;
-  font-size: 14px;
-  padding: 4px 8px;
-  min-width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.pagination-button:hover:not(:disabled) {
-  background-color: #f3f4f6;
-}
-
-.pagination-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination-button.active {
-  background-color: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
-}
-</style>
-
-<style>
-/* You can keep your existing styles and add these if needed */
-.status-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.unverified {
-  background-color: #f3f4f6;
-  color: #4b5563;
-}
-
-.verified {
-  background-color: #dbeafe;
-  color: #2563eb;
-}
-
-.processed {
-  background-color: #fef3c7;
-  color: #d97706;
-}
-
-.completed {
-  background-color: #d1fae5;
-  color: #059669;
-}
-
-.rejected {
-  background-color: #fee2e2;
-  color: #dc2626;
-}
-</style>

@@ -200,7 +200,7 @@
 
           <div v-if="dropdownStates[2]" class="pl-4 mt-1 space-y-1">
             <router-link
-              :to="getRouteByJabatan('bhp')"
+              :to="getRouteByJabatan('dashboardpkdosen')"
               class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
               @click.native="closeSidebar"
             >
