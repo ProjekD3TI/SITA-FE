@@ -63,6 +63,7 @@
                                 type="text"
                                 placeholder="Cari berdasarkan judul atau deskripsi"
                                 class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                @input="handleSearch"
                               />
                               <button 
                                 v-if="searchQuery || filters.status || filters.jenisKejadian"
@@ -91,6 +92,7 @@
                           <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                           <select 
                               v-model="filters.status" 
+                              @change="applyFilters"
                               class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           > 
                               <option value="">Semua</option>
@@ -102,9 +104,9 @@
                       
                       <!-- Type Filter -->
                       <div class="flex-1 min-w-[200px]">
-                          <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Kejadian</label>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
                           <select 
-                              v-model="filters.jenisKejadian" 
+                              v-model="filters.category_id" 
                               class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                               <option value="">Semua Jenis</option>
@@ -319,7 +321,6 @@ export default {
   },
   
   computed: {
-    // Calculate filtered data based on search query and filters
     filteredLaporan() {
       if (!this.laporan || !this.laporan.length) return [];
       
@@ -440,27 +441,6 @@ export default {
       const end = this.startIndex + this.itemsPerPage;
       return Math.min(end, this.filteredLaporan.length);
     },
-
-    // Add this computed property
-    filteredReports() {
-      return this.reports.filter(report => {
-        // Check if report matches search query
-        const matchesSearch = this.searchQuery === '' || 
-          (report.judul && report.judul.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
-          (report.deskripsi && report.deskripsi.toLowerCase().includes(this.searchQuery.toLowerCase()));
-        
-        // Check if report matches selected status
-        const matchesStatus = this.filters.status === '' || 
-          report.status === this.filters.status;
-        
-        // Check if report matches selected incident type
-        const matchesType = this.filters.jenisKejadian === '' || 
-          report.jenisKejadian === this.filters.jenisKejadian;
-        
-        // Return true only if all conditions are met
-        return matchesSearch && matchesStatus && matchesType;
-      });
-    }
   },
   
   methods: {
@@ -545,10 +525,15 @@ export default {
     
     // Handle search input with debounce
     handleSearch() {
-      clearTimeout(this.searchTimeout);
-      this.searchTimeout = setTimeout(() => {
-        this.currentPage = 1;
-      }, 300);
+      if (!this.searchQuery) {
+        // Jika kolom pencarian kosong, tampilkan semua laporan
+        this.filteredLaporan = [...this.laporan];
+      } else {
+        // Filter laporan berdasarkan query pencarian
+        this.filteredLaporan = this.laporan.filter(laporan => 
+          laporan.judul.toLowerCase().includes(this.searchQuery.toLowerCase())
+        );
+      }
     },
     
     // Sort table by field
@@ -600,6 +585,69 @@ export default {
       };
       this.searchQuery = '';
       this.currentPage = 1;
+    },
+
+    applyFilters() {
+      console.log('Applying filters:', this.filters); // Debug log
+      
+      // Start with all data
+      let filtered = [...this.laporan];
+      
+      // Apply category filter
+      if (this.filters.category_id) {
+        console.log('Filtering by category:', this.filters.category_id);
+        filtered = filtered.filter(item => 
+          String(item.category_id) === String(this.filters.category_id)
+        );
+      }
+      
+      // Apply status filter
+      if (this.filters.status) {
+        console.log('Filtering by status:', this.filters.status);
+        // Map frontend status labels to actual status values in the data
+        const statusMap = {
+          'Belum Diverifikasi': 'unverified',
+          'Diverifikasi': 'verified',
+          'Ditolak': 'rejected'
+        };
+        
+        const statusValue = statusMap[this.filters.status] || this.filters.status;
+        filtered = filtered.filter(item => item.status === statusValue);
+      }
+      
+      // Apply date range filter
+      if (this.filters.startDate || this.filters.endDate) {
+        console.log('Filtering by date range:', this.filters.startDate, 'to', this.filters.endDate);
+        
+        filtered = filtered.filter(item => {
+          // Convert to Date objects for comparison
+          const itemDate = new Date(item.created_at || item.tanggal); // Adjust field name as needed
+          
+          // Check start date if specified
+          if (this.filters.startDate) {
+            const startDate = new Date(this.filters.startDate);
+            startDate.setHours(0, 0, 0, 0);
+            if (itemDate < startDate) return false;
+          }
+          
+          // Check end date if specified
+          if (this.filters.endDate) {
+            const endDate = new Date(this.filters.endDate);
+            endDate.setHours(23, 59, 59, 999);
+            if (itemDate > endDate) return false;
+          }
+          
+          return true;
+        });
+      }
+      
+      // Update filtered data
+      this.filteredLaporan = filtered;
+      
+      // Reset to first page when filters change
+      this.currentPage = 1;
+      
+      console.log('Filtered results:', this.filteredLaporan.length); // Debug log
     },
     
     // Event handlers
