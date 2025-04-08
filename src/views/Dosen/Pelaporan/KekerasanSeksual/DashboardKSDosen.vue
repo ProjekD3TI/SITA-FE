@@ -14,7 +14,7 @@
           </div>
           <div class="ml-4">
             <p class="text-sm text-gray-500">Total Laporan</p>
-            <p class="text-lg font-semibold">{{ laporan.length }}</p>
+            <p class="text-lg font-semibold">{{ totalLaporan || 0 }}</p>
           </div>
         </div>
       </div>
@@ -26,7 +26,7 @@
           </div>
           <div class="ml-4">
             <p class="text-sm text-gray-500">Dalam Proses</p>
-            <p class="text-lg font-semibold">{{ pendingCount }}</p>
+            <p class="text-lg font-semibold">{{ dalamProses || 0 }}</p>
           </div>
         </div>
       </div>
@@ -38,7 +38,7 @@
           </div>
           <div class="ml-4">
             <p class="text-sm text-gray-500">Selesai</p>
-            <p class="text-lg font-semibold">{{ completedCount }}</p>
+            <p class="text-lg font-semibold">{{ selesai || 0 }}</p>
           </div>
         </div>
       </div>
@@ -73,7 +73,7 @@
             
             <!-- Tambah Laporan Button -->
             <button 
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center"
                 @click="addNewReport"
             >
                 <i class="fas fa-plus mr-2"></i> Tambah Laporan
@@ -289,8 +289,20 @@ export default {
   name: 'DashboardKSDosen',
   data() {
     return {
+      // Data for stats cards
+      totalLaporan: 0,
+      dalamProses: 0,
+      selesai: 0,
+      
+      // Table data and filtering
       laporan: [],
+      filteredLaporan: [],
       categories: {},
+      
+      // Current user data
+      userData: null,
+      
+      // Other data properties...
       loading: false,
       error: null,
       sortKey: 'tanggal_kejadian',
@@ -312,7 +324,7 @@ export default {
     filteredLaporan() {
       if (!this.laporan || this.laporan.length === 0) return [];
       
-      const result = this.laporan.filter(laporan => {
+      let result = this.laporan.filter(laporan => {
         // Apply search filter
         const searchTerms = this.searchQuery.toLowerCase().trim();
         const matchesSearch = !searchTerms || 
@@ -349,6 +361,15 @@ export default {
         
         return matchesSearch && matchesStatus && matchesCategory && matchesDateRange;
       });
+      
+      // Filter by current user if userData is available
+      if (this.userData) {
+        // Filter laporan for current user and update statistics
+        const userLaporan = this.laporan.filter(item => 
+          (item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
+          (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))
+        );
+      }
       
       // Sort the filtered data
       return result.sort((a, b) => {
@@ -402,13 +423,41 @@ export default {
           axios.get('http://localhost:8000/api/category'),
           axios.get('http://localhost:8000/api/laporan_kekerasan')
         ]);
-
+        
+        console.log('Raw API response:', laporanResponse);
+        console.log('Categories response:', categoriesResponse);
+        console.log('Laporan data:', laporanResponse.data);
+        console.log('User data:', this.userData);
+        
         this.categories = categoriesResponse.data.reduce((acc, category) => {
           acc[category.category_id] = category.nama;
           return acc;
         }, {});
         
         this.laporan = laporanResponse.data;
+        
+        // Calculate summary statistics based on filtered data
+        if (this.userData) {
+          // Filter laporan for current user
+          const userLaporan = this.laporan.filter(item => 
+            (item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
+            (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))
+          );
+          
+          // IMPORTANT: Assign the filtered reports to filteredLaporan
+          this.filteredLaporan = userLaporan;
+          
+          // Update statistics
+          this.totalLaporan = userLaporan.length;
+          this.dalamProses = userLaporan.filter(item => item.status === 'unverified').length;
+          this.selesai = userLaporan.filter(item => item.status === 'verified').length;
+          
+          console.log(`Filtered to ${userLaporan.length} reports for user: ${this.userData.name}`);
+        } else {
+          // If no user data, use all reports
+          this.filteredLaporan = this.laporan;
+        }
+        
       } catch (error) {
         console.error('Error fetching data:', error);
         this.error = 'Gagal memuat data. Silakan coba lagi nanti.';
@@ -549,11 +598,31 @@ export default {
     getSortIcon(key) {
       if (this.sortKey !== key) return 'fa-sort';
       return this.sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+    },
+    
+    // Add a method to get the current user from cookies
+    getCurrentUser() {
+      try {
+        const encryptedUserData = VueCookies.get("user_session");
+        if (encryptedUserData) {
+          this.userData = decryptData(encryptedUserData);
+          console.log("Current user loaded:", this.userData.name);
+        }
+      } catch (error) {
+        console.error("Error getting user data:", error);
+      }
     }
   },
   
   mounted() {
+    // Get current user first, then fetch data
+    this.getCurrentUser();
     this.fetchData();
+    
+    // Any other mounted code...
+    console.log('filteredLaporan length:', this.filteredLaporan.length);
+console.log('paginatedLaporan length:', this.paginatedLaporan.length);
+
   }
 };
 </script>

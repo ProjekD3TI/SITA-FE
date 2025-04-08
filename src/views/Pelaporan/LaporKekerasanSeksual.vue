@@ -32,7 +32,7 @@
                     required
                   >
                     <option value="" disabled>Pilih Kategori</option>
-                    <option v-for="category in categories" :key="category.category_id" :value="category.category_id">
+                    <option v-for="category in filteredCategories" :key="category.category_id" :value="category.category_id">
                       {{ category.nama }}
                     </option>
                   </select>
@@ -264,6 +264,13 @@ export default {
       } finally {
         this.isSubmitting = false;
       }
+    }
+  },
+  computed: {
+    filteredCategories() {
+      return this.categories.filter(category => 
+        category.nama.startsWith('Kekerasan')
+      );
     }
   }
 };

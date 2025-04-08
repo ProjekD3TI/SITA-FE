@@ -31,7 +31,7 @@
                     required
                   >
                     <option value="" disabled>Pilih Kategori</option>
-                    <option v-for="category in categories" :key="category.category_id" :value="category.category_id">
+                    <option v-for="category in filteredCategories" :key="category.category_id" :value="category.category_id">
                       {{ category.nama }}
                     </option>
                   </select>
@@ -131,6 +131,8 @@
 <script>
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import VueCookies from 'vue-cookies';
+import { decryptData } from '../../../../services/encrypt';
 
 export default {
   name: 'LaporKekerasanSeksual',
@@ -153,6 +155,7 @@ export default {
 
   mounted() {
     this.fetchCategories();
+    this.loadUserData();
   },
 
   methods: {
@@ -256,6 +259,22 @@ export default {
       } finally {
         this.isSubmitting = false;
       }
+    },
+    loadUserData() {
+      const encryptedUserData = VueCookies.get("user_session");
+      if (encryptedUserData) {
+        const userData = decryptData(encryptedUserData);
+        this.report.reporterName = userData.name || '';
+        this.report.nim = userData.nim || userData.nik || '';
+        this.report.phone = userData.no_telp || '';
+      }
+    },
+  },
+  computed: {
+    filteredCategories() {
+      return this.categories.filter(category => 
+        category.nama.startsWith('Kekerasan')
+      );
     }
   }
 };
