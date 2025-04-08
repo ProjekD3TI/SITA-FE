@@ -56,10 +56,11 @@
                 <i class="fas fa-search text-gray-400"></i>
               </div>
               <input
-                v-model="searchQuery"
-                type="text"
-                placeholder="Cari laporan..."
-                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  v-model="searchQuery"
+                  type="text"
+                  placeholder="Cari laporan..."
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  @input="handleSearch"
               />
               <button 
                 v-if="searchQuery || filters.category_id || filters.status || filters.startDate || filters.endDate"
@@ -83,57 +84,20 @@
       
       <!-- Filters Section -->
       <div class="mb-4 flex flex-wrap gap-3">
-        <!-- Status Filter -->
-        <div class="flex-1 min-w-[200px]">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-          <select 
-            v-model="filters.status" 
-            class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            @change="applyFilters"
-          >
-            <option value="">Semua Status</option>
-            <option value="unverified">Belum Diverifikasi</option>
-            <option value="verified">Terverifikasi</option>
-            <option value="processed">Diproses</option>
-            <option value="completed">Selesai</option>
-            <option value="rejected">Ditolak</option>
-          </select>
-        </div>
-        
-        <!-- Kategori Filter -->
-        <div class="flex-1 min-w-[200px]">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-          <select 
-            v-model="filters.category_id" 
-            class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            @change="applyFilters"
-          >
-            <option value="">Semua Kategori</option>
-            <option v-for="(name, id) in categories" :key="id" :value="id">
-              {{ name }}
-            </option>
-          </select>
-        </div>
-        
-        <!-- Date Filter -->
-        <div class="flex-1 min-w-[300px]">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Periode</label>
-          <div class="flex gap-2">
-            <input 
-              type="date" 
-              v-model="filters.startDate" 
-              class="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              @change="applyFilters"
-            >
-            <span class="inline-flex items-center">s/d</span>
-            <input 
-              type="date" 
-              v-model="filters.endDate" 
-              class="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              @change="applyFilters"
-            >
-          </div>
-        </div>
+      <!-- Kategori Filter -->
+      <div class="flex-1 min-w-[200px]">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+        <select 
+          v-model="filters.category_id" 
+          class="w-med border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          @change="applyFilters"
+        >
+          <option value="">Semua Kategori</option>
+          <option v-for="(name, id) in filteredCategories" :key="id" :value="id">
+            {{ name }}
+          </option>
+        </select>
+      </div>
         
         <!-- Reset Filter Button -->
         <div class="flex items-end">
@@ -410,6 +374,16 @@ export default {
     
     completedCount() {
       return this.laporan.filter(item => item.status === 'completed').length;
+    },
+
+    filteredCategories() {
+      const result = {};
+      for (const [id, name] of Object.entries(this.categories)) {
+        if (name.startsWith('Kekerasan')) {
+          result[id] = name;
+        }
+      }
+      return result;
     }
   },
   
@@ -490,8 +464,32 @@ export default {
     
     // Handle search input with debounce
     handleSearch() {
-      // Implement search logic
-      this.applyFilters();
+      // Always start from the user-filtered data
+      let filtered = [...this.laporan];
+      
+      // Apply user filtering first (keeping the same logic from fetchData)
+      if (this.userData && this.userData.name) {
+        filtered = filtered.filter(item => 
+          (item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
+          (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))
+        );
+      }
+      
+      // Then apply search query if it exists
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(item => 
+          (item.judul && item.judul.toLowerCase().includes(query)) || 
+          (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(query)) ||
+          (item.nama_pelapor && item.nama_pelapor.toLowerCase().includes(query))
+        );
+      }
+      
+      // Update the filtered list
+      this.filteredLaporan = filtered;
+      
+      // Reset to first page when search changes
+      this.currentPage = 1;
     },
     
     addNewReport() {
@@ -499,14 +497,6 @@ export default {
       console.log('Add new incident report');
       // For example:
       this.$router.push('/dosen/addpelaporanksdosen');
-    },
-    
-    applyFilters() {
-      console.log('Applying filters:', this.filters);
-      
-      // The filtering logic is now in the computed property
-      // Just reset page when filters change
-      this.currentPage = 1;
     },
 
     resetFilters() {
@@ -519,36 +509,142 @@ export default {
     },
     
     filterReports() {
-      // Start with all reports
-      let result = [...this.reports]; // Assuming you have a 'reports' array with all data
+      console.log('Filtering reports...');
       
-      // Filter by search query (case insensitive search on report name)
-      if (this.searchQuery) {
-        const searchLower = this.searchQuery.toLowerCase();
-        result = result.filter(report => 
-          report.name.toLowerCase().includes(searchLower) || 
-          report.title.toLowerCase().includes(searchLower) // Add more fields as needed
-        );
+      // Get the current user information and ensure it's a number for comparison
+      const currentUserId = parseInt(this.userData.id, 10);
+      console.log('Current user ID (parsed):', currentUserId);
+      
+      // Check if currentUserId is valid
+      if (!currentUserId) {
+        console.error('Invalid user ID or user not logged in');
+        this.filteredLaporan = [];
+        return;
       }
       
-      // Apply other filters (category, status, date range)
-      if (this.filters.category_id) {
-        result = result.filter(report => report.category_id === this.filters.category_id);
-      }
+      // Start with completely unfiltered data
+      let allReports = [...this.laporanKs];
+      console.log('Total reports before filtering:', allReports.length);
       
-      if (this.filters.status) {
-        result = result.filter(report => report.status === this.filters.status);
-      }
+      // STEP 1: First, check if we're looking at /reports for a dosen (should only see their own)
+      const isDosenView = this.$route.path.includes('/dosen') || this.$route.name.includes('Dosen');
+      console.log('Is dosen view?', isDosenView);
       
-      if (this.filters.startDate && this.filters.endDate) {
-        result = result.filter(report => {
-          const reportDate = new Date(report.created_at);
-          return reportDate >= new Date(this.filters.startDate) && 
-                 reportDate <= new Date(this.filters.endDate);
+      // STEP 2: Filter based on user role
+      let userReports = allReports;
+      
+      if (isDosenView) {
+        // In dosen view, only show reports explicitly associated with this user
+        userReports = allReports.filter(item => {
+          // Convert both IDs to numbers to ensure proper comparison
+          const reportUserId = item.user_id ? parseInt(item.user_id, 10) : null;
+          const reportPelaporId = item.pelapor_id ? parseInt(item.pelapor_id, 10) : null;
+          
+          console.log(`Report ${item.id}: user_id=${reportUserId}, pelapor_id=${reportPelaporId}, currentUserId=${currentUserId}`);
+          
+          // Strict equality check after type conversion
+          const isUsersReport = 
+            (reportUserId !== null && reportUserId === currentUserId) || 
+            (reportPelaporId !== null && reportPelaporId === currentUserId);
+          
+          if (!isUsersReport) {
+            console.log(`Excluding report ${item.id} - not associated with current user ${currentUserId}`);
+          }
+          
+          return isUsersReport;
         });
+        
+        console.log('Reports belonging to current user:', userReports.length);
+      } else {
+        // If not in dosen view, show all reports (for admin or public view)
+        console.log('Showing all reports (not in dosen view)');
       }
       
-      this.filteredReports = result;
+      // If no user reports found in dosen view, immediately return empty results
+      if (isDosenView && userReports.length === 0) {
+        console.log('No reports found for current user');
+        this.filteredLaporan = [];
+        return;
+      }
+      
+      // Rest of the filtering logic remains the same...
+      let filtered = [...userReports];
+      
+      // Apply search filter
+      if (this.searchQuery.trim()) {
+        const query = this.searchQuery.toLowerCase().trim();
+        filtered = filtered.filter(item => {
+          return (item.judul_laporan?.toLowerCase().includes(query) || 
+                  item.category?.name?.toLowerCase().includes(query));
+        });
+        console.log('After search filter:', filtered.length);
+      }
+      
+      // Apply category filter
+      if (this.filters.category_id) {
+        filtered = filtered.filter(item => {
+          const itemCategoryId = parseInt(item.category_id, 10);
+          const filterCategoryId = parseInt(this.filters.category_id, 10);
+          return itemCategoryId === filterCategoryId;
+        });
+        console.log('After category filter:', filtered.length);
+      }
+      
+      // Apply date filter
+      if (this.filters.startDate || this.filters.endDate) {
+        console.log('Applying date filters - Start:', this.filters.startDate, 'End:', this.filters.endDate);
+        
+        filtered = filtered.filter(item => {
+          // Use the correct date field, ensure it exists
+          const dateStr = item.tanggal_kegiatan || item.created_at || item.tanggal;
+          
+          if (!dateStr) {
+            console.log(`Report ${item.id} has no valid date field`);
+            return false;
+          }
+          
+          try {
+            const itemDate = new Date(dateStr);
+            
+            // Check that the date is valid
+            if (isNaN(itemDate.getTime())) {
+              console.log(`Report ${item.id} has invalid date: ${dateStr}`);
+              return false;
+            }
+            
+            // Check start date
+            if (this.filters.startDate) {
+              const startDate = new Date(this.filters.startDate);
+              startDate.setHours(0, 0, 0, 0);
+              if (itemDate < startDate) {
+                return false;
+              }
+            }
+            
+            // Check end date
+            if (this.filters.endDate) {
+              const endDate = new Date(this.filters.endDate);
+              endDate.setHours(23, 59, 59, 999);
+              if (itemDate > endDate) {
+                return false;
+              }
+            }
+            
+            return true;
+          } catch (error) {
+            console.error(`Error processing date for report ${item.id}:`, error);
+            return false;
+          }
+        });
+        
+        console.log('After date filter:', filtered.length);
+      }
+      
+      // Update the filtered reports
+      this.filteredLaporan = filtered;
+      
+      // Reset pagination
+      this.currentPage = 1;
     },
 
     prevPage() {
@@ -640,7 +736,70 @@ export default {
       } catch (error) {
         console.error("Error getting user data:", error);
       }
-    }
+    },
+
+    applyFilters() {
+      console.log('Applying filters:', this.filters); // Debug log
+      
+      // Start with all data
+      let filtered = [...this.laporan];
+      
+      // Apply category filter
+      if (this.filters.category_id) {
+        console.log('Filtering by category:', this.filters.category_id);
+        filtered = filtered.filter(item => 
+          String(item.category_id) === String(this.filters.category_id)
+        );
+      }
+      
+      // Apply status filter
+      if (this.filters.status) {
+        console.log('Filtering by status:', this.filters.status);
+        // Map frontend status labels to actual status values in the data
+        const statusMap = {
+          'Belum Diverifikasi': 'unverified',
+          'Diverifikasi': 'verified',
+          'Ditolak': 'rejected'
+        };
+        
+        const statusValue = statusMap[this.filters.status] || this.filters.status;
+        filtered = filtered.filter(item => item.status === statusValue);
+      }
+      
+      // Apply date range filter
+      if (this.filters.startDate || this.filters.endDate) {
+        console.log('Filtering by date range:', this.filters.startDate, 'to', this.filters.endDate);
+        
+        filtered = filtered.filter(item => {
+          // Convert to Date objects for comparison
+          const itemDate = new Date(item.created_at || item.tanggal); // Adjust field name as needed
+          
+          // Check start date if specified
+          if (this.filters.startDate) {
+            const startDate = new Date(this.filters.startDate);
+            startDate.setHours(0, 0, 0, 0);
+            if (itemDate < startDate) return false;
+          }
+          
+          // Check end date if specified
+          if (this.filters.endDate) {
+            const endDate = new Date(this.filters.endDate);
+            endDate.setHours(23, 59, 59, 999);
+            if (itemDate > endDate) return false;
+          }
+          
+          return true;
+        });
+      }
+      
+      // Update filtered data
+      this.filteredLaporan = filtered;
+      
+      // Reset to first page when filters change
+      this.currentPage = 1;
+      
+      console.log('Filtered results:', this.filteredLaporan.length); // Debug log
+    },
   },
   
   watch: {
@@ -669,43 +828,8 @@ export default {
     
     // Any other mounted code...
     console.log('filteredLaporan length:', this.filteredLaporan.length);
-console.log('paginatedLaporan length:', this.paginatedLaporan.length);
+    console.log('paginatedLaporan length:', this.paginatedLaporan.length);
 
   }
 };
 </script>
-
-<style scoped>
-.status-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.unverified {
-  background-color: #f3f4f6;
-  color: #4b5563;
-}
-
-.verified {
-  background-color: #dbeafe;
-  color: #2563eb;
-}
-
-.processed {
-  background-color: #fef3c7;
-  color: #d97706;
-}
-
-.completed {
-  background-color: #d1fae5;
-  color: #059669;
-}
-
-.rejected {
-  background-color: #fee2e2;
-  color: #dc2626;
-}
-</style>
