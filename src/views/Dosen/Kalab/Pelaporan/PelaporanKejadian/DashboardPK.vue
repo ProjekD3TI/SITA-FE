@@ -42,13 +42,12 @@
       
       <div class="table-header">
         <div class="search-container">
-          <input 
-            type="text" 
-            v-model="searchQuery" 
-            placeholder="Cari kejadian..." 
-            class="search-input"
-            @input="handleSearch"
-          >
+          <input
+            v-model="search"
+            type="text"
+            placeholder="Cari laporan..."
+            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
           <i class="fas fa-search search-icon"></i>
         </div>
         
@@ -124,7 +123,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(item, index) in displayedLaporan" :key="item.id">
+          <tr v-for="(item, index) in filteredLaporan" :key="item.id">
             <td>{{ startIndex + index + 1 }}</td>
             <td>{{ item.nomor_laporan }}</td>
             <td>{{ item.judul }}</td>
@@ -195,7 +194,6 @@ export default {
   name: 'DashboardPelaporanKejadian',
   data() {
     return {
-      searchQuery: '',
       currentPage: 1,
       pageSize: 10,
       filters: {
@@ -210,61 +208,26 @@ export default {
       itemsPerPage: 10,
       loading: true, // Start with loading true
       error: null,
-      filteredLaporan: [] // New property to hold filtered results
+      filteredLaporan: [], // New property to hold filtered results
+      search: '' // Replace or use alongside searchQuery if you prefer
     };
   },
   
   computed: {
     filteredLaporan() {
-      let result = this.laporan;
-      
-      // Apply search filter
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
-        result = result.filter(item => 
-          (item.judul && item.judul.toLowerCase().includes(query)) || 
-          (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(query))
-        );
+      if (!this.search) {
+        return this.laporan;
       }
       
-      // Apply status filter
-      if (this.selectedStatus !== 'all') {
-        result = result.filter(item => item.status === this.selectedStatus);
-      }
-      
-      // Apply jenisKejadian filter (category)
-      if (this.filters.jenisKejadian) {
-        console.log('Filtering by category:', this.filters.jenisKejadian);
-        
-        // Convert the filter value to number since your category IDs appear to be numeric
-        const filterCategoryId = parseInt(this.filters.jenisKejadian, 10);
-        
-        // Check if we have a valid number after conversion
-        if (!isNaN(filterCategoryId)) {
-          result = result.filter(item => {
-            // Convert item category_id to number as well for consistent comparison
-            const itemCategoryId = parseInt(item.category_id, 10);
-            return itemCategoryId === filterCategoryId;
-          });
-        }
-        
-        console.log('After filter items count:', result.length);
-      }
-      
-      // Apply date filters if needed
-      if (this.filters.startDate && this.filters.endDate) {
-        result = result.filter(item => {
-          const itemDate = new Date(item.tanggal_kejadian);
-          const startDate = new Date(this.filters.startDate);
-          const endDate = new Date(this.filters.endDate);
-          return itemDate >= startDate && itemDate <= endDate;
-        });
-      }
-      
-      return result;
+      const searchTerm = this.search.toLowerCase();
+      return this.laporan.filter(item => 
+        (item.judul && item.judul.toLowerCase().includes(searchTerm)) || 
+        (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(searchTerm))
+      );
     },
     
     paginatedLaporan() {
+      // If you're using pagination, update this to use filteredLaporan instead of laporan
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
       return this.filteredLaporan.slice(start, end);
@@ -462,11 +425,34 @@ export default {
       this.filteredLaporan = [...this.laporan];
       this.currentPage = 1;
       console.log('Filters reset');
+    },
+
+    handleSearch() {
+      // Reset to first page when search term changes
+      this.currentPage = 1;
+    },
+    
+    // Make sure to call this when component is created or data is loaded
+    initializeReports() {
+      this.filteredLaporan = [...this.laporan];
     }
   },
   
   mounted() {
     this.fetchData();
+  },
+
+  watch: {
+    search() {
+      this.handleSearch();
+    },
+    
+    // Reset pagination when filtered results change significantly
+    filteredLaporan() {
+      if (this.currentPage > this.totalPages && this.totalPages > 0) {
+        this.currentPage = this.totalPages;
+      }
+    }
   }
 };
 </script>

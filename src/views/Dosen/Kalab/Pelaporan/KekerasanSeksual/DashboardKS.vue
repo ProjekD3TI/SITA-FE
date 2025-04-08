@@ -76,16 +76,6 @@
             </select>
           </div>
           
-          <div class="filter-select">
-            <label for="statusFilter">Status:</label>
-            <select id="statusFilter" v-model="filters.status" @change="applyFilters">
-              <option value="">Semua</option>
-              <option value="unverified">Belum Diverifikasi</option>
-              <option value="verified">Diverifikasi</option>
-              <option value="rejected">Ditolak</option>
-            </select>
-          </div>
-          
           <div class="filter-date">
             <label for="dateFilter">Periode:</label>
             <div class="date-inputs">
