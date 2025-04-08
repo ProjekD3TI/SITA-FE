@@ -61,7 +61,7 @@
                               <input
                                 v-model="searchQuery"
                                 type="text"
-                                placeholder="Cari berdasarkan judul atau deskripsi"
+                                placeholder="Cari laporan..."
                                 class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 @input="handleSearch"
                               />
@@ -86,57 +86,71 @@
                   </div>
                   
                   <!-- Filters Section -->
-                  <div class="mb-4 flex flex-wrap gap-3">
-                      <!-- Status Filter -->
-                      <div class="flex-1 min-w-[200px]">
-                          <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                          <select 
-                              v-model="filters.status" 
-                              @change="applyFilters"
-                              class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          > 
-                              <option value="">Semua</option>
-                              <option value="Belum Diverifikasi">Belum Diverifikasi</option>
-                              <option value="Diverifikasi">Diverifikasi</option>
-                              <option value="Ditolak">Ditolak</option>
-                          </select>
+                  <div class="filter-container">
+                    <div class="filter-group">
+                      <label class="filter-title">Filter berdasarkan:</label>
+                      
+                      <!-- Category Filter -->
+                      <div class="filter-select">
+                        <label for="categoryFilter">Kategori:</label>
+                        <select 
+                          id="categoryFilter" 
+                          v-model="filters.category_id" 
+                          @change="applyFilters"
+                          class="filter-input"
+                        >
+                          <option value="">Semua</option>
+                          <option v-for="(name, id) in filteredCategories" :key="id" :value="id">
+                            {{ name }}
+                          </option>
+                        </select>
                       </div>
                       
-                      <!-- Type Filter -->
-                      <div class="flex-1 min-w-[200px]">
-                          <label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-                          <select 
-                              v-model="filters.category_id" 
-                              class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                              <option value="">Semua Jenis</option>
-                              <option v-for="jenis in jenisKejadianList" :key="jenis" :value="jenis">{{ jenis }}</option>
-                          </select>
+                      <!-- Status Filter -->
+                      <div class="filter-select">
+                        <label for="statusFilter">Status:</label>
+                        <select 
+                          id="statusFilter" 
+                          v-model="filters.status" 
+                          @change="applyFilters"
+                          class="filter-input"
+                        >
+                          <option value="">Semua</option>
+                          <option value="Belum Diverifikasi">Belum Diverifikasi</option>
+                          <option value="Diverifikasi">Diverifikasi</option>
+                          <option value="Ditolak">Ditolak</option>
+                        </select>
                       </div>
                       
                       <!-- Date Range Filter -->
-                      <div class="flex-1 min-w-[200px]">
-                          <label class="block text-sm font-medium text-gray-700 mb-1">Periode</label>
-                          <select 
-                              v-model="filters.period" 
-                              class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      <div class="filter-date">
+                        <label for="dateFilter">Periode:</label>
+                        <div class="date-inputs">
+                          <input 
+                            type="date" 
+                            id="startDate" 
+                            v-model="filters.startDate" 
+                            @change="applyFilters"
+                            class="filter-input"
+                            placeholder="Tanggal Mulai"
                           >
-                              <option value="">Semua Waktu</option>
-                              <option value="week">7 Hari Terakhir</option>
-                              <option value="month">30 Hari Terakhir</option>
-                              <option value="quarter">90 Hari Terakhir</option>
-                          </select>
+                          <span class="date-separator">s/d</span>
+                          <input 
+                            type="date" 
+                            id="endDate" 
+                            v-model="filters.endDate" 
+                            @change="applyFilters"
+                            class="filter-input"
+                            placeholder="Tanggal Akhir"
+                          >
+                        </div>
                       </div>
                       
-                      <!-- Reset Filters Button -->
-                      <div class="self-end mb-1 min-w-[100px]">
-                          <button 
-                              @click="resetFilters" 
-                              class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors w-full"
-                          >
-                              Reset Filter
-                          </button>
-                      </div>
+                      <!-- Reset Filter Button -->
+                      <button class="btn-reset-filter" @click="resetFilters">
+                        <i class="fas fa-undo"></i> Reset Filter
+                      </button>
+                    </div>
                   </div>
                   
                   <div v-if="filteredLaporan && filteredLaporan.length > 0" class="overflow-x-auto">
@@ -293,9 +307,10 @@ export default {
       // Search and filters
       searchQuery: '',
       filters: {
+        category_id: '',
         status: '',
-        jenisKejadian: '',
-        period: ''
+        startDate: '',
+        endDate: ''
       },
       
       // Sorting
@@ -441,6 +456,19 @@ export default {
       const end = this.startIndex + this.itemsPerPage;
       return Math.min(end, this.filteredLaporan.length);
     },
+
+    filteredCategories() {
+      const filtered = {};
+      
+      // Loop through the categories object and exclude those starting with "Kekerasan"
+      for (const [id, name] of Object.entries(this.categories)) {
+        if (!name.startsWith('Kekerasan')) {
+          filtered[id] = name;
+        }
+      }
+      
+      return filtered;
+    },
   },
   
   methods: {
@@ -579,9 +607,10 @@ export default {
     // Reset all filters
     resetFilters() {
       this.filters = {
+        category_id: '',
         status: '',
-        jenisKejadian: '',
-        period: ''
+        startDate: '',
+        endDate: ''
       };
       this.searchQuery = '';
       this.currentPage = 1;
@@ -705,3 +734,87 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+/* Filter styles */
+.filter-container {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid #edf2f7;
+}
+
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 15px;
+}
+
+.filter-title {
+  font-weight: 600;
+  margin-right: 5px;
+  color: #4a5568;
+}
+
+.filter-select, .filter-date {
+  display: flex;
+  align-items: center;
+}
+
+.filter-select label, .filter-date label {
+  margin-right: 8px;
+  font-size: 14px;
+  color: #4a5568;
+}
+
+.filter-input {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+}
+
+.date-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-separator {
+  color: #718096;
+  font-size: 14px;
+}
+
+.btn-reset-filter {
+  background-color: #edf2f7;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-reset-filter:hover {
+  background-color: #e2e8f0;
+}
+
+@media (max-width: 768px) {
+  .filter-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .filter-select, .filter-date {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+</style>
