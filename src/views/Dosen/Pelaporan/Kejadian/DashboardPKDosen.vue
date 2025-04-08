@@ -92,10 +92,11 @@
                           <select 
                               v-model="filters.status" 
                               class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                              <option value="">Semua Status</option>
-                              <option value="Selesai">Selesai</option>
-                              <option value="Dalam Proses">Dalam Proses</option>
+                          > 
+                              <option value="">Semua</option>
+                              <option value="Belum Diverifikasi">Belum Diverifikasi</option>
+                              <option value="Diverifikasi">Diverifikasi</option>
+                              <option value="Ditolak">Ditolak</option>
                           </select>
                       </div>
                       
