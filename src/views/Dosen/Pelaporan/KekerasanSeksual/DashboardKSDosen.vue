@@ -60,7 +60,6 @@
                 type="text"
                 placeholder="Cari laporan..."
                 class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                @input="handleSearch"
               />
               <button 
                 v-if="searchQuery || filters.category_id || filters.status || filters.startDate || filters.endDate"
@@ -511,15 +510,45 @@ export default {
     },
 
     resetFilters() {
-      this.filters = {
-        category_id: '',
-        status: '',
-        startDate: '',
-        endDate: ''
-      };
       this.searchQuery = '';
-      this.currentPage = 1;
-      console.log('Filters reset');
+      this.filters.category_id = '';
+      this.filters.status = '';
+      this.filters.startDate = null;
+      this.filters.endDate = null;
+      this.filterReports(); // Call filterReports to reset to original data
+    },
+    
+    filterReports() {
+      // Start with all reports
+      let result = [...this.reports]; // Assuming you have a 'reports' array with all data
+      
+      // Filter by search query (case insensitive search on report name)
+      if (this.searchQuery) {
+        const searchLower = this.searchQuery.toLowerCase();
+        result = result.filter(report => 
+          report.name.toLowerCase().includes(searchLower) || 
+          report.title.toLowerCase().includes(searchLower) // Add more fields as needed
+        );
+      }
+      
+      // Apply other filters (category, status, date range)
+      if (this.filters.category_id) {
+        result = result.filter(report => report.category_id === this.filters.category_id);
+      }
+      
+      if (this.filters.status) {
+        result = result.filter(report => report.status === this.filters.status);
+      }
+      
+      if (this.filters.startDate && this.filters.endDate) {
+        result = result.filter(report => {
+          const reportDate = new Date(report.created_at);
+          return reportDate >= new Date(this.filters.startDate) && 
+                 reportDate <= new Date(this.filters.endDate);
+        });
+      }
+      
+      this.filteredReports = result;
     },
 
     prevPage() {
@@ -611,6 +640,25 @@ export default {
       } catch (error) {
         console.error("Error getting user data:", error);
       }
+    }
+  },
+  
+  watch: {
+    // Add watchers to trigger filtering when inputs change
+    searchQuery() {
+      this.filterReports();
+    },
+    'filters.category_id'() {
+      this.filterReports();
+    },
+    'filters.status'() {
+      this.filterReports();
+    },
+    'filters.startDate'() {
+      this.filterReports();
+    },
+    'filters.endDate'() {
+      this.filterReports();
     }
   },
   
