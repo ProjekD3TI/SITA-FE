@@ -11,7 +11,7 @@
                 <span class="icon"><i class="fas fa-chart-bar"></i></span>
                 <span class="text">Dashboard</span>
             </router-link>
-            <router-link to="/pelaporan/pelaporan-kejadian" class="sidebar-item" active-class="active">
+            <router-link to="/pelaporan/kejadian" class="sidebar-item" active-class="active">
                 <span class="icon"><i class="fas fa-exclamation-triangle"></i></span>
                 <span class="text">Pelaporan Kejadian</span>
             </router-link>

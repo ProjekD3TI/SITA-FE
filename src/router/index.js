@@ -367,12 +367,12 @@ const routes = [
         component: () => import("../views/Mahasiswa/Pelaporan/Dashboard.vue"),
       },
       {
-        path: "pelaporan-kejadian",
+        path: "kejadian",
         name: "PelaporanKejadian",
-        component: () => import("../views/Pelaporan/Kejadian/PelaporanKejadian.vue"),
+        component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/PelaporanKejadian.vue"),
       },
       {
-        path: "add-pelaporan-kejadian",
+        path: "add-kejadian",
         name: "AddPelaporanKejadian",
         component: () => import("../views/Pelaporan/Kejadian/AddPelaporanKejadian.vue"),
       },

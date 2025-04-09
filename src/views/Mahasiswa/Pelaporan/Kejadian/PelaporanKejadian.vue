@@ -136,31 +136,32 @@
                             <thead>
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <div class="flex items-center cursor-pointer" @click="sortBy('id')">
-                                            ID Laporan
-                                            <span class="ml-1">
-                                                <i class="fas" :class="getSortIcon('id')"></i>
-                                            </span>
-                                        </div>
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <div class="flex items-center cursor-pointer" @click="sortBy('tanggal')">
-                                            Tanggal
-                                            <span class="ml-1">
-                                                <i class="fas" :class="getSortIcon('tanggal')"></i>
-                                            </span>
-                                        </div>
-                                    </th>
+                                      No
+                                  </th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      <div class="flex items-center cursor-pointer" @click="sortBy('nomor_laporan')">
+                                          Nomor Laporan
+                                          <span class="ml-1">
+                                              <i class="fas" :class="getSortIcon('nomor_laporan')"></i>
+                                          </span>
+                                      </div>
+                                  </th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      <div class="flex items-center cursor-pointer" @click="sortBy('judul')">
+                                          Judul
+                                          <span class="ml-1">
+                                              <i class="fas" :class="getSortIcon('judul')"></i>
+                                          </span>
+                                      </div>
+                                  </th>
+                                    
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         <div class="flex items-center cursor-pointer" @click="sortBy('jenisKejadian')">
-                                            Jenis Kejadian
+                                            Kategori
                                             <span class="ml-1">
                                                 <i class="fas" :class="getSortIcon('jenisKejadian')"></i>
                                             </span>
                                         </div>
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Lokasi
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Pelapor
@@ -177,17 +178,17 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-for="laporan in paginatedLaporan" :key="laporan.id" class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.id }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ formatDate(laporan.tanggal) }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.jenisKejadian }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.lokasi }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.pelapor }}</td>
+                                <tr v-for="(laporan, index) in paginatedLaporan" :key="laporan.laporan_id" class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ startIndex + index + 1 }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.nomor_laporan }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.judul }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ getCategoryName(laporan.category_id) }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.nama_pelapor }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span :class="getStatusClass(laporan.status)">{{ laporan.status }}</span>
+                                        <span :class="getStatusClass(formatStatus(laporan.status))">{{ formatStatus(laporan.status) }}</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                        <button class="text-blue-600 hover:text-blue-800 mr-2" @click="lihatDetail(laporan.id)">
+                                        <button class="text-blue-600 hover:text-blue-800 mr-2" @click="lihatDetail(laporan.laporan_id)">
                                             <i class="fas fa-eye"></i>
                                         </button>
                                     </td>
@@ -262,11 +263,51 @@
 </template>
 
 <script>
-import { ref, computed, watch } from 'vue';
+import axios from 'axios';
+import VueCookies from 'vue-cookies';
+import { decryptData } from '../../../../services/encrypt';
 import Header from '../components/Header.vue';
 import Sidebar from '../components/Sidebar.vue';
 import Footer from '../components/Footer.vue';
-import { useRouter } from 'vue-router';
+
+// Create axios instance outside the component
+// This ensures interceptors are set up once before the component is created
+const setupInterceptors = () => {
+  // Remove any existing interceptors to prevent duplicates
+  axios.interceptors.request.eject(axios.interceptors.request.handlers?.[0]);
+  axios.interceptors.response.eject(axios.interceptors.response.handlers?.[0]);
+  
+  // Set up request interceptor
+  axios.interceptors.request.use((config) => {
+    const encryptedUserData = VueCookies.get("user_session");
+    if (encryptedUserData) {
+      const userData = decryptData(encryptedUserData);
+      if (userData && userData.token) {
+        config.headers.Authorization = `Bearer ${userData.token}`;
+      }
+    }
+    return config;
+  }, (error) => {
+    return Promise.reject(error);
+  });
+  
+  // Set up response interceptor
+  axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response && error.response.status === 401) {
+        console.log('Unauthorized - redirecting to login');
+        VueCookies.remove("user_session");
+        // Use window.location instead of router for more reliable redirect on refresh
+        window.location.href = '/login';
+      }
+      return Promise.reject(error);
+    }
+  );
+};
+
+// Set up interceptors immediately
+setupInterceptors();
 
 export default {
     name: 'PelaporanKejadian',
@@ -275,264 +316,400 @@ export default {
         Header,
         Footer
     },
-    setup() {
-        const showModal = ref(false);
-        const searchQuery = ref('');
-        const currentPage = ref(1);
-        const itemsPerPage = ref(5);
-        
-        // List of all reports
-        const daftarLaporan = ref([
-            {
-                id: 'LP001',
-                tanggal: new Date('2023-11-15'),
-                jenisKejadian: 'Kebakaran',
-                lokasi: 'Jl. Pahlawan No. 10',
-                pelapor: 'Ahmad Rizki',
-                status: 'Selesai'
-            },
-            {
-                id: 'LP002',
-                tanggal: new Date('2023-11-16'),
-                jenisKejadian: 'Kecelakaan',
-                lokasi: 'Jl. Sudirman No. 45',
-                pelapor: 'Budi Santoso',
-                status: 'Dalam Proses'
-            },
-            {
-                id: 'LP003',
-                tanggal: new Date('2023-11-17'),
-                jenisKejadian: 'Banjir',
-                lokasi: 'Perumahan Indah Blok C',
-                pelapor: 'Citra Dewi',
-                status: 'Dalam Proses'
-            }
-        ]);
-        
-        // Sorting
-        const sortConfig = ref({
-            key: 'tanggal',
-            direction: 'desc'
-        });
-
-        // Filtering
-        const filters = ref({
-            status: '',
-            jenisKejadian: '',
-            period: ''
-        });
-
-        // List of unique report types for dropdown
-        const jenisKejadianList = computed(() => {
-            if (!daftarLaporan.value.length) return [];
-            return [...new Set(daftarLaporan.value.map(report => report.jenisKejadian))];
-        });
-        
-        // Filter by date helper function
-        const isWithinPeriod = (date, period) => {
-            if (!period) return true;
+    data() {
+        return {
+            // User data
+            userData: null,
             
-            const today = new Date();
-            const reportDate = new Date(date);
-            const diffTime = Math.abs(today - reportDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            // API data
+            laporan: [],
+            filteredLaporan: [],
+            categories: {},
+            loading: true,
+            error: null,
+
+            // Stats for cards
+            totalLaporan: 0,
+            dalamProses: 0,
+            selesai: 0,
+
+            // Search and filters
+            searchQuery: '',
+            filters: {
+                category_id: '',
+                status: '',
+                startDate: '',
+                endDate: ''
+            },
+
+            // Sorting
+            sortField: 'laporan_id',
+            sortDirection: 'desc',
+
+            // Pagination
+            currentPage: 1,
+            itemsPerPage: 10,
+
+            // Modal state
+            showModal: false,
             
-            switch (period) {
-                case 'week':
-                    return diffDays <= 7;
-                case 'month':
-                    return diffDays <= 30;
-                case 'quarter':
-                    return diffDays <= 90;
-                default:
-                    return true;
-            }
+            // Jenis kejadian list
+            jenisKejadianList: []
         };
-        
-        // Search and filter functionality
-        const filteredLaporan = computed(() => {
-            let result = daftarLaporan.value;
+    },
+    computed: {
+        filteredLaporan() {
+            if (!this.laporan || !this.laporan.length) return [];
             
-            if (filters.value.status) {
-                result = result.filter(laporan => laporan.status === filters.value.status);
-            }
+            let result = [...this.laporan];
             
-            if (filters.value.jenisKejadian) {
-                result = result.filter(laporan => laporan.jenisKejadian === filters.value.jenisKejadian);
-            }
-            
-            if (filters.value.period) {
-                result = result.filter(laporan => isWithinPeriod(laporan.tanggal, filters.value.period));
-            }
-            
-            if (searchQuery.value) {
-                const query = searchQuery.value.toLowerCase();
-                result = result.filter(laporan => 
-                    laporan.id.toLowerCase().includes(query) ||
-                    laporan.jenisKejadian.toLowerCase().includes(query) ||
-                    laporan.lokasi.toLowerCase().includes(query) ||
-                    laporan.pelapor.toLowerCase().includes(query) ||
-                    laporan.status.toLowerCase().includes(query)
+            // Apply search filter
+            if (this.searchQuery) {
+                const query = this.searchQuery.toLowerCase();
+                result = result.filter(item => 
+                    (item.judul && item.judul.toLowerCase().includes(query)) || 
+                    (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(query)) ||
+                    (item.nama_pelapor && item.nama_pelapor.toLowerCase().includes(query))
                 );
             }
             
-            result = [...result].sort((a, b) => {
-                let modifier = sortConfig.value.direction === 'asc' ? 1 : -1;
+            // Apply status filter
+            if (this.filters.status) {
+                const statusValue = this.filters.status === 'Selesai' ? 'verified' : 
+                                  this.filters.status === 'Dalam Proses' ? 'unverified' : null;
                 
-                if (sortConfig.value.key === 'tanggal') {
-                    return modifier * (new Date(a.tanggal) - new Date(b.tanggal));
+                if (statusValue) {
+                    result = result.filter(item => item.status === statusValue);
+                }
+            }
+            
+            // Apply category filter
+            if (this.filters.category_id) {
+                result = result.filter(item => 
+                    String(item.category_id) === String(this.filters.category_id)
+                );
+            }
+            
+            // Apply date range filter
+            if (this.filters.startDate || this.filters.endDate) {
+                result = result.filter(item => {
+                    const itemDate = new Date(item.created_at);
+                    
+                    if (this.filters.startDate) {
+                        const startDate = new Date(this.filters.startDate);
+                        startDate.setHours(0, 0, 0, 0);
+                        if (itemDate < startDate) return false;
+                    }
+                    
+                    if (this.filters.endDate) {
+                        const endDate = new Date(this.filters.endDate);
+                        endDate.setHours(23, 59, 59, 999);
+                        if (itemDate > endDate) return false;
+                    }
+                    
+                    return true;
+                });
+            }
+            
+            // Apply sorting
+            result.sort((a, b) => {
+                let fieldA, fieldB;
+                
+                // Handle special fields
+                if (this.sortField === 'laporan_id') {
+                    fieldA = a.laporan_id;
+                    fieldB = b.laporan_id;
+                } else if (this.sortField === 'tanggal') {
+                    fieldA = new Date(a.created_at);
+                    fieldB = new Date(b.created_at);
+                } else if (this.sortField === 'category_id') {
+                    fieldA = this.getCategoryName(a.category_id);
+                    fieldB = this.getCategoryName(b.category_id);
+                } else if (this.sortField === 'status') {
+                    fieldA = a.status;
+                    fieldB = b.status;
+                } else {
+                    fieldA = a[this.sortField];
+                    fieldB = b[this.sortField];
                 }
                 
-                if (a[sortConfig.value.key] < b[sortConfig.value.key]) return -1 * modifier;
-                if (a[sortConfig.value.key] > b[sortConfig.value.key]) return 1 * modifier;
-                return 0;
+                let comparison = 0;
+                if (fieldA > fieldB) {
+                    comparison = 1;
+                } else if (fieldA < fieldB) {
+                    comparison = -1;
+                }
+                
+                return this.sortDirection === 'asc' ? comparison : -comparison;
             });
             
             return result;
-        });
+        },
         
-        // Sorting function
-        const sortBy = (key) => {
-            if (sortConfig.value.key === key) {
-                sortConfig.value.direction = sortConfig.value.direction === 'asc' ? 'desc' : 'asc';
+        // Paginated data for display
+        paginatedLaporan() {
+            const start = (this.currentPage - 1) * this.itemsPerPage;
+            const end = start + this.itemsPerPage;
+            return this.filteredLaporan.slice(start, end);
+        },
+        
+        // Calculate pagination values
+        totalPages() {
+            return Math.ceil(this.filteredLaporan.length / this.itemsPerPage);
+        },
+        
+        startIndex() {
+            return (this.currentPage - 1) * this.itemsPerPage;
+        },
+        
+        endIndex() {
+            const end = this.startIndex + this.itemsPerPage;
+            return Math.min(end, this.filteredLaporan.length);
+        },
+        
+        filteredCategories() {
+            const filtered = {};
+            
+            // Loop through the categories object and exclude those starting with "Kekerasan"
+            for (const [id, name] of Object.entries(this.categories)) {
+                if (!name.startsWith('Kekerasan')) {
+                    filtered[id] = name;
+                }
+            }
+            
+            return filtered;
+        },
+    },
+    methods: {
+        // Adding the missing formatStatus function
+        formatStatus(status) {
+            if (!status) return 'Tidak Ada Status';
+            
+            switch (status.toLowerCase()) {
+                case 'verified':
+                    return 'Diverifikasi';
+                case 'unverified':
+                    return 'Belum Diverifikasi';
+                case 'rejected':
+                    return 'Ditolak';
+                default:
+                    return status;
+            }
+        },
+        
+        // Fetch data from API
+        async fetchData() {
+            this.loading = true;
+            try {
+                // Check authentication before making API requests
+                if (!this.getCurrentUser()) {
+                    console.error('User not authenticated');
+                    window.location.href = '/login'; // Use window.location for more reliable redirect
+                    return;
+                }
+                
+                // Set up axios with authentication header for all requests
+                axios.defaults.headers.common['Authorization'] = `Bearer ${this.userData.token}`;
+                
+                // Fetch categories first
+                const categoriesResponse = await axios.get('http://localhost:8000/api/category');
+                
+                // Transform categories array to an object with id as key for easy lookup
+                this.categories = categoriesResponse.data.reduce((acc, category) => {
+                    acc[category.category_id] = category.nama;
+                    return acc;
+                }, {});
+                
+                // Extract category names for filter dropdown
+                this.jenisKejadianList = categoriesResponse.data.map(category => category.nama);
+                
+                // Get user data from cookie
+                const encryptedUserData = VueCookies.get("user_session");
+                let userData = null;
+                if (encryptedUserData) {
+                    userData = decryptData(encryptedUserData);
+                }
+                
+                // Then fetch all laporan data
+                const laporanResponse = await axios.get('http://localhost:8000/api/laporan');
+                
+                // Filter laporan for the current user only
+                if (userData && userData.name) {
+                    this.laporan = laporanResponse.data.filter(item => 
+                        (item.nama_pelapor && item.nama_pelapor.trim() === userData.name.trim()) || 
+                        (item.ni_pelapor && (item.ni_pelapor === userData.nim || item.ni_pelapor === userData.nik))
+                    );
+                    console.log(`Filtered to ${this.laporan.length} reports for user: ${userData.name}`);
+                    console.log('Laporan data:', this.laporan); // Debug: log the laporan data
+                } else {
+                    this.laporan = laporanResponse.data;
+                    console.warn('User data not available for filtering, showing all reports');
+                }
+                
+                // Initialize filteredLaporan with all data
+                this.filteredLaporan = [...this.laporan];
+                
+                // Calculate summary statistics
+                this.totalLaporan = this.laporan.length;
+                this.dalamProses = this.laporan.filter(item => item.status === 'unverified').length;
+                this.selesai = this.laporan.filter(item => item.status === 'verified').length;
+                
+                console.log('Data loaded successfully:', this.laporan);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                if (error.response && error.response.status === 401) {
+                    // If unauthorized, redirect to login
+                    this.$router.push('/login');
+                }
+                this.error = 'Gagal memuat data. Silakan coba lagi nanti.';
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        // Helper to get category name by ID
+        getCategoryName(categoryId) {
+            return this.categories[categoryId] || 'Tidak ada kategori';
+        },
+        
+        // Format date for display
+        formatDate(dateString) {
+            if (!dateString) return '';
+            
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
+        },
+        
+        // Get status class for styling
+        getStatusClass(status) {
+            const classMap = {
+                'Belum Diverifikasi': 'px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800',
+                'Diverifikasi': 'px-2 py-1 text-xs rounded-full bg-green-100 text-green-800',
+                'Ditolak': 'px-2 py-1 text-xs rounded-full bg-red-100 text-red-800'
+            };
+            
+            return classMap[status] || 'px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800';
+        },
+        
+        // Handle search input
+        handleSearch() {
+            // Reset to first page when searching
+            this.currentPage = 1;
+            
+            // Filtering is handled by the computed property
+        },
+        
+        // Sort table by field
+        sortBy(field) {
+            if (this.sortField === field) {
+                this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
             } else {
-                sortConfig.value.key = key;
-                sortConfig.value.direction = 'asc';
+                this.sortField = field;
+                this.sortDirection = 'asc';
             }
-        };
+        },
         
-        const getSortIcon = (key) => {
-            if (sortConfig.value.key === key) {
-                return sortConfig.value.direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+        // Get sort icon class based on current sort
+        getSortIcon(field) {
+            if (this.sortField !== field) return 'fa-sort';
+            return this.sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+        },
+        
+        // Pagination methods
+        prevPage() {
+            if (this.currentPage > 1) {
+                this.currentPage--;
             }
-            return 'fa-sort';
-        };
+        },
+        
+        nextPage() {
+            if (this.currentPage < this.totalPages) {
+                this.currentPage++;
+            }
+        },
         
         // Reset all filters
-        const resetFilters = () => {
-            filters.value = {
+        resetFilters() {
+            this.filters = {
+                category_id: '',
                 status: '',
-                jenisKejadian: '',
-                period: ''
+                startDate: '',
+                endDate: ''
             };
-            searchQuery.value = '';
-            currentPage.value = 1;
-        };
+            this.searchQuery = '';
+            this.currentPage = 1;
+        },
         
-        // Pagination
-        const totalPages = computed(() => {
-            return Math.ceil(filteredLaporan.value.length / itemsPerPage.value);
-        });
+        // Apply filters
+        applyFilters() {
+            // Reset to first page when filters change
+            this.currentPage = 1;
+            
+            // Filtering is handled by the computed property
+        },
         
-        const startIndex = computed(() => {
-            return (currentPage.value - 1) * itemsPerPage.value;
-        });
-        
-        const endIndex = computed(() => {
-            const end = startIndex.value + itemsPerPage.value;
-            return end > filteredLaporan.value.length ? filteredLaporan.value.length : end;
-        });
-        
-        const paginatedLaporan = computed(() => {
-            return filteredLaporan.value.slice(startIndex.value, endIndex.value);
-        });
-        
-        // Reset to first page when search query or filters change
-        watch([searchQuery, filters], () => {
-            currentPage.value = 1;
-        }, { deep: true });
-        
-        const nextPage = () => {
-            if (currentPage.value < totalPages.value) {
-                currentPage.value++;
+        // Get current user from cookie
+        getCurrentUser() {
+            try {
+                const encryptedUserData = VueCookies.get("user_session");
+                if (encryptedUserData) {
+                    this.userData = decryptData(encryptedUserData);
+                    console.log("Current user loaded:", this.userData.name);
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error("Error getting user data:", error);
+                return false;
             }
-        };
+        },
         
-        const prevPage = () => {
-            if (currentPage.value > 1) {
-                currentPage.value--;
-            }
-        };
+        // Add new report
+        tambahLaporan() {
+            this.$router.push('/tambah-laporan');
+        },
         
-        const handleSearch = () => {
-            currentPage.value = 1; // Reset to first page on search
-        };
-        
-        const tambahLaporan = () => {
-            showModal.value = true;
-        };
-        
-        const lihatDetail = (id) => {
-            console.log(`Melihat detail laporan dengan ID: ${id}`);
-            router.push({
-                name: 'DetailPelaporanKejadian',
-                query: { id: id }
+        // View report details
+        lihatDetail(laporanId) {
+            this.$router.push({ 
+                name: 'DetailLaporan', 
+                params: { id: laporanId } 
             });
-        };
+        },
         
-        const editLaporan = (id) => {
-            console.log(`Edit laporan dengan ID: ${id}`);
-            // Implement edit functionality
-        };
-        
-        const formatDate = (date) => {
-            return new Date(date).toLocaleDateString('id-ID', {
-                day: '2-digit',
-                month: '2-digit', 
-                year: 'numeric'
+        // Edit report
+        editLaporan(laporanId) {
+            this.$router.push({ 
+                name: 'EditLaporan', 
+                params: { id: laporanId } 
             });
-        };
+        },
         
-        const getStatusClass = (status) => {
-            switch(status) {
-                case 'Selesai':
-                    return 'px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800';
-                case 'Dalam Proses':
-                    return 'px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800';
-                default:
-                    return 'px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800';
-            }
-        };
+        // Add new report (same as tambahLaporan, but kept for compatibility)
+        addNewReport() {
+            this.$router.push('/tambah-laporan');
+        }
+    },
+    mounted() {
+        // Check authentication first
+        if (!this.getCurrentUser()) {
+            console.log('User not authenticated, redirecting to login');
+            window.location.href = '/login';
+            return;
+        }
         
-        // Computed properties for stats
-        const totalLaporan = computed(() => daftarLaporan.value.length);
-        const dalamProses = computed(() => daftarLaporan.value.filter(laporan => laporan.status === 'Dalam Proses').length);
-        const selesai = computed(() => daftarLaporan.value.filter(laporan => laporan.status === 'Selesai').length);
+        // If authenticated, proceed with component initialization
+        this.fetchData();
         
-        const router = useRouter();
-        
-        const addNewReport = () => {
-            router.push('/pelaporan/add-pelaporan-kejadian');
-        };
-        
-        return {
-            showModal,
-            daftarLaporan,
-            searchQuery,
-            filters,
-            jenisKejadianList,
-            filteredLaporan,
-            currentPage,
-            totalPages,
-            startIndex,
-            endIndex,
-            paginatedLaporan,
-            totalLaporan,
-            dalamProses,
-            selesai,
-            sortBy,
-            getSortIcon,
-            resetFilters,
-            handleSearch,
-            nextPage,
-            prevPage,
-            tambahLaporan,
-            lihatDetail,
-            editLaporan,
-            formatDate,
-            getStatusClass,
-            addNewReport
-        };
+        // Add debugging to show what data actually comes back
+        setTimeout(() => {
+            console.log('After 1s - Laporan data:', this.laporan);
+            console.log('After 1s - First item:', this.laporan[0]);
+        }, 1000);
     }
 };
 </script>
+
+<style scoped>
+/* Add your styles here if needed */
+</style>
