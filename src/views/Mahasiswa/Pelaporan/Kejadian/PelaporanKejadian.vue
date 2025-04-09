@@ -4,6 +4,25 @@
         <div class="flex-1">
             <Header />
             <div class="p-4">
+                <!-- Authentication Error Banner -->
+                <div v-if="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 relative">
+                    <p>{{ error }}</p>
+                    <button 
+                        v-if="error.includes('login')" 
+                        @click="$router.push('/mahasiswa/login')" 
+                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg mt-2"
+                    >
+                        Login Kembali
+                    </button>
+                    <button 
+                        v-else 
+                        @click="fetchData" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg mt-2"
+                    >
+                        Coba Lagi
+                    </button>
+                </div>
+
                 <div class="bg-white shadow rounded-lg p-6 mb-4">
                     <h1 class="text-2xl font-semibold text-gray-800">Pelaporan Kejadian</h1>
                     <p class="text-gray-600 mt-2">Sistem pencatatan dan manajemen laporan kejadian yang terjadi di D3 TI SV UNS. Gunakan halaman ini untuk mengirim, memantau, dan mengelola laporan kejadian.</p>
@@ -48,8 +67,14 @@
                   </div>
                 </div>
 
+                <!-- Loading indicator -->
+                <div v-if="loading" class="text-center py-6">
+                  <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                  <p class="mt-2 text-gray-600">Memuat data...</p>
+                </div>
+
                 <!-- Laporan Kejadian with Search, Filters and Pagination -->
-                <div class="bg-white shadow rounded-lg p-6">
+                <div v-if="!loading" class="bg-white shadow rounded-lg p-6">
                     <div class="flex flex-col md:flex-row md:items-center justify-between mb-4">
                         <h2 class="text-lg font-semibold text-gray-800">Daftar Laporan Kejadian</h2>
                         
@@ -201,7 +226,7 @@
                     </div>
                     
                     <!-- Pagination -->
-                    <div class="flex items-center justify-between mt-4 border-t pt-4">
+                    <div v-if="filteredLaporan && filteredLaporan.length > 0" class="flex items-center justify-between mt-4 border-t pt-4">
                         <div class="flex items-center text-sm text-gray-500">
                             Menampilkan {{ filteredLaporan.length ? startIndex + 1 : 0 }}-{{ endIndex }} dari {{ filteredLaporan.length }} laporan
                         </div>
@@ -271,43 +296,57 @@ import Sidebar from '../components/Sidebar.vue';
 import Footer from '../components/Footer.vue';
 
 // Create axios instance outside the component
-// This ensures interceptors are set up once before the component is created
 const setupInterceptors = () => {
-  // Remove any existing interceptors to prevent duplicates
-  axios.interceptors.request.eject(axios.interceptors.request.handlers?.[0]);
-  axios.interceptors.response.eject(axios.interceptors.response.handlers?.[0]);
-  
-  // Set up request interceptor
-  axios.interceptors.request.use((config) => {
-    const encryptedUserData = VueCookies.get("user_session");
-    if (encryptedUserData) {
-      const userData = decryptData(encryptedUserData);
-      if (userData && userData.token) {
-        config.headers.Authorization = `Bearer ${userData.token}`;
-      }
+  try {
+    // Remove any existing interceptors to prevent duplicates
+    if (axios.interceptors && axios.interceptors.request && axios.interceptors.request.handlers) {
+      axios.interceptors.request.handlers.forEach((handler, i) => {
+        axios.interceptors.request.eject(i);
+      });
     }
-    return config;
-  }, (error) => {
-    return Promise.reject(error);
-  });
-  
-  // Set up response interceptor
-  axios.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      if (error.response && error.response.status === 401) {
-        console.log('Unauthorized - redirecting to login');
-        VueCookies.remove("user_session");
-        // Use window.location instead of router for more reliable redirect on refresh
-        window.location.href = '/login';
+    
+    if (axios.interceptors && axios.interceptors.response && axios.interceptors.response.handlers) {
+      axios.interceptors.response.handlers.forEach((handler, i) => {
+        axios.interceptors.response.eject(i);
+      });
+    }
+    
+    // Set up request interceptor
+    axios.interceptors.request.use((config) => {
+      const encryptedUserData = VueCookies.get("user_session");
+      if (encryptedUserData) {
+        try {
+          const userData = decryptData(encryptedUserData);
+          if (userData && userData.token) {
+            config.headers.Authorization = `Bearer ${userData.token}`;
+          }
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+          // Don't redirect yet, just log the error
+        }
       }
+      return config;
+    }, (error) => {
       return Promise.reject(error);
-    }
-  );
+    });
+    
+    // Set up response interceptor with more graceful handling
+    axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        // Don't redirect on 401, just mark the session as potentially invalid
+        if (error.response && error.response.status === 401) {
+          console.log('Unauthorized API response - handling at component level');
+          // Store a flag that can be checked, but don't redirect immediately
+          sessionStorage.setItem('auth_check_needed', 'true');
+        }
+        return Promise.reject(error);
+      }
+    );
+  } catch (err) {
+    console.error("Error setting up interceptors:", err);
+  }
 };
-
-// Set up interceptors immediately
-setupInterceptors();
 
 export default {
     name: 'PelaporanKejadian',
@@ -323,10 +362,15 @@ export default {
             
             // API data
             laporan: [],
-            filteredLaporan: [],
+            // REMOVE filteredLaporan from data since it's defined as computed
             categories: {},
             loading: true,
             error: null,
+
+            // Authentication state
+            isAuthenticated: false,
+            authCheckInProgress: false,
+            sessionValidated: false,
 
             // Stats for cards
             totalLaporan: 0,
@@ -358,6 +402,7 @@ export default {
         };
     },
     computed: {
+        // Keep filteredLaporan here as a computed property
         filteredLaporan() {
             if (!this.laporan || !this.laporan.length) return [];
             
@@ -481,7 +526,7 @@ export default {
         },
     },
     methods: {
-        // Adding the missing formatStatus function
+        // Format status for display
         formatStatus(status) {
             if (!status) return 'Tidak Ada Status';
             
@@ -497,22 +542,131 @@ export default {
             }
         },
         
-        // Fetch data from API
-        async fetchData() {
-            this.loading = true;
+        // Improved authentication check
+        async checkAuthentication() {
+            // Check if this is a refresh and we need to recover state
+            const isRefresh = sessionStorage.getItem('page_refreshing') === 'true';
+            
+            if (isRefresh) {
+                sessionStorage.removeItem('page_refreshing');
+                console.log('Page was refreshed - attempting to recover session');
+            }
+            
+            // Check if session is being maintained
+            if (sessionStorage.getItem('session_maintained') === 'true') {
+                console.log('Session maintenance flag detected - skipping redirect');
+                sessionStorage.removeItem('session_maintained');
+            }
+            
+            // Prevent multiple simultaneous checks
+            if (this.authCheckInProgress) {
+                return this.isAuthenticated;
+            }
+            
+            this.authCheckInProgress = true;
+            
             try {
-                // Check authentication before making API requests
-                if (!this.getCurrentUser()) {
-                    console.error('User not authenticated');
-                    window.location.href = '/login'; // Use window.location for more reliable redirect
-                    return;
+                // First try localStorage (similar to what HeaderLogin uses)
+                try {
+                    const userInfo = JSON.parse(localStorage.getItem('user'));
+                    if (userInfo) {
+                        console.log('Found user info in localStorage');
+                        this.isAuthenticated = true;
+                        // Set user data from localStorage
+                        this.userData = userInfo;
+                        return true;
+                    }
+                } catch (e) {
+                    console.log('No user data in localStorage or error parsing it');
                 }
                 
-                // Set up axios with authentication header for all requests
+                // Then try cookies
+                const encryptedUserData = VueCookies.get("user_session");
+                if (!encryptedUserData) {
+                    console.log("No user session cookie found");
+                    
+                    // On refresh, try to continue anyway
+                    if (isRefresh) {
+                        console.log("Refresh detected, continuing despite missing session");
+                        return true;
+                    }
+                    
+                    this.isAuthenticated = false;
+                    return false;
+                }
+                
+                // Try to decrypt and validate the user data
+                try {
+                    this.userData = decryptData(encryptedUserData);
+                } catch (error) {
+                    console.error("Failed to decrypt user data:", error);
+                    
+                    // On refresh, continue anyway
+                    if (isRefresh) {
+                        return true;
+                    }
+                    
+                    this.isAuthenticated = false;
+                    return false;
+                }
+                
+                if (!this.userData || !this.userData.token) {
+                    console.log("Invalid user data or missing token");
+                    
+                    // On refresh, try to continue anyway
+                    if (isRefresh) {
+                        console.log("Refresh detected, continuing despite invalid token");
+                        return true;
+                    }
+                    
+                    this.isAuthenticated = false;
+                    return false;
+                }
+                
+                // Set the token for axios requests
                 axios.defaults.headers.common['Authorization'] = `Bearer ${this.userData.token}`;
+                
+                console.log("User authenticated from session:", this.userData.name);
+                this.isAuthenticated = true;
+                return true;
+            } catch (error) {
+                console.error("Error during authentication check:", error);
+                
+                // On refresh, try to continue anyway
+                if (isRefresh) {
+                    return true;
+                }
+                
+                this.isAuthenticated = false;
+                return false;
+            } finally {
+                this.authCheckInProgress = false;
+            }
+        },
+        
+        // Fetch data from API with improved error handling
+        async fetchData() {
+            this.loading = true;
+            
+            try {
+                // Check for existing session first
+                await this.checkAuthentication();
+                
+                if (!this.isAuthenticated) {
+                    // Try to continue even without authentication
+                    console.log('User not authenticated but attempting to load data anyway');
+                }
+                
+                // Set up axios with authentication header for all requests if we have userData
+                if (this.userData && this.userData.token) {
+                    axios.defaults.headers.common['Authorization'] = `Bearer ${this.userData.token}`;
+                }
                 
                 // Fetch categories first
                 const categoriesResponse = await axios.get('http://localhost:8000/api/category');
+                
+                // If we get here, the connection is valid - clear any previous errors
+                this.error = null;
                 
                 // Transform categories array to an object with id as key for easy lookup
                 this.categories = categoriesResponse.data.reduce((acc, category) => {
@@ -523,51 +677,49 @@ export default {
                 // Extract category names for filter dropdown
                 this.jenisKejadianList = categoriesResponse.data.map(category => category.nama);
                 
-                // Get user data from cookie
-                const encryptedUserData = VueCookies.get("user_session");
-                let userData = null;
-                if (encryptedUserData) {
-                    userData = decryptData(encryptedUserData);
-                }
-                
                 // Then fetch all laporan data
                 const laporanResponse = await axios.get('http://localhost:8000/api/laporan');
                 
-                // Filter laporan for the current user only
-                if (userData && userData.name) {
+                // Filter laporan for the current user only if we have user data
+                if (this.userData && (this.userData.name || this.userData.username)) {
+                    const userName = this.userData.name || this.userData.username;
                     this.laporan = laporanResponse.data.filter(item => 
-                        (item.nama_pelapor && item.nama_pelapor.trim() === userData.name.trim()) || 
-                        (item.ni_pelapor && (item.ni_pelapor === userData.nim || item.ni_pelapor === userData.nik))
+                        (item.nama_pelapor && item.nama_pelapor.trim() === userName.trim()) || 
+                        (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || 
+                                            item.ni_pelapor === this.userData.nik))
                     );
-                    console.log(`Filtered to ${this.laporan.length} reports for user: ${userData.name}`);
-                    console.log('Laporan data:', this.laporan); // Debug: log the laporan data
+                    console.log(`Filtered to ${this.laporan.length} reports for user: ${userName}`);
                 } else {
                     this.laporan = laporanResponse.data;
                     console.warn('User data not available for filtering, showing all reports');
                 }
-                
-                // Initialize filteredLaporan with all data
-                this.filteredLaporan = [...this.laporan];
                 
                 // Calculate summary statistics
                 this.totalLaporan = this.laporan.length;
                 this.dalamProses = this.laporan.filter(item => item.status === 'unverified').length;
                 this.selesai = this.laporan.filter(item => item.status === 'verified').length;
                 
-                console.log('Data loaded successfully:', this.laporan);
             } catch (error) {
                 console.error('Error fetching data:', error);
-                if (error.response && error.response.status === 401) {
-                    // If unauthorized, redirect to login
-                    this.$router.push('/login');
+                
+                // Check for specific error types
+                if (error.response) {
+                    if (error.response.status === 401) {
+                        this.error = 'Sesi login Anda mungkin sudah berakhir. Silakan login kembali.';
+                    } else {
+                        this.error = `Gagal memuat data: ${error.response.status} ${error.response.statusText}`;
+                    }
+                } else if (error.request) {
+                    this.error = 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
+                } else {
+                    this.error = 'Gagal memuat data. Silakan coba lagi nanti.';
                 }
-                this.error = 'Gagal memuat data. Silakan coba lagi nanti.';
             } finally {
                 this.loading = false;
             }
         },
         
-        // Helper to get category name by ID
+        // Get category name by ID
         getCategoryName(categoryId) {
             return this.categories[categoryId] || 'Tidak ada kategori';
         },
@@ -595,8 +747,6 @@ export default {
         handleSearch() {
             // Reset to first page when searching
             this.currentPage = 1;
-            
-            // Filtering is handled by the computed property
         },
         
         // Sort table by field
@@ -609,7 +759,7 @@ export default {
             }
         },
         
-        // Get sort icon class based on current sort
+        // Get sort icon based on current sort
         getSortIcon(field) {
             if (this.sortField !== field) return 'fa-sort';
             return this.sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
@@ -640,30 +790,6 @@ export default {
             this.currentPage = 1;
         },
         
-        // Apply filters
-        applyFilters() {
-            // Reset to first page when filters change
-            this.currentPage = 1;
-            
-            // Filtering is handled by the computed property
-        },
-        
-        // Get current user from cookie
-        getCurrentUser() {
-            try {
-                const encryptedUserData = VueCookies.get("user_session");
-                if (encryptedUserData) {
-                    this.userData = decryptData(encryptedUserData);
-                    console.log("Current user loaded:", this.userData.name);
-                    return true;
-                }
-                return false;
-            } catch (error) {
-                console.error("Error getting user data:", error);
-                return false;
-            }
-        },
-        
         // Add new report
         tambahLaporan() {
             this.$router.push('/tambah-laporan');
@@ -688,24 +814,45 @@ export default {
         // Add new report (same as tambahLaporan, but kept for compatibility)
         addNewReport() {
             this.$router.push('/tambah-laporan');
+        },
+        
+        // Handle page refresh
+        handleBeforeUnload() {
+            sessionStorage.setItem('page_refreshing', 'true');
         }
     },
-    mounted() {
-        // Check authentication first
-        if (!this.getCurrentUser()) {
-            console.log('User not authenticated, redirecting to login');
-            window.location.href = '/login';
-            return;
+    beforeCreate() {
+        // Set up interceptors before component is created
+        setupInterceptors();
+    },
+    created() {
+        // Configure axios to maintain session across page navigations
+        axios.defaults.withCredentials = true;
+    },
+    async mounted() {
+        // Set up refresh detection
+        window.addEventListener('beforeunload', this.handleBeforeUnload);
+        
+        // Check for page refresh
+        const wasRefresh = sessionStorage.getItem('page_refreshing') === 'true';
+        if (wasRefresh) {
+            console.log('Page refresh detected - maintaining state');
+            sessionStorage.removeItem('page_refreshing');
         }
         
-        // If authenticated, proceed with component initialization
-        this.fetchData();
+        // Always try to check authentication
+        await this.checkAuthentication();
         
-        // Add debugging to show what data actually comes back
-        setTimeout(() => {
-            console.log('After 1s - Laporan data:', this.laporan);
-            console.log('After 1s - First item:', this.laporan[0]);
-        }, 1000);
+        // Always try to fetch data, even if authentication is uncertain
+        this.fetchData();
+    },
+    beforeUnmount() {
+        window.removeEventListener('beforeunload', this.handleBeforeUnload);
+        
+        // Preserve session when navigating away
+        if (!sessionStorage.getItem('logging_out')) {
+            sessionStorage.setItem('session_maintained', 'true');
+        }
     }
 };
 </script>

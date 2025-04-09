@@ -15,7 +15,7 @@
           <p class="text-lg text-gray-600">
             To access more features, please login or create your account.
           </p>
-          <router-link :to="{ name: '404' }">
+          <router-link :to="isAuthenticated ? '/pelaporan/dashboard' : { name: '404' }">
             <button
               class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md shadow-md text-sm mt-4"
             >
@@ -41,16 +41,100 @@
 <script>
 import HeaderLogin from "../../components/HeaderLogin.vue";
 import Footer from "../../components/Footer.vue";
+import VueCookies from 'vue-cookies';
+import axios from 'axios';
+import { decryptData } from '../../services/encrypt'; // Adjust path as needed
 
 export default {
-  name: "AppComponent",
+  name: "LandingLogin",
   components: {
     HeaderLogin,
     Footer,
   },
-  mounted() {
-    console.log("Routing is working!");
+  data() {
+    return {
+      isAuthenticated: false,
+      userData: null
+    };
   },
+  methods: {
+    // Check for existing session and validate it
+    checkSession() {
+      try {
+        // First check localStorage
+        try {
+          const userInfo = JSON.parse(localStorage.getItem('user'));
+          if (userInfo) {
+            console.log('Found user info in localStorage');
+            this.isAuthenticated = true;
+            this.userData = userInfo;
+            
+            // Ensure the session is marked for maintenance
+            sessionStorage.setItem('session_maintained', 'true');
+            return true;
+          }
+        } catch (e) {
+          console.log('No user data in localStorage');
+        }
+        
+        // Then check cookies
+        const encryptedUserData = VueCookies.get("user_session");
+        if (encryptedUserData) {
+          try {
+            this.userData = decryptData(encryptedUserData);
+            if (this.userData && this.userData.token) {
+              // Set the token for all axios requests
+              axios.defaults.headers.common['Authorization'] = `Bearer ${this.userData.token}`;
+              this.isAuthenticated = true;
+              
+              // Mark session for maintenance
+              sessionStorage.setItem('session_maintained', 'true');
+              
+              console.log("Session maintained for user:", this.userData.name || this.userData.username);
+              return true;
+            }
+          } catch (error) {
+            console.error("Error decrypting user data:", error);
+          }
+        }
+        
+        this.isAuthenticated = false;
+        return false;
+      } catch (error) {
+        console.error("Error checking session:", error);
+        this.isAuthenticated = false;
+        return false;
+      }
+    }
+  },
+  created() {
+    // Configure axios to maintain session across page navigations
+    axios.defaults.withCredentials = true;
+  },
+  mounted() {
+    console.log("Landing page mounted!");
+    
+    // Check for existing session
+    this.checkSession();
+    
+    // Set up beforeunload event to prevent session loss on refresh
+    window.addEventListener('beforeunload', () => {
+      // Set a flag in sessionStorage to prevent redirect on refresh
+      sessionStorage.setItem('page_refreshing', 'true');
+    });
+    
+    // Dispatch event so header updates
+    window.dispatchEvent(new Event('user-logged-in'));
+  },
+  beforeUnmount() {
+    // If navigating away, set a flag that we're not logging out
+    if (!sessionStorage.getItem('logging_out')) {
+      sessionStorage.setItem('session_maintained', 'true');
+    }
+    
+    // Remove event listener
+    window.removeEventListener('beforeunload', () => {});
+  }
 };
 </script>
 

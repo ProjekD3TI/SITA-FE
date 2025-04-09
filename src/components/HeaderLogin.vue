@@ -43,13 +43,10 @@
             :class="{ hidden: !isMenuOpen, block: isMenuOpen }"
             class="md:flex space-x-6 relative"
           >
-            <router-link to="/" class="hover:text-gray-600"
-              >Home</router-link
-            >
+            <router-link to="/" class="hover:text-gray-600">Home</router-link>
             <router-link to="/informasi-ta" class="hover:text-gray-600">TA</router-link>
-            <router-link to="/informasi-inventaris-peminjaman" class="hover:text-gray-600"
-              >Ruang dan Inventaris</router-link
-            >
+            <router-link to="/informasi-inventaris-peminjaman" class="hover:text-gray-600">Ruang dan Inventaris</router-link>
+            
             <!-- Dropdown Menu for "Pelaporan" -->
             <div class="relative group">
               <span class="hover:text-gray-600 cursor-pointer px-4 py-2">Pelaporan</span>
@@ -161,6 +158,9 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 import { authMahasiswa } from '../services/authMahasiswa';
+import VueCookies from 'vue-cookies';
+import axios from 'axios';
+import { decryptData } from '../services/encrypt'; // Adjust path to your encrypt service
 
 export default {
   name: "HeaderComponent",
@@ -169,36 +169,103 @@ export default {
     const toast = useToast();
     const { logout } = authMahasiswa();
     const username = ref('');
+    const isAuthenticated = ref(false);
 
-    onMounted(() => {
-      // Get username from cookies or localStorage if available
-      // This is a placeholder - adjust based on how you store user info
+    // Check for user session
+    const checkUserSession = () => {
       try {
+        // First check localStorage as in the original component
         const userInfo = JSON.parse(localStorage.getItem('user'));
         if (userInfo && userInfo.username) {
           username.value = userInfo.username;
+          isAuthenticated.value = true;
+          
+          // Set token for axios if available
+          if (userInfo.token) {
+            axios.defaults.headers.common['Authorization'] = `Bearer ${userInfo.token}`;
+          }
+          
+          return;
         } else if (userInfo && userInfo.email) {
           // If no username, use email or first part of email
           username.value = userInfo.email.split('@')[0];
+          isAuthenticated.value = true;
+          return;
         }
+        
+        // If not in localStorage, check cookies
+        const encryptedUserData = VueCookies.get("user_session");
+        if (encryptedUserData) {
+          try {
+            const userData = decryptData(encryptedUserData);
+            if (userData && (userData.name || userData.username)) {
+              username.value = userData.name || userData.username;
+              isAuthenticated.value = true;
+              
+              // Set token for axios if available
+              if (userData.token) {
+                axios.defaults.headers.common['Authorization'] = `Bearer ${userData.token}`;
+              }
+              return;
+            }
+          } catch (error) {
+            console.error("Error decrypting user data:", error);
+          }
+        }
+        
+        username.value = '';
+        isAuthenticated.value = false;
       } catch (error) {
-        console.log('No user data found');
+        console.log('No user data found or error:', error);
+        username.value = '';
+        isAuthenticated.value = false;
       }
+    };
+    
+    // Call this on mount
+    onMounted(() => {
+      checkUserSession();
+      
+      // Listen for login events
+      window.addEventListener('user-logged-in', checkUserSession);
     });
 
     const handleLogout = () => {
       try {
+        // Set this flag to allow redirect on logout
+        sessionStorage.setItem('logging_out', 'true');
+        
+        // Remove session maintenance flag
+        sessionStorage.removeItem('session_maintained');
+        
+        // Original logout
         logout();
+        
+        // Also clear cookies
+        VueCookies.remove("user_session");
+        
+        // Remove axios auth header
+        delete axios.defaults.headers.common['Authorization'];
+        
+        // Reset state
+        username.value = '';
+        isAuthenticated.value = false;
+        
         toast.success("Berhasil Logout!");
         router.push('/');
       } catch (error) {
         toast.error("Terjadi kesalahan saat logout.");
+      } finally {
+        // Clean up flag
+        sessionStorage.removeItem('logging_out');
       }
     };
 
     return {
       username,
-      handleLogout
+      isAuthenticated,
+      handleLogout,
+      checkUserSession
     };
   },
   data() {
@@ -210,9 +277,13 @@ export default {
   // Close dropdown when clicking outside
   mounted() {
     document.addEventListener('click', this.closeDropdownOnClickOutside);
+    
+    // Set up axios with credentials
+    axios.defaults.withCredentials = true;
   },
   beforeUnmount() {
     document.removeEventListener('click', this.closeDropdownOnClickOutside);
+    window.removeEventListener('user-logged-in', this.$options.setup().checkUserSession);
   },
   methods: {
     toggleMenu() {

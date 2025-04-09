@@ -15,23 +15,66 @@
 </template>
 
 <script>
+import VueCookies from 'vue-cookies';
+import { decryptData } from '../../../../services/encrypt'; // Adjust path as needed
+
 export default {
-    name: 'PelaporanHeader',
-    data() {
-        return {
-            username: 'User'
-        }
-    },
-    methods: {
-        logout() {
-            // Handle logout logic here
-            this.$emit('logout');
-            // or use Vuex action or router
-            // this.$store.dispatch('auth/logout');
-            // this.$router.push('/login');
-        }
+  name: 'PelaporanHeader',
+  props: {
+    // Accept userData as a prop from parent
+    userData: {
+      type: Object,
+      default: null
     }
-}
+  },
+  data() {
+    return {
+      // Local userData if not provided by parent
+      localUserData: null
+    };
+  },
+  computed: {
+    // Use either prop userData or local userData
+    user() {
+      return this.userData || this.localUserData || {};
+    },
+    
+    // Computed properties for user information
+    userName() {
+      if (this.user && (this.user.name || this.user.username)) {
+        return this.user.name || this.user.username;
+      }
+      return 'User';
+    }
+  },
+  methods: {
+    // Get user data from cookie
+    getUserData() {
+      try {
+        // First try localStorage
+        const userInfo = JSON.parse(localStorage.getItem('user'));
+        if (userInfo) {
+          this.localUserData = userInfo;
+          return;
+        }
+        
+        // Then try cookies
+        const encryptedUserData = VueCookies.get("user_session");
+        if (encryptedUserData) {
+          this.localUserData = decryptData(encryptedUserData);
+        }
+      } catch (error) {
+        console.error("Error getting user data:", error);
+      }
+    }
+  },
+  created() {
+    // Get user data if not provided by parent
+    if (!this.userData) {
+      this.getUserData();
+    }
+  }
+};
 </script>
 
 <style scoped>
