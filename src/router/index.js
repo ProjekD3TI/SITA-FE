@@ -138,37 +138,7 @@ const routes = [
         path: "profile",
         name: "ProfileMahasiswa",
         component: () => import("../views/Mahasiswa/Profile.vue"),
-      },
-      {
-        path: "dashboardpkmhs",
-        name: "DashboardPKMhs",
-        component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/DashboardPKMhs.vue"),
-      },
-      {
-        path: "addpkmhs",
-        name: "AddPKMhs",
-        component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/AddPKMhs.vue"),
-      },
-      {
-        path: "/laporan/:id",
-        name: "DetailPKMhs",
-        component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/DetailPKMhs.vue"),
-      },
-      {
-        path: "dashboardksmhs",
-        name: "DashboardKSMhs",
-        component: () => import("../views/Mahasiswa/Pelaporan/KekerasanSeksual/DashboardKSMhs.vue"),
-      },
-      {
-        path: "addpelaporanksmhs",
-        name: "AddPelaporanKSMhs",
-        component: () => import("../views/Mahasiswa/Pelaporan/KekerasanSeksual/AddKSMhs.vue"),
-      },
-      {
-        path: "/laporan_kekerasan/:id",
-        name: "DetailKSMhs",
-        component: () => import("../views/Mahasiswa/Pelaporan/KekerasanSeksual/DetailKSMhs.vue"),
-      },
+      }
       // route mahasiswa yg laenya
     ],
   },
@@ -386,7 +356,7 @@ const routes = [
     ],
   },
 
-  //Pelaporan
+  //SI Pelaporan untuk Mahasiswa
   {
     path: "/pelaporan",
     meta: { requiresAuth: true, userType: "mahasiswa" },
@@ -394,7 +364,7 @@ const routes = [
       {
         path: "dashboard",
         name: "DashboardPelaporan",
-        component: () => import("../views/Pelaporan/Dashboard.vue"),
+        component: () => import("../views/Mahasiswa/Pelaporan/Dashboard.vue"),
       },
       {
         path: "pelaporan-kejadian",
