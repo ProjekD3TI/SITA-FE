@@ -9,36 +9,12 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
       <div class="bg-white shadow rounded-lg p-4">
         <div class="flex items-center">
-          <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+          <div class="p-3 rounded-full bg-red-100 text-red-600">
             <i class="fas fa-file-alt text-xl"></i>
           </div>
           <div class="ml-4">
             <p class="text-sm text-gray-500">Total Laporan</p>
             <p class="text-lg font-semibold">{{ totalLaporan || 0 }}</p>
-          </div>
-        </div>
-      </div>
-      
-      <div class="bg-white shadow rounded-lg p-4">
-        <div class="flex items-center">
-          <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
-            <i class="fas fa-hourglass-half text-xl"></i>
-          </div>
-          <div class="ml-4">
-            <p class="text-sm text-gray-500">Dalam Proses</p>
-            <p class="text-lg font-semibold">{{ dalamProses || 0 }}</p>
-          </div>
-        </div>
-      </div>
-      
-      <div class="bg-white shadow rounded-lg p-4">
-        <div class="flex items-center">
-          <div class="p-3 rounded-full bg-green-100 text-green-600">
-            <i class="fas fa-check-circle text-xl"></i>
-          </div>
-          <div class="ml-4">
-            <p class="text-sm text-gray-500">Selesai</p>
-            <p class="text-lg font-semibold">{{ selesai || 0 }}</p>
           </div>
         </div>
       </div>
@@ -97,6 +73,27 @@
             {{ name }}
           </option>
         </select>
+      </div>
+
+      <!-- Date Range Filters -->
+      <div class="flex-1 min-w-[200px]">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
+        <input
+          type="date"
+          v-model="filters.startDate"
+          class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          @change="applyFilters"
+        />
+      </div>
+
+      <div class="flex-1 min-w-[200px]">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Akhir</label>
+        <input
+          type="date"
+          v-model="filters.endDate"
+          class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          @change="applyFilters"
+        />
       </div>
         
         <!-- Reset Filter Button -->
@@ -211,8 +208,8 @@
       
       <!-- Pagination -->
       <div class="mt-6 flex justify-between items-center">
-        <div class="text-sm text-gray-700">
-          Total: {{ filteredLaporan.length }} laporan
+        <div class="flex items-center text-sm text-gray-500">
+          Menampilkan {{ userFilteredLaporan.length ? startIndex + 1 : 0 }}-{{ Math.min(startIndex + itemsPerPage, userFilteredLaporan.length) }} dari {{ userFilteredLaporan.length }} laporan
         </div>
         
         <div class="flex items-center space-x-2">
@@ -350,18 +347,6 @@ export default {
       });
     },
     
-    // Paginated data for display
-    paginatedLaporan() {
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return this.filteredLaporan.slice(start, end);
-    },
-    
-    // Calculate pagination values
-    totalPages() {
-      return Math.ceil(this.filteredLaporan.length / this.itemsPerPage);
-    },
-    
     startIndex() {
       return (this.currentPage - 1) * this.itemsPerPage;
     },
@@ -384,6 +369,70 @@ export default {
         }
       }
       return result;
+    },
+
+    currentUserLaporanCount() {
+      // Assuming you have user info in this.user or similar
+      // And filteredLaporan already applies other filters
+      return this.filteredLaporan.filter(laporan => 
+        laporan.user_id === this.user.id || 
+        laporan.created_by === this.user.id
+      ).length;
+    },
+
+    // In your computed properties
+    totalLaporan() {
+      if (!this.userData) return 0;
+      return this.laporan.filter(item => 
+        (item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
+        (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))
+      ).length;
+    },
+
+    dalamProses() {
+      if (!this.userData) return 0;
+      return this.laporan.filter(item => 
+        ((item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
+        (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))) &&
+        item.status === 'unverified'
+      ).length;
+    },
+
+    selesai() {
+      if (!this.userData) return 0;
+      return this.laporan.filter(item => 
+        ((item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
+        (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))) &&
+        item.status === 'verified'
+      ).length;
+    },
+
+    startIndex() {
+      return (this.currentPage - 1) * this.itemsPerPage;
+    },
+
+    userFilteredLaporan() {
+      if (!this.userData) return [];
+      
+      return this.filteredLaporan.filter(item => 
+        (item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
+        (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))
+      );
+    },
+
+    // Update these computed properties to use userFilteredLaporan
+    endIndex() {
+      return Math.min(this.startIndex + this.itemsPerPage, this.userFilteredLaporan.length);
+    },
+
+    totalPages() {
+      return Math.ceil(this.userFilteredLaporan.length / this.itemsPerPage);
+    },
+
+    paginatedLaporan() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.userFilteredLaporan.slice(start, end);
     }
   },
   
@@ -397,39 +446,16 @@ export default {
           axios.get('http://localhost:8000/api/laporan_kekerasan')
         ]);
         
-        console.log('Raw API response:', laporanResponse);
-        console.log('Categories response:', categoriesResponse);
-        console.log('Laporan data:', laporanResponse.data);
-        console.log('User data:', this.userData);
-        
         this.categories = categoriesResponse.data.reduce((acc, category) => {
           acc[category.category_id] = category.nama;
           return acc;
         }, {});
         
+        // Store all reports in this.laporan
         this.laporan = laporanResponse.data;
         
-        // Calculate summary statistics based on filtered data
-        if (this.userData) {
-          // Filter laporan for current user
-          const userLaporan = this.laporan.filter(item => 
-            (item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
-            (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))
-          );
-          
-          // IMPORTANT: Assign the filtered reports to filteredLaporan
-          this.filteredLaporan = userLaporan;
-          
-          // Update statistics
-          this.totalLaporan = userLaporan.length;
-          this.dalamProses = userLaporan.filter(item => item.status === 'unverified').length;
-          this.selesai = userLaporan.filter(item => item.status === 'verified').length;
-          
-          console.log(`Filtered to ${userLaporan.length} reports for user: ${this.userData.name}`);
-        } else {
-          // If no user data, use all reports
-          this.filteredLaporan = this.laporan;
-        }
+        // Apply filtering based on user
+        this.filterReports();
         
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -464,32 +490,9 @@ export default {
     
     // Handle search input with debounce
     handleSearch() {
-      // Always start from the user-filtered data
-      let filtered = [...this.laporan];
-      
-      // Apply user filtering first (keeping the same logic from fetchData)
-      if (this.userData && this.userData.name) {
-        filtered = filtered.filter(item => 
-          (item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
-          (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))
-        );
-      }
-      
-      // Then apply search query if it exists
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
-        filtered = filtered.filter(item => 
-          (item.judul && item.judul.toLowerCase().includes(query)) || 
-          (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(query)) ||
-          (item.nama_pelapor && item.nama_pelapor.toLowerCase().includes(query))
-        );
-      }
-      
-      // Update the filtered list
-      this.filteredLaporan = filtered;
-      
-      // Reset to first page when search changes
-      this.currentPage = 1;
+      // Don't implement separate logic here
+      // Just call the common filterReports method
+      this.filterReports();
     },
     
     addNewReport() {
@@ -503,147 +506,84 @@ export default {
       this.searchQuery = '';
       this.filters.category_id = '';
       this.filters.status = '';
-      this.filters.startDate = null;
-      this.filters.endDate = null;
-      this.filterReports(); // Call filterReports to reset to original data
+      this.filters.startDate = '';
+      this.filters.endDate = '';
+      
+      // Re-apply filtering (which will only filter by user)
+      this.filterReports();
     },
     
     filterReports() {
       console.log('Filtering reports...');
       
-      // Get the current user information and ensure it's a number for comparison
-      const currentUserId = parseInt(this.userData.id, 10);
-      console.log('Current user ID (parsed):', currentUserId);
+      // Start with all data
+      let filtered = [...this.laporan];
       
-      // Check if currentUserId is valid
-      if (!currentUserId) {
-        console.error('Invalid user ID or user not logged in');
-        this.filteredLaporan = [];
-        return;
+      // Always apply user filtering first
+      if (this.userData && this.userData.name) {
+        filtered = filtered.filter(item => 
+          (item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
+          (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))
+        );
+        console.log(`Filtered to ${filtered.length} reports for user: ${this.userData.name}`);
       }
       
-      // Start with completely unfiltered data
-      let allReports = [...this.laporanKs];
-      console.log('Total reports before filtering:', allReports.length);
-      
-      // STEP 1: First, check if we're looking at /reports for a dosen (should only see their own)
-      const isDosenView = this.$route.path.includes('/dosen') || this.$route.name.includes('Dosen');
-      console.log('Is dosen view?', isDosenView);
-      
-      // STEP 2: Filter based on user role
-      let userReports = allReports;
-      
-      if (isDosenView) {
-        // In dosen view, only show reports explicitly associated with this user
-        userReports = allReports.filter(item => {
-          // Convert both IDs to numbers to ensure proper comparison
-          const reportUserId = item.user_id ? parseInt(item.user_id, 10) : null;
-          const reportPelaporId = item.pelapor_id ? parseInt(item.pelapor_id, 10) : null;
-          
-          console.log(`Report ${item.id}: user_id=${reportUserId}, pelapor_id=${reportPelaporId}, currentUserId=${currentUserId}`);
-          
-          // Strict equality check after type conversion
-          const isUsersReport = 
-            (reportUserId !== null && reportUserId === currentUserId) || 
-            (reportPelaporId !== null && reportPelaporId === currentUserId);
-          
-          if (!isUsersReport) {
-            console.log(`Excluding report ${item.id} - not associated with current user ${currentUserId}`);
-          }
-          
-          return isUsersReport;
-        });
-        
-        console.log('Reports belonging to current user:', userReports.length);
-      } else {
-        // If not in dosen view, show all reports (for admin or public view)
-        console.log('Showing all reports (not in dosen view)');
-      }
-      
-      // If no user reports found in dosen view, immediately return empty results
-      if (isDosenView && userReports.length === 0) {
-        console.log('No reports found for current user');
-        this.filteredLaporan = [];
-        return;
-      }
-      
-      // Rest of the filtering logic remains the same...
-      let filtered = [...userReports];
-      
-      // Apply search filter
-      if (this.searchQuery.trim()) {
-        const query = this.searchQuery.toLowerCase().trim();
-        filtered = filtered.filter(item => {
-          return (item.judul_laporan?.toLowerCase().includes(query) || 
-                  item.category?.name?.toLowerCase().includes(query));
-        });
-        console.log('After search filter:', filtered.length);
+      // Apply search query if it exists
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(item => 
+          (item.judul && item.judul.toLowerCase().includes(query)) || 
+          (item.nomor_laporan_kekerasan && item.nomor_laporan_kekerasan.toLowerCase().includes(query))
+        );
       }
       
       // Apply category filter
       if (this.filters.category_id) {
-        filtered = filtered.filter(item => {
-          const itemCategoryId = parseInt(item.category_id, 10);
-          const filterCategoryId = parseInt(this.filters.category_id, 10);
-          return itemCategoryId === filterCategoryId;
-        });
-        console.log('After category filter:', filtered.length);
+        filtered = filtered.filter(item => 
+          String(item.category_id) === String(this.filters.category_id)
+        );
       }
       
-      // Apply date filter
+      // Apply status filter
+      if (this.filters.status) {
+        filtered = filtered.filter(item => item.status === this.filters.status);
+      }
+      
+      // Apply date range filter
       if (this.filters.startDate || this.filters.endDate) {
-        console.log('Applying date filters - Start:', this.filters.startDate, 'End:', this.filters.endDate);
-        
         filtered = filtered.filter(item => {
-          // Use the correct date field, ensure it exists
-          const dateStr = item.tanggal_kegiatan || item.created_at || item.tanggal;
+          // Get the date field to filter on (use tanggal_kejadian if available, otherwise created_at)
+          const itemDateStr = item.tanggal_kejadian || item.created_at;
+          if (!itemDateStr) return true; // Skip if no date available
           
-          if (!dateStr) {
-            console.log(`Report ${item.id} has no valid date field`);
-            return false;
+          // Convert to Date object and set to midnight for accurate date comparison
+          const itemDate = new Date(itemDateStr);
+          itemDate.setHours(0, 0, 0, 0);
+          
+          // Check start date if specified
+          if (this.filters.startDate) {
+            const startDate = new Date(this.filters.startDate);
+            startDate.setHours(0, 0, 0, 0);
+            if (itemDate < startDate) return false;
           }
           
-          try {
-            const itemDate = new Date(dateStr);
-            
-            // Check that the date is valid
-            if (isNaN(itemDate.getTime())) {
-              console.log(`Report ${item.id} has invalid date: ${dateStr}`);
-              return false;
-            }
-            
-            // Check start date
-            if (this.filters.startDate) {
-              const startDate = new Date(this.filters.startDate);
-              startDate.setHours(0, 0, 0, 0);
-              if (itemDate < startDate) {
-                return false;
-              }
-            }
-            
-            // Check end date
-            if (this.filters.endDate) {
-              const endDate = new Date(this.filters.endDate);
-              endDate.setHours(23, 59, 59, 999);
-              if (itemDate > endDate) {
-                return false;
-              }
-            }
-            
-            return true;
-          } catch (error) {
-            console.error(`Error processing date for report ${item.id}:`, error);
-            return false;
+          // Check end date if specified
+          if (this.filters.endDate) {
+            const endDate = new Date(this.filters.endDate);
+            endDate.setHours(23, 59, 59, 999); // End of the day
+            if (itemDate > endDate) return false;
           }
+          
+          return true;
         });
         
-        console.log('After date filter:', filtered.length);
+        console.log(`Date filtered to ${filtered.length} reports`);
       }
       
-      // Update the filtered reports
+      // Update the filtered list
       this.filteredLaporan = filtered;
       
-      // Reset pagination
+      // Reset to first page when filters change
       this.currentPage = 1;
     },
 
@@ -738,67 +678,9 @@ export default {
       }
     },
 
+    // Add a method to apply filters
     applyFilters() {
-      console.log('Applying filters:', this.filters); // Debug log
-      
-      // Start with all data
-      let filtered = [...this.laporan];
-      
-      // Apply category filter
-      if (this.filters.category_id) {
-        console.log('Filtering by category:', this.filters.category_id);
-        filtered = filtered.filter(item => 
-          String(item.category_id) === String(this.filters.category_id)
-        );
-      }
-      
-      // Apply status filter
-      if (this.filters.status) {
-        console.log('Filtering by status:', this.filters.status);
-        // Map frontend status labels to actual status values in the data
-        const statusMap = {
-          'Belum Diverifikasi': 'unverified',
-          'Diverifikasi': 'verified',
-          'Ditolak': 'rejected'
-        };
-        
-        const statusValue = statusMap[this.filters.status] || this.filters.status;
-        filtered = filtered.filter(item => item.status === statusValue);
-      }
-      
-      // Apply date range filter
-      if (this.filters.startDate || this.filters.endDate) {
-        console.log('Filtering by date range:', this.filters.startDate, 'to', this.filters.endDate);
-        
-        filtered = filtered.filter(item => {
-          // Convert to Date objects for comparison
-          const itemDate = new Date(item.created_at || item.tanggal); // Adjust field name as needed
-          
-          // Check start date if specified
-          if (this.filters.startDate) {
-            const startDate = new Date(this.filters.startDate);
-            startDate.setHours(0, 0, 0, 0);
-            if (itemDate < startDate) return false;
-          }
-          
-          // Check end date if specified
-          if (this.filters.endDate) {
-            const endDate = new Date(this.filters.endDate);
-            endDate.setHours(23, 59, 59, 999);
-            if (itemDate > endDate) return false;
-          }
-          
-          return true;
-        });
-      }
-      
-      // Update filtered data
-      this.filteredLaporan = filtered;
-      
-      // Reset to first page when filters change
-      this.currentPage = 1;
-      
-      console.log('Filtered results:', this.filteredLaporan.length); // Debug log
+      this.filterReports();
     },
   },
   
@@ -825,11 +707,6 @@ export default {
     // Get current user first, then fetch data
     this.getCurrentUser();
     this.fetchData();
-    
-    // Any other mounted code...
-    console.log('filteredLaporan length:', this.filteredLaporan.length);
-    console.log('paginatedLaporan length:', this.paginatedLaporan.length);
-
   }
 };
 </script>
