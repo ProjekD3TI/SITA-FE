@@ -52,7 +52,9 @@
         </div>
         
         <div class="action-buttons">
-          <button class="btn-add-report" @click="addNewReport">
+          <button                               
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+            @click="addNewReport">
             <i class="fas fa-plus"></i> Tambah Laporan
           </button>
         </div>
@@ -60,55 +62,71 @@
       
       <!-- Filter controls -->
       <div class="filter-container">
-        <div class="filter-group">
-          <label>Filter berdasarkan:</label>
-          
-          <div class="filter-select">
-            <label for="categoryFilter">Kategori:</label>
-            <select id="categoryFilter" v-model="filters.category_id" @change="applyFilters">
-              <option value="">Semua</option>
-              <option v-for="(name, id) in filteredCategories" :key="id" :value="id">
-                {{ name }}
-              </option>
-            </select>
-          </div>
-          
-          <div class="filter-select">
-            <label for="statusFilter">Status:</label>
-            <select id="statusFilter" v-model="filters.status" @change="applyFilters">
-              <option value="">Semua</option>
-              <option value="Belum Diverifikasi">Belum Diverifikasi</option>
-              <option value="Diverifikasi">Diverifikasi</option>
-              <option value="Ditolak">Ditolak</option>
-            </select>
-          </div>
-          
-          <div class="filter-date">
-            <label for="dateFilter">Periode:</label>
-            <div class="date-inputs">
-              <input 
-                type="date" 
-                id="startDate" 
-                v-model="filters.startDate" 
-                @change="applyFilters"
-                placeholder="Tanggal Mulai"
-              >
-              <span>s/d</span>
-              <input 
-                type="date" 
-                id="endDate" 
-                v-model="filters.endDate" 
-                @change="applyFilters"
-                placeholder="Tanggal Akhir"
-              >
-            </div>
-          </div>
-          
-          <button class="btn-reset-filter" @click="resetFilters">
-            <i class="fas fa-undo"></i> Reset Filter
-          </button>
-        </div>
-      </div>
+                    <div class="filter-group">
+                      <label class="filter-title">Filter berdasarkan:</label>
+                      
+                      <!-- Category Filter -->
+                      <div class="filter-select">
+                        <label for="categoryFilter">Kategori:</label>
+                        <select 
+                          id="categoryFilter" 
+                          v-model="filters.category_id" 
+                          @change="applyFilters"
+                          class="filter-input"
+                        >
+                          <option value="">Semua</option>
+                          <option v-for="(name, id) in filteredCategories" :key="id" :value="id">
+                            {{ name }}
+                          </option>
+                        </select>
+                      </div>
+                      
+                      <!-- Status Filter -->
+                      <div class="filter-select">
+                        <label for="statusFilter">Status:</label>
+                        <select 
+                          id="statusFilter" 
+                          v-model="filters.status" 
+                          @change="applyFilters"
+                          class="filter-input"
+                        >
+                          <option value="">Semua</option>
+                          <option value="Belum Diverifikasi">Belum Diverifikasi</option>
+                          <option value="Diverifikasi">Diverifikasi</option>
+                          <option value="Ditolak">Ditolak</option>
+                        </select>
+                      </div>
+                      
+                      <!-- Date Range Filter -->
+                      <div class="filter-date">
+                        <label for="dateFilter">Periode:</label>
+                        <div class="date-inputs">
+                          <input 
+                            type="date" 
+                            id="startDate" 
+                            v-model="filters.startDate" 
+                            @change="applyFilters"
+                            class="filter-input"
+                            placeholder="Tanggal Mulai"
+                          >
+                          <span class="date-separator">s/d</span>
+                          <input 
+                            type="date" 
+                            id="endDate" 
+                            v-model="filters.endDate" 
+                            @change="applyFilters"
+                            class="filter-input"
+                            placeholder="Tanggal Akhir"
+                          >
+                        </div>
+                      </div>
+                      
+                      <!-- Reset Filter Button -->
+                      <button class="btn-reset-filter" @click="resetFilters">
+                        <i class="fas fa-undo"></i> Reset Filter
+                      </button>
+                    </div>
+                  </div>
       
       <table class="data-table">
         <thead>
@@ -209,36 +227,91 @@ export default {
       loading: true, // Start with loading true
       error: null,
       filteredLaporan: [], // New property to hold filtered results
-      search: '' // Replace or use alongside searchQuery if you prefer
+      search: '', // Replace or use alongside searchQuery if you prefer
+      totalFilteredCount: 0 // New property to store total filtered count
     };
   },
   
   computed: {
     filteredLaporan() {
-      if (!this.search) {
-        return this.laporan;
+      // Start with all reports
+      let result = [...this.laporan];
+      
+      // Apply search filter
+      if (this.search) {
+        const searchTerm = this.search.toLowerCase();
+        result = result.filter(item => 
+          (item.judul && item.judul.toLowerCase().includes(searchTerm)) || 
+          (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(searchTerm)) ||
+          (item.nama_pelapor && item.nama_pelapor.toLowerCase().includes(searchTerm))
+        );
       }
       
-      const searchTerm = this.search.toLowerCase();
-      return this.laporan.filter(item => 
-        (item.judul && item.judul.toLowerCase().includes(searchTerm)) || 
-        (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(searchTerm))
-      );
+      // Apply category filter
+      if (this.filters.category_id) {
+        result = result.filter(item => 
+          String(item.category_id) === String(this.filters.category_id)
+        );
+      }
+      
+      // Apply status filter
+      if (this.filters.status) {
+        // Map frontend status labels to actual status values in the data
+        const statusMap = {
+          'Belum Diverifikasi': 'unverified',
+          'Diverifikasi': 'verified',
+          'Ditolak': 'rejected'
+        };
+        
+        const statusValue = statusMap[this.filters.status] || this.filters.status;
+        result = result.filter(item => item.status === statusValue);
+      }
+      
+      // Apply date range filter
+      if (this.filters.startDate || this.filters.endDate) {
+        result = result.filter(item => {
+          // Convert to Date objects for comparison
+          const itemDate = new Date(item.created_at || item.tanggal);
+          
+          // Check start date if specified
+          if (this.filters.startDate) {
+            const startDate = new Date(this.filters.startDate);
+            startDate.setHours(0, 0, 0, 0);
+            if (itemDate < startDate) return false;
+          }
+          
+          // Check end date if specified
+          if (this.filters.endDate) {
+            const endDate = new Date(this.filters.endDate);
+            endDate.setHours(23, 59, 59, 999);
+            if (itemDate > endDate) return false;
+          }
+          
+          return true;
+        });
+      }
+      
+      // Store total filtered count before pagination
+      this.totalFilteredCount = result.length;
+      
+      // Apply pagination directly in filteredLaporan
+      const start = (this.currentPage - 1) * this.pageSize;
+      const end = start + this.pageSize;
+      
+      return result.slice(start, end);
     },
     
-    paginatedLaporan() {
-      // If you're using pagination, update this to use filteredLaporan instead of laporan
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return this.filteredLaporan.slice(start, end);
-    },
-    
+    // Update totalPages to use totalFilteredCount
     totalPages() {
-      return Math.ceil(this.filteredLaporan.length / this.itemsPerPage);
+      return Math.ceil(this.totalFilteredCount / this.pageSize);
     },
     
     startIndex() {
-      return (this.currentPage - 1) * this.itemsPerPage;
+      return (this.currentPage - 1) * this.pageSize;
+    },
+    
+    endIndex() {
+      return Math.min(this.startIndex + this.filteredLaporan.length, this.totalFilteredCount);
     },
     
     unverifiedCount() {
@@ -254,10 +327,6 @@ export default {
       const start = this.startIndex;
       const end = start + this.itemsPerPage;
       return this.filteredLaporan.slice(start, end);
-    },
-    
-    totalPages() {
-      return Math.ceil(this.filteredLaporan.length / this.itemsPerPage);
     },
 
     filteredCategories() {
@@ -353,66 +422,9 @@ export default {
 
     // New filtering method
     applyFilters() {
-      console.log('Applying filters:', this.filters); // Debug log
-      
-      // Start with all data
-      let filtered = [...this.laporan];
-      
-      // Apply category filter
-      if (this.filters.category_id) {
-        console.log('Filtering by category:', this.filters.category_id);
-        filtered = filtered.filter(item => 
-          String(item.category_id) === String(this.filters.category_id)
-        );
-      }
-      
-      // Apply status filter
-      if (this.filters.status) {
-        console.log('Filtering by status:', this.filters.status);
-        // Map frontend status labels to actual status values in the data
-        const statusMap = {
-          'Belum Diverifikasi': 'unverified',
-          'Diverifikasi': 'verified',
-          'Ditolak': 'rejected'
-        };
-        
-        const statusValue = statusMap[this.filters.status] || this.filters.status;
-        filtered = filtered.filter(item => item.status === statusValue);
-      }
-      
-      // Apply date range filter
-      if (this.filters.startDate || this.filters.endDate) {
-        console.log('Filtering by date range:', this.filters.startDate, 'to', this.filters.endDate);
-        
-        filtered = filtered.filter(item => {
-          // Convert to Date objects for comparison
-          const itemDate = new Date(item.created_at || item.tanggal); // Adjust field name as needed
-          
-          // Check start date if specified
-          if (this.filters.startDate) {
-            const startDate = new Date(this.filters.startDate);
-            startDate.setHours(0, 0, 0, 0);
-            if (itemDate < startDate) return false;
-          }
-          
-          // Check end date if specified
-          if (this.filters.endDate) {
-            const endDate = new Date(this.filters.endDate);
-            endDate.setHours(23, 59, 59, 999);
-            if (itemDate > endDate) return false;
-          }
-          
-          return true;
-        });
-      }
-      
-      // Update filtered data
-      this.filteredLaporan = filtered;
-      
-      // Reset to first page when filters change
+      // The computed property will automatically apply filters
+      // Just reset the current page
       this.currentPage = 1;
-      
-      console.log('Filtered results:', this.filteredLaporan.length); // Debug log
     },
     
     resetFilters() {
@@ -422,9 +434,8 @@ export default {
         startDate: '',
         endDate: ''
       };
-      this.filteredLaporan = [...this.laporan];
+      this.search = '';
       this.currentPage = 1;
-      console.log('Filters reset');
     },
 
     handleSearch() {
@@ -435,16 +446,38 @@ export default {
     // Make sure to call this when component is created or data is loaded
     initializeReports() {
       this.filteredLaporan = [...this.laporan];
-    }
+    },
+
+    resetPage() {
+      // Reset to page 1 when page size changes
+      this.currentPage = 1;
+    },
   },
   
   mounted() {
     this.fetchData();
+
+    const savedPageSize = localStorage.getItem('dashboardPkPageSize');
+    if (savedPageSize) {
+      this.pageSize = parseInt(savedPageSize);
+    }
   },
 
   watch: {
     search() {
-      this.handleSearch();
+      this.currentPage = 1;
+    },
+
+    pageSize(newValue) {
+      // Optionally save the user's preference to localStorage
+      localStorage.setItem('dashboardPkPageSize', newValue);
+    },
+
+    'filters': {
+      handler() {
+        this.resetPage();
+      },
+      deep: true
     },
     
     // Reset pagination when filtered results change significantly
