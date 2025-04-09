@@ -2,14 +2,14 @@
     <div class="flex">
         <Sidebar />
         <div class="flex-1">
-            <Header />
+            <Header :userData="userData" />
             <div class="p-4">
                 <!-- Authentication Error Banner -->
                 <div v-if="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 relative">
                     <p>{{ error }}</p>
                     <button 
                         v-if="error.includes('login')" 
-                        @click="$router.push('/mahasiswa/login')" 
+                        @click="goToLogin()" 
                         class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg mt-2"
                     >
                         Login Kembali
@@ -295,59 +295,6 @@ import Header from '../components/Header.vue';
 import Sidebar from '../components/Sidebar.vue';
 import Footer from '../components/Footer.vue';
 
-// Create axios instance outside the component
-const setupInterceptors = () => {
-  try {
-    // Remove any existing interceptors to prevent duplicates
-    if (axios.interceptors && axios.interceptors.request && axios.interceptors.request.handlers) {
-      axios.interceptors.request.handlers.forEach((handler, i) => {
-        axios.interceptors.request.eject(i);
-      });
-    }
-    
-    if (axios.interceptors && axios.interceptors.response && axios.interceptors.response.handlers) {
-      axios.interceptors.response.handlers.forEach((handler, i) => {
-        axios.interceptors.response.eject(i);
-      });
-    }
-    
-    // Set up request interceptor
-    axios.interceptors.request.use((config) => {
-      const encryptedUserData = VueCookies.get("user_session");
-      if (encryptedUserData) {
-        try {
-          const userData = decryptData(encryptedUserData);
-          if (userData && userData.token) {
-            config.headers.Authorization = `Bearer ${userData.token}`;
-          }
-        } catch (error) {
-          console.error("Error parsing user data:", error);
-          // Don't redirect yet, just log the error
-        }
-      }
-      return config;
-    }, (error) => {
-      return Promise.reject(error);
-    });
-    
-    // Set up response interceptor with more graceful handling
-    axios.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        // Don't redirect on 401, just mark the session as potentially invalid
-        if (error.response && error.response.status === 401) {
-          console.log('Unauthorized API response - handling at component level');
-          // Store a flag that can be checked, but don't redirect immediately
-          sessionStorage.setItem('auth_check_needed', 'true');
-        }
-        return Promise.reject(error);
-      }
-    );
-  } catch (err) {
-    console.error("Error setting up interceptors:", err);
-  }
-};
-
 export default {
     name: 'PelaporanKejadian',
     components: {
@@ -362,15 +309,12 @@ export default {
             
             // API data
             laporan: [],
-            // REMOVE filteredLaporan from data since it's defined as computed
             categories: {},
             loading: true,
             error: null,
 
             // Authentication state
             isAuthenticated: false,
-            authCheckInProgress: false,
-            sessionValidated: false,
 
             // Stats for cards
             totalLaporan: 0,
@@ -402,7 +346,6 @@ export default {
         };
     },
     computed: {
-        // Keep filteredLaporan here as a computed property
         filteredLaporan() {
             if (!this.laporan || !this.laporan.length) return [];
             
@@ -542,131 +485,36 @@ export default {
             }
         },
         
-        // Improved authentication check
-        async checkAuthentication() {
-            // Check if this is a refresh and we need to recover state
-            const isRefresh = sessionStorage.getItem('page_refreshing') === 'true';
-            
-            if (isRefresh) {
-                sessionStorage.removeItem('page_refreshing');
-                console.log('Page was refreshed - attempting to recover session');
-            }
-            
-            // Check if session is being maintained
-            if (sessionStorage.getItem('session_maintained') === 'true') {
-                console.log('Session maintenance flag detected - skipping redirect');
-                sessionStorage.removeItem('session_maintained');
-            }
-            
-            // Prevent multiple simultaneous checks
-            if (this.authCheckInProgress) {
-                return this.isAuthenticated;
-            }
-            
-            this.authCheckInProgress = true;
-            
+        // Get current user from cookie - SIMPLIFIED from the working component
+        getCurrentUser() {
             try {
-                // First try localStorage (similar to what HeaderLogin uses)
-                try {
-                    const userInfo = JSON.parse(localStorage.getItem('user'));
-                    if (userInfo) {
-                        console.log('Found user info in localStorage');
-                        this.isAuthenticated = true;
-                        // Set user data from localStorage
-                        this.userData = userInfo;
-                        return true;
-                    }
-                } catch (e) {
-                    console.log('No user data in localStorage or error parsing it');
-                }
-                
-                // Then try cookies
                 const encryptedUserData = VueCookies.get("user_session");
-                if (!encryptedUserData) {
-                    console.log("No user session cookie found");
-                    
-                    // On refresh, try to continue anyway
-                    if (isRefresh) {
-                        console.log("Refresh detected, continuing despite missing session");
-                        return true;
-                    }
-                    
-                    this.isAuthenticated = false;
-                    return false;
-                }
-                
-                // Try to decrypt and validate the user data
-                try {
+                if (encryptedUserData) {
                     this.userData = decryptData(encryptedUserData);
-                } catch (error) {
-                    console.error("Failed to decrypt user data:", error);
+                    console.log("Current user loaded:", this.userData.name);
                     
-                    // On refresh, continue anyway
-                    if (isRefresh) {
-                        return true;
+                    // Set auth token for axios directly
+                    if (this.userData && this.userData.token) {
+                        axios.defaults.headers.common['Authorization'] = `Bearer ${this.userData.token}`;
                     }
                     
-                    this.isAuthenticated = false;
-                    return false;
-                }
-                
-                if (!this.userData || !this.userData.token) {
-                    console.log("Invalid user data or missing token");
-                    
-                    // On refresh, try to continue anyway
-                    if (isRefresh) {
-                        console.log("Refresh detected, continuing despite invalid token");
-                        return true;
-                    }
-                    
-                    this.isAuthenticated = false;
-                    return false;
-                }
-                
-                // Set the token for axios requests
-                axios.defaults.headers.common['Authorization'] = `Bearer ${this.userData.token}`;
-                
-                console.log("User authenticated from session:", this.userData.name);
-                this.isAuthenticated = true;
-                return true;
-            } catch (error) {
-                console.error("Error during authentication check:", error);
-                
-                // On refresh, try to continue anyway
-                if (isRefresh) {
                     return true;
                 }
-                
-                this.isAuthenticated = false;
                 return false;
-            } finally {
-                this.authCheckInProgress = false;
+            } catch (error) {
+                console.error("Error getting user data:", error);
+                return false;
             }
         },
         
-        // Fetch data from API with improved error handling
+        // Fetch data from API - SIMPLIFIED to match the working component
         async fetchData() {
             this.loading = true;
+            this.error = null;
             
             try {
-                // Check for existing session first
-                await this.checkAuthentication();
-                
-                if (!this.isAuthenticated) {
-                    // Try to continue even without authentication
-                    console.log('User not authenticated but attempting to load data anyway');
-                }
-                
-                // Set up axios with authentication header for all requests if we have userData
-                if (this.userData && this.userData.token) {
-                    axios.defaults.headers.common['Authorization'] = `Bearer ${this.userData.token}`;
-                }
-                
                 // Fetch categories first
                 const categoriesResponse = await axios.get('http://localhost:8000/api/category');
-                
-                // If we get here, the connection is valid - clear any previous errors
-                this.error = null;
                 
                 // Transform categories array to an object with id as key for easy lookup
                 this.categories = categoriesResponse.data.reduce((acc, category) => {
@@ -680,6 +528,9 @@ export default {
                 // Then fetch all laporan data
                 const laporanResponse = await axios.get('http://localhost:8000/api/laporan');
                 
+                // Store all laporan data first
+                this.laporan = laporanResponse.data;
+                
                 // Filter laporan for the current user only if we have user data
                 if (this.userData && (this.userData.name || this.userData.username)) {
                     const userName = this.userData.name || this.userData.username;
@@ -689,9 +540,6 @@ export default {
                                             item.ni_pelapor === this.userData.nik))
                     );
                     console.log(`Filtered to ${this.laporan.length} reports for user: ${userName}`);
-                } else {
-                    this.laporan = laporanResponse.data;
-                    console.warn('User data not available for filtering, showing all reports');
                 }
                 
                 // Calculate summary statistics
@@ -699,6 +547,7 @@ export default {
                 this.dalamProses = this.laporan.filter(item => item.status === 'unverified').length;
                 this.selesai = this.laporan.filter(item => item.status === 'verified').length;
                 
+                this.error = null; // Clear any previous errors
             } catch (error) {
                 console.error('Error fetching data:', error);
                 
@@ -816,43 +665,23 @@ export default {
             this.$router.push('/tambah-laporan');
         },
         
-        // Handle page refresh
-        handleBeforeUnload() {
-            sessionStorage.setItem('page_refreshing', 'true');
+        // Navigate to login page
+        goToLogin() {
+            this.$router.push('/login');
         }
     },
-    beforeCreate() {
-        // Set up interceptors before component is created
-        setupInterceptors();
-    },
-    created() {
-        // Configure axios to maintain session across page navigations
+    mounted() {
+        // Simply get user data and then fetch data - same approach as the working component
+        this.getCurrentUser();
+        
+        // Ensure axios has credentials
         axios.defaults.withCredentials = true;
-    },
-    async mounted() {
-        // Set up refresh detection
-        window.addEventListener('beforeunload', this.handleBeforeUnload);
         
-        // Check for page refresh
-        const wasRefresh = sessionStorage.getItem('page_refreshing') === 'true';
-        if (wasRefresh) {
-            console.log('Page refresh detected - maintaining state');
-            sessionStorage.removeItem('page_refreshing');
-        }
-        
-        // Always try to check authentication
-        await this.checkAuthentication();
-        
-        // Always try to fetch data, even if authentication is uncertain
+        // Fetch data after user data is loaded
         this.fetchData();
     },
     beforeUnmount() {
-        window.removeEventListener('beforeunload', this.handleBeforeUnload);
-        
-        // Preserve session when navigating away
-        if (!sessionStorage.getItem('logging_out')) {
-            sessionStorage.setItem('session_maintained', 'true');
-        }
+        // No special cleanup needed
     }
 };
 </script>
