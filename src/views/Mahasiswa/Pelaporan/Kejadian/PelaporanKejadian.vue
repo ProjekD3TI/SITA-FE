@@ -478,6 +478,99 @@ export default {
             
             return filtered;
         },
+
+        filteredLaporan() {
+            if (!this.laporan || !this.laporan.length) return [];
+            
+            let result = [...this.laporan];
+            
+            // Apply search filter
+            if (this.searchQuery) {
+                const query = this.searchQuery.toLowerCase();
+                result = result.filter(item => 
+                    (item.judul && item.judul.toLowerCase().includes(query)) || 
+                    (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(query)) ||
+                    (item.nama_pelapor && item.nama_pelapor.toLowerCase().includes(query))
+                );
+            }
+            
+            // Apply status filter - FIX HERE
+            if (this.filters.status) {
+                // Map the display status back to the database status values
+                const statusMap = {
+                    'Belum Diverifikasi': 'unverified',
+                    'Diverifikasi': 'verified', 
+                    'Ditolak': 'rejected'
+                };
+                
+                const statusValue = statusMap[this.filters.status];
+                if (statusValue) {
+                    result = result.filter(item => item.status === statusValue);
+                }
+            }
+            
+            // Apply category filter
+            if (this.filters.category_id) {
+                result = result.filter(item => 
+                    String(item.category_id) === String(this.filters.category_id)
+                );
+            }
+            
+            // Apply date range filter
+            if (this.filters.startDate || this.filters.endDate) {
+                result = result.filter(item => {
+                    const itemDate = new Date(item.created_at);
+                    
+                    if (this.filters.startDate) {
+                        const startDate = new Date(this.filters.startDate);
+                        startDate.setHours(0, 0, 0, 0);
+                        if (itemDate < startDate) return false;
+                    }
+                    
+                    if (this.filters.endDate) {
+                        const endDate = new Date(this.filters.endDate);
+                        endDate.setHours(23, 59, 59, 999);
+                        if (itemDate > endDate) return false;
+                    }
+                    
+                    return true;
+                });
+            }
+            
+            // Apply sorting
+            result.sort((a, b) => {
+                let fieldA, fieldB;
+                
+                // Handle special fields
+                if (this.sortField === 'laporan_id') {
+                    fieldA = a.laporan_id;
+                    fieldB = b.laporan_id;
+                } else if (this.sortField === 'tanggal') {
+                    fieldA = new Date(a.created_at);
+                    fieldB = new Date(b.created_at);
+                } else if (this.sortField === 'category_id') {
+                    fieldA = this.getCategoryName(a.category_id);
+                    fieldB = this.getCategoryName(b.category_id);
+                } else if (this.sortField === 'status') {
+                    fieldA = a.status;
+                    fieldB = b.status;
+                } else {
+                    fieldA = a[this.sortField];
+                    fieldB = b[this.sortField];
+                }
+                
+                let comparison = 0;
+                if (fieldA > fieldB) {
+                    comparison = 1;
+                } else if (fieldA < fieldB) {
+                    comparison = -1;
+                }
+                
+                return this.sortDirection === 'asc' ? comparison : -comparison;
+            });
+            
+            return result;
+        },
     },
     methods: {
         // Simplified method to get the auth token - now focuses on the auth_token cookie
