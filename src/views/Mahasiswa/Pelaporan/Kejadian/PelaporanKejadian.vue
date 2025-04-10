@@ -781,11 +781,11 @@ export default {
         },
         
         addNewReport() {
-            this.$router.push('/tambah-laporan');
+            this.$router.push('/pelaporan/add-kejadian');
         },
         
         goToLogin() {
-            this.$router.push('/login');
+            this.$router.push('/mahasiswa/login');
         },
 
         applyFilters() {

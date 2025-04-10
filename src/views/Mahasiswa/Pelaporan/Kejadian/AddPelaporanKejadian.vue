@@ -16,143 +16,157 @@
               <!-- Left Column - 4 inputs -->
               <div>
                 <div class="mb-4">
-                  <label for="judul" class="block text-sm font-medium text-gray-700 mb-1">Judul Laporan</label>
+                  <label for="judul" class="block text-sm font-medium text-gray-700 mb-1">Judul Laporan <span class="text-red-500">*</span></label>
                   <input 
                     type="text" 
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    :class="{ 'border-red-500': errors.judul }"
                     id="judul" 
                     v-model="form.judul" 
                     required
                   >
+                  <div v-if="errors.judul" class="text-red-500 text-sm mt-1">{{ errors.judul[0] }}</div>
                 </div>
                 <div class="mb-4">
-                  <label for="category_id" class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                  <label for="category_id" class="block text-sm font-medium text-gray-700 mb-1">Kategori <span class="text-red-500">*</span></label>
                   <select 
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    :class="{ 'border-red-500': errors.category_id }"
                     id="category_id" 
                     v-model="form.category_id" 
                     required
                   >
-                    <option value="">Pilih Kategori</option>
-                    <option v-for="category in categories" :key="category.id" :value="category.id">
-                      {{ category.name }}
+                    <option value="" disabled selected>Pilih Kategori</option>
+                    <option v-for="category in filteredCategories" :key="category.id" :value="category.id">
+                      {{ category.nama }}
                     </option>
                   </select>
+                  <div v-if="errors.category_id" class="text-red-500 text-sm mt-1">{{ errors.category_id[0] }}</div>
                 </div>
                 <div class="mb-4">
-                  <label for="nama_pelapor" class="block text-sm font-medium text-gray-700 mb-1">Nama Pelapor</label>
+                  <label for="lampiran" class="block text-sm font-medium text-gray-700 mb-1">Lampiran Foto <span class="text-red-500">*</span></label>
                   <input 
-                    type="text" 
+                    type="file" 
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                    id="nama_pelapor" 
-                    v-model="form.nama_pelapor" 
+                    :class="{ 'border-red-500': errors.image_path }"
+                    id="lampiran" 
+                    accept="image/*"
+                    @change="handleFileUpload"
                     required
                   >
+                  <div v-if="errors.image_path" class="text-red-500 text-sm mt-1">{{ errors.image_path[0] }}</div>
+                  <div v-if="imagePreview" class="mt-2">
+                    <img :src="imagePreview" alt="Preview" class="max-h-48 rounded-md">
+                  </div>
                 </div>
                 <div class="mb-4">
-                  <label for="kontak_pelapor" class="block text-sm font-medium text-gray-700 mb-1">Kontak Pelapor</label>
-                  <input 
-                    type="text" 
+                  <label for="deskripsi" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Kejadian <span class="text-red-500">*</span></label>
+                  <textarea 
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                    id="kontak_pelapor" 
-                    v-model="form.kontak_pelapor" 
+                    :class="{ 'border-red-500': errors.deskripsi }"
+                    id="deskripsi" 
+                    v-model="form.deskripsi" 
+                    rows="5" 
+                    required
+                  ></textarea>
+                  <div v-if="errors.deskripsi" class="text-red-500 text-sm mt-1">{{ errors.deskripsi[0] }}</div>
+                </div>
+                <div class="mb-4">
+                  <label for="tanggal_kejadian" class="block text-sm font-medium text-gray-700 mb-1">Tanggal & Waktu Kejadian <span class="text-red-500">*</span></label>
+                  <input 
+                    type="datetime-local" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    :class="{ 'border-red-500': errors.tanggal_kejadian }"
+                    id="tanggal_kejadian" 
+                    v-model="form.tanggal_kejadian" 
                     required
                   >
+                  <div v-if="errors.tanggal_kejadian" class="text-red-500 text-sm mt-1">{{ errors.tanggal_kejadian[0] }}</div>
                 </div>
               </div>
 
               <!-- Right Column - 4 inputs -->
               <div>
                 <div class="mb-4">
-                  <label for="tanggal_kejadian" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Kejadian</label>
-                  <input 
-                    type="date" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                    id="tanggal_kejadian" 
-                    v-model="form.tanggal_kejadian" 
-                    required
-                  >
-                </div>
-                <div class="mb-4">
-                  <label for="lokasi" class="block text-sm font-medium text-gray-700 mb-1">Lokasi Kejadian</label>
+                  <label for="nama_pelapor" class="block text-sm font-medium text-gray-700 mb-1">Nama Pelapor</label>
                   <input 
                     type="text" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                    id="lokasi" 
-                    v-model="form.lokasi" 
-                    required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 cursor-not-allowed" 
+                    id="nama_pelapor" 
+                    v-model="form.nama_pelapor" 
+                    disabled
                   >
                 </div>
                 <div class="mb-4">
-                  <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <select 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                    id="status" 
-                    v-model="form.status" 
-                    required
+                  <label for="nim_pelapor" class="block text-sm font-medium text-gray-700 mb-1">NIM/NIK Pelapor</label>
+                  <input 
+                    type="text" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 cursor-not-allowed" 
+                    id="nim_pelapor" 
+                    v-model="form.nim_pelapor" 
+                    disabled
                   >
-                    <option value="">Pilih Status</option>
-                    <option value="pending">Menunggu</option>
-                    <option value="process">Diproses</option>
-                    <option value="completed">Selesai</option>
-                  </select>
                 </div>
                 <div class="mb-4">
-                  <label for="prioritas" class="block text-sm font-medium text-gray-700 mb-1">Prioritas</label>
-                  <select 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                    id="prioritas" 
-                    v-model="form.prioritas" 
-                    required
+                  <label for="nomor_telepon" class="block text-sm font-medium text-gray-700 mb-1">Nomor HP Pelapor</label>
+                  <input 
+                    type="text" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 cursor-not-allowed" 
+                    id="nomor_telepon" 
+                    v-model="form.nomor_telepon" 
+                    disabled
                   >
-                    <option value="">Pilih Prioritas</option>
-                    <option value="low">Rendah</option>
-                    <option value="medium">Sedang</option>
-                    <option value="high">Tinggi</option>
-                  </select>
                 </div>
               </div>
             </div>
 
             <!-- Full width fields -->
-            <div class="mt-4">
-              <div class="mb-4">
-                <label for="lampiran" class="block text-sm font-medium text-gray-700 mb-1">Lampiran</label>
-                <input 
-                  type="file" 
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                  id="lampiran" 
-                  @change="handleFileUpload"
-                >
-              </div>
-              <div class="mb-4">
-                <label for="deskripsi" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Kejadian</label>
-                <textarea 
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                  id="deskripsi" 
-                  v-model="form.deskripsi" 
-                  rows="5" 
-                  required
-                ></textarea>
-              </div>
-            </div>
-            
             <div class="flex justify-end space-x-3 mt-6">
               <button 
                 type="button" 
                 class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                @click="$router.push('/pelaporan-kejadian')"
+                @click="goBack"
               >
-                Batal
+                Kembali
               </button>
               <button 
                 type="submit" 
                 class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                :disabled="loading"
               >
-                Simpan Laporan
+                <span v-if="loading">Mengirim...</span>
+                <span v-else>Kirim Laporan</span>
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification modal -->
+    <div v-if="showModal" class="fixed inset-0 z-50 overflow-y-auto">
+      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+          <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+        </div>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div class="sm:flex sm:items-start">
+              <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                <h3 class="text-lg leading-6 font-medium text-gray-900" :class="{ 'text-green-600': isSuccess, 'text-red-600': !isSuccess }">
+                  {{ modalTitle }}
+                </h3>
+                <div class="mt-2">
+                  <p class="text-sm text-gray-500">{{ modalMessage }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <button @click="closeModal" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+              OK
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -161,11 +175,12 @@
 
 <script>
 import axios from 'axios';
-import { ref } from 'vue';
 import Header from '../components/Header.vue';
 import Sidebar from '../components/Sidebar.vue';
 import Footer from '../components/Footer.vue';
-import { useRouter } from 'vue-router';
+import { decryptData } from '../../../../services/encrypt';
+import VueCookies from 'vue-cookies';
+import Swal from 'sweetalert2';
 
 export default {
   name: 'AddPelaporanKejadian',
@@ -174,130 +189,184 @@ export default {
     Header,
     Footer
   },
-  setup() {
-    const router = useRouter();
-    
-    // Form data
-    const form = ref({
-      judul: '',
-      category_id: '',
-      deskripsi: '',
-      nomor_telepon: '',
-      nomor_laporan: '',
-      nama_pelapor: '',
-      nim_pelapor: '',
-      tanggal_kejadian: '',
-      image: null,
-      kontak_pelapor: '',
-      waktu_kejadian: '',
-      lokasi: '',
-      status: '',
-      prioritas: '',
-      lampiran: null
-    });
-    
-    const imagePreview = ref(null);
-    const categories = ref([]);
-    const loading = ref(false);
-    const error = ref(null);
-    
-    // Fetch categories
-    const fetchCategories = async () => {
-      try {
-        const response = await axios.get('/api/categories');
-        categories.value = response.data;
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-        error.value = 'Failed to load categories';
-      }
+  data() {
+    return {
+      form: {
+        judul: '',
+        category_id: '',
+        deskripsi: '',
+        tanggal_kejadian: '',
+        image_path: null,
+        nama_pelapor: '',
+        nim_pelapor: '',
+        nomor_telepon: ''
+      },
+      imagePreview: null,
+      categories: [],
+      errors: {},
+      loading: false,
+      showModal: false,
+      modalTitle: '',
+      modalMessage: '',
+      isSuccess: false
     };
-    
-    // Handle file upload
-    const previewImage = (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        form.value.image = file;
-        imagePreview.value = URL.createObjectURL(file);
+  },
+  mounted() {
+    this.fetchCategories();
+    this.loadUserData();
+  },
+  computed: {
+    filteredCategories() {
+      // Filter out categories that start with "Kekerasan" if needed
+      return this.categories.filter(category => 
+        !category.nama.startsWith('Kekerasan')
+      );
+    }
+  },
+  methods: {
+    loadUserData() {
+      const encryptedUserData = VueCookies.get("user_session");
+      if (encryptedUserData) {
+        const userData = decryptData(encryptedUserData);
+        this.form.nama_pelapor = userData.name || '';
+        this.form.nim_pelapor = userData.nim || userData.nik || '';
+        this.form.nomor_telepon = userData.no_telp || '';
       }
-    };
-    
-    // Handle file upload for lampiran
-    const handleFileUpload = (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        form.value.lampiran = file;
-      }
-    };
-    
-    // Submit form
-    const submitForm = async () => {
-      loading.value = true;
-      try {
-        const formData = new FormData();
-        Object.keys(form.value).forEach(key => {
-          formData.append(key, form.value[key]);
+    },
+    fetchCategories() {
+      axios.get('http://localhost:8000/api/category')
+        .then(response => {
+          this.categories = response.data;
+        })
+        .catch(error => {
+          console.error('Error fetching categories:', error);
+          this.showNotification('Error', 'Gagal memuat kategori laporan.', false);
         });
+    },
+    handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) {
+        this.imagePreview = null;
+        this.form.image_path = null;
+        return;
+      }
 
-        await axios.post('/api/pelaporan-kejadian', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
+      this.form.image_path = file;
+      
+      // Create image preview
+      const reader = new FileReader();
+      reader.onload = e => {
+        this.imagePreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    },
+    submitForm() {
+      this.loading = true;
+      this.errors = {};
+      
+      const formData = new FormData();
+      formData.append('judul', this.formData.judul);
+      formData.append('category_id', this.formData.category_id);
+      formData.append('deskripsi', this.formData.deskripsi);
+      formData.append('tanggal_kejadian', this.formData.tanggal_kejadian);
+      formData.append('image_path', this.formData.image_path);
+
+      axios.post('http://localhost:8000/api/laporan/add_laporan', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+        .then(response => {
+          this.loading = false;
+          Swal.fire({
+            title: 'Berhasil!',
+            text: 'Laporan berhasil ditambahkan.',
+            icon: 'success',
+            timer: 2000,                // Auto-close after 2 seconds (2000ms)
+            timerProgressBar: true,     // Show a progress bar counting down
+            showConfirmButton: false    // Hide the confirmation button
+          }).then(() => {
+            // After the timer finishes or alert is closed
+            this.$router.push('/kalab/pelaporankejadiankalab');
+          });
+          this.resetForm();
+        })
+        .catch(error => {
+          this.loading = false;
+          if (error.response && error.response.status === 400) {
+            this.errors = error.response.data;
+          } else {
+            this.showNotification('Error', 'Terjadi kesalahan saat mengirim laporan.', false);
           }
         });
-
-        router.push('/pelaporan-kejadian');
-      } catch (err) {
-        console.error('Error submitting form:', err);
-        error.value = 'Failed to submit form';
-      } finally {
-        loading.value = false;
+    },
+    resetForm() {
+      this.form = {
+        judul: '',
+        category_id: '',
+        deskripsi: '',
+        tanggal_kejadian: '',
+        image_path: null,
+        nama_pelapor: this.form.nama_pelapor,
+        nim_pelapor: this.form.nim_pelapor,
+        nomor_telepon: this.form.nomor_telepon
+      };
+      this.imagePreview = null;
+      this.errors = {};
+    },
+    goBack() {
+      this.$router.go(-1);
+    },
+    showNotification(title, message, isSuccess) {
+      this.modalTitle = title;
+      this.modalMessage = message;
+      this.isSuccess = isSuccess;
+      this.showModal = true;
+    },
+    closeModal() {
+      this.showModal = false;
+      if (this.isSuccess) {
+        this.$router.push('/pelaporan/kejadian');
       }
-    };
-    
-    // Cancel form
-    const cancelForm = () => {
-      router.push('/pelaporan-kejadian');
-    };
-    
-    // Fetch categories on created
-    fetchCategories();
-    
-    return {
-      form,
-      imagePreview,
-      categories,
-      loading,
-      error,
-      previewImage,
-      handleFileUpload,
-      submitForm,
-      cancelForm
-    };
+    }
   }
-}
+};
 </script>
 
 <style scoped>
-.action-buttons {
-  display: flex;
-  justify-content: flex-end;
+/* Adding focused styles for form elements */
+input:focus, select:focus, textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+  outline: none;
 }
 
-.btn {
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
+/* Style for disabled inputs */
+input:disabled, select:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
 }
 
-.btn-primary {
-  background-color: #007bff;
-  color: white;
-  border: 1px solid #007bff;
+/* Required field indicator */
+.text-red-500 {
+  color: #ef4444;
 }
 
-.btn-secondary {
-  background-color: #f5f5f5;
-  color: #333;
-  border: 1px solid #ddd;
-  margin-right: 10px;
+/* Button hover effects */
+button:hover {
+  opacity: 0.9;
+}
+
+button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Image preview */
+.image-preview img {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  max-height: 12rem;
+  object-fit: contain;
 }
 </style>

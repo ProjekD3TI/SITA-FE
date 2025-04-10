@@ -374,7 +374,7 @@ const routes = [
       {
         path: "add-kejadian",
         name: "AddPelaporanKejadian",
-        component: () => import("../views/Pelaporan/Kejadian/AddPelaporanKejadian.vue"),
+        component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/AddPelaporanKejadian.vue"),
       },
       {
         path: "detail-pelaporan-kejadian",
