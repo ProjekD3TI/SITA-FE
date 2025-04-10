@@ -13,7 +13,7 @@
         <div class="bg-white shadow rounded-lg p-6">
           <form @submit.prevent="submitForm">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <!-- Left Column - 4 inputs -->
+              <!-- Left Column -->
               <div>
                 <div class="mb-4">
                   <label for="judul" class="block text-sm font-medium text-gray-700 mb-1">Judul Laporan <span class="text-red-500">*</span></label>
@@ -37,8 +37,8 @@
                     required
                   >
                     <option value="" disabled selected>Pilih Kategori</option>
-                    <option v-for="category in filteredCategories" :key="category.id" :value="category.id">
-                      {{ category.nama }}
+                    <option v-for="category in filteredCategories" :key="category.id || category.category_id" :value="category.id || category.category_id">
+                      {{ category.nama || category.name }}
                     </option>
                   </select>
                   <div v-if="errors.category_id" class="text-red-500 text-sm mt-1">{{ errors.category_id[0] }}</div>
@@ -85,7 +85,7 @@
                 </div>
               </div>
 
-              <!-- Right Column - 4 inputs -->
+              <!-- Right Column -->
               <div>
                 <div class="mb-4">
                   <label for="nama_pelapor" class="block text-sm font-medium text-gray-700 mb-1">Nama Pelapor</label>
@@ -208,39 +208,101 @@ export default {
       showModal: false,
       modalTitle: '',
       modalMessage: '',
-      isSuccess: false
+      isSuccess: false,
+      token: null
     };
+  },
+  computed: {
+    filteredCategories() {
+      // Pastikan categories ada sebelum melakukan filter
+      if (!this.categories || !Array.isArray(this.categories) || this.categories.length === 0) {
+        return [];
+      }
+      
+      // Filter kategori, sesuaikan dengan property yang tersedia
+      return this.categories.filter(category => {
+        const name = category.nama || category.name || '';
+        return !name.startsWith('Kekerasan');
+      });
+    }
+  },
+  created() {
+    // Coba ambil token dari cookie
+    this.getAuthTokenFromCookie();
   },
   mounted() {
     this.fetchCategories();
     this.loadUserData();
   },
-  computed: {
-    filteredCategories() {
-      // Filter out categories that start with "Kekerasan" if needed
-      return this.categories.filter(category => 
-        !category.nama.startsWith('Kekerasan')
-      );
-    }
-  },
   methods: {
+    getAuthTokenFromCookie() {
+      try {
+        // Cek jika ada cookie token langsung
+        let token = VueCookies.get('token');
+        if (token) {
+          this.token = token;
+          axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
+          console.log('Token set from direct cookie');
+          return;
+        }
+        
+        // Cek dari user_session
+        const encryptedUserData = VueCookies.get("user_session");
+        if (encryptedUserData) {
+          const userData = decryptData(encryptedUserData);
+          if (userData && userData.token) {
+            this.token = userData.token;
+            axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
+            console.log('Token set from user_session');
+          }
+        }
+      } catch (error) {
+        console.error('Error getting auth token:', error);
+      }
+    },
     loadUserData() {
-      const encryptedUserData = VueCookies.get("user_session");
-      if (encryptedUserData) {
-        const userData = decryptData(encryptedUserData);
-        this.form.nama_pelapor = userData.name || '';
-        this.form.nim_pelapor = userData.nim || userData.nik || '';
-        this.form.nomor_telepon = userData.no_telp || '';
+      try {
+        const encryptedUserData = VueCookies.get("user_session");
+        if (encryptedUserData) {
+          const userData = decryptData(encryptedUserData);
+          this.form.nama_pelapor = userData.name || '';
+          this.form.nim_pelapor = userData.nim || userData.nik || '';
+          this.form.nomor_telepon = userData.no_telp || '';
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
       }
     },
     fetchCategories() {
-      axios.get('http://localhost:8000/api/category')
+      // Tambahkan header otorisasi jika ada token
+      const config = {};
+      if (this.token) {
+        config.headers = {
+          'Authorization': `Bearer ${this.token}`
+        };
+      }
+      
+      axios.get('http://localhost:8000/api/category', config)
         .then(response => {
-          this.categories = response.data;
+          console.log('Categories response:', response.data);
+          
+          // Handle berbagai format respons
+          if (Array.isArray(response.data)) {
+            this.categories = response.data;
+          } else if (response.data.data && Array.isArray(response.data.data)) {
+            this.categories = response.data.data;
+          } else {
+            console.warn('Unexpected category response format:', response.data);
+            this.categories = [];
+          }
         })
         .catch(error => {
           console.error('Error fetching categories:', error);
-          this.showNotification('Error', 'Gagal memuat kategori laporan.', false);
+          if (error.response && error.response.status === 401) {
+            this.showNotification('Error Autentikasi', 'Sesi login telah berakhir. Silakan login kembali.', false);
+          } else {
+            this.showNotification('Error', 'Gagal memuat kategori laporan.', false);
+          }
         });
     },
     handleFileUpload(event) {
@@ -248,6 +310,13 @@ export default {
       if (!file) {
         this.imagePreview = null;
         this.form.image_path = null;
+        return;
+      }
+
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.errors.image_path = ['Ukuran file maksimal 5MB'];
+        event.target.value = '';
         return;
       }
 
@@ -261,44 +330,138 @@ export default {
       reader.readAsDataURL(file);
     },
     submitForm() {
+      // Validasi form terlebih dahulu
+      if (!this.validateForm()) {
+        return;
+      }
+      
       this.loading = true;
       this.errors = {};
       
       const formData = new FormData();
-      formData.append('judul', this.formData.judul);
-      formData.append('category_id', this.formData.category_id);
-      formData.append('deskripsi', this.formData.deskripsi);
-      formData.append('tanggal_kejadian', this.formData.tanggal_kejadian);
-      formData.append('image_path', this.formData.image_path);
+      
+      // Pastikan menggunakan this.form, bukan this.formData
+      formData.append('judul', this.form.judul);
+      formData.append('category_id', this.form.category_id);
+      formData.append('deskripsi', this.form.deskripsi);
+      formData.append('tanggal_kejadian', this.form.tanggal_kejadian);
+      
+      if (this.form.image_path) {
+        formData.append('image_path', this.form.image_path);
+      }
 
-      axios.post('http://localhost:8000/api/laporan/add_laporan', formData, {
+      // Log untuk debugging
+      console.log('Submitting form with data:', {
+        judul: this.form.judul,
+        category_id: this.form.category_id,
+        deskripsi: this.form.deskripsi,
+        tanggal_kejadian: this.form.tanggal_kejadian,
+        image_path: this.form.image_path ? this.form.image_path.name : null
+      });
+
+      // Siapkan konfigurasi dengan header yang benar
+      const config = {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'multipart/form-data',
         }
-      })
+      };
+      
+      // Tambahkan token jika tersedia
+      if (this.token) {
+        config.headers['Authorization'] = `Bearer ${this.token}`;
+        console.log('Adding token to request');
+      } else {
+        console.warn('No token available for request');
+        
+        // Coba refresh token sekali lagi
+        this.getAuthTokenFromCookie();
+        if (this.token) {
+          config.headers['Authorization'] = `Bearer ${this.token}`;
+          console.log('Token refreshed and added to request');
+        }
+      }
+
+      // Kirim permintaan ke backend dengan header yang sudah disiapkan
+      axios.post('http://localhost:8000/api/laporan/add_laporan', formData, config)
         .then(response => {
           this.loading = false;
+          console.log('Success response:', response);
           Swal.fire({
             title: 'Berhasil!',
             text: 'Laporan berhasil ditambahkan.',
             icon: 'success',
-            timer: 2000,                // Auto-close after 2 seconds (2000ms)
-            timerProgressBar: true,     // Show a progress bar counting down
-            showConfirmButton: false    // Hide the confirmation button
+            timer: 2000,
+            timerProgressBar: true,
+            showConfirmButton: false
           }).then(() => {
             // After the timer finishes or alert is closed
-            this.$router.push('/kalab/pelaporankejadiankalab');
+            this.$router.push('/pelaporan/kejadian');
           });
           this.resetForm();
         })
         .catch(error => {
           this.loading = false;
-          if (error.response && error.response.status === 400) {
-            this.errors = error.response.data;
+          console.error('Error submitting form:', error);
+          
+          if (error.response) {
+            if (error.response.status === 401) {
+              this.showNotification('Error Autentikasi', 'Sesi login telah berakhir. Silakan login kembali untuk melanjutkan.', false);
+              
+              // Optional: Redirect to login after a delay
+              setTimeout(() => {
+                this.$router.push('/mahasiswa/login');
+              }, 3000);
+            } else if (error.response.status === 400) {
+              this.errors = error.response.data;
+            } else if (error.response.status === 422 && error.response.data.errors) {
+              // Handle Laravel validation errors
+              const validationErrors = error.response.data.errors;
+              this.errors = {};
+              
+              // Convert Laravel validation errors to our format
+              Object.keys(validationErrors).forEach(key => {
+                this.errors[key] = validationErrors[key];
+              });
+            } else {
+              this.showNotification('Error', `Terjadi kesalahan saat mengirim laporan. (${error.response.status})`, false);
+            }
+          } else if (error.request) {
+            this.showNotification('Error Koneksi', 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.', false);
           } else {
             this.showNotification('Error', 'Terjadi kesalahan saat mengirim laporan.', false);
           }
         });
+    },
+    validateForm() {
+      let isValid = true;
+      this.errors = {};
+      
+      if (!this.form.judul) {
+        this.errors.judul = ['Judul laporan harus diisi'];
+        isValid = false;
+      }
+      
+      if (!this.form.category_id) {
+        this.errors.category_id = ['Kategori harus dipilih'];
+        isValid = false;
+      }
+      
+      if (!this.form.deskripsi) {
+        this.errors.deskripsi = ['Deskripsi kejadian harus diisi'];
+        isValid = false;
+      }
+      
+      if (!this.form.tanggal_kejadian) {
+        this.errors.tanggal_kejadian = ['Tanggal dan waktu kejadian harus diisi'];
+        isValid = false;
+      }
+      
+      if (!this.form.image_path) {
+        this.errors.image_path = ['Lampiran foto harus diunggah'];
+        isValid = false;
+      }
+      
+      return isValid;
     },
     resetForm() {
       this.form = {
@@ -368,5 +531,18 @@ button:disabled {
   border-radius: 0.375rem;
   max-height: 12rem;
   object-fit: contain;
+}
+
+/* Debug info box */
+.bg-blue-50 {
+  background-color: #eff6ff;
+}
+
+.text-blue-800 {
+  color: #1e40af;
+}
+
+.text-blue-700 {
+  color: #1d4ed8;
 }
 </style>
