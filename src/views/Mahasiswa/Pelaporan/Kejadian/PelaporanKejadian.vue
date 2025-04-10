@@ -105,56 +105,72 @@
                     </div>
                     
                     <!-- Filters Section -->
-                    <div class="mb-4 flex flex-wrap gap-3">
-                        <!-- Status Filter -->
-                        <div class="flex-1 min-w-[200px]">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                            <select 
-                                v-model="filters.status" 
-                                class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="">Semua Status</option>
-                                <option value="Selesai">Selesai</option>
-                                <option value="Dalam Proses">Dalam Proses</option>
-                            </select>
+                    <div class="filter-container">
+                    <div class="filter-group">
+                      <label class="filter-title">Filter berdasarkan:</label>
+                      
+                      <!-- Category Filter -->
+                      <div class="filter-select">
+                        <label for="categoryFilter">Kategori:</label>
+                        <select 
+                          id="categoryFilter" 
+                          v-model="filters.category_id" 
+                          @change="applyFilters"
+                          class="filter-input"
+                        >
+                          <option value="">Semua</option>
+                          <option v-for="(name, id) in filteredCategories" :key="id" :value="id">
+                            {{ name }}
+                          </option>
+                        </select>
+                      </div>
+                      
+                      <!-- Status Filter -->
+                      <div class="filter-select">
+                        <label for="statusFilter">Status:</label>
+                        <select 
+                          id="statusFilter" 
+                          v-model="filters.status" 
+                          @change="applyFilters"
+                          class="filter-input"
+                        >
+                          <option value="">Semua</option>
+                          <option value="Belum Diverifikasi">Belum Diverifikasi</option>
+                          <option value="Diverifikasi">Diverifikasi</option>
+                          <option value="Ditolak">Ditolak</option>
+                        </select>
+                      </div>
+                      
+                      <!-- Date Range Filter -->
+                      <div class="filter-date">
+                        <label for="dateFilter">Periode:</label>
+                        <div class="date-inputs">
+                          <input 
+                            type="date" 
+                            id="startDate" 
+                            v-model="filters.startDate" 
+                            @change="applyFilters"
+                            class="filter-input"
+                            placeholder="Tanggal Mulai"
+                          >
+                          <span class="date-separator">s/d</span>
+                          <input 
+                            type="date" 
+                            id="endDate" 
+                            v-model="filters.endDate" 
+                            @change="applyFilters"
+                            class="filter-input"
+                            placeholder="Tanggal Akhir"
+                          >
                         </div>
-                        
-                        <!-- Type Filter -->
-                        <div class="flex-1 min-w-[200px]">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Kejadian</label>
-                            <select 
-                                v-model="filters.jenisKejadian" 
-                                class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="">Semua Jenis</option>
-                                <option v-for="jenis in jenisKejadianList" :key="jenis" :value="jenis">{{ jenis }}</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Date Range Filter -->
-                        <div class="flex-1 min-w-[200px]">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Periode</label>
-                            <select 
-                                v-model="filters.period" 
-                                class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="">Semua Waktu</option>
-                                <option value="week">7 Hari Terakhir</option>
-                                <option value="month">30 Hari Terakhir</option>
-                                <option value="quarter">90 Hari Terakhir</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Reset Filters Button -->
-                        <div class="self-end mb-1 min-w-[100px]">
-                            <button 
-                                @click="resetFilters" 
-                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors w-full"
-                            >
-                                Reset Filter
-                            </button>
-                        </div>
+                      </div>
+                      
+                      <!-- Reset Filter Button -->
+                      <button class="btn-reset-filter" @click="resetFilters">
+                        <i class="fas fa-undo"></i> Reset Filter
+                      </button>
                     </div>
+                  </div>
                     
                     <div v-if="filteredLaporan && filteredLaporan.length > 0" class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
@@ -313,9 +329,6 @@ export default {
             loading: true,
             error: null,
 
-            // Authentication state
-            isAuthenticated: false,
-
             // Stats for cards
             totalLaporan: 0,
             dalamProses: 0,
@@ -346,6 +359,7 @@ export default {
         };
     },
     computed: {
+        // Your computed properties remain the same
         filteredLaporan() {
             if (!this.laporan || !this.laporan.length) return [];
             
@@ -434,14 +448,12 @@ export default {
             return result;
         },
         
-        // Paginated data for display
         paginatedLaporan() {
             const start = (this.currentPage - 1) * this.itemsPerPage;
             const end = start + this.itemsPerPage;
             return this.filteredLaporan.slice(start, end);
         },
         
-        // Calculate pagination values
         totalPages() {
             return Math.ceil(this.filteredLaporan.length / this.itemsPerPage);
         },
@@ -458,7 +470,6 @@ export default {
         filteredCategories() {
             const filtered = {};
             
-            // Loop through the categories object and exclude those starting with "Kekerasan"
             for (const [id, name] of Object.entries(this.categories)) {
                 if (!name.startsWith('Kekerasan')) {
                     filtered[id] = name;
@@ -469,35 +480,19 @@ export default {
         },
     },
     methods: {
-        // Format status for display
-        formatStatus(status) {
-            if (!status) return 'Tidak Ada Status';
-            
-            switch (status.toLowerCase()) {
-                case 'verified':
-                    return 'Diverifikasi';
-                case 'unverified':
-                    return 'Belum Diverifikasi';
-                case 'rejected':
-                    return 'Ditolak';
-                default:
-                    return status;
-            }
+        // Simplified method to get the auth token - now focuses on the auth_token cookie
+        getAuthToken() {
+            return VueCookies.get("auth_token");
         },
         
-        // Get current user from cookie - SIMPLIFIED from the working component
+        // Get current user data
         getCurrentUser() {
             try {
+                // Use the encrypted user_session cookie
                 const encryptedUserData = VueCookies.get("user_session");
                 if (encryptedUserData) {
                     this.userData = decryptData(encryptedUserData);
-                    console.log("Current user loaded:", this.userData.name);
-                    
-                    // Set auth token for axios directly
-                    if (this.userData && this.userData.token) {
-                        axios.defaults.headers.common['Authorization'] = `Bearer ${this.userData.token}`;
-                    }
-                    
+                    console.log("User data loaded successfully");
                     return true;
                 }
                 return false;
@@ -507,16 +502,34 @@ export default {
             }
         },
         
-        // Fetch data from API - SIMPLIFIED to match the working component
+        // Method to setup authentication for API requests
+        setupAuth() {
+            // Get the auth token from the cookie
+            const token = this.getAuthToken();
+            if (token) {
+                // Set the Authorization header for all subsequent requests
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                return true;
+            }
+            return false;
+        },
+        
+        // Fetch data with proper authentication
         async fetchData() {
             this.loading = true;
             this.error = null;
             
             try {
-                // Fetch categories first
+                // Make sure user data is loaded
+                this.getCurrentUser();
+                
+                // Set up authentication
+                this.setupAuth();
+                
+                // Fetch categories
                 const categoriesResponse = await axios.get('http://localhost:8000/api/category');
                 
-                // Transform categories array to an object with id as key for easy lookup
+                // Store categories
                 this.categories = categoriesResponse.data.reduce((acc, category) => {
                     acc[category.category_id] = category.nama;
                     return acc;
@@ -525,13 +538,13 @@ export default {
                 // Extract category names for filter dropdown
                 this.jenisKejadianList = categoriesResponse.data.map(category => category.nama);
                 
-                // Then fetch all laporan data
+                // Fetch reports
                 const laporanResponse = await axios.get('http://localhost:8000/api/laporan');
                 
-                // Store all laporan data first
+                // Store all reports initially
                 this.laporan = laporanResponse.data;
                 
-                // Filter laporan for the current user only if we have user data
+                // Filter for current user if we have user data
                 if (this.userData && (this.userData.name || this.userData.username)) {
                     const userName = this.userData.name || this.userData.username;
                     this.laporan = laporanResponse.data.filter(item => 
@@ -547,11 +560,12 @@ export default {
                 this.dalamProses = this.laporan.filter(item => item.status === 'unverified').length;
                 this.selesai = this.laporan.filter(item => item.status === 'verified').length;
                 
-                this.error = null; // Clear any previous errors
+                // Clear any previous errors
+                this.error = null;
             } catch (error) {
                 console.error('Error fetching data:', error);
                 
-                // Check for specific error types
+                // Handle specific error types
                 if (error.response) {
                     if (error.response.status === 401) {
                         this.error = 'Sesi login Anda mungkin sudah berakhir. Silakan login kembali.';
@@ -565,6 +579,22 @@ export default {
                 }
             } finally {
                 this.loading = false;
+            }
+        },
+        
+        // Format status for display
+        formatStatus(status) {
+            if (!status) return 'Tidak Ada Status';
+            
+            switch (status.toLowerCase()) {
+                case 'verified':
+                    return 'Diverifikasi';
+                case 'unverified':
+                    return 'Belum Diverifikasi';
+                case 'rejected':
+                    return 'Ditolak';
+                default:
+                    return status;
             }
         },
         
@@ -594,7 +624,6 @@ export default {
         
         // Handle search input
         handleSearch() {
-            // Reset to first page when searching
             this.currentPage = 1;
         },
         
@@ -639,12 +668,11 @@ export default {
             this.currentPage = 1;
         },
         
-        // Add new report
+        // Navigation methods
         tambahLaporan() {
             this.$router.push('/tambah-laporan');
         },
         
-        // View report details
         lihatDetail(laporanId) {
             this.$router.push({ 
                 name: 'DetailLaporan', 
@@ -652,7 +680,6 @@ export default {
             });
         },
         
-        // Edit report
         editLaporan(laporanId) {
             this.$router.push({ 
                 name: 'EditLaporan', 
@@ -660,32 +687,168 @@ export default {
             });
         },
         
-        // Add new report (same as tambahLaporan, but kept for compatibility)
         addNewReport() {
             this.$router.push('/tambah-laporan');
         },
         
-        // Navigate to login page
         goToLogin() {
             this.$router.push('/login');
-        }
+        },
+
+        applyFilters() {
+            console.log('Applying filters:', this.filters); // Debug log
+            
+            // Start with all data
+            let filtered = [...this.laporan];
+            
+            // Apply category filter
+            if (this.filters.category_id) {
+                console.log('Filtering by category:', this.filters.category_id);
+                filtered = filtered.filter(item => 
+                String(item.category_id) === String(this.filters.category_id)
+                );
+            }
+            
+            // Apply status filter
+            if (this.filters.status) {
+                console.log('Filtering by status:', this.filters.status);
+                // Map frontend status labels to actual status values in the data
+                const statusMap = {
+                'Belum Diverifikasi': 'unverified',
+                'Diverifikasi': 'verified',
+                'Ditolak': 'rejected'
+                };
+                
+                const statusValue = statusMap[this.filters.status] || this.filters.status;
+                filtered = filtered.filter(item => item.status === statusValue);
+            }
+            
+            // Apply date range filter
+            if (this.filters.startDate || this.filters.endDate) {
+                console.log('Filtering by date range:', this.filters.startDate, 'to', this.filters.endDate);
+                
+                filtered = filtered.filter(item => {
+                // Convert to Date objects for comparison
+                const itemDate = new Date(item.created_at || item.tanggal); // Adjust field name as needed
+                
+                // Check start date if specified
+                if (this.filters.startDate) {
+                    const startDate = new Date(this.filters.startDate);
+                    startDate.setHours(0, 0, 0, 0);
+                    if (itemDate < startDate) return false;
+                }
+                
+                // Check end date if specified
+                if (this.filters.endDate) {
+                    const endDate = new Date(this.filters.endDate);
+                    endDate.setHours(23, 59, 59, 999);
+                    if (itemDate > endDate) return false;
+                }
+                
+                return true;
+                });
+            }
+            
+            // Update filtered data
+            this.filteredLaporan = filtered;
+            
+            // Reset to first page when filters change
+            this.currentPage = 1;
+            
+            console.log('Filtered results:', this.filteredLaporan.length); // Debug log
+        },
+    },
+    created() {
+        // Set up basic axios config
+        axios.defaults.withCredentials = true;
     },
     mounted() {
-        // Simply get user data and then fetch data - same approach as the working component
-        this.getCurrentUser();
-        
-        // Ensure axios has credentials
-        axios.defaults.withCredentials = true;
-        
-        // Fetch data after user data is loaded
+        // Fetch data when component is mounted
         this.fetchData();
-    },
-    beforeUnmount() {
-        // No special cleanup needed
     }
 };
 </script>
 
 <style scoped>
-/* Add your styles here if needed */
+/* Filter styles */
+.filter-container {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid #edf2f7;
+}
+
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 15px;
+}
+
+.filter-title {
+  font-weight: 600;
+  margin-right: 5px;
+  color: #4a5568;
+}
+
+.filter-select, .filter-date {
+  display: flex;
+  align-items: center;
+}
+
+.filter-select label, .filter-date label {
+  margin-right: 8px;
+  font-size: 14px;
+  color: #4a5568;
+}
+
+.filter-input {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+}
+
+.date-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-separator {
+  color: #718096;
+  font-size: 14px;
+}
+
+.btn-reset-filter {
+  background-color: #edf2f7;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-reset-filter:hover {
+  background-color: #e2e8f0;
+}
+
+@media (max-width: 768px) {
+  .filter-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .filter-select, .filter-date {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
 </style>
