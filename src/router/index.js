@@ -377,9 +377,9 @@ const routes = [
         component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/AddPelaporanKejadian.vue"),
       },
       {
-        path: "detail-pelaporan-kejadian",
+        path: "/laporan/:id",
         name: "DetailPelaporanKejadian",
-        component: () => import("../views/Pelaporan/Kejadian/DetailPelaporanKejadian.vue"),
+        component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/DetailPelaporanKejadian.vue"),
       },
       {
         path: "kekerasan-seksual",

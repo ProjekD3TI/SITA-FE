@@ -761,14 +761,9 @@ export default {
             this.currentPage = 1;
         },
         
-        // Navigation methods
-        tambahLaporan() {
-            this.$router.push('/tambah-laporan');
-        },
-        
         lihatDetail(laporanId) {
             this.$router.push({ 
-                name: 'DetailLaporan', 
+                name: 'DetailPelaporanKejadian', 
                 params: { id: laporanId } 
             });
         },
