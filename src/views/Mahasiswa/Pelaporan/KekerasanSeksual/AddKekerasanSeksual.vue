@@ -1,303 +1,339 @@
 <template>
-    <div class="flex">
-      <Sidebar />
-      <div class="flex-1">
-        <Header />
-        <div class="p-4">
-          <div class="bg-white shadow rounded-lg p-6 mb-4">
-            <h1 class="text-2xl font-semibold text-gray-800">Tambah Laporan Kekerasan Seksual</h1>
-            <p class="text-gray-600 mt-2">Silakan isi formulir berikut untuk menambahkan laporan kekerasan seksual baru.</p>
-          </div>
-          
-          <!-- Form Section -->
-          <div class="bg-white shadow rounded-lg p-6">
-            <form @submit.prevent="submitForm">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Left Column - 4 inputs -->
-                <div>
-                  <div class="mb-4">
-                    <label for="judul" class="block text-sm font-medium text-gray-700 mb-1">Judul Laporan</label>
-                    <input 
-                      type="text" 
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                      id="judul" 
-                      v-model="form.judul" 
-                      required
-                    >
-                  </div>
-                  <div class="mb-4">
-                    <label for="category_id" class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+  <div class="flex">
+    <Sidebar />
+    <div class="flex-1">
+      <Header />
+      <div class="p-4">
+        <div class="bg-white shadow rounded-lg p-6 mb-4">
+          <h1 class="text-2xl font-semibold text-gray-800">Tambah Laporan Kekerasan Seksual</h1>
+          <p class="text-gray-600 mt-2">Silakan isi formulir berikut untuk menambahkan laporan kekerasan seksual baru.</p>
+        </div>
+        
+        <!-- Form Section -->
+        <div class="bg-white shadow rounded-lg p-6">
+          <form @submit.prevent="submitReport" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Left Column -->
+              <div>
+                <!-- Judul/Nama Laporan -->
+                <div class="mb-4">
+                  <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Judul Laporan</label>
+                  <input
+                    type="text"
+                    id="title"
+                    v-model="report.title"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                    required
+                  />
+                </div>
+
+                <!-- Kategori -->
+                <div class="mb-4">
+                  <label for="category" class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
+                  <div class="relative">
                     <select 
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                      id="category_id" 
-                      v-model="form.category_id" 
+                      v-model="report.category" 
+                      id="category"
+                      class="block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 text-sm"
                       required
                     >
-                      <option value="">Pilih Kategori</option>
-                      <option v-for="category in categories" :key="category.id" :value="category.id">
-                        {{ category.name }}
+                      <option value="" disabled>Pilih Kategori</option>
+                      <option v-for="category in filteredCategories" :key="category.category_id" :value="category.category_id">
+                        {{ category.nama }}
                       </option>
                     </select>
                   </div>
-                  <div class="mb-4">
-                    <label for="nama_pelapor" class="block text-sm font-medium text-gray-700 mb-1">Nama Pelapor</label>
-                    <input 
-                      type="text" 
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                      id="nama_pelapor" 
-                      v-model="form.nama_pelapor" 
-                      required
-                    >
-                  </div>
-                  <div class="mb-4">
-                    <label for="kontak_pelapor" class="block text-sm font-medium text-gray-700 mb-1">Kontak Pelapor</label>
-                    <input 
-                      type="text" 
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                      id="kontak_pelapor" 
-                      v-model="form.kontak_pelapor" 
-                      required
-                    >
-                  </div>
                 </div>
-  
-                <!-- Right Column - 4 inputs -->
-                <div>
-                  <div class="mb-4">
-                    <label for="tanggal_kejadian" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Kejadian</label>
-                    <input 
-                      type="date" 
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                      id="tanggal_kejadian" 
-                      v-model="form.tanggal_kejadian" 
-                      required
-                    >
-                  </div>
-                  <div class="mb-4">
-                    <label for="lokasi" class="block text-sm font-medium text-gray-700 mb-1">Lokasi Kejadian</label>
-                    <input 
-                      type="text" 
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                      id="lokasi" 
-                      v-model="form.lokasi" 
-                      required
-                    >
-                  </div>
-                  <div class="mb-4">
-                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select 
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                      id="status" 
-                      v-model="form.status" 
-                      required
-                    >
-                      <option value="">Pilih Status</option>
-                      <option value="pending">Menunggu</option>
-                      <option value="process">Diproses</option>
-                      <option value="completed">Selesai</option>
-                    </select>
-                  </div>
-                  <div class="mb-4">
-                    <label for="prioritas" class="block text-sm font-medium text-gray-700 mb-1">Prioritas</label>
-                    <select 
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                      id="prioritas" 
-                      v-model="form.prioritas" 
-                      required
-                    >
-                      <option value="">Pilih Prioritas</option>
-                      <option value="low">Rendah</option>
-                      <option value="medium">Sedang</option>
-                      <option value="high">Tinggi</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-  
-              <!-- Full width fields -->
-              <div class="mt-4">
+
+                <!-- Bukti Laporan (File Input) -->
                 <div class="mb-4">
-                  <label for="lampiran" class="block text-sm font-medium text-gray-700 mb-1">Lampiran</label>
-                  <input 
-                    type="file" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                    id="lampiran" 
+                  <label for="evidence" class="block text-sm font-medium text-gray-700 mb-1">Bukti Laporan (Foto)</label>
+                  <input
+                    type="file"
+                    id="evidence"
                     @change="handleFileUpload"
-                  >
+                    accept="image/*"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                  <p class="text-xs text-gray-500 mt-1">Format yang didukung: JPG, PNG, JPEG (max 5MB)</p>
                 </div>
+
+                <!-- Deskripsi Laporan -->
                 <div class="mb-4">
-                  <label for="deskripsi" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Kejadian</label>
-                  <textarea 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                    id="deskripsi" 
-                    v-model="form.deskripsi" 
-                    rows="5" 
+                  <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Laporan</label>
+                  <textarea
+                    id="description"
+                    v-model="report.description"
+                    rows="4"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
                     required
                   ></textarea>
                 </div>
               </div>
-              
-              <div class="flex justify-end space-x-3 mt-6">
-                <button 
-                  type="button" 
-                  class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  @click="$router.push('/pelaporan-kejadian')"
-                >
-                  Batal
-                </button>
-                <button 
-                  type="submit" 
-                  class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Simpan Laporan
-                </button>
+
+              <!-- Right Column -->
+              <div>
+                <!-- Informasi Pelapor -->
+                <div class="mb-4">
+                  <label for="reporterName" class="block text-sm font-medium text-gray-700 mb-1">Nama Pelapor</label>
+                  <input
+                    type="text"
+                    id="reporterName"
+                    v-model="report.reporterName"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                    required
+                  />
+                </div>
+
+                <div class="mb-4">
+                  <label for="nim" class="block text-sm font-medium text-gray-700 mb-1">NIM Pelapor</label>
+                  <input
+                    type="text"
+                    id="nim"
+                    v-model="report.nim"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                    required
+                  />
+                </div>
+
+                <div class="mb-4">
+                  <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Nomor HP Pelapor</label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    v-model="report.phone"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                    required
+                  />
+                </div>
+
+                <div class="mb-4">
+                  <label for="incidentDate" class="block text-sm font-medium text-gray-700 mb-1">Tanggal dan Waktu Kejadian</label>
+                  <input
+                    type="datetime-local"
+                    id="incidentDate"
+                    v-model="report.incidentDate"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                    required
+                  />
+                </div>
               </div>
-            </form>
-          </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+              <button 
+                type="button" 
+                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                @click="$router.push('/pelaporan-kejadian')"
+              >
+                Batal
+              </button>
+              <button 
+                type="submit" 
+                class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                :disabled="isSubmitting"
+              >
+                Simpan Laporan
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
-  </template>
-  
-  <script>
-  import axios from 'axios';
-  import { ref } from 'vue';
-  import Header from '../components/Header.vue';
-  import Sidebar from '../components/Sidebar.vue';
-  import Footer from '../components/Footer.vue';
-  import { useRouter } from 'vue-router';
-  
-  export default {
-    name: 'AddPelaporanKejadian',
-    components: {
-      Sidebar,
-      Header,
-      Footer
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+import Swal from 'sweetalert2';
+import VueCookies from 'vue-cookies';
+import { decryptData } from '../../../../services/encrypt';
+import Header from '../components/Header.vue';
+import Sidebar from '../components/Sidebar.vue';
+import { useRouter } from 'vue-router';
+
+export default {
+  name: 'AddKekerasanSeksual',
+  components: {
+    Sidebar,
+    Header
+  },
+  setup() {
+    const router = useRouter();
+    return { router };
+  },
+  data() {
+    return {
+      report: {
+        title: '',
+        category: '',
+        description: '',
+        reporterName: '',
+        nim: '',
+        phone: '',
+        incidentDate: '',
+        evidenceFile: null
+      },
+      categories: [],
+      isSubmitting: false
+    };
+  },
+
+  mounted() {
+    this.fetchCategories();
+    this.loadUserData();
+  },
+
+  methods: {
+    fetchCategories() {
+      axios.get('http://localhost:8000/api/category')
+        .then(response => {
+          // Check if response.data is an array directly
+          if (Array.isArray(response.data)) {
+            this.categories = response.data;
+          } 
+          // Otherwise check if it has a data property containing the array (as originally expected)
+          else if (response.data && response.data.data) {
+            this.categories = response.data.data;
+          } 
+          // Handle unexpected formats
+          else {
+            console.error('Unexpected API response structure:', response.data);
+            this.categories = [];
+          }
+          console.log('Categories loaded:', this.categories);
+        })
+        .catch(error => {
+          console.error('Error fetching categories:', error);
+          // If you have a notification system
+          // this.showNotification('Error', 'Gagal memuat kategori laporan.', false);
+        });
     },
-    setup() {
-      const router = useRouter();
-      
-      // Form data
-      const form = ref({
-        judul: '',
-        category_id: '',
-        deskripsi: '',
-        nomor_telepon: '',
-        nomor_laporan: '',
-        nama_pelapor: '',
-        nim_pelapor: '',
-        tanggal_kejadian: '',
-        image: null,
-        kontak_pelapor: '',
-        waktu_kejadian: '',
-        lokasi: '',
-        status: '',
-        prioritas: '',
-        lampiran: null
-      });
-      
-      const imagePreview = ref(null);
-      const categories = ref([]);
-      const loading = ref(false);
-      const error = ref(null);
-      
-      // Fetch categories
-      const fetchCategories = async () => {
-        try {
-          const response = await axios.get('/api/categories');
-          categories.value = response.data;
-        } catch (err) {
-          console.error('Error fetching categories:', err);
-          error.value = 'Failed to load categories';
-        }
+    
+    resetForm() {
+      this.report = {
+        title: '',
+        category: '',
+        description: '',
+        reporterName: '',
+        nim: '',
+        phone: '',
+        incidentDate: '',
+        evidenceFile: null
       };
-      
-      // Handle file upload
-      const previewImage = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-          form.value.image = file;
-          imagePreview.value = URL.createObjectURL(file);
-        }
-      };
-      
-      // Handle file upload for lampiran
-      const handleFileUpload = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-          form.value.lampiran = file;
-        }
-      };
-      
-      // Submit form
-      const submitForm = async () => {
-        loading.value = true;
-        try {
-          const formData = new FormData();
-          Object.keys(form.value).forEach(key => {
-            formData.append(key, form.value[key]);
+      // Reset file input if you have one
+      const fileInput = document.getElementById('evidence');
+      if (fileInput) fileInput.value = '';
+    },
+    
+    handleFileUpload(event) {
+      this.report.evidenceFile = event.target.files[0];
+    },
+    
+    async submitReport() {
+      try {
+        // Basic validation
+        if (!this.report.title || !this.report.category || !this.report.description) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Validasi Gagal',
+            text: 'Mohon isi semua field yang diperlukan',
+            confirmButtonColor: '#3085d6',
           });
-  
-          await axios.post('/api/pelaporan-kejadian', formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            }
-          });
-  
-          router.push('/pelaporan-kejadian');
-        } catch (err) {
-          console.error('Error submitting form:', err);
-          error.value = 'Failed to submit form';
-        } finally {
-          loading.value = false;
+          return;
         }
-      };
-      
-      // Cancel form
-      const cancelForm = () => {
-        router.push('/pelaporan-kejadian');
-      };
-      
-      // Fetch categories on created
-      fetchCategories();
-      
-      return {
-        form,
-        imagePreview,
-        categories,
-        loading,
-        error,
-        previewImage,
-        handleFileUpload,
-        submitForm,
-        cancelForm
-      };
+        
+        // Create FormData object to handle file upload
+        const formData = new FormData();
+        formData.append('judul', this.report.title);
+        formData.append('category_id', this.report.category);
+        formData.append('deskripsi', this.report.description);
+        formData.append('nama_pelapor', this.report.reporterName);
+        formData.append('nim_pelapor', this.report.nim);
+        formData.append('nomor_telepon', this.report.phone);
+        formData.append('tanggal_kejadian', this.report.incidentDate);
+        
+        if (this.report.evidenceFile) {
+          formData.append('image_path', this.report.evidenceFile);
+        }
+        
+        // Show loading state
+        this.isSubmitting = true;
+        
+        // Submit the data to the API
+        const response = await axios.post('http://localhost:8000/api/laporan_kekerasan/add_laporan', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        
+        // Handle success
+        Swal.fire({
+          icon: 'success',
+          title: 'Sukses!',
+          text: 'Laporan berhasil dikirim',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'OK'
+        });
+        this.resetForm();
+        this.$router.push('/kekerasan-seksual');
+        
+      } catch (error) {
+        // Handle error
+        console.error('Error submitting report:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: 'Gagal mengirim laporan. Silakan coba lagi.',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'OK'
+        });
+      } finally {
+        this.isSubmitting = false;
+      }
+    },
+    loadUserData() {
+      const encryptedUserData = VueCookies.get("user_session");
+      if (encryptedUserData) {
+        const userData = decryptData(encryptedUserData);
+        this.report.reporterName = userData.name || '';
+        this.report.nim = userData.nim || userData.nik || '';
+        this.report.phone = userData.no_telp || '';
+      }
+    }
+  },
+  computed: {
+    filteredCategories() {
+      return this.categories.filter(category => 
+        category.nama && category.nama.startsWith('Kekerasan')
+      );
     }
   }
-  </script>
-  
-  <style scoped>
-  .action-buttons {
-    display: flex;
-    justify-content: flex-end;
-  }
-  
-  .btn {
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  .btn-primary {
-    background-color: #007bff;
-    color: white;
-    border: 1px solid #007bff;
-  }
-  
-  .btn-secondary {
-    background-color: #f5f5f5;
-    color: #333;
-    border: 1px solid #ddd;
-    margin-right: 10px;
-  }
-  </style>
+};
+</script>
+
+<style scoped>
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: 1px solid #007bff;
+}
+
+.btn-secondary {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+  margin-right: 10px;
+}
+</style>

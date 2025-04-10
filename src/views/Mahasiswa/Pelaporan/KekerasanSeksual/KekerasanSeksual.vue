@@ -22,30 +22,6 @@
                       </div>
                     </div>
                   </div>
-                  
-                  <div class="bg-white shadow rounded-lg p-4">
-                    <div class="flex items-center">
-                      <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
-                        <i class="fas fa-hourglass-half text-xl"></i>
-                      </div>
-                      <div class="ml-4">
-                        <p class="text-sm text-gray-500">Dalam Proses</p>
-                        <p class="text-lg font-semibold">{{ dalamProses || 0 }}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div class="bg-white shadow rounded-lg p-4">
-                    <div class="flex items-center">
-                      <div class="p-3 rounded-full bg-green-100 text-green-600">
-                        <i class="fas fa-check-circle text-xl"></i>
-                      </div>
-                      <div class="ml-4">
-                        <p class="text-sm text-gray-500">Selesai</p>
-                        <p class="text-lg font-semibold">{{ selesai || 0 }}</p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
                 <!-- Laporan Kejadian with Search, Filters and Pagination -->
@@ -67,6 +43,13 @@
                                 <div class="absolute left-3 top-2.5 text-gray-400">
                                     <i class="fas fa-search"></i>
                                 </div>
+                                <button 
+                                  v-if="searchQuery || filters.category_id || filters.status || filters.startDate || filters.endDate"
+                                  @click="resetFilters" 
+                                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-700 hover:text-gray-900"
+                                >
+                                  <i class="fas fa-times"></i>
+                                </button>
                             </div>
                             
                             <!-- Tambah Laporan Button -->
@@ -81,114 +64,130 @@
                     
                     <!-- Filters Section -->
                     <div class="mb-4 flex flex-wrap gap-3">
-                        <!-- Status Filter -->
+                        <!-- Kategori Filter -->
                         <div class="flex-1 min-w-[200px]">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                            <select 
-                                v-model="filters.status" 
-                                class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="">Semua Status</option>
-                                <option value="Selesai">Selesai</option>
-                                <option value="Dalam Proses">Dalam Proses</option>
-                            </select>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                          <select 
+                            v-model="filters.category_id" 
+                            class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            @change="applyFilters"
+                          >
+                            <option value="">Semua Kategori</option>
+                            <option v-for="(name, id) in filteredCategories" :key="id" :value="id">
+                              {{ name }}
+                            </option>
+                          </select>
                         </div>
                         
-                        <!-- Type Filter -->
+                        <!-- Date Range Filters -->
                         <div class="flex-1 min-w-[200px]">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Kejadian</label>
-                            <select 
-                                v-model="filters.jenisKejadian" 
-                                class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="">Semua Jenis</option>
-                                <option v-for="jenis in jenisKejadianList" :key="jenis" :value="jenis">{{ jenis }}</option>
-                            </select>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
+                          <input
+                            type="date"
+                            v-model="filters.startDate"
+                            class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            @change="applyFilters"
+                          />
                         </div>
-                        
-                        <!-- Date Range Filter -->
+
                         <div class="flex-1 min-w-[200px]">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Periode</label>
-                            <select 
-                                v-model="filters.period" 
-                                class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="">Semua Waktu</option>
-                                <option value="week">7 Hari Terakhir</option>
-                                <option value="month">30 Hari Terakhir</option>
-                                <option value="quarter">90 Hari Terakhir</option>
-                            </select>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Akhir</label>
+                          <input
+                            type="date"
+                            v-model="filters.endDate"
+                            class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            @change="applyFilters"
+                          />
                         </div>
                         
                         <!-- Reset Filters Button -->
-                        <div class="self-end mb-1 min-w-[100px]">
-                            <button 
-                                @click="resetFilters" 
-                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors w-full"
-                            >
-                                Reset Filter
-                            </button>
+                        <div class="flex items-end">
+                          <button 
+                            @click="resetFilters" 
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors w-full"
+                          >
+                            Reset Filter
+                          </button>
                         </div>
                     </div>
                     
-                    <div v-if="filteredLaporan && filteredLaporan.length > 0" class="overflow-x-auto">
+                    <!-- Loading indicator -->
+                    <div v-if="loading" class="text-center py-8">
+                      <i class="fas fa-spinner fa-spin text-blue-500 text-2xl"></i>
+                      <p class="mt-2 text-gray-600">Memuat data...</p>
+                    </div>
+                    
+                    <!-- Error message -->
+                    <div v-else-if="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4">
+                      <p class="font-bold">Error</p>
+                      <p>{{ error }}</p>
+                    </div>
+                    
+                    <div v-else-if="filteredLaporan && filteredLaporan.length > 0" class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead>
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <div class="flex items-center cursor-pointer" @click="sortBy('id')">
-                                            ID Laporan
+                                        No
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <div class="flex items-center cursor-pointer" @click="sortBy('nomor_laporan_kekerasan')">
+                                            Nomor Laporan
                                             <span class="ml-1">
-                                                <i class="fas" :class="getSortIcon('id')"></i>
+                                                <i class="fas" :class="getSortIcon('nomor_laporan_kekerasan')"></i>
                                             </span>
                                         </div>
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <div class="flex items-center cursor-pointer" @click="sortBy('tanggal')">
-                                            Tanggal
+                                        <div class="flex items-center cursor-pointer" @click="sortBy('judul')">
+                                            Judul
                                             <span class="ml-1">
-                                                <i class="fas" :class="getSortIcon('tanggal')"></i>
+                                                <i class="fas" :class="getSortIcon('judul')"></i>
                                             </span>
                                         </div>
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <div class="flex items-center cursor-pointer" @click="sortBy('jenisKejadian')">
-                                            Jenis Kejadian
+                                        Kategori
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Nama Pelapor
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <div class="flex items-center cursor-pointer" @click="sortBy('tanggal_kejadian')">
+                                            Tanggal Kejadian
                                             <span class="ml-1">
-                                                <i class="fas" :class="getSortIcon('jenisKejadian')"></i>
+                                                <i class="fas" :class="getSortIcon('tanggal_kejadian')"></i>
                                             </span>
                                         </div>
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Lokasi
+                                        Aksi
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Pelapor
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <div class="flex items-center cursor-pointer" @click="sortBy('status')">
-                                            Status
-                                            <span class="ml-1">
-                                                <i class="fas" :class="getSortIcon('status')"></i>
-                                            </span>
-                                        </div>
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-for="laporan in paginatedLaporan" :key="laporan.id" class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.id }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ formatDate(laporan.tanggal) }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.jenisKejadian }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.lokasi }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.pelapor }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span :class="getStatusClass(laporan.status)">{{ laporan.status }}</span>
+                                <tr v-for="(laporan, index) in paginatedLaporan" :key="laporan.id" class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ startIndex + index + 1 }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ laporan.nomor_laporan_kekerasan }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">
+                                        {{ laporan.judul }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ getCategoryName(laporan.category_id) }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ laporan.nama_pelapor }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ formatDate(laporan.tanggal_kejadian) }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                        <button class="text-blue-600 hover:text-blue-800 mr-2" @click="lihatDetail(laporan.id)">
-                                            <i class="fas fa-eye"></i>
+                                        <button class="text-blue-600 hover:text-blue-800 mr-2" @click="viewDetail(laporan)">
+                                            <i class="fas fa-eye"></i> Detail
                                         </button>
                                     </td>
                                 </tr>
@@ -202,7 +201,7 @@
                     <!-- Pagination -->
                     <div class="flex items-center justify-between mt-4 border-t pt-4">
                         <div class="flex items-center text-sm text-gray-500">
-                            Menampilkan {{ filteredLaporan.length ? startIndex + 1 : 0 }}-{{ endIndex }} dari {{ filteredLaporan.length }} laporan
+                            Menampilkan {{ userFilteredLaporan.length ? startIndex + 1 : 0 }}-{{ Math.min(startIndex + itemsPerPage, userFilteredLaporan.length) }} dari {{ userFilteredLaporan.length }} laporan
                         </div>
                         
                         <div class="flex space-x-2">
@@ -217,6 +216,10 @@
                                 <i class="fas fa-chevron-left"></i>
                             </button>
                             
+                            <span class="text-sm text-gray-700">
+                                Halaman {{ currentPage }} dari {{ totalPages }}
+                            </span>
+                            
                             <button 
                                 @click="nextPage" 
                                 :disabled="currentPage >= totalPages" 
@@ -230,31 +233,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Modal untuk tambah laporan (hidden by default) -->
-                <div v-if="showModal" class="fixed inset-0 z-10 overflow-y-auto">
-                    <div class="flex items-center justify-center min-h-screen px-4">
-                        <div class="fixed inset-0 bg-black opacity-30"></div>
-                        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="text-lg font-medium text-gray-900">Tambah Laporan Kejadian</h3>
-                                <button @click="showModal = false" class="text-gray-400 hover:text-gray-500">
-                                    <span class="text-2xl">&times;</span>
-                                </button>
-                            </div>
-                            <!-- Form will go here -->
-                            <div class="mt-4">
-                                <!-- Form fields would go here -->
-                                <button 
-                                    class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
-                                    @click="showModal = false"
-                                >
-                                    Simpan
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
             <Footer />
         </div>
@@ -262,185 +240,329 @@
 </template>
 
 <script>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, reactive } from 'vue';
 import Header from '../components/Header.vue';
 import Sidebar from '../components/Sidebar.vue';
 import Footer from '../components/Footer.vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
+import VueCookies from 'vue-cookies';
+import { decryptData } from '../../../../services/encrypt';
 
 export default {
-    name: 'PelaporanKejadian',
+    name: 'KekerasanSeksual',
     components: {
         Sidebar,
         Header,
         Footer
     },
     setup() {
-        const showModal = ref(false);
+        const router = useRouter();
+        
+        // Data for API
+        const laporan = ref([]);
+        const filteredLaporan = ref([]);
+        const categories = ref({});
+        const userData = ref(null);
+        const authToken = ref('');
+        
+        // Loading state
+        const loading = ref(false);
+        const error = ref(null);
+        
+        // UI state
         const searchQuery = ref('');
         const currentPage = ref(1);
-        const itemsPerPage = ref(5);
+        const itemsPerPage = ref(10);
+        const sortKey = ref('tanggal_kejadian');
+        const sortDirection = ref('desc');
         
-        // List of all reports
-        const daftarLaporan = ref([
-            {
-                id: 'LP001',
-                tanggal: new Date('2023-11-15'),
-                jenisKejadian: 'Kebakaran',
-                lokasi: 'Jl. Pahlawan No. 10',
-                pelapor: 'Ahmad Rizki',
-                status: 'Selesai'
-            },
-            {
-                id: 'LP002',
-                tanggal: new Date('2023-11-16'),
-                jenisKejadian: 'Kecelakaan',
-                lokasi: 'Jl. Sudirman No. 45',
-                pelapor: 'Budi Santoso',
-                status: 'Dalam Proses'
-            },
-            {
-                id: 'LP003',
-                tanggal: new Date('2023-11-17'),
-                jenisKejadian: 'Banjir',
-                lokasi: 'Perumahan Indah Blok C',
-                pelapor: 'Citra Dewi',
-                status: 'Dalam Proses'
-            }
-        ]);
-        
-        // Sorting
-        const sortConfig = ref({
-            key: 'tanggal',
-            direction: 'desc'
-        });
-
-        // Filtering
-        const filters = ref({
+        const filters = reactive({
+            category_id: '',
             status: '',
-            jenisKejadian: '',
-            period: ''
-        });
-
-        // List of unique report types for dropdown
-        const jenisKejadianList = computed(() => {
-            if (!daftarLaporan.value.length) return [];
-            return [...new Set(daftarLaporan.value.map(report => report.jenisKejadian))];
+            startDate: '',
+            endDate: ''
         });
         
-        // Filter by date helper function
-        const isWithinPeriod = (date, period) => {
-            if (!period) return true;
-            
-            const today = new Date();
-            const reportDate = new Date(date);
-            const diffTime = Math.abs(today - reportDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            
-            switch (period) {
-                case 'week':
-                    return diffDays <= 7;
-                case 'month':
-                    return diffDays <= 30;
-                case 'quarter':
-                    return diffDays <= 90;
-                default:
-                    return true;
+        // Get current user and auth token from cookies
+        const getCurrentUser = () => {
+            try {
+                const encryptedUserData = VueCookies.get("user_session");
+                if (encryptedUserData) {
+                    userData.value = decryptData(encryptedUserData);
+                    console.log("Current user loaded:", userData.value.name);
+                }
+                
+                // Get auth token from cookies
+                const token = VueCookies.get("auth_token");
+                if (token) {
+                    authToken.value = token;
+                    // Set default Authorization header for all axios requests
+                    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                    console.log("Auth token loaded");
+                } else {
+                    console.warn("No auth token found in cookies");
+                }
+            } catch (error) {
+                console.error("Error getting user data:", error);
             }
         };
         
-        // Search and filter functionality
-        const filteredLaporan = computed(() => {
-            let result = daftarLaporan.value;
+        // Fetch data from API
+        const fetchData = async () => {
+            loading.value = true;
+            error.value = null;
             
-            if (filters.value.status) {
-                result = result.filter(laporan => laporan.status === filters.value.status);
+            try {
+                // Check if we have an auth token before making API calls
+                if (!authToken.value) {
+                    error.value = 'Anda tidak memiliki akses. Silakan login kembali.';
+                    loading.value = false;
+                    return;
+                }
+                
+                // Configure axios with auth header for these specific requests
+                const config = {
+                    headers: {
+                        'Authorization': `Bearer ${authToken.value}`
+                    }
+                };
+                
+                const [categoriesResponse, laporanResponse] = await Promise.all([
+                    axios.get('http://localhost:8000/api/category', config),
+                    axios.get('http://localhost:8000/api/laporan_kekerasan', config)
+                ]);
+                
+                categories.value = categoriesResponse.data.reduce((acc, category) => {
+                    acc[category.category_id] = category.nama;
+                    return acc;
+                }, {});
+                
+                laporan.value = laporanResponse.data;
+                
+                // Apply initial filtering based on user
+                filterReports();
+                
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                if (error.response && error.response.status === 401) {
+                    error.value = 'Sesi anda telah berakhir. Silakan login kembali.';
+                } else {
+                    error.value = 'Gagal memuat data. Silakan coba lagi nanti.';
+                }
+            } finally {
+                loading.value = false;
+            }
+        };
+        
+        // Filter reports based on user and search/filter criteria
+        const filterReports = () => {
+            console.log('Filtering reports...');
+            
+            // Start with all data
+            let filtered = [...laporan.value];
+            
+            // Always apply user filtering first
+            if (userData.value && userData.value.name) {
+                filtered = filtered.filter(item => 
+                    (item.nama_pelapor && item.nama_pelapor.trim() === userData.value.name.trim()) || 
+                    (item.ni_pelapor && (item.ni_pelapor === userData.value.nim || item.ni_pelapor === userData.value.nik))
+                );
+                console.log(`Filtered to ${filtered.length} reports for user: ${userData.value.name}`);
             }
             
-            if (filters.value.jenisKejadian) {
-                result = result.filter(laporan => laporan.jenisKejadian === filters.value.jenisKejadian);
-            }
-            
-            if (filters.value.period) {
-                result = result.filter(laporan => isWithinPeriod(laporan.tanggal, filters.value.period));
-            }
-            
+            // Apply search query if it exists
             if (searchQuery.value) {
                 const query = searchQuery.value.toLowerCase();
-                result = result.filter(laporan => 
-                    laporan.id.toLowerCase().includes(query) ||
-                    laporan.jenisKejadian.toLowerCase().includes(query) ||
-                    laporan.lokasi.toLowerCase().includes(query) ||
-                    laporan.pelapor.toLowerCase().includes(query) ||
-                    laporan.status.toLowerCase().includes(query)
+                filtered = filtered.filter(item => 
+                    (item.judul && item.judul.toLowerCase().includes(query)) || 
+                    (item.nomor_laporan_kekerasan && item.nomor_laporan_kekerasan.toLowerCase().includes(query))
                 );
             }
             
-            result = [...result].sort((a, b) => {
-                let modifier = sortConfig.value.direction === 'asc' ? 1 : -1;
-                
-                if (sortConfig.value.key === 'tanggal') {
-                    return modifier * (new Date(a.tanggal) - new Date(b.tanggal));
-                }
-                
-                if (a[sortConfig.value.key] < b[sortConfig.value.key]) return -1 * modifier;
-                if (a[sortConfig.value.key] > b[sortConfig.value.key]) return 1 * modifier;
-                return 0;
-            });
+            // Apply category filter
+            if (filters.category_id) {
+                filtered = filtered.filter(item => 
+                    String(item.category_id) === String(filters.category_id)
+                );
+            }
             
+            // Apply status filter
+            if (filters.status) {
+                filtered = filtered.filter(item => item.status === filters.status);
+            }
+            
+            // Apply date range filter
+            if (filters.startDate || filters.endDate) {
+                filtered = filtered.filter(item => {
+                    // Get the date field to filter on (use tanggal_kejadian if available, otherwise created_at)
+                    const itemDateStr = item.tanggal_kejadian || item.created_at;
+                    if (!itemDateStr) return true; // Skip if no date available
+                    
+                    // Convert to Date object and set to midnight for accurate date comparison
+                    const itemDate = new Date(itemDateStr);
+                    itemDate.setHours(0, 0, 0, 0);
+                    
+                    // Check start date if specified
+                    if (filters.startDate) {
+                        const startDate = new Date(filters.startDate);
+                        startDate.setHours(0, 0, 0, 0);
+                        if (itemDate < startDate) return false;
+                    }
+                    
+                    // Check end date if specified
+                    if (filters.endDate) {
+                        const endDate = new Date(filters.endDate);
+                        endDate.setHours(23, 59, 59, 999); // End of the day
+                        if (itemDate > endDate) return false;
+                    }
+                    
+                    return true;
+                });
+            }
+            
+            // Update the filtered list
+            filteredLaporan.value = filtered;
+            
+            // Reset to first page when filters change
+            currentPage.value = 1;
+        };
+        
+        // Compute filtered categories for dropdown
+        const filteredCategories = computed(() => {
+            const result = {};
+            for (const [id, name] of Object.entries(categories.value)) {
+                if (name && typeof name === 'string' && name.startsWith('Kekerasan')) {
+                    result[id] = name;
+                }
+            }
             return result;
         });
         
-        // Sorting function
+        // Sort by column
         const sortBy = (key) => {
-            if (sortConfig.value.key === key) {
-                sortConfig.value.direction = sortConfig.value.direction === 'asc' ? 'desc' : 'asc';
+            if (sortKey.value === key) {
+                sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
             } else {
-                sortConfig.value.key = key;
-                sortConfig.value.direction = 'asc';
+                sortKey.value = key;
+                sortDirection.value = 'asc';
             }
+            
+            // Re-sort filtered results
+            filteredLaporan.value = [...filteredLaporan.value].sort((a, b) => {
+                const modifier = sortDirection.value === 'asc' ? 1 : -1;
+                
+                if (key === 'tanggal_kejadian') {
+                    return modifier * (new Date(a[key] || 0) - new Date(b[key] || 0));
+                } else {
+                    // Handle null or undefined values
+                    const valA = a[key] || '';
+                    const valB = b[key] || '';
+                    
+                    // String comparison for other fields
+                    if (valA < valB) return -1 * modifier;
+                    if (valA > valB) return 1 * modifier;
+                    return 0;
+                }
+            });
         };
         
+        // Get sort icon for column header
         const getSortIcon = (key) => {
-            if (sortConfig.value.key === key) {
-                return sortConfig.value.direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
-            }
-            return 'fa-sort';
+            if (sortKey.value !== key) return 'fa-sort';
+            return sortDirection.value === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
         };
         
         // Reset all filters
         const resetFilters = () => {
-            filters.value = {
-                status: '',
-                jenisKejadian: '',
-                period: ''
-            };
             searchQuery.value = '';
-            currentPage.value = 1;
+            filters.category_id = '';
+            filters.status = '';
+            filters.startDate = '';
+            filters.endDate = '';
+            
+            // Re-apply filtering (which will only filter by user)
+            filterReports();
         };
         
-        // Pagination
-        const totalPages = computed(() => {
-            return Math.ceil(filteredLaporan.value.length / itemsPerPage.value);
-        });
+        // Handle search input
+        const handleSearch = () => {
+            filterReports();
+        };
         
-        const startIndex = computed(() => {
-            return (currentPage.value - 1) * itemsPerPage.value;
-        });
+        // Format date for display
+        const formatDate = (dateString) => {
+            if (!dateString) return '-';
+            const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
+        };
         
-        const endIndex = computed(() => {
-            const end = startIndex.value + itemsPerPage.value;
-            return end > filteredLaporan.value.length ? filteredLaporan.value.length : end;
-        });
+        // Get category name by ID
+        const getCategoryName = (categoryId) => {
+            return categories.value[categoryId] || `Kategori ${categoryId}`;
+        };
         
-        const paginatedLaporan = computed(() => {
-            return filteredLaporan.value.slice(startIndex.value, endIndex.value);
-        });
+        // Navigate to add new report page
+        const addNewReport = () => {
+            router.push('/pelaporan/add-kekerasan-seksual');
+        };
         
-        // Reset to first page when search query or filters change
-        watch([searchQuery, filters], () => {
-            currentPage.value = 1;
-        }, { deep: true });
+        // Navigate to view report detail
+        const viewDetail = (laporan) => {
+            // Accept the entire laporan object instead of just the ID
+            console.log('Laporan being passed:', laporan);
+            
+            // Exit early if no laporan object was provided
+            if (!laporan) {
+                console.error('No laporan object provided to viewDetail');
+                return;
+            }
+            
+            // Extract the correct ID based on the data structure
+            let actualId;
+            
+            if (typeof laporan === 'object') {
+                // Try all possible ID field names in the object
+                if (laporan.laporan_kekerasan_id) {
+                actualId = laporan.laporan_kekerasan_id;
+                } else if (laporan.id) {
+                actualId = laporan.id;
+                } else {
+                // Log the object structure if we can't find the ID
+                console.error('Cannot find ID in laporan object. Available keys:', Object.keys(laporan));
+                return; // Don't navigate without a valid ID
+                }
+            } else {
+                // If laporan is already a primitive value (number or string)
+                actualId = laporan;
+            }
+            
+            // Make sure we have an ID value before navigating
+            if (!actualId && actualId !== 0) {
+                console.error('Invalid ID for navigation:', actualId);
+                return;
+            }
+            
+            console.log('Navigating with ID:', actualId);
+            
+            // Navigate using the exact route name from your configuration
+            router.push({
+                name: "DetailKekekerasanSeksual",
+                params: { id: actualId }
+            });
+        };
+        
+        // Apply filters
+        const applyFilters = () => {
+            filterReports();
+        };
+        
+        // Pagination controls
+        const prevPage = () => {
+            if (currentPage.value > 1) {
+                currentPage.value--;
+            }
+        };
         
         const nextPage = () => {
             if (currentPage.value < totalPages.value) {
@@ -448,90 +570,113 @@ export default {
             }
         };
         
-        const prevPage = () => {
-            if (currentPage.value > 1) {
-                currentPage.value--;
-            }
-        };
+        // Computed properties for filtered user reports
+        const userFilteredLaporan = computed(() => {
+            if (!userData.value) return [];
+            
+            return filteredLaporan.value.filter(item => 
+                (item.nama_pelapor && item.nama_pelapor.trim() === userData.value.name.trim()) || 
+                (item.ni_pelapor && (item.ni_pelapor === userData.value.nim || item.ni_pelapor === userData.value.nik))
+            );
+        });
         
-        const handleSearch = () => {
-            currentPage.value = 1; // Reset to first page on search
-        };
+        // Pagination data
+        const startIndex = computed(() => {
+            return (currentPage.value - 1) * itemsPerPage.value;
+        });
         
-        const tambahLaporan = () => {
-            showModal.value = true;
-        };
+        const endIndex = computed(() => {
+            return Math.min(startIndex.value + itemsPerPage.value, userFilteredLaporan.value.length);
+        });
         
-        const lihatDetail = (id) => {
-            console.log(`Melihat detail laporan dengan ID: ${id}`);
-            router.push({
-                name: 'DetailPelaporanKejadian',
-                query: { id: id }
-            });
-        };
+        const totalPages = computed(() => {
+            return Math.max(1, Math.ceil(userFilteredLaporan.value.length / itemsPerPage.value));
+        });
         
-        const editLaporan = (id) => {
-            console.log(`Edit laporan dengan ID: ${id}`);
-            // Implement edit functionality
-        };
+        const paginatedLaporan = computed(() => {
+            const start = (currentPage.value - 1) * itemsPerPage.value;
+            const end = start + itemsPerPage.value;
+            return userFilteredLaporan.value.slice(start, end);
+        });
         
-        const formatDate = (date) => {
-            return new Date(date).toLocaleDateString('id-ID', {
-                day: '2-digit',
-                month: '2-digit', 
-                year: 'numeric'
-            });
-        };
+        // Stats for dashboard cards
+        const totalLaporan = computed(() => {
+            if (!userData.value) return 0;
+            
+            return laporan.value.filter(item => 
+                (item.nama_pelapor && item.nama_pelapor.trim() === userData.value.name.trim()) || 
+                (item.ni_pelapor && (item.ni_pelapor === userData.value.nim || item.ni_pelapor === userData.value.nik))
+            ).length;
+        });
         
-        const getStatusClass = (status) => {
-            switch(status) {
-                case 'Selesai':
-                    return 'px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800';
-                case 'Dalam Proses':
-                    return 'px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800';
-                default:
-                    return 'px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800';
-            }
-        };
+        const dalamProses = computed(() => {
+            if (!userData.value) return 0;
+            
+            return laporan.value.filter(item => 
+                ((item.nama_pelapor && item.nama_pelapor.trim() === userData.value.name.trim()) || 
+                (item.ni_pelapor && (item.ni_pelapor === userData.value.nim || item.ni_pelapor === userData.value.nik))) &&
+                item.status === 'unverified'
+            ).length;
+        });
         
-        // Computed properties for stats
-        const totalLaporan = computed(() => daftarLaporan.value.length);
-        const dalamProses = computed(() => daftarLaporan.value.filter(laporan => laporan.status === 'Dalam Proses').length);
-        const selesai = computed(() => daftarLaporan.value.filter(laporan => laporan.status === 'Selesai').length);
+        const selesai = computed(() => {
+            if (!userData.value) return 0;
+            
+            return laporan.value.filter(item => 
+                ((item.nama_pelapor && item.nama_pelapor.trim() === userData.value.name.trim()) || 
+                (item.ni_pelapor && (item.ni_pelapor === userData.value.nim || item.ni_pelapor === userData.value.nik))) &&
+                item.status === 'verified'
+            ).length;
+        });
         
-        const router = useRouter();
+        // Watch for changes in search query or filters
+        watch([searchQuery, () => filters.category_id, () => filters.status, () => filters.startDate, () => filters.endDate], () => {
+            filterReports();
+        });
         
-        const addNewReport = () => {
-            router.push('/pelaporan/add-kekerasan-seksual');
-        };
+        // Initialize data on component mount
+        getCurrentUser();
+        fetchData();
         
         return {
-            showModal,
-            daftarLaporan,
+            // Data
+            laporan,
+            filteredLaporan,
+            categories,
+            userData,
+            loading,
+            error,
             searchQuery,
             filters,
-            jenisKejadianList,
-            filteredLaporan,
             currentPage,
-            totalPages,
+            itemsPerPage,
+            
+            // Computed properties
+            filteredCategories,
+            userFilteredLaporan,
             startIndex,
             endIndex,
+            totalPages,
             paginatedLaporan,
             totalLaporan,
             dalamProses,
             selesai,
+            
+            // Methods
+            getCurrentUser,
+            fetchData,
+            filterReports,
             sortBy,
             getSortIcon,
             resetFilters,
             handleSearch,
-            nextPage,
-            prevPage,
-            tambahLaporan,
-            lihatDetail,
-            editLaporan,
             formatDate,
-            getStatusClass,
-            addNewReport
+            getCategoryName,
+            addNewReport,
+            viewDetail,
+            applyFilters,
+            prevPage,
+            nextPage
         };
     }
 };

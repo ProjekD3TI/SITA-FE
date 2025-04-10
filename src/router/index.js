@@ -384,17 +384,17 @@ const routes = [
       {
         path: "kekerasan-seksual",
         name: "KekekerasanSeksual",
-        component: () => import("../views/Pelaporan/KekerasanSeksual/KekerasanSeksual.vue"),
+        component: () => import("../views/Mahasiswa/Pelaporan/KekerasanSeksual/KekerasanSeksual.vue"),
       },
       {
         path: "add-kekerasan-seksual",
         name: "AddKekekerasanSeksual",
-        component: () => import("../views/Pelaporan/KekerasanSeksual/AddKekerasanSeksual.vue"),
+        component: () => import("../views/Mahasiswa/Pelaporan/KekerasanSeksual/AddKekerasanSeksual.vue"),
       },
       {
-        path: "detail-kekerasan-seksual",
+        path: "/laporan_kekerasan/:id",
         name: "DetailKekekerasanSeksual",
-        component: () => import("../views/Pelaporan/KekerasanSeksual/DetailKekerasanSeksual.vue"),
+        component: () => import("../views/Mahasiswa/Pelaporan/KekerasanSeksual/DetailKekerasanSeksual.vue"),
       },
     ],
   },

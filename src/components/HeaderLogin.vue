@@ -57,7 +57,7 @@
                 v-on:mouseleave="e => setTimeout(() => e.target.classList.remove('group-hover:visible'), 1500)"
               >
                 <router-link
-                  to="/pelaporan/dashboard"
+                  to="/pelaporan/kejadian"
                   class="block px-4 py-2 hover:bg-gray-700"
                 >
                   Lapor Kejadian
