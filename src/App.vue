@@ -1,10 +1,8 @@
 <!-- src/App.vue -->
 <template>
-  <Header />
   <div id="app">
     <router-view />
   </div>
-  <Footer />
 </template>
 
 <script>

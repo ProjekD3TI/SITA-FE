@@ -14,7 +14,7 @@
           </div>
           <div class="ml-4">
             <p class="text-sm text-gray-500">Total Laporan</p>
-            <p class="text-lg font-semibold">{{ totalLaporan || 0 }}</p>
+            <p class="text-lg font-semibold">{{ totalLaporanCount || 0 }}</p>
           </div>
         </div>
       </div>
@@ -120,7 +120,7 @@
       </div>
       
       <!-- Table Section -->
-      <div v-else-if="filteredLaporan && filteredLaporan.length > 0" class="overflow-x-auto">
+      <div v-else-if="filteredLaporanList && filteredLaporanList.length > 0" class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
           <thead>
             <tr>
@@ -249,14 +249,9 @@ export default {
   name: 'DashboardKSDosen',
   data() {
     return {
-      // Data for stats cards
-      totalLaporan: 0,
-      dalamProses: 0,
-      selesai: 0,
-      
       // Table data and filtering
       laporan: [],
-      filteredLaporan: [],
+      filteredLaporanList: [], // Renamed to avoid conflict with computed
       categories: {},
       
       // Current user data
@@ -322,15 +317,6 @@ export default {
         return matchesSearch && matchesStatus && matchesCategory && matchesDateRange;
       });
       
-      // Filter by current user if userData is available
-      if (this.userData) {
-        // Filter laporan for current user and update statistics
-        const userLaporan = this.laporan.filter(item => 
-          (item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
-          (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))
-        );
-      }
-      
       // Sort the filtered data
       return result.sort((a, b) => {
         const modifier = this.sortDirection === 'asc' ? 1 : -1;
@@ -347,41 +333,8 @@ export default {
       });
     },
     
-    startIndex() {
-      return (this.currentPage - 1) * this.itemsPerPage;
-    },
-    
-    pendingCount() {
-      return this.laporan.filter(item => 
-        item.status === 'unverified' || item.status === 'verified' || item.status === 'processed'
-      ).length;
-    },
-    
-    completedCount() {
-      return this.laporan.filter(item => item.status === 'completed').length;
-    },
-
-    filteredCategories() {
-      const result = {};
-      for (const [id, name] of Object.entries(this.categories)) {
-        if (name.startsWith('Kekerasan')) {
-          result[id] = name;
-        }
-      }
-      return result;
-    },
-
-    currentUserLaporanCount() {
-      // Assuming you have user info in this.user or similar
-      // And filteredLaporan already applies other filters
-      return this.filteredLaporan.filter(laporan => 
-        laporan.user_id === this.user.id || 
-        laporan.created_by === this.user.id
-      ).length;
-    },
-
-    // In your computed properties
-    totalLaporan() {
+    // Statistics computations
+    totalLaporanCount() {
       if (!this.userData) return 0;
       return this.laporan.filter(item => 
         (item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
@@ -389,7 +342,7 @@ export default {
       ).length;
     },
 
-    dalamProses() {
+    dalamProsesCount() {
       if (!this.userData) return 0;
       return this.laporan.filter(item => 
         ((item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
@@ -398,7 +351,7 @@ export default {
       ).length;
     },
 
-    selesai() {
+    selesaiCount() {
       if (!this.userData) return 0;
       return this.laporan.filter(item => 
         ((item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
@@ -420,7 +373,7 @@ export default {
       );
     },
 
-    // Update these computed properties to use userFilteredLaporan
+    // Pagination computed properties
     endIndex() {
       return Math.min(this.startIndex + this.itemsPerPage, this.userFilteredLaporan.length);
     },
@@ -433,7 +386,17 @@ export default {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
       return this.userFilteredLaporan.slice(start, end);
-    }
+    },
+
+    filteredCategories() {
+      const result = {};
+      for (const [id, name] of Object.entries(this.categories)) {
+        if (name.startsWith('Kekerasan')) {
+          result[id] = name;
+        }
+      }
+      return result;
+    },
   },
   
   methods: {
@@ -490,8 +453,6 @@ export default {
     
     // Handle search input with debounce
     handleSearch() {
-      // Don't implement separate logic here
-      // Just call the common filterReports method
       this.filterReports();
     },
     
@@ -516,72 +477,8 @@ export default {
     filterReports() {
       console.log('Filtering reports...');
       
-      // Start with all data
-      let filtered = [...this.laporan];
-      
-      // Always apply user filtering first
-      if (this.userData && this.userData.name) {
-        filtered = filtered.filter(item => 
-          (item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
-          (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))
-        );
-        console.log(`Filtered to ${filtered.length} reports for user: ${this.userData.name}`);
-      }
-      
-      // Apply search query if it exists
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
-        filtered = filtered.filter(item => 
-          (item.judul && item.judul.toLowerCase().includes(query)) || 
-          (item.nomor_laporan_kekerasan && item.nomor_laporan_kekerasan.toLowerCase().includes(query))
-        );
-      }
-      
-      // Apply category filter
-      if (this.filters.category_id) {
-        filtered = filtered.filter(item => 
-          String(item.category_id) === String(this.filters.category_id)
-        );
-      }
-      
-      // Apply status filter
-      if (this.filters.status) {
-        filtered = filtered.filter(item => item.status === this.filters.status);
-      }
-      
-      // Apply date range filter
-      if (this.filters.startDate || this.filters.endDate) {
-        filtered = filtered.filter(item => {
-          // Get the date field to filter on (use tanggal_kejadian if available, otherwise created_at)
-          const itemDateStr = item.tanggal_kejadian || item.created_at;
-          if (!itemDateStr) return true; // Skip if no date available
-          
-          // Convert to Date object and set to midnight for accurate date comparison
-          const itemDate = new Date(itemDateStr);
-          itemDate.setHours(0, 0, 0, 0);
-          
-          // Check start date if specified
-          if (this.filters.startDate) {
-            const startDate = new Date(this.filters.startDate);
-            startDate.setHours(0, 0, 0, 0);
-            if (itemDate < startDate) return false;
-          }
-          
-          // Check end date if specified
-          if (this.filters.endDate) {
-            const endDate = new Date(this.filters.endDate);
-            endDate.setHours(23, 59, 59, 999); // End of the day
-            if (itemDate > endDate) return false;
-          }
-          
-          return true;
-        });
-        
-        console.log(`Date filtered to ${filtered.length} reports`);
-      }
-      
-      // Update the filtered list
-      this.filteredLaporan = filtered;
+      // Using the computed filteredLaporan data to update the data property
+      this.filteredLaporanList = this.filteredLaporan;
       
       // Reset to first page when filters change
       this.currentPage = 1;
@@ -658,6 +555,9 @@ export default {
         this.sortKey = key;
         this.sortDirection = 'asc';
       }
+      
+      // Re-apply filtering to reflect the new sort
+      this.filterReports();
     },
     
     getSortIcon(key) {
@@ -685,21 +585,12 @@ export default {
   },
   
   watch: {
-    // Add watchers to trigger filtering when inputs change
-    searchQuery() {
-      this.filterReports();
-    },
-    'filters.category_id'() {
-      this.filterReports();
-    },
-    'filters.status'() {
-      this.filterReports();
-    },
-    'filters.startDate'() {
-      this.filterReports();
-    },
-    'filters.endDate'() {
-      this.filterReports();
+    // Add watchers to trigger filtering when computed filtered data changes
+    filteredLaporan: {
+      handler(newValue) {
+        this.filteredLaporanList = newValue;
+      },
+      deep: true
     }
   },
   
@@ -707,6 +598,17 @@ export default {
     // Get current user first, then fetch data
     this.getCurrentUser();
     this.fetchData();
+  },
+  
+  // Add Vue Router navigation guards if needed
+  beforeRouteEnter(to, from, next) {
+    // Make sure to call next() only ONCE
+    next();
+  },
+  
+  beforeRouteUpdate(to, from, next) {
+    // Make sure to call next() only ONCE
+    next();
   }
 };
 </script>

@@ -297,7 +297,7 @@ export default {
       
       // Table data and filtering
       laporan: [],
-      filteredLaporan: [],
+      filteredLaporan: [], // Keep this in data for initialization
       categories: {},
       
       // Pagination
@@ -336,106 +336,6 @@ export default {
   },
   
   computed: {
-    filteredLaporan() {
-      if (!this.laporan || !this.laporan.length) return [];
-      
-      let result = [...this.laporan];
-      
-      // Filter by current user if userData is available
-      if (this.userData) {
-        result = result.filter(item => 
-          (item.nama_pelapor && item.nama_pelapor === this.userData.name) || 
-          (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))
-        );
-      }
-      
-      // Apply search filter (keep your existing code)
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
-        result = result.filter(item => 
-          (item.judul && item.judul.toLowerCase().includes(query)) || 
-          (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(query)) ||
-          (item.nama_pelapor && item.nama_pelapor.toLowerCase().includes(query))
-        );
-      }
-      
-      // Apply status filter (keep your existing code)
-      if (this.filters.status) {
-        const statusValue = this.filters.status === 'Selesai' ? 'verified' : 
-                          this.filters.status === 'Dalam Proses' ? 'unverified' : null;
-        
-        if (statusValue) {
-          result = result.filter(item => item.status === statusValue);
-        }
-      }
-      
-      // Apply jenis kejadian filter (keep your existing code)
-      if (this.filters.jenisKejadian) {
-        result = result.filter(item =>
-          this.getCategoryName(item.category_id) === this.filters.jenisKejadian
-        );
-      }
-      
-      // Apply period filter
-      if (this.filters.period) {
-        const now = new Date();
-        let startDate;
-        
-        switch(this.filters.period) {
-          case 'week':
-            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            break;
-          case 'month':
-            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-            break;
-          case 'quarter':
-            startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-            break;
-        }
-        
-        if (startDate) {
-          result = result.filter(item => {
-            const itemDate = new Date(item.created_at);
-            return itemDate >= startDate;
-          });
-        }
-      }
-      
-      // Apply sorting
-      result.sort((a, b) => {
-        let fieldA, fieldB;
-        
-        // Handle special fields
-        if (this.sortField === 'id') {
-          fieldA = a.laporan_id;
-          fieldB = b.laporan_id;
-        } else if (this.sortField === 'tanggal') {
-          fieldA = new Date(a.created_at);
-          fieldB = new Date(b.created_at);
-        } else if (this.sortField === 'jenisKejadian') {
-          fieldA = this.getCategoryName(a.category_id);
-          fieldB = this.getCategoryName(b.category_id);
-        } else if (this.sortField === 'status') {
-          fieldA = a.status;
-          fieldB = b.status;
-        } else {
-          fieldA = a[this.sortField];
-          fieldB = b[this.sortField];
-        }
-        
-        let comparison = 0;
-        if (fieldA > fieldB) {
-          comparison = 1;
-        } else if (fieldA < fieldB) {
-          comparison = -1;
-        }
-        
-        return this.sortDirection === 'asc' ? comparison : -comparison;
-      });
-      
-      return result;
-    },
-    
     // Paginated data for display
     paginatedLaporan() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
@@ -493,6 +393,7 @@ export default {
         let userData = null;
         if (encryptedUserData) {
           userData = decryptData(encryptedUserData);
+          this.userData = userData; // Pastikan userData diset
         }
         
         // Then fetch all laporan data
@@ -511,7 +412,7 @@ export default {
         }
         
         // Initialize filteredLaporan with all data
-        this.filteredLaporan = [...this.laporan];
+        this.applyAllFilters(); // Apply filters untuk inisialisasi awal
         
         // Calculate summary statistics
         this.totalLaporan = this.laporan.length;
@@ -553,15 +454,125 @@ export default {
     
     // Handle search input with debounce
     handleSearch() {
-      if (!this.searchQuery) {
-        // Jika kolom pencarian kosong, tampilkan semua laporan
-        this.filteredLaporan = [...this.laporan];
-      } else {
-        // Filter laporan berdasarkan query pencarian
-        this.filteredLaporan = this.laporan.filter(laporan => 
-          laporan.judul.toLowerCase().includes(this.searchQuery.toLowerCase())
+      this.applyAllFilters();
+      this.currentPage = 1; // Reset to first page when searching
+    },
+    
+    // Metode untuk mengaplikasikan semua filter
+    applyAllFilters() {
+      if (!this.laporan || !this.laporan.length) {
+        this.filteredLaporan = [];
+        return;
+      }
+      
+      let result = [...this.laporan];
+      
+      // Filter by current user if userData is available
+      if (this.userData) {
+        result = result.filter(item => 
+          (item.nama_pelapor && item.nama_pelapor === this.userData.name) || 
+          (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))
         );
       }
+      
+      // Apply search filter
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        result = result.filter(item => 
+          (item.judul && item.judul.toLowerCase().includes(query)) || 
+          (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(query)) ||
+          (item.nama_pelapor && item.nama_pelapor.toLowerCase().includes(query))
+        );
+      }
+      
+      // Apply status filter
+      if (this.filters.status) {
+        // Map status UI ke nilai status database
+        const statusMap = {
+          'Belum Diverifikasi': 'unverified',
+          'Diverifikasi': 'verified', 
+          'Ditolak': 'rejected'
+        };
+        
+        const statusValue = statusMap[this.filters.status];
+        if (statusValue) {
+          result = result.filter(item => item.status === statusValue);
+        }
+      }
+      
+      // Apply category filter
+      if (this.filters.category_id) {
+        result = result.filter(item => 
+          String(item.category_id) === String(this.filters.category_id)
+        );
+      }
+      
+      // Apply date range filter
+      if (this.filters.startDate || this.filters.endDate) {
+        result = result.filter(item => {
+          // Convert to Date objects for comparison
+          const itemDate = new Date(item.created_at || item.tanggal);
+          
+          // Check start date if specified
+          if (this.filters.startDate) {
+            const startDate = new Date(this.filters.startDate);
+            startDate.setHours(0, 0, 0, 0);
+            if (itemDate < startDate) return false;
+          }
+          
+          // Check end date if specified
+          if (this.filters.endDate) {
+            const endDate = new Date(this.filters.endDate);
+            endDate.setHours(23, 59, 59, 999);
+            if (itemDate > endDate) return false;
+          }
+          
+          return true;
+        });
+      }
+      
+      // Apply sorting
+      result.sort((a, b) => {
+        let fieldA, fieldB;
+        
+        // Handle special fields
+        if (this.sortField === 'id') {
+          fieldA = a.laporan_id;
+          fieldB = b.laporan_id;
+        } else if (this.sortField === 'tanggal') {
+          fieldA = new Date(a.created_at);
+          fieldB = new Date(b.created_at);
+        } else if (this.sortField === 'jenisKejadian') {
+          fieldA = this.getCategoryName(a.category_id);
+          fieldB = this.getCategoryName(b.category_id);
+        } else if (this.sortField === 'status') {
+          fieldA = a.status;
+          fieldB = b.status;
+        } else {
+          fieldA = a[this.sortField];
+          fieldB = b[this.sortField];
+        }
+        
+        let comparison = 0;
+        if (fieldA > fieldB) {
+          comparison = 1;
+        } else if (fieldA < fieldB) {
+          comparison = -1;
+        }
+        
+        return this.sortDirection === 'asc' ? comparison : -comparison;
+      });
+      
+      // Update filtered data
+      this.filteredLaporan = result;
+      
+      // Debug log hasil filter
+      console.log(`Filter applied: ${result.length} results`, {
+        categoryFilter: this.filters.category_id,
+        statusFilter: this.filters.status,
+        searchQuery: this.searchQuery,
+        filteredData: result.map(i => ({id: i.laporan_id, kategori: i.category_id, judul: i.judul}))
+      });
     },
     
     // Sort table by field
@@ -572,6 +583,7 @@ export default {
         this.sortField = field;
         this.sortDirection = 'asc';
       }
+      this.applyAllFilters(); // Terapkan sort
     },
     
     // Get sort icon class based on current sort
@@ -583,8 +595,8 @@ export default {
     // Get status badge class
     getStatusClass(status) {
       const classMap = {
-        'Selesai': 'px-2 py-1 text-xs rounded-full bg-green-100 text-green-800',
-        'Dalam Proses': 'px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800',
+        'Belum Diverifikasi': 'px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800',
+        'Diverifikasi': 'px-2 py-1 text-xs rounded-full bg-green-100 text-green-800',
         'Ditolak': 'px-2 py-1 text-xs rounded-full bg-red-100 text-red-800'
       };
       
@@ -614,69 +626,14 @@ export default {
       };
       this.searchQuery = '';
       this.currentPage = 1;
+      this.applyAllFilters(); // Terapkan reset filter
     },
 
+    // Method yang dipanggil ketika filter diubah
     applyFilters() {
-      console.log('Applying filters:', this.filters); // Debug log
-      
-      // Start with all data
-      let filtered = [...this.laporan];
-      
-      // Apply category filter
-      if (this.filters.category_id) {
-        console.log('Filtering by category:', this.filters.category_id);
-        filtered = filtered.filter(item => 
-          String(item.category_id) === String(this.filters.category_id)
-        );
-      }
-      
-      // Apply status filter
-      if (this.filters.status) {
-        console.log('Filtering by status:', this.filters.status);
-        // Map frontend status labels to actual status values in the data
-        const statusMap = {
-          'Belum Diverifikasi': 'unverified',
-          'Diverifikasi': 'verified',
-          'Ditolak': 'rejected'
-        };
-        
-        const statusValue = statusMap[this.filters.status] || this.filters.status;
-        filtered = filtered.filter(item => item.status === statusValue);
-      }
-      
-      // Apply date range filter
-      if (this.filters.startDate || this.filters.endDate) {
-        console.log('Filtering by date range:', this.filters.startDate, 'to', this.filters.endDate);
-        
-        filtered = filtered.filter(item => {
-          // Convert to Date objects for comparison
-          const itemDate = new Date(item.created_at || item.tanggal); // Adjust field name as needed
-          
-          // Check start date if specified
-          if (this.filters.startDate) {
-            const startDate = new Date(this.filters.startDate);
-            startDate.setHours(0, 0, 0, 0);
-            if (itemDate < startDate) return false;
-          }
-          
-          // Check end date if specified
-          if (this.filters.endDate) {
-            const endDate = new Date(this.filters.endDate);
-            endDate.setHours(23, 59, 59, 999);
-            if (itemDate > endDate) return false;
-          }
-          
-          return true;
-        });
-      }
-      
-      // Update filtered data
-      this.filteredLaporan = filtered;
-      
-      // Reset to first page when filters change
+      console.log('Applying filters:', this.filters);
+      this.applyAllFilters(); // Panggil metode utama untuk filter
       this.currentPage = 1;
-      
-      console.log('Filtered results:', this.filteredLaporan.length); // Debug log
     },
     
     // Event handlers
@@ -707,30 +664,34 @@ export default {
       }
     },
 
-    // Add or update these methods
-    // Method to fetch reports from API
+    // Method to fetch reports from API - Not actually needed since we already fetch in fetchData
     async fetchReports() {
       try {
-        // Replace with your actual API endpoint
-        const response = await axios.get('/api/reports');
-        this.reports = response.data;
-        
-        // Update counters
-        this.totalLaporan = this.reports.length;
-        this.dalamProses = this.reports.filter(r => r.status === 'Dalam Proses').length;
+        // Don't need to make this API call again if we already have the data
+        // Just use the data we already have
+        if (!this.reports.length) {
+          this.reports = [...this.laporan];
+        }
       } catch (error) {
-        console.error('Error fetching reports:', error);
+        console.error('Error in fetchReports:', error);
       }
     },
   },
   
   mounted() {
     this.fetchData();
-    // Add this to your mounted() method
     this.getCurrentUser();
-
-    // Add to created or mounted lifecycle hook
-    this.fetchReports();
+  },
+  
+  // Add watcher untuk filters
+  watch: {
+    // Watch filters untuk debugging
+    filters: {
+      handler(newFilters) {
+        console.log('Filters changed:', newFilters);
+      },
+      deep: true // Untuk mendeteksi perubahan dalam objek
+    }
   }
 };
 </script>

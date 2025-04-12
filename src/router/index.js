@@ -112,7 +112,7 @@ const routes = [
     name: "laporks",
     component: () =>
       import(
-        /* webpackChunkName: "login" */ "../views/Pelaporan/LaporKekerasanSeksual.vue"
+        /* webpackChunkName: "login" */ "../views/Mahasiswa/Pelaporan/LaporKekerasanSeksual.vue"
       ),
   },
   {

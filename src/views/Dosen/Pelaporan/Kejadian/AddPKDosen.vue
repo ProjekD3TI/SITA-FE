@@ -258,7 +258,7 @@ export default {
             showConfirmButton: false    // Hide the confirmation button
           }).then(() => {
             // After the timer finishes or alert is closed
-            this.$router.push('/kalab/pelaporankejadiankalab');
+            this.$router.push('/dosen/dashboardpkdosen');
           });
           this.resetForm();
         })
@@ -297,7 +297,7 @@ export default {
     closeModal() {
       this.showModal = false;
       if (this.isSuccess) {
-        this.$router.push('/kalab/pelaporankejadiankalab');
+        this.$router.push('/dosen/dashboardpkdosen');
       }
     }
   }
