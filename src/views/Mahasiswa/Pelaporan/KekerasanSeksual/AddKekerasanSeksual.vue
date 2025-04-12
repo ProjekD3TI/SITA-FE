@@ -11,7 +11,7 @@
         
         <!-- Form Section -->
         <div class="bg-white shadow rounded-lg p-6">
-          <form @submit.prevent="submitReport" class="space-y-6">
+          <form @submit.prevent="submitReport" class="space-y-6" name="reportForm" id="reportForm">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <!-- Left Column -->
               <div>
@@ -21,8 +21,10 @@
                   <input
                     type="text"
                     id="title"
+                    name="title"
                     v-model="report.title"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                    autocomplete="off"
                     required
                   />
                 </div>
@@ -34,6 +36,7 @@
                     <select 
                       v-model="report.category" 
                       id="category"
+                      name="category"
                       class="block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 text-sm"
                       required
                     >
@@ -51,6 +54,7 @@
                   <input
                     type="file"
                     id="evidence"
+                    name="evidence"
                     @change="handleFileUpload"
                     accept="image/*"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
@@ -63,9 +67,11 @@
                   <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Laporan</label>
                   <textarea
                     id="description"
+                    name="description"
                     v-model="report.description"
                     rows="4"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                    autocomplete="off"
                     required
                   ></textarea>
                 </div>
@@ -79,8 +85,10 @@
                   <input
                     type="text"
                     id="reporterName"
+                    name="reporterName"
                     v-model="report.reporterName"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                    autocomplete="name"
                     required
                   />
                 </div>
@@ -90,8 +98,10 @@
                   <input
                     type="text"
                     id="nim"
+                    name="nim"
                     v-model="report.nim"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                    autocomplete="off"
                     required
                   />
                 </div>
@@ -101,8 +111,10 @@
                   <input
                     type="tel"
                     id="phone"
+                    name="phone"
                     v-model="report.phone"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                    autocomplete="tel"
                     required
                   />
                 </div>
@@ -112,6 +124,7 @@
                   <input
                     type="datetime-local"
                     id="incidentDate"
+                    name="incidentDate"
                     v-model="report.incidentDate"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
                     required
@@ -123,6 +136,8 @@
             <div class="flex justify-end space-x-3 mt-6">
               <button 
                 type="button" 
+                id="cancelButton"
+                name="cancelButton"
                 class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 @click="$router.push('/pelaporan-kejadian')"
               >
@@ -130,6 +145,8 @@
               </button>
               <button 
                 type="submit" 
+                id="submitButton"
+                name="submitButton"
                 class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 :disabled="isSubmitting"
               >
@@ -175,8 +192,22 @@ export default {
         evidenceFile: null
       },
       categories: [],
-      isSubmitting: false
+      isSubmitting: false,
+      currentUser: 'miftahul01',
+      formattedDateTime: ''
     };
+  },
+
+  created() {
+    // Set initial date/time with the required format
+    this.updateDateTime();
+    // Update time every minute
+    this.timerInterval = setInterval(this.updateDateTime, 60000);
+  },
+
+  beforeUnmount() {
+    // Clear interval when component is destroyed
+    clearInterval(this.timerInterval);
   },
 
   mounted() {
@@ -185,8 +216,27 @@ export default {
   },
 
   methods: {
+    updateDateTime() {
+      const now = new Date();
+      const year = now.getUTCFullYear();
+      const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(now.getUTCDate()).padStart(2, '0');
+      const hours = String(now.getUTCHours()).padStart(2, '0');
+      const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+      const seconds = String(now.getUTCSeconds()).padStart(2, '0');
+      
+      // Format as "YYYY-MM-DD HH:MM:SS"
+      this.formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+    
     fetchCategories() {
-      axios.get('http://localhost:8000/api/category')
+      axios.get('http://localhost:8000/api/category', {
+        // Add these headers to help prevent CORB issues
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      })
         .then(response => {
           // Check if response.data is an array directly
           if (Array.isArray(response.data)) {
@@ -227,7 +277,22 @@ export default {
     },
     
     handleFileUpload(event) {
-      this.report.evidenceFile = event.target.files[0];
+      const file = event.target.files[0];
+      if (file) {
+        // Check file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+          Swal.fire({
+            icon: 'error',
+            title: 'File Terlalu Besar',
+            text: 'Ukuran file maksimal adalah 5MB',
+            confirmButtonColor: '#3085d6',
+          });
+          event.target.value = ''; // Clear the file input
+          return;
+        }
+        
+        this.report.evidenceFile = file;
+      }
     },
     
     async submitReport() {
@@ -252,6 +317,8 @@ export default {
         formData.append('nim_pelapor', this.report.nim);
         formData.append('nomor_telepon', this.report.phone);
         formData.append('tanggal_kejadian', this.report.incidentDate);
+        formData.append('current_datetime', this.formattedDateTime);
+        formData.append('username', this.currentUser);
         
         if (this.report.evidenceFile) {
           formData.append('image_path', this.report.evidenceFile);
@@ -263,7 +330,8 @@ export default {
         // Submit the data to the API
         const response = await axios.post('http://localhost:8000/api/laporan_kekerasan/add_laporan', formData, {
           headers: {
-            'Content-Type': 'multipart/form-data'
+            'Content-Type': 'multipart/form-data',
+            'Accept': 'application/json'
           }
         });
         
@@ -295,10 +363,19 @@ export default {
     loadUserData() {
       const encryptedUserData = VueCookies.get("user_session");
       if (encryptedUserData) {
-        const userData = decryptData(encryptedUserData);
-        this.report.reporterName = userData.name || '';
-        this.report.nim = userData.nim || userData.nik || '';
-        this.report.phone = userData.no_telp || '';
+        try {
+          const userData = decryptData(encryptedUserData);
+          this.report.reporterName = userData.name || '';
+          this.report.nim = userData.nim || userData.nik || '';
+          this.report.phone = userData.no_telp || '';
+          
+          // Update current user display if available
+          if (userData.username) {
+            this.currentUser = userData.username;
+          }
+        } catch (error) {
+          console.error('Error decrypting user data:', error);
+        }
       }
     }
   },
