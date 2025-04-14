@@ -108,11 +108,10 @@
             <tr>
               <th>No.</th>
               <th>Nomor Laporan</th>
+              <th>Tanggal Laporan Masuk</th>
               <th>Judul</th>
               <th>Kategori</th>
               <th>Nama Pelapor</th>
-              <th>Tanggal Kejadian</th>
-              <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -120,15 +119,10 @@
             <tr v-for="(item, index) in paginatedLaporan" :key="item.laporan_kekerasan_id">
               <td>{{ startIndex + index + 1 }}</td>
               <td>{{ item.nomor_laporan_kekerasan }}</td>
+              <td>{{ formatDate(item.created_at) }}</td>
               <td>{{ item.judul }}</td>
               <td>{{ getCategoryName(item.category_id) }}</td>
               <td>{{ item.nama_pelapor }}</td>
-              <td>{{ new Date(item.tanggal_kejadian).toLocaleDateString() }}</td>
-              <td>
-                <span :class="['status-badge', getStatusClass(item)]">
-                  {{ item.tanggapan ? 'Ditanggapi' : 'Pending' }}
-                </span>
-              </td>
               <td>
                 <button class="btn-detail" @click="viewDetail(item)">
                   <i class="fas fa-eye"></i> Detail
@@ -416,7 +410,20 @@ export default {
 
     resetPage() {
       this.currentPage = 1;
-    }
+    },
+
+    formatDate(dateString) {
+      if (!dateString) return '-';
+      
+      const date = new Date(dateString);
+      
+      // Format to DD-MM-YYYY
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      
+      return `${day}-${month}-${year}`;
+    },
   },
 
   mounted() {
@@ -859,6 +866,11 @@ export default {
 
 .data-table th:nth-child(7),
 .data-table td:nth-child(7) {
+  width: 15%;
+}
+
+.data-table th:nth-child(8),
+.data-table td:nth-child(8) {
   width: 15%;
   text-align: center;
 }

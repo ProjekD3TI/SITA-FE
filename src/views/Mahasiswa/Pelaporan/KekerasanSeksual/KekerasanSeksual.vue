@@ -139,6 +139,14 @@
                                         </div>
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <div class="flex items-center cursor-pointer" @click="sortBy('created_at')">
+                                        Tanggal Laporan Masuk
+                                        <span class="ml-1">
+                                            <i class="fas" :class="getSortIcon('created_at')"></i>
+                                        </span>
+                                        </div>
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         <div class="flex items-center cursor-pointer" @click="sortBy('judul')">
                                             Judul
                                             <span class="ml-1">
@@ -153,14 +161,6 @@
                                         Nama Pelapor
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <div class="flex items-center cursor-pointer" @click="sortBy('tanggal_kejadian')">
-                                            Tanggal Kejadian
-                                            <span class="ml-1">
-                                                <i class="fas" :class="getSortIcon('tanggal_kejadian')"></i>
-                                            </span>
-                                        </div>
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Aksi
                                     </th>
                                 </tr>
@@ -173,6 +173,9 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {{ laporan.nomor_laporan_kekerasan }}
                                     </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ formatedDate(laporan.created_at, 'long') }}
+                                    </td>
                                     <td class="px-6 py-4 text-sm text-gray-900">
                                         {{ laporan.judul }}
                                     </td>
@@ -181,9 +184,6 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {{ laporan.nama_pelapor }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {{ formatDate(laporan.tanggal_kejadian) }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                         <button class="text-blue-600 hover:text-blue-800 mr-2" @click="viewDetail(laporan)">
@@ -283,6 +283,33 @@ export default {
             startDate: '',
             endDate: ''
         });
+
+        const formatedDate = (dateString, format = 'long') => {
+            if (!dateString) return '-';
+            
+            const date = new Date(dateString);
+            
+            if (format === 'long') {
+                // Format to "DD Bulan YYYY" (e.g., "08 April 2025")
+                const day = date.getDate().toString().padStart(2, '0');
+                
+                // Get month name in Indonesian
+                const monthNames = [
+                  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+                ];
+                const month = monthNames[date.getMonth()];
+                
+                const year = date.getFullYear();
+                return `${day} ${month} ${year}`;
+            } else if (format === 'short') {
+                // Format to DD-MM-YYYY
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}-${month}-${year}`;
+            }
+        };
         
         // Get current user and auth token from cookies
         const getCurrentUser = () => {
@@ -638,6 +665,8 @@ export default {
         getCurrentUser();
         fetchData();
         
+        
+        
         return {
             // Data
             laporan,
@@ -671,6 +700,7 @@ export default {
             resetFilters,
             handleSearch,
             formatDate,
+            formatedDate,
             getCategoryName,
             addNewReport,
             viewDetail,

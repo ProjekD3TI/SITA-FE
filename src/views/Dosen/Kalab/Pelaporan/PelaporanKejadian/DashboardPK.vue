@@ -133,6 +133,7 @@
           <tr>
             <th>No</th>
             <th>Nomor Laporan</th>
+            <th>Tanggal Laporan Masuk</th>
             <th>Judul</th>
             <th>Kategori</th>
             <th>Nama Pelapor</th>
@@ -144,6 +145,7 @@
           <tr v-for="(item, index) in filteredLaporan" :key="item.id">
             <td>{{ startIndex + index + 1 }}</td>
             <td>{{ item.nomor_laporan }}</td>
+            <td>{{ formatDate(item.created_at) }}</td>
             <td>{{ item.judul }}</td>
             <td>{{ getCategoryName(item.category_id) }}</td>
             <td>{{ item.nama_pelapor }}</td>
@@ -451,6 +453,19 @@ export default {
     resetPage() {
       // Reset to page 1 when page size changes
       this.currentPage = 1;
+    },
+
+    formatDate(dateString) {
+      if (!dateString) return '-';
+      
+      const date = new Date(dateString);
+      
+      // Format to DD-MM-YYYY
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      
+      return `${day}-${month}-${year}`;
     },
   },
   
@@ -924,6 +939,11 @@ export default {
 
 .data-table th:nth-child(7),
 .data-table td:nth-child(7) {
+  width: 15%;
+}
+
+.data-table th:nth-child(8),
+.data-table td:nth-child(8) {
   width: 15%;
   text-align: center;
 }

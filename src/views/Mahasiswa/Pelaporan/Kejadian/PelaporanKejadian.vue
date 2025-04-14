@@ -188,6 +188,14 @@
                                       </div>
                                   </th>
                                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      <div class="flex items-center cursor-pointer" @click="sortBy('created_at')">
+                                          Tanggal Laporan Masuk
+                                          <span class="ml-1">
+                                              <i class="fas" :class="getSortIcon('created_at')"></i>
+                                          </span>
+                                      </div>
+                                  </th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                       <div class="flex items-center cursor-pointer" @click="sortBy('judul')">
                                           Judul
                                           <span class="ml-1">
@@ -222,6 +230,7 @@
                                 <tr v-for="(laporan, index) in paginatedLaporan" :key="laporan.laporan_id" class="hover:bg-gray-50">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ startIndex + index + 1 }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.nomor_laporan }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ formatedDate(laporan.created_at, 'long') }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.judul }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ getCategoryName(laporan.category_id) }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.nama_pelapor }}</td>
@@ -845,6 +854,23 @@ export default {
             
             console.log('Filtered results:', this.filteredLaporan.length); // Debug log
         },
+
+        formatedDate(dateString, format = 'long') {
+            if (!dateString) return '-';
+            
+            const date = new Date(dateString);
+            
+            if (format === 'long') {
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                return new Date(dateString).toLocaleDateString('id-ID', options);
+            } else if (format === 'short') {
+                // Format to DD-MM-YYYY
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}-${month}-${year}`;
+            }
+        },
     },
     created() {
         // Set up basic axios config
@@ -853,7 +879,7 @@ export default {
     mounted() {
         // Fetch data when component is mounted
         this.fetchData();
-    }
+    },
 };
 </script>
 
