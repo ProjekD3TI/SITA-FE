@@ -203,12 +203,6 @@
     margin-bottom: 0;
   }
   
-  .form-control:focus {
-    border-color: #8a2be2;
-    box-shadow: 0 0 0 0.2rem rgba(138, 43, 226, 0.15);
-    outline: none;
-  }
-  
   .is-invalid {
     border-color: #dc3545 !important;
   }
