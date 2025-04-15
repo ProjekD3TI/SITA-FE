@@ -6,13 +6,19 @@ import { useToast } from "vue-toastification";
 import UserLayout from "../layout/UserLayout.vue";
 import DosenLayout from "../layout/DosenLayout.vue";
 import AdminLayout from "../layout/AdminLayout.vue";
+import Test from "../views/Mahasiswa/Tugas-akhir/Test.vue";
 
 //define a routes
 const routes = [
   {
-    path: "/",
-    name: "Landing",
-    component: () => import("../views/Landing/Landing.vue"),
+    path: '/',
+    component: AdminLayout, // Gunakan AdminLayout sebagai layout
+    children: [
+      {
+        path: '',
+        component: Test, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+    ],
   },
   {
     path: "/informasi-ta",
