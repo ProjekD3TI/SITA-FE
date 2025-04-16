@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Header />
+    <HeaderLogin />
     <div class="container mx-auto px-4 py-8 mt-16">
       <div class="max-w-5xl mx-auto bg-white p-6 rounded-lg shadow-lg">
         <h2 class="text-2xl font-bold text-center mb-6">Laporan Kekerasan Seksual</h2>
@@ -133,7 +133,7 @@
 <script>
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import Header from '../../../components/Header.vue';
+import HeaderLogin from '../../../components/HeaderLogin.vue';
 import Footer from '../../../components/Footer.vue';
 
 export default {
