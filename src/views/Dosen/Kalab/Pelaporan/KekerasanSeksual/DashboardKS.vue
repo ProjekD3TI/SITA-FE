@@ -55,6 +55,13 @@
         </div>
         
         <div class="action-buttons">
+          <!-- Tombol Export PDF - langsung trigger download -->
+          <button
+            class="btn-export-pdf"
+            @click="exportToPDF">
+            <i class="fas fa-file-pdf"></i> Export PDF
+          </button>
+          
           <button class="btn-add-report" @click="addNewReport">
             <i class="fas fa-plus"></i> Tambah Laporan
           </button>
@@ -162,16 +169,81 @@
         </div>
       </div>
     </div>
+    
+    <!-- Template untuk PDF export (tersembunyi) -->
+    <div id="pdf-content" style="display: none;">
+      <div style="padding: 20px;">
+        <!-- Logo di atas -->
+        <div style="text-align: center; margin-bottom: 10px;">
+          <img :src="d3tiLogoSrc" alt="D3TI Logo" style="height: 70px; margin: 0 auto;">
+        </div>
+        
+        <!-- Judul yang lebih besar dari h2 dan bold -->
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1 style="font-size: 24px; font-weight: 700; margin: 0;">LAPORAN KEKERASAN SEKSUAL D3TI UNS</h1>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <div v-if="isFilterActive">
+            <p v-if="filters.category_id">
+              <strong>Kategori:</strong> {{ getCategoryName(filters.category_id) }}
+            </p>
+            <p v-if="filters.startDate || filters.endDate">
+              <strong>Periode:</strong>
+              {{ filters.startDate ? formatDate(filters.startDate) : '' }}
+              {{ filters.startDate && filters.endDate ? ' s/d ' : '' }}
+              {{ filters.endDate ? formatDate(filters.endDate) : '' }}
+            </p>
+            <p v-if="searchQuery">
+              <strong>Pencarian:</strong> "{{ searchQuery }}"
+            </p>
+          </div>
+          <p>
+            <strong>Tanggal Export:</strong> {{ formatDate(new Date()) }}
+          </p>
+        </div>
+        
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+          <thead>
+            <tr style="background-color: #f2f2f2;">
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">No</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Nomor Laporan</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Tanggal</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Judul</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Kategori</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Nama Pelapor</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, index) in dataToExport" :key="index" :style="index % 2 === 0 ? '' : 'background-color: #f9f9f9;'">
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ index + 1 }}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ item.nomor_laporan_kekerasan }}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ formatDate(item.created_at) }}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ item.judul }}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ getCategoryName(item.category_id) }}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ item.nama_pelapor }}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">
+                {{ item.tanggapan ? 'Sudah Ditanggapi' : 'Belum Ditanggapi' }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
+import html2pdf from 'html2pdf.js';
+import d3tiLogo from '../../../../../assets/images/d3ti-logo.png'; // Sesuaikan path sesuai struktur proyek Anda
 
 export default {
   name: 'DashboardKS',
   data() {
     return {
+      d3tiLogoSrc: d3tiLogo,
       laporan: [],
       categories: {},
       loading: false,
@@ -186,7 +258,11 @@ export default {
         status: '',
         startDate: '',
         endDate: ''
-      }
+      },
+      exportInProgress: false,
+      dataToExport: [],
+      currentUser: 'miftahul01', // Menggunakan login yang disediakan
+      currentDateTime: '2025-04-16 06:25:20' // Menggunakan waktu yang disediakan
     }
   },
 
@@ -212,7 +288,7 @@ export default {
         const query = this.searchQuery.toLowerCase();
         result = result.filter(item => 
           (item.judul && item.judul.toLowerCase().includes(query)) || 
-          (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(query))
+          (item.nomor_laporan_kekerasan && item.nomor_laporan_kekerasan.toLowerCase().includes(query))
         );
       }
       
@@ -221,19 +297,6 @@ export default {
         result = result.filter(item => 
           String(item.category_id) === String(this.filters.category_id)
         );
-      }
-      
-      // Apply status filter
-      if (this.filters.status) {
-        // Map frontend status labels to actual status values in the data
-        const statusMap = {
-          'Belum Diverifikasi': 'unverified',
-          'Diverifikasi': 'verified',
-          'Ditolak': 'rejected'
-        };
-        
-        const statusValue = statusMap[this.filters.status] || this.filters.status;
-        result = result.filter(item => item.status === statusValue);
       }
       
       // Apply date range filter
@@ -284,6 +347,63 @@ export default {
 
     respondedCount() {
       return this.laporan.filter(item => item.tanggapan).length;
+    },
+    
+    // Computed property untuk mendapatkan semua data yang terfilter tanpa pagination
+    allFilteredData() {
+      let result = [...this.laporan];
+      
+      // Apply search filter
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        result = result.filter(item => 
+          (item.judul && item.judul.toLowerCase().includes(query)) || 
+          (item.nomor_laporan_kekerasan && item.nomor_laporan_kekerasan.toLowerCase().includes(query))
+        );
+      }
+      
+      // Apply category filter
+      if (this.filters.category_id) {
+        result = result.filter(item => 
+          String(item.category_id) === String(this.filters.category_id)
+        );
+      }
+      
+      // Apply date range filter
+      if (this.filters.startDate || this.filters.endDate) {
+        result = result.filter(item => {
+          // Convert to Date objects for comparison
+          const itemDate = new Date(item.created_at || item.tanggal);
+          
+          // Check start date if specified
+          if (this.filters.startDate) {
+            const startDate = new Date(this.filters.startDate);
+            startDate.setHours(0, 0, 0, 0);
+            if (itemDate < startDate) return false;
+          }
+          
+          // Check end date if specified
+          if (this.filters.endDate) {
+            const endDate = new Date(this.filters.endDate);
+            endDate.setHours(23, 59, 59, 999);
+            if (itemDate > endDate) return false;
+          }
+          
+          return true;
+        });
+      }
+      
+      return result;
+    },
+    
+    // Check if any filter is active
+    isFilterActive() {
+      return (
+        this.searchQuery.trim() !== '' || 
+        this.filters.category_id !== '' || 
+        this.filters.startDate !== '' || 
+        this.filters.endDate !== ''
+      );
     }
   },
 
@@ -370,12 +490,14 @@ export default {
       // Implement search logic
       this.applyFilters()
     },
+    
     addNewReport() {
       // Navigate to form page or show modal for adding a new report
       console.log('Add new incident report');
       // For example:
       this.$router.push('/kalab/addpelaporankskalab');
     },
+    
     applyFilters() {
       console.log('Applying filters:', this.filters);
       
@@ -424,6 +546,50 @@ export default {
       
       return `${day}-${month}-${year}`;
     },
+    
+    // Method untuk export PDF dengan html2pdf.js
+    async exportToPDF() {
+      if (this.exportInProgress) return;
+      
+      this.exportInProgress = true;
+      
+      try {
+        // Tentukan data yang akan diexport berdasarkan filter aktif atau semua data
+        this.dataToExport = this.isFilterActive ? this.allFilteredData : this.laporan;
+        
+        // Tunggu sampai vue merender data di elemen tersembunyi
+        await this.$nextTick();
+        
+        // Dapatkan elemen yang akan dikonversi ke PDF
+        const element = document.getElementById('pdf-content');
+        
+        // Tampilkan dulu elemen
+        element.style.display = 'block';
+        
+        // Opsi untuk html2pdf
+        const options = {
+          margin: 10,
+          filename: `Laporan_Kekerasan_Seksual_${this.formatDate(new Date()).replace(/-/g, '')}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        };
+        
+        // Generate PDF
+        await html2pdf()
+          .from(element)
+          .set(options)
+          .save();
+          
+        // Sembunyikan kembali elemen setelah diproses
+        element.style.display = 'none';
+      } catch (error) {
+        console.error('Error exporting to PDF:', error);
+        alert('Terjadi kesalahan saat export PDF. Silakan coba lagi.');
+      } finally {
+        this.exportInProgress = false;
+      }
+    }
   },
 
   mounted() {
@@ -553,6 +719,31 @@ export default {
   font-size: 12px;
 }
 
+.btn-export-pdf {
+  background-color: #16a34a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+  box-shadow: 0 2px 5px rgba(22, 163, 74, 0.2);
+  margin-right: 10px;
+}
+
+.btn-export-pdf:hover {
+  background-color: #15803d;
+}
+
+.btn-export-pdf i {
+  font-size: 12px;
+}
+
 .table-header {
   display: flex;
   justify-content: space-between;
@@ -568,6 +759,7 @@ export default {
 
 .action-buttons {
   margin-left: 15px;
+  display: flex;
 }
 
 .search-input {
@@ -768,7 +960,7 @@ export default {
     width: 100%;
   }
   
-  .btn-add-report {
+  .btn-add-report, .btn-export-pdf {
     width: 100%;
     justify-content: center;
   }
