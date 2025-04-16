@@ -6,7 +6,9 @@ import { useToast } from "vue-toastification";
 import UserLayout from "../layout/UserLayout.vue";
 import DosenLayout from "../layout/DosenLayout.vue";
 import AdminLayout from "../layout/AdminLayout.vue";
-import Test from "../views/Mahasiswa/Tugas-akhir/Test.vue";
+import Dashboard from "../views/Mahasiswa/Tugas-akhir/Dashboard.vue";
+import Request from "../views/Mahasiswa/Tugas-akhir/Request.vue";
+import Daftar from "../views/Mahasiswa/Tugas-akhir/Daftar.vue";
 
 //define a routes
 const routes = [
@@ -16,10 +18,51 @@ const routes = [
     children: [
       {
         path: '',
-        component: Test, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: Dashboard, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'request-pembimbing',
+        component: Request, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'daftar-bimbingan',
+        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'seminar-proposal',
+        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'seminar-hasil',
+        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'jadwal-menguji',
+        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'input-nilai-ujian',
+        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'revisi-ujian',
+        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'jadwal-sempro',
+        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'daftar-bimbingan',
+        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
     ],
   },
+  // {
+  //   path: "/",
+  //   name: "Landing",
+  //   component: () => import("../views/Landing/Landing.vue"),
+  // },
   {
     path: "/informasi-ta",
     name: "InformasiTA",
