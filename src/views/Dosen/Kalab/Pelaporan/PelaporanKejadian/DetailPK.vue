@@ -80,9 +80,24 @@
                 </div>
             </div>
 
-            <div class="detail-card" v-if="laporan.tanggapan">
+            <div class="detail-card" v-if="hasTanggapan">
                 <h3 class="detail-section-title"><i class="fas fa-comment-alt"></i> Tanggapan</h3>
-                <p class="tanggapan-text">{{ laporan.tanggapan }}</p>
+                
+                <!-- For string tanggapan (old format) -->
+                <p class="tanggapan-text" v-if="typeof laporan.tanggapan === 'string'">
+                    {{ laporan.tanggapan }}
+                </p>
+                
+                <!-- For array tanggapan (new format) -->
+                <div v-else class="tanggapan-list">
+                    <div v-for="(item, index) in laporan.tanggapan" :key="index" class="tanggapan-item">
+                        <div class="tanggapan-header">
+                            <span class="tanggapan-user">{{ item.user || 'Admin' }}</span>
+                            <span class="tanggapan-time">{{ formatDate(item.timestamp) }}</span>
+                        </div>
+                        <p class="tanggapan-text">{{ item.text }}</p>
+                    </div>
+                </div>
             </div>
 
             <div class="action-buttons">
@@ -175,6 +190,7 @@ export default {
             tanggapanText: '',
             showVerificationModal: false,
             isVerifying: false,
+            currentUser: 'miftahul01', // Current user's login as specified
         };
     },
     
@@ -182,6 +198,19 @@ export default {
         this.laporanId = this.$route.params.id;
         this.fetchCategories();
         this.fetchLaporanDetail();
+    },
+    
+    computed: {
+        hasTanggapan() {
+            if (!this.laporan) return false;
+            if (!this.laporan.tanggapan) return false;
+            
+            if (Array.isArray(this.laporan.tanggapan)) {
+                return this.laporan.tanggapan.length > 0;
+            }
+            
+            return typeof this.laporan.tanggapan === 'string' && this.laporan.tanggapan.trim() !== '';
+        }
     },
     
     methods: {
@@ -204,7 +233,22 @@ export default {
             try {
                 const response = await axios.get(`http://localhost:8000/api/laporan/${this.laporanId}`);
                 this.laporan = response.data;
-                this.tanggapanText = this.laporan.tanggapan || '';
+                
+                // Process tanggapan data
+                if (this.laporan.tanggapan) {
+                    // Try to parse if it's a JSON string
+                    try {
+                        const parsed = JSON.parse(this.laporan.tanggapan);
+                        if (Array.isArray(parsed)) {
+                            this.laporan.tanggapan = parsed;
+                        }
+                    } catch (e) {
+                        // If it's not valid JSON, keep it as a string
+                        console.log('Tanggapan is not in JSON format, keeping as string');
+                    }
+                }
+                
+                this.tanggapanText = '';
             } catch (error) {
                 console.error('Error fetching laporan detail:', error);
                 this.error = 'Gagal memuat data laporan. Silakan coba lagi.';
@@ -220,15 +264,33 @@ export default {
         formatDate(dateString) {
             if (!dateString) return '-';
             
+            // If the date is already in the YYYY-MM-DD HH:MM:SS format with no 'T' and 'Z'
+            // we need to convert it to a proper ISO format for the Date constructor
+            let date;
+            if (typeof dateString === 'string' && dateString.includes(' ') && !dateString.includes('T')) {
+                // Replace space with 'T' and add 'Z' for UTC if not present
+                const hasZ = dateString.endsWith('Z');
+                date = new Date((dateString.replace(' ', 'T') + (hasZ ? '' : '')));
+                
+                // Adjust for Indonesia timezone (GMT+7)
+                // This is needed if the date is coming as UTC and we need to add 7 hours
+                date = new Date(date.getTime() + (7 * 60 * 60 * 1000));
+            } else {
+                // If it's already in a proper format that JS Date can parse
+                date = new Date(dateString);
+            }
+            
+            // Format the date in Indonesian style
             const options = { 
                 day: 'numeric', 
                 month: 'long', 
                 year: 'numeric',
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
+                timeZone: 'Asia/Jakarta' // Set the timezone to Indonesia's timezone (GMT+7)
             };
             
-            return new Date(dateString).toLocaleDateString('id-ID', options);
+            return date.toLocaleDateString('id-ID', options);
         },
         
         formatStatus(status) {
@@ -285,7 +347,7 @@ export default {
                 this.$toast.error(`Gagal memperbarui status: ${errorMessage}`);
             }
         },
-
+        
         // Add specific methods for verification and rejection
         verifyReport() {
             this.showVerificationModal = true;
@@ -398,31 +460,18 @@ export default {
                     return;
                 }
                 
-                console.log('Sending tanggapan:', {
-                    laporanId: this.laporanId,
-                    tanggapan: this.tanggapanText
-                });
-                
-                // Make the API call using POST with _method: PUT
-                // Include both the status (preserving current status) and tanggapan
+                // Make the API call first to get updated_at value
                 const formData = new FormData();
                 formData.append('_method', 'PUT');
-                formData.append('tanggapan', this.tanggapanText);
+                formData.append('tanggapan', this.tanggapanText); // Temporary single string for API call
                 
                 // Include the current status to maintain it
-                // The API might be expecting status to always be present
                 if (this.laporan && this.laporan.status) {
                     formData.append('status', this.laporan.status);
                 } else {
-                    // Provide a default status if none exists
                     formData.append('status', 'pending');
                 }
-
-                // For debugging, log the FormData
-                for (let pair of formData.entries()) {
-                    console.log(pair[0] + ': ' + pair[1]);
-                }
-
+                
                 const response = await axios.post(
                     `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
                     formData
@@ -430,10 +479,60 @@ export default {
                 
                 console.log('Response:', response);
                 
-                // Update local data after successful submission
-                if (this.laporan) {
-                    this.laporan.tanggapan = this.tanggapanText;
+                // Get the updated data to get the new updated_at timestamp
+                const updatedResponse = await axios.get(`http://localhost:8000/api/laporan/${this.laporanId}`);
+                const updatedData = updatedResponse.data;
+                
+                // Now create the tanggapan array with the new timestamp from updated_at
+                // Create a new response object with text and timestamp from the API's updated_at
+                const newTanggapan = {
+                    text: this.tanggapanText,
+                    timestamp: updatedData.updated_at, // Using the updated_at from API response
+                    user: this.currentUser
+                };
+                
+                // Prepare the tanggapan array
+                let tanggapanArray = [];
+                
+                if (this.laporan.tanggapan) {
+                    // If tanggapan exists and is already an array, use it
+                    if (Array.isArray(this.laporan.tanggapan)) {
+                        tanggapanArray = [...this.laporan.tanggapan];
+                    } 
+                    // If tanggapan exists but is a string (old format), convert it to array
+                    else if (typeof this.laporan.tanggapan === 'string' && this.laporan.tanggapan.trim() !== '') {
+                        tanggapanArray = [{
+                            text: this.laporan.tanggapan,
+                            timestamp: this.laporan.updated_at, // Use the previous update time 
+                            user: 'Admin'
+                        }];
+                    }
                 }
+                
+                // Add the new response
+                tanggapanArray.push(newTanggapan);
+                
+                // Update tanggapan with the array format
+                const arrayFormData = new FormData();
+                arrayFormData.append('_method', 'PUT');
+                arrayFormData.append('tanggapan', JSON.stringify(tanggapanArray));
+                
+                // Include the current status to maintain it
+                if (this.laporan && this.laporan.status) {
+                    arrayFormData.append('status', this.laporan.status);
+                } else {
+                    arrayFormData.append('status', 'pending');
+                }
+
+                // Make second API call to update with the array
+                await axios.post(
+                    `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+                    arrayFormData
+                );
+                
+                // Update local data after successful submission
+                this.laporan.tanggapan = tanggapanArray;
+                this.laporan.updated_at = updatedData.updated_at;
                 
                 // Show success message
                 Swal.fire({
@@ -713,11 +812,41 @@ export default {
     color: #111827;
 }
 
+.tanggapan-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tanggapan-item {
+    border-left: 3px solid #3b82f6;
+    padding-left: 16px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.tanggapan-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.tanggapan-user {
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.tanggapan-time {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
 .tanggapan-text {
     font-size: 1rem;
     line-height: 1.6;
     color: #374151;
     white-space: pre-line;
+    margin: 0;
 }
 
 .action-buttons {

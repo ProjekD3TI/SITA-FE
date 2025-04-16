@@ -52,6 +52,13 @@
         </div>
         
         <div class="action-buttons">
+          <!-- Tombol Export PDF - langsung trigger download -->
+          <button
+            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center mr-2"
+            @click="exportToPDF">
+            <i class="fas fa-file-pdf"></i> Export PDF
+          </button>
+          
           <button                               
             class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
             @click="addNewReport">
@@ -62,72 +69,73 @@
       
       <!-- Filter controls -->
       <div class="filter-container">
-                    <div class="filter-group">
-                      <label class="filter-title">Filter berdasarkan:</label>
-                      
-                      <!-- Category Filter -->
-                      <div class="filter-select">
-                        <label for="categoryFilter">Kategori:</label>
-                        <select 
-                          id="categoryFilter" 
-                          v-model="filters.category_id" 
-                          @change="applyFilters"
-                          class="filter-input"
-                        >
-                          <option value="">Semua</option>
-                          <option v-for="(name, id) in filteredCategories" :key="id" :value="id">
-                            {{ name }}
-                          </option>
-                        </select>
-                      </div>
-                      
-                      <!-- Status Filter -->
-                      <div class="filter-select">
-                        <label for="statusFilter">Status:</label>
-                        <select 
-                          id="statusFilter" 
-                          v-model="filters.status" 
-                          @change="applyFilters"
-                          class="filter-input"
-                        >
-                          <option value="">Semua</option>
-                          <option value="Belum Diverifikasi">Belum Diverifikasi</option>
-                          <option value="Diverifikasi">Diverifikasi</option>
-                          <option value="Ditolak">Ditolak</option>
-                        </select>
-                      </div>
-                      
-                      <!-- Date Range Filter -->
-                      <div class="filter-date">
-                        <label for="dateFilter">Periode:</label>
-                        <div class="date-inputs">
-                          <input 
-                            type="date" 
-                            id="startDate" 
-                            v-model="filters.startDate" 
-                            @change="applyFilters"
-                            class="filter-input"
-                            placeholder="Tanggal Mulai"
-                          >
-                          <span class="date-separator">s/d</span>
-                          <input 
-                            type="date" 
-                            id="endDate" 
-                            v-model="filters.endDate" 
-                            @change="applyFilters"
-                            class="filter-input"
-                            placeholder="Tanggal Akhir"
-                          >
-                        </div>
-                      </div>
-                      
-                      <!-- Reset Filter Button -->
-                      <button class="btn-reset-filter" @click="resetFilters">
-                        <i class="fas fa-undo"></i> Reset Filter
-                      </button>
-                    </div>
-                  </div>
+        <div class="filter-group">
+          <label class="filter-title">Filter berdasarkan:</label>
+          
+          <!-- Category Filter -->
+          <div class="filter-select">
+            <label for="categoryFilter">Kategori:</label>
+            <select 
+              id="categoryFilter" 
+              v-model="filters.category_id" 
+              @change="applyFilters"
+              class="filter-input"
+            >
+              <option value="">Semua</option>
+              <option v-for="(name, id) in filteredCategories" :key="id" :value="id">
+                {{ name }}
+              </option>
+            </select>
+          </div>
+          
+          <!-- Status Filter -->
+          <div class="filter-select">
+            <label for="statusFilter">Status:</label>
+            <select 
+              id="statusFilter" 
+              v-model="filters.status" 
+              @change="applyFilters"
+              class="filter-input"
+            >
+              <option value="">Semua</option>
+              <option value="Belum Diverifikasi">Belum Diverifikasi</option>
+              <option value="Diverifikasi">Diverifikasi</option>
+              <option value="Ditolak">Ditolak</option>
+            </select>
+          </div>
+          
+          <!-- Date Range Filter -->
+          <div class="filter-date">
+            <label for="dateFilter">Periode:</label>
+            <div class="date-inputs">
+              <input 
+                type="date" 
+                id="startDate" 
+                v-model="filters.startDate" 
+                @change="applyFilters"
+                class="filter-input"
+                placeholder="Tanggal Mulai"
+              >
+              <span class="date-separator">s/d</span>
+              <input 
+                type="date" 
+                id="endDate" 
+                v-model="filters.endDate" 
+                @change="applyFilters"
+                class="filter-input"
+                placeholder="Tanggal Akhir"
+              >
+            </div>
+          </div>
+          
+          <!-- Reset Filter Button -->
+          <button class="btn-reset-filter" @click="resetFilters">
+            <i class="fas fa-undo"></i> Reset Filter
+          </button>
+        </div>
+      </div>
       
+      <!-- Table section -->
       <table class="data-table">
         <thead>
           <tr>
@@ -161,7 +169,7 @@
             </td>
           </tr>
           <tr v-if="displayedLaporan.length === 0">
-            <td colspan="7" class="no-data">Tidak ada data yang ditampilkan</td>
+            <td colspan="8" class="no-data">Tidak ada data yang ditampilkan</td>
           </tr>
         </tbody>
       </table>
@@ -204,20 +212,86 @@
         </div>
       </div>
     </div>
+    
+    <!-- Style Tabel untuk ekspor PDF -->
+    <div id="pdf-content" style="display: none;">
+      <div style="padding: 20px;">
+        <!-- Logo di atas -->
+        <div style="text-align: center; margin-bottom: 10px;">
+          <img :src="d3tiLogoSrc" alt="D3TI Logo" style="height: 70px; margin: 0 auto;">
+        </div>
+        
+        <!-- Judul yang lebih besar dari h2 dan bold -->
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1 style="font-size: 24px; font-weight: 700; margin: 0;">LAPORAN KEJADIAN D3TI UNS</h1>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <div v-if="isFilterActive">
+            <p v-if="filters.category_id">
+              <strong>Kategori:</strong> {{ getCategoryName(filters.category_id) }}
+            </p>
+            <p v-if="filters.status">
+              <strong>Status:</strong> {{ filters.status }}
+            </p>
+            <p v-if="filters.startDate || filters.endDate">
+              <strong>Periode:</strong>
+              {{ filters.startDate ? formatDate(filters.startDate) : '' }}
+              {{ filters.startDate && filters.endDate ? ' s/d ' : '' }}
+              {{ filters.endDate ? formatDate(filters.endDate) : '' }}
+            </p>
+            <p v-if="search">
+              <strong>Pencarian:</strong> "{{ search }}"
+            </p>
+          </div>
+          <p>
+            <strong>Tanggal Export:</strong> {{ formatDate(new Date()) }}
+          </p>
+        </div>
+        
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+          <thead>
+            <tr style="background-color: #f2f2f2;">
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">No</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Nomor Laporan</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Tanggal</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Judul</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Kategori</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Nama Pelapor</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, index) in dataToExport" :key="index" :style="index % 2 === 0 ? '' : 'background-color: #f9f9f9;'">
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ index + 1 }}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ item.nomor_laporan }}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ formatDate(item.created_at) }}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ item.judul }}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ getCategoryName(item.category_id) }}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ item.nama_pelapor }}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ formatStatus(item.status) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
+import html2pdf from 'html2pdf.js';
+import d3tiLogo from '../../../../../assets/images/d3ti-logo.png';
 
 export default {
   name: 'DashboardPelaporanKejadian',
   data() {
     return {
+      d3tiLogoSrc: d3tiLogo,
       currentPage: 1,
       pageSize: 10,
       filters: {
-        category_id: '', // Changed from jenisKejadian
+        category_id: '',
         status: '',
         startDate: '',
         endDate: ''
@@ -230,7 +304,9 @@ export default {
       error: null,
       filteredLaporan: [], // New property to hold filtered results
       search: '', // Replace or use alongside searchQuery if you prefer
-      totalFilteredCount: 0 // New property to store total filtered count
+      totalFilteredCount: 0, // New property to store total filtered count
+      exportInProgress: false, // Flag to prevent multiple exports at once
+      dataToExport: [] // Data that will be exported to PDF
     };
   },
   
@@ -301,6 +377,79 @@ export default {
       const end = start + this.pageSize;
       
       return result.slice(start, end);
+    },
+    
+    // Computed property untuk mendapatkan semua data yang terfilter tanpa pagination
+    allFilteredData() {
+      // Start with all reports
+      let result = [...this.laporan];
+      
+      // Apply search filter
+      if (this.search) {
+        const searchTerm = this.search.toLowerCase();
+        result = result.filter(item => 
+          (item.judul && item.judul.toLowerCase().includes(searchTerm)) || 
+          (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(searchTerm)) ||
+          (item.nama_pelapor && item.nama_pelapor.toLowerCase().includes(searchTerm))
+        );
+      }
+      
+      // Apply category filter
+      if (this.filters.category_id) {
+        result = result.filter(item => 
+          String(item.category_id) === String(this.filters.category_id)
+        );
+      }
+      
+      // Apply status filter
+      if (this.filters.status) {
+        // Map frontend status labels to actual status values in the data
+        const statusMap = {
+          'Belum Diverifikasi': 'unverified',
+          'Diverifikasi': 'verified',
+          'Ditolak': 'rejected'
+        };
+        
+        const statusValue = statusMap[this.filters.status] || this.filters.status;
+        result = result.filter(item => item.status === statusValue);
+      }
+      
+      // Apply date range filter
+      if (this.filters.startDate || this.filters.endDate) {
+        result = result.filter(item => {
+          // Convert to Date objects for comparison
+          const itemDate = new Date(item.created_at || item.tanggal);
+          
+          // Check start date if specified
+          if (this.filters.startDate) {
+            const startDate = new Date(this.filters.startDate);
+            startDate.setHours(0, 0, 0, 0);
+            if (itemDate < startDate) return false;
+          }
+          
+          // Check end date if specified
+          if (this.filters.endDate) {
+            const endDate = new Date(this.filters.endDate);
+            endDate.setHours(23, 59, 59, 999);
+            if (itemDate > endDate) return false;
+          }
+          
+          return true;
+        });
+      }
+      
+      return result;
+    },
+    
+    // Check if any filter is active
+    isFilterActive() {
+      return (
+        this.search.trim() !== '' || 
+        this.filters.category_id !== '' || 
+        this.filters.status !== '' || 
+        this.filters.startDate !== '' || 
+        this.filters.endDate !== ''
+      );
     },
     
     // Update totalPages to use totalFilteredCount
@@ -467,6 +616,50 @@ export default {
       
       return `${day}-${month}-${year}`;
     },
+    
+    // Method baru untuk export PDF dengan html2pdf.js
+    async exportToPDF() {
+      if (this.exportInProgress) return;
+      
+      this.exportInProgress = true;
+      
+      try {
+        // Tentukan data yang akan diexport berdasarkan filter aktif atau semua data
+        this.dataToExport = this.isFilterActive ? this.allFilteredData : this.laporan;
+        
+        // Tunggu sampai vue merender data di elemen tersembunyi
+        await this.$nextTick();
+        
+        // Dapatkan elemen yang akan dikonversi ke PDF
+        const element = document.getElementById('pdf-content');
+        
+        // Tampilkan dulu elemen
+        element.style.display = 'block';
+        
+        // Opsi untuk html2pdf
+        const options = {
+          margin: 10,
+          filename: `Laporan_Kejadian_${this.formatDate(new Date()).replace(/-/g, '')}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        };
+        
+        // Generate PDF
+        await html2pdf()
+          .from(element)
+          .set(options)
+          .save();
+          
+        // Sembunyikan kembali elemen setelah diproses
+        element.style.display = 'none';
+      } catch (error) {
+        console.error('Error exporting to PDF:', error);
+        alert('Terjadi kesalahan saat export PDF. Silakan coba lagi.');
+      } finally {
+        this.exportInProgress = false;
+      }
+    }
   },
   
   mounted() {
@@ -641,6 +834,8 @@ export default {
 
 .action-buttons {
   margin-left: 15px;
+  display: flex;
+  position: relative;
 }
 
 .search-input {
