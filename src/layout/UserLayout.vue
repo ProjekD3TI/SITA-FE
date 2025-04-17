@@ -3,7 +3,7 @@
 
     <!-- Sidebar -->
     <div v-bind:class="{'translate-x-0 opacity-100 w-64': showNavbar, '-translate-x-full opacity-0 w-0': !showNavbar}" 
-      class=" bg-white border-r shadow-sm duration-200 fixed top-0 left-0 h-full z-50 transform lg:static lg:h-auto">
+      class=" bg-white border-r shadow-sm duration-200 fixed top-0 left-0 h-full z-50 transform">
       <div class="p-4 flex justify-between items-center">
         <img :src="D3TILogo" alt="" class="h-8">
         <button class="text-gray-500 hover:text-gray-700 focus:outline-none ">
@@ -146,7 +146,7 @@
       </header>
 
       <!-- Dashboard Content -->
-      <main class="flex-1 p-6">
+      <main :class="{'ml-64': showNavbar}" class="flex-1 p-6 ml-0">
         <router-view/>
       </main>
       

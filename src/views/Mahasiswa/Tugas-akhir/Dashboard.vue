@@ -1,55 +1,88 @@
 <script setup>
-import { ref } from 'vue'
+import { ref } from 'vue';
 
-
-const students = ref([
-  { name: 'John Smith el Pikir' },
-  { name: 'John Smith el Pikir' },
-  { name: 'John Smith el Pikir' },
-  { name: 'John Smith el Pikir' },
-  { name: 'John Smith el Pikir' },
-  { name: 'John Smith el Pikir' }
-])
+const studentName = ref('Mahasiswa 1');
+const bimbinganProgress = ref({
+  completed: 5,
+  total: 9,
+});
+const proposalStatus = ref('Terverifikasi');
+const pendaftaranStatus = ref('Belum Tersedia');
+const revisiStatus = ref('Belum Tersedia');
 </script>
 <template>
-        <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
-          <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
-            <div>
-              <h1 class="text-3xl font-semibold text-blue-500">Welcome Back!</h1>
-              <h2 class="text-2xl font-semibold mt-2">Dosen 1</h2>
-            </div>
-            <div class="mt-4 md:mt-0">
-              <img src="https://via.placeholder.com/200x150" alt="Teacher illustration" class="max-w-full h-auto" />
-            </div>
+<body class="bg-gray-100">
+  <div id="app" class="max-w-6xl mx-auto p-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Welcome Card -->
+      <div class="bg-white rounded-lg shadow-md overflow-hidden col-span-1 md:col-span-2  ">
+        <div class="flex flex-col md:flex-row items-center">
+          <div class="p-6 md:w-1/2 mx-auto">
+            <h2 class="text-blue-500 text-4xl font-bold">Welcome Back!</h2>
+            <h3 class="text-gray-800 text-2xl font-bold mt-2">Mahasiswa 1</h3>
+          </div>
+          <div class="md:w-1/2 flex justify-center p-4">
+            <img src="/src/assets/images/header-dashbord-mahasiswa.svg" alt="Student working on computer" class=" object-contain" />
           </div>
         </div>
+      </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Daftar Bimbingan -->
-          <div class="bg-white p-6 rounded-lg shadow-sm">
-            <h3 class="text-lg font-semibold mb-4">Daftar Bimbingan</h3>
-            <div class="space-y-3">
-              <div v-for="(student, index) in students" :key="index" class="flex items-center py-2 border-b border-gray-100">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span>{{ student.name }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Recent Students -->
-          <div class="bg-white p-6 rounded-lg shadow-sm">
-            <h3 class="text-lg font-semibold mb-4">Students</h3>
-            <div class="space-y-3">
-              <div v-for="(student, index) in students.slice(0, 4)" :key="index" class="flex items-center py-2 border-b border-gray-100">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span>{{ student.name }}</span>
-              </div>
-            </div>
+      <!-- Total Bimbingan Card -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-gray-800 font-semibold mb-4">Total Bimbingan</h3>
+        <div class="flex items-center justify-center">
+          <div class="text-4xl font-bold mr-4">5/9</div>
+          <div class="relative w-36 h-36">
+            <!-- Circle background -->
+            <div class="absolute inset-0 rounded-full bg-gray-200"></div>
+            <!-- Progress circle (approximately 55%) -->
+            <div class="absolute inset-0 rounded-full bg-gradient-to-r from-orange-300 to-orange-400" style="clip-path: polygon(50% 50%, 50% 0, 100% 0, 100% 50%, 100% 100%, 50% 100%, 50% 50%);"></div>
+            <!-- Inner white circle -->
+            <div class="absolute inset-5 rounded-full bg-white"></div>
           </div>
         </div>
+      </div>
+
+      <!-- Proposal Tugas Akhir Card -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-gray-800 font-semibold mb-4">Proposal Tugas Akhir</h3>
+        <div class="flex flex-col items-center justify-center h-36">
+          <div class="mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <span class="bg-green-100 text-green-600 px-4 py-1 rounded-full text-sm">Terverifikasi</span>
+        </div>
+      </div>
+
+      <!-- Pendaftaran Ujian Card -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-gray-800 font-semibold mb-4">Pendaftaran Ujian Tugas Akhir</h3>
+        <div class="flex flex-col items-center justify-center">
+          <div class="mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <span class="bg-yellow-100 text-yellow-600 px-4 py-1 rounded-full text-sm">Belum Tersedia</span>
+        </div>
+      </div>
+
+      <!-- Revisi Ujian Card -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-gray-800 font-semibold mb-4">Revisi Ujian Tugas Akhir</h3>
+        <div class="flex flex-col items-center justify-center">
+          <div class="mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <span class="bg-yellow-100 text-yellow-600 px-4 py-1 rounded-full text-sm">Belum Tersedia</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
 
 </template>

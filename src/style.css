@@ -5,6 +5,13 @@
 @tailwind components;
 @tailwind utilities;
 
+
+@layer components {
+  .heading1 {
+    @apply text-sm font-normal text-red-500;
+  }
+}
+
 body{
     font-family: "Poppins", sans-serif;
 }

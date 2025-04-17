@@ -6,7 +6,9 @@ import { useToast } from "vue-toastification";
 import UserLayout from "../layout/UserLayout.vue";
 import DosenLayout from "../layout/DosenLayout.vue";
 import AdminLayout from "../layout/AdminLayout.vue";
-import Dashboard from "../views/Mahasiswa/Tugas-akhir/Dashboard.vue";
+import DashboardTADosen from "../views/Dosen/Tugas-akhir/Dashboard.vue";
+import DashboardTAAdmin from "../views/Admin/AdminTa/Dashboard.vue";
+import DashboardTAMhs from "../views/Mahasiswa/Tugas-akhir/Dashboard.vue";
 import Request from "../views/Mahasiswa/Tugas-akhir/Request.vue";
 import Daftar from "../views/Mahasiswa/Tugas-akhir/Daftar.vue";
 
@@ -18,7 +20,7 @@ const routes = [
     children: [
       {
         path: '',
-        component: Dashboard, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: DashboardTADosen, // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
       {
         path: 'request-pembimbing',
@@ -64,7 +66,7 @@ const routes = [
     children: [
       {
         path: '',
-        component: Dashboard, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: DashboardTAAdmin, // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
     ],
   },
@@ -74,7 +76,7 @@ const routes = [
     children: [
       {
         path: '',
-        component: Dashboard, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: DashboardTAMhs, // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
     ],
   },
