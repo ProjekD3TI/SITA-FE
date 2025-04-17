@@ -14,7 +14,7 @@
       </div>
       <nav class="mt-5">
         <div class="px-4 py-2">
-          <router-link :class="isActive(['/']) ? 'text-blue-600 hover:bg-blue-50 px-2 ' : ' text-gray-700 hover:text-blue-700 '" class="rounded duration-150 flex items-center active:scale-95" to="/">
+          <router-link :class="isActive(withPrefix(['','/'])) ? 'text-blue-600 hover:bg-blue-50 px-2 ' : ' text-gray-700 hover:text-blue-700 '" class="rounded duration-150 flex items-center active:scale-95" :to="withPrefix('')">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
@@ -23,78 +23,91 @@
         </div>
 
         <div class="" >
-          <div @click="toggleBimbingan" :class="isActive(['/request-pembimbing','/daftar-bimbingan']) ? ' text-blue-600 hover:bg-blue-50  px-4 rounded' : 'hover:bg-gray-50'" class="cursor-pointer items-center py-2 px-4 ">
-            <div :class="isActive(['/request-pembimbing','/daftar-bimbingan']) ? '  ps-2 rounded ' : '   hover:bg-gray-50'" class="duration-150 flex items-center justify-between cursor-pointer active:scale-95">
+          <div @click="toggleProposal" :class="isActive(withPrefix(['/???','/???'])) ? ' text-blue-600 hover:bg-blue-50  px-4 rounded' : 'hover:bg-gray-50'" class="cursor-pointer items-center py-2 px-4 ">
+            <div :class="isActive(withPrefix(['/???','/???'])) ? '  ps-2 rounded ' : '   hover:bg-gray-50'" class="duration-150 flex items-center justify-between cursor-pointer active:scale-95">
+              <div class="flex items-center">
+                <img :src="SemproIcon" alt="" class="h-5 w-5 mr-2">
+                <span class="uppercase">Proposal</span>
+              </div>
+              <svg :class="{'transform rotate-180': showProposal}" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+          <div v-show="showProposal" :class="isActive(withPrefix(['/???','/???'])) ? 'pl-10 py-1 ': 'pl-8 py-1 '" class="py-1 flex flex-col gap-2 duration-200">
+            <div :class="isActive(withPrefix(['/???'])) ? 'pe-4' : 'block text-gray-700 hover:text-blue-700'" class="py-1">
+              <router-link :to="withPrefix('/???')"  :class="isActive(withPrefix(['/???'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block active:scale-95 duration-150">
+              Link 1
+              </router-link>
+            </div>
+            <div :class="isActive(withPrefix(['/???'])) ? 'pe-4' : 'block text-gray-700 hover:text-blue-700'" class="py-1">
+              <router-link :to="withPrefix('/???')" :class="isActive(withPrefix(['/???'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block active:scale-95 duration-150">
+              Link 2
+              </router-link>
+            </div>
+          </div>
+        </div>
+        <div class="" >
+          <div @click="toggleBimbingan" :class="isActive(withPrefix(['/??','/??'])) ? ' text-blue-600 hover:bg-blue-50  px-4 rounded' : 'hover:bg-gray-50'" class="cursor-pointer items-center py-2 px-4 ">
+            <div :class="isActive(withPrefix(['/??','/??'])) ? '  ps-2 rounded ' : '   hover:bg-gray-50'" class="duration-150 flex items-center justify-between cursor-pointer active:scale-95">
               <div class="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
-                <span>BIMBINGAN</span>
+                <span class="uppercase">Bimbingan</span>
               </div>
               <svg :class="{'transform rotate-180': showBimbingan}" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </div>
           </div>
-          <div v-show="showBimbingan" :class="isActive(['/request-pembimbing','/daftar-bimbingan']) ? 'pl-10 py-1 ': 'pl-8 py-1 '" class="py-1 flex flex-col gap-2 duration-200">
-            <div :class="isActive(['/request-pembimbing']) ? 'pe-4' : 'block text-gray-700 hover:text-blue-700'" class="py-1">
-              <router-link to="/request-pembimbing"  :class="isActive(['/request-pembimbing']) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block active:scale-95 duration-150">
-              Request Pembimbing
+          <div v-show="showBimbingan" :class="isActive(withPrefix(['/??','/??'])) ? 'pl-10 py-1 ': 'pl-8 py-1 '" class="py-1 flex flex-col gap-2 duration-200">
+            <div :class="isActive(withPrefix(['/??'])) ? 'pe-4' : 'block text-gray-700 hover:text-blue-700'" class="py-1">
+              <router-link :to="withPrefix('/??')"  :class="isActive(withPrefix(['/??'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block active:scale-95 duration-150">
+              Link 1
               </router-link>
             </div>
-            <div :class="isActive(['/daftar-bimbingan']) ? 'pe-4' : 'block text-gray-700 hover:text-blue-700'" class="py-1">
-              <router-link to="/daftar-bimbingan" :class="isActive(['/daftar-bimbingan']) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block active:scale-95 duration-150">
-              Daftar Bimbingan
+            <div :class="isActive(withPrefix(['/??'])) ? 'pe-4' : 'block text-gray-700 hover:text-blue-700'" class="py-1">
+              <router-link :to="withPrefix('/??')" :class="isActive(withPrefix(['/??'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block active:scale-95 duration-150">
+              Link 2
               </router-link>
             </div>
           </div>
         </div>
-        <div class="px-4 py-2">
-          <router-link :class="isActive(['/seminar-proposal']) ? 'text-blue-600 hover:bg-blue-50 px-2 ' : ' text-gray-700 hover:text-blue-700 '" class="rounded flex items-center active:scale-95 duration-150" to="/seminar-proposal">
-            <img :src="SemproIcon" alt="" class="h-5 w-5 mr-2">
-            SEMINAR PROPOSAL
-          </router-link>
-        </div>
-        <div class="px-4 py-2">
-          <router-link :class="isActive(['/seminar-hasil']) ? 'text-blue-600 hover:bg-blue-50 px-2 ' : ' text-gray-700 hover:text-blue-700 '" class="rounded flex items-center active:scale-95 duration-150" to="/seminar-hasil">
-            <img :src="SemhasIcon" alt="" class="h-5 w-5 mr-2">
-            SEMINAR HASIL
-          </router-link>
-        </div>
         <div class="">
-          <div @click="toggleProposal" :class="isActive(['/jadwal-menguji','/input-nilai-ujian','/revisi-ujian','/jadwal-sempro']) ? ' text-blue-600 hover:bg-blue-50  px-4 rounded' : 'hover:bg-gray-50'" class="cursor-pointer items-center py-2 px-4">
-            <div :class="isActive(['/jadwal-menguji','/input-nilai-ujian','/revisi-ujian','/jadwal-sempro']) ? '  ps-2 rounded ' : '   hover:bg-gray-50'" class="flex items-center justify-between cursor-pointer active:scale-95 duration-150">
+          <div @click="toggleTugasAkhir" :class="isActive(withPrefix(['/????','?????','/revisi-ujian','/jadwal-sempro'])) ? ' text-blue-600 hover:bg-blue-50  px-4 rounded' : 'hover:bg-gray-50'" class="cursor-pointer items-center py-2 px-4">
+            <div :class="isActive(withPrefix(['/????','?????','/revisi-ujian','/jadwal-sempro'])) ? '  ps-2 rounded ' : '   hover:bg-gray-50'" class="flex items-center justify-between cursor-pointer active:scale-95 duration-150">
               <div class="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <span>Ujian TA</span>
+                <span class="uppercase">Tugas Akhir</span>
               </div>
-              <svg :class="{'transform rotate-180': showProposal}" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg :class="{'transform rotate-180': showTugasAkhir}" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </div>
             
           </div>
-          <div v-show="showProposal" :class="isActive(['/jadwal-menguji','/input-nilai-ujian','/revisi-ujian','/jadwal-sempro']) ? 'pl-10 py-1 ': 'pl-8 py-1 '" class="py-1 flex flex-col gap-2 duration-200">
-            <div :class="isActive(['/jadwal-menguji']) ? 'pe-4 ' : 'block  text-gray-700 hover:text-blue-700'" class="block">
-              <router-link to="/jadwal-menguji" :class="isActive(['/jadwal-menguji']) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block active:scale-95 duration-150">
-              Jadwal Menguji
+          <div v-show="showTugasAkhir" :class="isActive(withPrefix(['/????','?????','/??????','/????????'])) ? 'pl-10 py-1 ': 'pl-8 py-1 '" class="py-1 flex flex-col gap-2 duration-200">
+            <div :class="isActive(withPrefix(['/????'])) ? 'pe-4 ' : 'block  text-gray-700 hover:text-blue-700'" class="block">
+              <router-link :to="withPrefix('/????')" :class="isActive(withPrefix(['/????'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block active:scale-95 duration-150">
+              Link 1
               </router-link>
             </div>
-            <div :class="isActive(['/input-nilai-ujian']) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="block">
-              <router-link to="/input-nilai-ujian" :class="isActive(['/input-nilai-ujian']) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block active:scale-95 duration-150">
-              Input Nilai Ujian TA
+            <div :class="isActive(withPrefix(['?????'])) ? 'text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="block">
+              <router-link :to="withPrefix('?????')" :class="isActive(withPrefix(['?????'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block active:scale-95 duration-150">
+              Link 2
               </router-link>
             </div>
-            <div :class="isActive(['/revisi-ujian']) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="block">
-              <router-link to="/revisi-ujian" :class="isActive(['/revisi-ujian']) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block  active:scale-95 duration-150">
-              Revisi Ujian TA
+            <div :class="isActive(withPrefix(['/??????'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="block">
+              <router-link :to="withPrefix('/??????')" :class="isActive(withPrefix(['/??????'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block  active:scale-95 duration-150">
+              Link 3
               </router-link>
             </div>
-            <div :class="isActive(['/jadwal-sempro']) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="block">
-              <router-link to="/jadwal-sempro" :class="isActive(['/jadwal-sempro']) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block  active:scale-95 duration-150">
-              Jadwal Sempro
+            <div :class="isActive(withPrefix(['/????????'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="block">
+              <router-link :to="withPrefix('/????????')" :class="isActive(withPrefix(['/????????'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block  active:scale-95 duration-150">
+              Link 4s
               </router-link>
             </div>  
           </div>
@@ -130,9 +143,9 @@
             </button>
           </div>
           <div class="flex items-center">
-            <span class="text-sm font-medium mr-2">Dosen 1</span>
+            <span class="text-sm font-medium mr-2">{{ user.name }}</span>
             <button id="user-button" @click="toggleUser" class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center active:scale-90 duration-150">
-              <span class="text-sm font-medium text-gray-600">D</span>
+              <span class="text-sm font-medium text-gray-600">{{ user.name.charAt(0) }}</span>            
             </button>
           </div>
         </div>
@@ -231,16 +244,27 @@ const newNotification = ref(true)
 const newNotification1 = ref(true) 
 const newNotification2 = ref(true) 
 
+const user = ref({
+  name: 'Admin', // Nama pengguna
+  role: 'Admin',   // Peran pengguna
+});
+
+const withPrefix = (paths) => {
+  if (typeof paths === 'string') {
+    return `/admin/tugas-akhir${paths}`;
+  }
+  return paths.map((path) => `/admin/tugas-akhir${path}`);
+};
+
 const isActive = (paths) => {
-  return paths.some((path) => path === route.path)
-}
+  return paths.some((path) => path === route.path);
+};
+
 const checkNotification = () => {
   if(newNotification.value || newNotification1.value || newNotification2.value) {
     hasNotification.value = true
-    console.log('ada notifikasi')
   } else {
     hasNotification.value = false
-    console.log('tidak ada notifikasi')
   }
 }
 const checkScreenSize = () => {
@@ -251,14 +275,12 @@ const checkScreenSize = () => {
 onMounted(() => {
   checkScreenSize()
   checkNotification()
-  // window.addEventListener('notif', checkNotification)
   window.addEventListener('resize', checkScreenSize)
   document.addEventListener('click', closeDropdownOnClickOutside);
 
 })
 
 onUnmounted(() => {
-  window.removeEventListener('notif', checkScreenSize)
   window.removeEventListener('resize', checkScreenSize)
   document.removeEventListener('click', closeDropdownOnClickOutside);
 })

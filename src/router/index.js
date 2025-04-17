@@ -13,8 +13,8 @@ import Daftar from "../views/Mahasiswa/Tugas-akhir/Daftar.vue";
 //define a routes
 const routes = [
   {
-    path: '/admin/',
-    component: AdminLayout, // Gunakan AdminLayout sebagai layout
+    path: '/dosen/tugas-akhir',
+    component: DosenLayout, // Gunakan AdminLayout sebagai layout
     children: [
       {
         path: '',
@@ -59,48 +59,22 @@ const routes = [
     ],
   },
   {
-    path: '/dosen/',
-    component: DosenLayout, // Gunakan AdminLayout sebagai layout
+    path: '/admin/tugas-akhir',
+    component: AdminLayout, // Gunakan AdminLayout sebagai layout
     children: [
       {
         path: '',
         component: Dashboard, // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
+    ],
+  },
+  {
+    path: '/mahasiswa/tugas-akhir',
+    component: UserLayout, // Gunakan AdminLayout sebagai layout
+    children: [
       {
-        path: 'request-pembimbing',
-        component: Request, // Konten halaman akan dirender di <router-view> dalam AdminLayout
-      },
-      {
-        path: 'daftar-bimbingan',
-        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
-      },
-      {
-        path: 'seminar-proposal',
-        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
-      },
-      {
-        path: 'seminar-hasil',
-        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
-      },
-      {
-        path: 'jadwal-menguji',
-        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
-      },
-      {
-        path: 'input-nilai-ujian',
-        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
-      },
-      {
-        path: 'revisi-ujian',
-        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
-      },
-      {
-        path: 'jadwal-sempro',
-        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
-      },
-      {
-        path: 'daftar-bimbingan',
-        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        path: '',
+        component: Dashboard, // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
     ],
   },
