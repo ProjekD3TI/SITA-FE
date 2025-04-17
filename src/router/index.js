@@ -13,8 +13,54 @@ import Daftar from "../views/Mahasiswa/Tugas-akhir/Daftar.vue";
 //define a routes
 const routes = [
   {
-    path: '/',
+    path: '/admin/',
     component: AdminLayout, // Gunakan AdminLayout sebagai layout
+    children: [
+      {
+        path: '',
+        component: Dashboard, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'request-pembimbing',
+        component: Request, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'daftar-bimbingan',
+        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'seminar-proposal',
+        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'seminar-hasil',
+        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'jadwal-menguji',
+        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'input-nilai-ujian',
+        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'revisi-ujian',
+        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'jadwal-sempro',
+        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'daftar-bimbingan',
+        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+    ],
+  },
+  {
+    path: '/dosen/',
+    component: DosenLayout, // Gunakan AdminLayout sebagai layout
     children: [
       {
         path: '',

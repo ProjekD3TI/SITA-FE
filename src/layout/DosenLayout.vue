@@ -1,55 +1,45 @@
 <template>
-  <div class="min-h-screen bg-gray-100 flex">
-    <Sidebar
-      :is-collapsed="isSidebarCollapsed"
-      :is-mobile="isMobile"
-      @toggle-sidebar="toggleSidebar"
-    />
+  <div class="flex min-h-screen bg-gray-100">
+    <!-- Sidebar -->
+    <Sidebar>
+      <!-- Pass navigation links as slot -->
+      <div class="px-4 py-2">
+        <router-link
+          :class="isActive('/') ? 'text-blue-600 hover:bg-blue-50 px-2 ' : 'text-gray-700 hover:text-blue-700'"
+          class="rounded duration-150 flex items-center active:scale-95"
+          to="/"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+          DASHBOARD
+        </router-link>
+      </div>
+      <!-- Add other navigation links here -->
+    </Sidebar>
 
-    <div
-      class="flex flex-col min-h-screen w-full transition-all duration-300"
-      :class="{
-        'lg:ml-64': !isSidebarCollapsed,
-        'lg:ml-16': isSidebarCollapsed,
-      }"
-    >
-      <Navbar />
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col">
+      <!-- Header -->
+      <Header />
 
-      <main class="flex-1 p-4 md:p-6">
+      <!-- Dashboard Content -->
+      <main class="flex-1 p-6">
         <router-view />
       </main>
-
-      <Footer />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
-import Navbar from "../components/Dosen/Header.vue";
-import Sidebar from "../components/Dosen/Sidebar.vue";
-import Footer from "../components/Dosen/Footer.vue";
+import { useRoute } from 'vue-router'
+import Sidebar from './components/Sidebar.vue'
+import Header from './components/Header.vue'
 
-const isSidebarCollapsed = ref(false);
-const isMobile = ref(false);
+const route = useRoute()
 
-const toggleSidebar = (collapsed) => {
-  isSidebarCollapsed.value = collapsed;
-};
-
-const handleResize = () => {
-  isMobile.value = window.innerWidth <= 991.98;
-  if (isMobile.value) {
-    isSidebarCollapsed.value = true;
-  }
-};
-
-onMounted(() => {
-  window.addEventListener("resize", handleResize);
-  handleResize();
-});
-
-onUnmounted(() => {
-  window.removeEventListener("resize", handleResize);
-});
+// Function to check if the current route matches the given path
+const isActive = (path) => {
+  return route.path === path
+}
 </script>
