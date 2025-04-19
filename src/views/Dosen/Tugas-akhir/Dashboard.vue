@@ -83,7 +83,7 @@ const studentsWithoutUjian = computed(() => {
                   </svg>
                   <span>{{ student.name }} - {{ student.nim }}</span>
                 </div>
-                <button class="p-2 bg-blue-500 rounded text-white hover:bg-blue-600">Detail</button>
+                <button class="p-2 bg-primary rounded text-white hover:bg-primary">Detail</button>
               </div>
             </div>
           </div>
@@ -99,7 +99,6 @@ const studentsWithoutUjian = computed(() => {
                   <span>{{ student.name }} - {{ student.nim }}</span>
                   <span>{{ student.jadwal }}</span>
                 </div>
-                <!-- <button class="p-2 bg-blue-500 rounded text-white hover:bg-blue-600">Detail</button> -->
               </div>
             </div>
           </div>

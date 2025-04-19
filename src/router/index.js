@@ -3,14 +3,27 @@ import { createRouter, createWebHistory } from "vue-router";
 import { getUserData } from "../services/authDosen";
 import VueCookies from "vue-cookies";
 import { useToast } from "vue-toastification";
-import UserLayout from "../layout/UserLayout.vue";
-import DosenLayout from "../layout/DosenLayout.vue";
-import AdminLayout from "../layout/AdminLayout.vue";
-import DashboardTADosen from "../views/Dosen/Tugas-akhir/Dashboard.vue";
+import UserLayout from "../layout/Tugas-akhir/UserLayout.vue";
+import DosenLayout from "../layout/Tugas-akhir/DosenLayout.vue";
+import AdminLayout from "../layout/Tugas-akhir/AdminLayout.vue";
+
+// Route Admin TA
 import DashboardTAAdmin from "../views/Admin/AdminTa/Dashboard.vue";
+import BimbinganforAdmin from "../views/Admin/AdminTa/Bimbingan.vue";
+import ProposalforAdmin from "../views/Admin/AdminTa/Proposal.vue";
+import TugasAkhirforAdmin from "../views/Admin/AdminTa/TugasAkhir.vue";
+// Route Mhs TA
 import DashboardTAMhs from "../views/Mahasiswa/Tugas-akhir/Dashboard.vue";
-import Request from "../views/Mahasiswa/Tugas-akhir/Request.vue";
-import Daftar from "../views/Mahasiswa/Tugas-akhir/Daftar.vue";
+import BimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan.vue";
+import ProposalforMhs from "../views/Mahasiswa/Tugas-akhir/Proposal.vue";
+import TugasAkhirforMhs from "../views/Mahasiswa/Tugas-akhir/TugasAkhir.vue";
+// Route Dosen TA 
+import DashboardTADosen from "../views/Dosen/Tugas-akhir/Dashboard.vue";
+import RequestBimbinganforDosen from "../views/Dosen/Tugas-akhir/RequestBimbingan.vue";
+import DaftarBimbinganforDosen from "../views/Dosen/Tugas-akhir/DaftarBimbingan.vue";
+import SeminarProposalforDosen from "../views/Dosen/Tugas-akhir/SeminarProposal.vue";
+import SeminarHasilforDosen from "../views/Dosen/Tugas-akhir/SeminarHasil.vue";
+import JadwalMengujiforDosen from "../views/Dosen/Tugas-akhir/JadwalMenguji.vue";
 
 //define a routes
 const routes = [
@@ -24,39 +37,35 @@ const routes = [
       },
       {
         path: 'request-pembimbing',
-        component: Request, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: RequestBimbinganforDosen, // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
       {
         path: 'daftar-bimbingan',
-        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: DaftarBimbinganforDosen // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
       {
         path: 'seminar-proposal',
-        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: SeminarProposalforDosen // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
       {
         path: 'seminar-hasil',
-        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: SeminarHasilforDosen // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
       {
         path: 'jadwal-menguji',
-        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: JadwalMengujiforDosen // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
       {
         path: 'input-nilai-ujian',
-        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: DashboardTADosen // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
       {
         path: 'revisi-ujian',
-        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: DashboardTADosen // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
       {
         path: 'jadwal-sempro',
-        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
-      },
-      {
-        path: 'daftar-bimbingan',
-        component: Daftar, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: DashboardTADosen // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
     ],
   },
@@ -70,15 +79,15 @@ const routes = [
       },
       {
         path: 'bimbingan',
-        component: DashboardTAAdmin, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: BimbinganforAdmin, // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
       {
         path: 'proposal',
-        component: DashboardTAAdmin, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: ProposalforAdmin, // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
       {
         path: 'tugas-akhir',
-        component: DashboardTAAdmin, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: TugasAkhirforAdmin, // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
     ],
   },
@@ -92,23 +101,23 @@ const routes = [
       },
       {
         path: 'bimbingan',
-        component: DashboardTAMhs, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: BimbinganforMhs, // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
       {
         path: 'proposal',
-        component: DashboardTAMhs, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: ProposalforMhs, // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
       {
         path: 'tugas-akhir',
-        component: DashboardTAMhs, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: TugasAkhirforMhs, // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
     ],
   },
-  // {
-  //   path: "/",
-  //   name: "Landing",
-  //   component: () => import("../views/Landing/Landing.vue"),
-  // },
+  {
+    path: "/",
+    name: "Landing",
+    component: () => import("../views/Landing/Landing.vue"),
+  },
   {
     path: "/informasi-ta",
     name: "InformasiTA",
@@ -203,14 +212,6 @@ const routes = [
       import(/* webpackChunkName: "login" */ "../views/404/404.vue"),
   },
   {
-    path: "/laporks",
-    name: "laporks",
-    component: () =>
-      import(
-        /* webpackChunkName: "login" */ "../views/Pelaporan/LaporKekerasanSeksual.vue"
-      ),
-  },
-  {
     path: "/dashboard",
     name: "dashboard-login",
     component: () => import("../views/Landing/LandingLogin.vue"),
@@ -233,36 +234,6 @@ const routes = [
         path: "profile",
         name: "ProfileMahasiswa",
         component: () => import("../views/Mahasiswa/Profile.vue"),
-      },
-      {
-        path: "dashboardpkmhs",
-        name: "DashboardPKMhs",
-        component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/DashboardPKMhs.vue"),
-      },
-      {
-        path: "addpkmhs",
-        name: "AddPKMhs",
-        component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/AddPKMhs.vue"),
-      },
-      {
-        path: "/laporan/:id",
-        name: "DetailPKMhs",
-        component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/DetailPKMhs.vue"),
-      },
-      {
-        path: "dashboardksmhs",
-        name: "DashboardKSMhs",
-        component: () => import("../views/Mahasiswa/Pelaporan/KekerasanSeksual/DashboardKSMhs.vue"),
-      },
-      {
-        path: "addpelaporanksmhs",
-        name: "AddPelaporanKSMhs",
-        component: () => import("../views/Mahasiswa/Pelaporan/KekerasanSeksual/AddKSMhs.vue"),
-      },
-      {
-        path: "/laporan_kekerasan/:id",
-        name: "DetailKSMhs",
-        component: () => import("../views/Mahasiswa/Pelaporan/KekerasanSeksual/DetailKSMhs.vue"),
       },
       // route mahasiswa yg laenya
     ],
@@ -294,36 +265,6 @@ const routes = [
         name: "DashboardDosen",
         component: () => import("../views/Dosen/Dashboard.vue"),
       },
-      {
-        path: "dashboardpkdosen",
-        name: "DashboardPKDosen",
-        component: () => import("../views/Dosen/Pelaporan/Kejadian/DashboardPKDosen.vue"),
-      },
-      {
-        path: "addpkdosen",
-        name: "AddPKDosen",
-        component: () => import("../views/Dosen/Pelaporan/Kejadian/AddPKDosen.vue"),
-      },
-      {
-        path: "/laporan/:id",
-        name: "DetailPKDosen",
-        component: () => import("../views/Dosen/Pelaporan/Kejadian/DetailPKDosen.vue"),
-      },
-      {
-        path: "dashboardksdosen",
-        name: "DashboardKSDosen",
-        component: () => import("../views/Dosen/Pelaporan/KekerasanSeksual/DashboardKSDosen.vue"),
-      },
-      {
-        path: "addpelaporanksdosen",
-        name: "AddPelaporanKSDosen",
-        component: () => import("../views/Dosen/Pelaporan/KekerasanSeksual/AddKSDosen.vue"),
-      },
-      {
-        path: "/laporan_kekerasan/:id",
-        name: "DetailKSDosen",
-        component: () => import("../views/Dosen/Pelaporan/KekerasanSeksual/DetailKSDosen.vue"),
-      },
       // route yg laen
     ],
   },
@@ -338,51 +279,6 @@ const routes = [
         path: "dashboard",
         name: "DashboardKalab",
         component: () => import("../views/Dosen/Kalab/Dashboard.vue"),
-      },
-      {
-        path: "kategoripelaporan",
-        name: "KatPelaporan",
-        component: () => import("../views/Dosen/Kalab/Pelaporan/Kategori/DashboardCategory.vue"),
-      },
-      {
-        path: "addkategoripelaporan",
-        name: "AddKatPelaporan",
-        component: () => import("../views/Dosen/Kalab/Pelaporan/Kategori/AddKategori.vue"),
-      },
-      {
-        path: "editkategoripelaporan",
-        name: "EditKatPelaporan",
-        component: () => import("../views/Dosen/Kalab/Pelaporan/Kategori/EditKategori.vue"),
-      },
-      {
-        path: "pelaporankejadiankalab",
-        name: "PelaporanKejadianKalab",
-        component: () => import("../views/Dosen/Kalab/Pelaporan/PelaporanKejadian/DashboardPK.vue"),
-      },
-      {
-        path: "addpelaporankejadiankalab",
-        name: "AddPelaporanKejadianKalab",
-        component: () => import("../views/Dosen/Kalab/Pelaporan/PelaporanKejadian/AddPK.vue"),
-      },
-      {
-        path: "/laporan/:id",
-        name: "DetailPK",
-        component: () => import("../views/Dosen/Kalab/Pelaporan/PelaporanKejadian/DetailPK.vue"),
-      },
-      {
-        path: "pelaporankekerasanseksual",
-        name: "PelaporanKekerasanSeksual",
-        component: () => import("../views/Dosen/Kalab/Pelaporan/KekerasanSeksual/DashboardKS.vue"),
-      },
-      {
-        path: "addpelaporankskalab",
-        name: "AddPelaporanKSKalab",
-        component: () => import("../views/Dosen/Kalab/Pelaporan/KekerasanSeksual/AddKS.vue"),
-      },
-      {
-        path: "/laporan_kekerasan/:id",
-        name: "DetailKS",
-        component: () => import("../views/Dosen/Kalab/Pelaporan/KekerasanSeksual/DetailKS.vue"),
       },
       // route yg laen
     ],
@@ -481,48 +377,6 @@ const routes = [
     ],
   },
 
-  //Pelaporan
-  {
-    path: "/pelaporan",
-    meta: { requiresAuth: true, userType: "mahasiswa" },
-    children: [
-      {
-        path: "dashboard",
-        name: "DashboardPelaporan",
-        component: () => import("../views/Pelaporan/Dashboard.vue"),
-      },
-      {
-        path: "pelaporan-kejadian",
-        name: "PelaporanKejadian",
-        component: () => import("../views/Pelaporan/Kejadian/PelaporanKejadian.vue"),
-      },
-      {
-        path: "add-pelaporan-kejadian",
-        name: "AddPelaporanKejadian",
-        component: () => import("../views/Pelaporan/Kejadian/AddPelaporanKejadian.vue"),
-      },
-      {
-        path: "detail-pelaporan-kejadian",
-        name: "DetailPelaporanKejadian",
-        component: () => import("../views/Pelaporan/Kejadian/DetailPelaporanKejadian.vue"),
-      },
-      {
-        path: "kekerasan-seksual",
-        name: "KekekerasanSeksual",
-        component: () => import("../views/Pelaporan/KekerasanSeksual/KekerasanSeksual.vue"),
-      },
-      {
-        path: "add-kekerasan-seksual",
-        name: "AddKekekerasanSeksual",
-        component: () => import("../views/Pelaporan/KekerasanSeksual/AddKekerasanSeksual.vue"),
-      },
-      {
-        path: "detail-kekerasan-seksual",
-        name: "DetailKekekerasanSeksual",
-        component: () => import("../views/Pelaporan/KekerasanSeksual/DetailKekerasanSeksual.vue"),
-      },
-    ],
-  },
 
   // {
   //   path: "/admin-pengelola/dashboard",

@@ -34,11 +34,11 @@ defineEmits(['toggle']);
     <!-- Dropdown Header -->
     <div 
       @click="$emit('toggle')" 
-      :class="active ? 'text-blue-600 hover:bg-blue-50 px-4 rounded' : 'hover:bg-gray-50'" 
+      :class="active ? 'text-primary hover:bg-primary-bg px-4 rounded' : 'hover:bg-gray-50'" 
       class="cursor-pointer items-center py-2 px-2"
     >
       <div 
-        :class="active ? 'border-l-4 border-blue-500 bg-blue-100 rounded' : 'hover:bg-gray-50'" 
+        :class="active ? 'border-l-4 border-primary bg-primary-bg rounded' : 'hover:bg-gray-50'" 
         class="px-2 duration-150 flex items-center justify-between cursor-pointer active:scale-95"
       >
         <div class="flex items-center">
@@ -83,12 +83,12 @@ defineEmits(['toggle']);
       <div 
         v-for="item in subItems" 
         :key="item.path"
-        :class="item.active ? 'pe-4' : 'block hover:text-blue-700'" 
+        :class="item.active ? 'pe-4' : 'block hover:text-primary'" 
         class="py-1"
       >
         <router-link 
           :to="item.path" 
-          :class="item.active ? 'text-blue-600 hover:bg-blue-50 rounded' : 'hover:text-blue-700'" 
+          :class="item.active ? 'text-primary hover:bg-primary-bg rounded' : 'hover:text-primary'" 
           class="px-2 block active:scale-95 duration-150"
         >
           {{ item.label }}

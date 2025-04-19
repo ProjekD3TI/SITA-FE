@@ -1,3 +1,5 @@
+import { warn } from 'console';
+
 /** @type {import('tailwindcss').Config} */
 export default {
     darkMode: ["class"],
@@ -27,13 +29,25 @@ export default {
   				foreground: 'hsl(var(--popover-foreground))'
   			},
   			primary: {
-  				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
-  			},
+				DEFAULT: '#00A2EA',
+				bg: '#eff6ff',
+			} ,
   			secondary: {
-  				DEFAULT: 'hsl(var(--secondary))',
-  				foreground: 'hsl(var(--secondary-foreground))'
-  			},
+				DEFAULT: '#F78052',
+				bg: '#fef2f2',
+			},
+			warning: {
+				DEFAULT: '#ca8a04',
+				bg: '#fef9c3',
+			},
+			success: {
+				DEFAULT: '#4ADE80',
+				bg: '#dcfce7',
+			},
+			danger: {
+				DEFAULT: '#ff0000',
+				bg: '#fee2e2',
+			},
   			muted: {
   				DEFAULT: 'hsl(var(--muted))',
   				foreground: 'hsl(var(--muted-foreground))'

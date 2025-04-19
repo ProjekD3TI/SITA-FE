@@ -29,8 +29,8 @@ const totalDocuments = ref(26);
       <!-- Total Bimbingan Card -->
       <div class="bg-white p-4 rounded-lg shadow-sm flex items-center justify-between">
         <div class="flex items-center">
-          <div class="bg-red-50 p-2 rounded-full mr-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="bg-danger-bg p-2 rounded-full mr-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
             </svg>
           </div>
@@ -44,8 +44,8 @@ const totalDocuments = ref(26);
       <!-- Proposal Tugas Akhir Card -->
       <div class="bg-white p-4 rounded-lg shadow-sm flex items-center justify-between">
         <div class="flex items-center">
-          <div class="bg-green-50 p-2 rounded-full mr-4">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="bg-success-bg p-2 rounded-full mr-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         </div>
@@ -69,7 +69,7 @@ const totalDocuments = ref(26);
             <!-- Donut Chart Background -->
             <div class="absolute inset-0 rounded-full bg-gray-200"></div>
             <!-- Donut Chart Fill -->
-            <div class="absolute inset-0 rounded-full bg-orange-400" 
+            <div class="absolute inset-0 rounded-full bg-secondary" 
                  style="clip-path: polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0)"></div>
             <!-- Center Circle -->
             <div class="absolute inset-0 w-28 h-28 bg-white rounded-full m-auto flex items-center justify-center">
@@ -82,7 +82,7 @@ const totalDocuments = ref(26);
         </div>
         <div class="flex justify-center mt-4 space-x-6">
           <div class="flex items-center">
-            <div class="w-3 h-3 bg-orange-400 rounded-full mr-2"></div>
+            <div class="w-3 h-3 bg-secondary rounded-full mr-2"></div>
             <span class="text-sm">Belum Terverifikasi</span>
           </div>
           <div class="flex items-center">

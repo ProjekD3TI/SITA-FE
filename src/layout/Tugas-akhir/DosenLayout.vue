@@ -35,30 +35,73 @@
           icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' />"
         />
 
-        <SidebarLink
-          :to="withPrefix('/bimbingan')"
-          :active="isActive(withPrefix(['/bimbingan']))"
-          :showLabel="showNavbar"
+        <SidebarDropdown
+          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' />"
           label="Bimbingan"
-          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25' />"
+          :active="isActive(withPrefix(['/request-pembimbing', '/daftar-bimbingan']))"
+          :isOpen="showBimbingan"
+          :showLabel="showNavbar"
+          :subItems="[
+            { 
+              path: withPrefix('/request-pembimbing'), 
+              label: 'Request Pembimbing', 
+              active: isActive(withPrefix(['/request-pembimbing']))
+            },
+            { 
+              path: withPrefix('/daftar-bimbingan'), 
+              label: 'Daftar Bimbingan', 
+              active: isActive(withPrefix(['/daftar-bimbingan']))
+            }
+          ]"
+          @toggle="toggleBimbingan"
         />
 
         <SidebarLink
-          :to="withPrefix('/proposal')"
-          :active="isActive(withPrefix(['/proposal']))"
+          :to="withPrefix('/seminar-proposal')"
+          :active="isActive(withPrefix(['/seminar-proposal']))"
           :showLabel="showNavbar"
-          label="Proposal"
+          label="Seminar Proposal"
+          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12-3-3m0 0-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z' />"
+        />
+
+        <SidebarLink
+          :to="withPrefix('/seminar-hasil')"
+          :active="isActive(withPrefix(['/seminar-hasil']))"
+          :showLabel="showNavbar"
+          label="Seminar Hasil"
           icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z' />"
         />
 
-        <SidebarLink
-          :to="withPrefix('/tugas-akhir')"
-          :active="isActive(withPrefix(['/tugas-akhir']))"
+        <SidebarDropdown
+          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />"
+          label="Ujian TA"
+          :active="isActive(withPrefix(['/jadwal-menguji', '/input-nilai-ujian', '/revisi-ujian', '/jadwal-sempro']))"
+          :isOpen="showTugasAkhir"
           :showLabel="showNavbar"
-          label="Tugas Akhir"
-          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 0 1 9 9v.375M10.125 2.25A3.375 3.375 0 0 1 13.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 0 1 3.375 3.375M9 15l2.25 2.25L15 12' />"
+          :subItems="[
+            { 
+              path: withPrefix('/jadwal-menguji'), 
+              label: 'Jadwal Menguji', 
+              active: isActive(withPrefix(['/jadwal-menguji']))
+            },
+            { 
+              path: withPrefix('/input-nilai-ujian'), 
+              label: 'Input Nilai Ujian TA', 
+              active: isActive(withPrefix(['/input-nilai-ujian']))
+            },
+            { 
+              path: withPrefix('/revisi-ujian'), 
+              label: 'Revisi Ujian TA', 
+              active: isActive(withPrefix(['/revisi-ujian']))
+            },
+            { 
+              path: withPrefix('/jadwal-sempro'), 
+              label: 'Jadwal Sempro', 
+              active: isActive(withPrefix(['/jadwal-sempro']))
+            }
+          ]"
+          @toggle="toggleTugasAkhir"
         />
-
       </nav>
 
     </div>
@@ -86,7 +129,7 @@
               <svg :class="{'transform rotate-180': showNotification}" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
-              <div v-show="hasNotification" class="absolute top-0 right-6 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>
+              <div v-show="hasNotification" class="absolute top-0 right-6 w-3 h-3 bg-primary rounded-full border-2 border-white"></div>
             </button>
           </div>
           <div class="flex items-center">
@@ -114,7 +157,7 @@
                 <button class="py-2 active:scale-95 duration-150">Profile</button>
               </li>
               <li class=" px-2 hover:bg-gray-100 rounded duration-200">
-                <button class="py-2 text-red-500">Log Out</button>
+                <button class="py-2 text-danger">Log Out</button>
               </li>
             </ul>
           </div>
@@ -138,7 +181,7 @@ const route = useRoute()
 import D3TILogo from '@/assets/images/d3ti-logo.png'
 
 // Notifikasi
-import Notification from '@/views/Dosen/Tugas-akhir/components/Notification.vue'
+import Notification from '@/components/Tugas-akhir/Notification.vue'
 const notifications = ref([
   {
     id: 1,
@@ -198,15 +241,15 @@ const isLgScreen = ref(false)
 const hasNotification = ref(false)
 
 const user = ref({
-  name: 'Bu Sari', // Nama pengguna
-  role: 'Admin',   // Peran pengguna
+  name: 'Eko Harry Pratisto S.Kom.', // Nama pengguna
+  role: 'Dosen',   // Peran pengguna
 });
 
 const withPrefix = (paths) => {
   if (typeof paths === 'string') {
-    return `/admin/tugas-akhir${paths}`;
+    return `/dosen/tugas-akhir${paths}`;
   }
-  return paths.map((path) => `/admin/tugas-akhir${path}`);
+  return paths.map((path) => `/dosen/tugas-akhir${path}`);
 };
 
 const isActive = (paths) => {
@@ -296,6 +339,6 @@ const toggleUser = () => {
 }
 
 // sidebar 
-import SidebarLink from '@/views/Dosen/Tugas-akhir/components/SidebarLink.vue'
-import SidebarDropdown from '@/views/Dosen/Tugas-akhir/components/SidebarDropdown.vue'
+import SidebarLink from '@/components/Tugas-akhir/SidebarLink.vue'
+import SidebarDropdown from '@/components/Tugas-akhir/SidebarDropdown.vue'
 </script>

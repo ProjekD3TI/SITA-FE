@@ -86,7 +86,7 @@
               <svg :class="{'transform rotate-180': showNotification}" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
-              <div v-show="hasNotification" class="absolute top-0 right-6 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>
+              <div v-show="hasNotification" class="absolute top-0 right-6 w-3 h-3 bg-primary rounded-full border-2 border-white"></div>
             </button>
           </div>
           <div class="flex items-center">
@@ -114,7 +114,7 @@
                 <button class="py-2 active:scale-95 duration-150">Profile</button>
               </li>
               <li class=" px-2 hover:bg-gray-100 rounded duration-200">
-                <button class="py-2 text-red-500">Log Out</button>
+                <button class="py-2 text-danger">Log Out</button>
               </li>
             </ul>
           </div>
@@ -138,7 +138,7 @@ const route = useRoute()
 import D3TILogo from '@/assets/images/d3ti-logo.png'
 
 // Notifikasi
-import Notification from '@/views/Dosen/Tugas-akhir/components/Notification.vue'
+import Notification from '@/components/Tugas-akhir/Notification.vue'
 const notifications = ref([
   {
     id: 1,
@@ -296,6 +296,6 @@ const toggleUser = () => {
 }
 
 // sidebar 
-import SidebarLink from '@/views/Dosen/Tugas-akhir/components/SidebarLink.vue'
-import SidebarDropdown from '@/views/Dosen/Tugas-akhir/components/SidebarDropdown.vue'
+import SidebarLink from '@/components/Tugas-akhir/SidebarLink.vue'
+import SidebarDropdown from '@/components/Tugas-akhir/SidebarDropdown.vue'
 </script>
