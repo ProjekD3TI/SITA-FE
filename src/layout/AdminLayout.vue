@@ -2,129 +2,76 @@
   <div class="flex min-h-screen bg-gray-100">
 
     <!-- Sidebar -->
-    <div v-bind:class="{'translate-x-0 opacity-100 w-64': showNavbar, '-translate-x-full opacity-0 w-0': !showNavbar}" 
-      class=" bg-white border-r shadow-sm duration-200 fixed top-0 left-0 h-full z-50 transform lg:static lg:h-auto">
-      <div class="p-4 flex justify-between items-center">
-        <img :src="D3TILogo" alt="" class="h-8">
-        <button class="text-gray-500 hover:text-gray-700 focus:outline-none ">
-            <svg @click="toggleNavbar" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+    <div v-bind:class="{'translate-x-0  w-64': showNavbar, '-translate-x-full lg:translate-x-0 w-20': !showNavbar}" 
+      class=" bg-white border-r shadow-sm duration-200 fixed top-0 left-0 h-full z-50 transform">
+      <div class="absolute top-4 -right-4">
+        <button @click="toggleNavbar"  class="hidden lg:block hover:text-gray-700 focus:outline-none p-2 border bg-white rounded-full shadow-md ">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" :class="{'transform rotate-180' : showNavbar}" class="h-4 w-4 transition-transform duration-500">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+          </svg>
         </button>
       </div>
-      <nav class="mt-5">
-        <div class="px-4 py-2">
-          <router-link :class="isActive(withPrefix(['','/'])) ? 'text-blue-600 hover:bg-blue-50 px-2 ' : ' text-gray-700 hover:text-blue-700 '" class="rounded duration-150 flex items-center active:scale-95" :to="withPrefix('')">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-            DASHBOARD
-          </router-link>
+
+      <div class="p-4 flex justify-between items-center duration-200">
+        <img :src="D3TILogo" alt=""  v-bind:class="{'w-20': showNavbar,'w-9 my-2' : !showNavbar}">
+        <div v-show="showNavbar">
+          <button  @click="toggleNavbar" class="hover:bg-gray-100 rounded-full p-2 lg:hidden active:scale-90 duration-150">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 lg:hidden">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+
+          </button>
         </div>
 
-        <div class="" >
-          <div @click="toggleProposal" :class="isActive(withPrefix(['/???','/???'])) ? ' text-blue-600 hover:bg-blue-50  px-4 rounded' : 'hover:bg-gray-50'" class="cursor-pointer items-center py-2 px-4 ">
-            <div :class="isActive(withPrefix(['/???','/???'])) ? '  ps-2 rounded ' : '   hover:bg-gray-50'" class="duration-150 flex items-center justify-between cursor-pointer active:scale-95">
-              <div class="flex items-center">
-                <img :src="SemproIcon" alt="" class="h-5 w-5 mr-2">
-                <span class="uppercase">Proposal</span>
-              </div>
-              <svg :class="{'transform rotate-180': showProposal}" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
-          <div v-show="showProposal" :class="isActive(withPrefix(['/???','/???'])) ? 'pl-10 py-1 ': 'pl-8 py-1 '" class="py-1 flex flex-col gap-2 duration-200">
-            <div :class="isActive(withPrefix(['/???'])) ? 'pe-4' : 'block text-gray-700 hover:text-blue-700'" class="py-1">
-              <router-link :to="withPrefix('/???')"  :class="isActive(withPrefix(['/???'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block active:scale-95 duration-150">
-              Link 1
-              </router-link>
-            </div>
-            <div :class="isActive(withPrefix(['/???'])) ? 'pe-4' : 'block text-gray-700 hover:text-blue-700'" class="py-1">
-              <router-link :to="withPrefix('/???')" :class="isActive(withPrefix(['/???'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block active:scale-95 duration-150">
-              Link 2
-              </router-link>
-            </div>
-          </div>
-        </div>
-        <div class="" >
-          <div @click="toggleBimbingan" :class="isActive(withPrefix(['/??','/??'])) ? ' text-blue-600 hover:bg-blue-50  px-4 rounded' : 'hover:bg-gray-50'" class="cursor-pointer items-center py-2 px-4 ">
-            <div :class="isActive(withPrefix(['/??','/??'])) ? '  ps-2 rounded ' : '   hover:bg-gray-50'" class="duration-150 flex items-center justify-between cursor-pointer active:scale-95">
-              <div class="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-                <span class="uppercase">Bimbingan</span>
-              </div>
-              <svg :class="{'transform rotate-180': showBimbingan}" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
-          <div v-show="showBimbingan" :class="isActive(withPrefix(['/??','/??'])) ? 'pl-10 py-1 ': 'pl-8 py-1 '" class="py-1 flex flex-col gap-2 duration-200">
-            <div :class="isActive(withPrefix(['/??'])) ? 'pe-4' : 'block text-gray-700 hover:text-blue-700'" class="py-1">
-              <router-link :to="withPrefix('/??')"  :class="isActive(withPrefix(['/??'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block active:scale-95 duration-150">
-              Link 1
-              </router-link>
-            </div>
-            <div :class="isActive(withPrefix(['/??'])) ? 'pe-4' : 'block text-gray-700 hover:text-blue-700'" class="py-1">
-              <router-link :to="withPrefix('/??')" :class="isActive(withPrefix(['/??'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block active:scale-95 duration-150">
-              Link 2
-              </router-link>
-            </div>
-          </div>
-        </div>
-        <div class="">
-          <div @click="toggleTugasAkhir" :class="isActive(withPrefix(['/????','?????','/revisi-ujian','/jadwal-sempro'])) ? ' text-blue-600 hover:bg-blue-50  px-4 rounded' : 'hover:bg-gray-50'" class="cursor-pointer items-center py-2 px-4">
-            <div :class="isActive(withPrefix(['/????','?????','/revisi-ujian','/jadwal-sempro'])) ? '  ps-2 rounded ' : '   hover:bg-gray-50'" class="flex items-center justify-between cursor-pointer active:scale-95 duration-150">
-              <div class="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span class="uppercase">Tugas Akhir</span>
-              </div>
-              <svg :class="{'transform rotate-180': showTugasAkhir}" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-            
-          </div>
-          <div v-show="showTugasAkhir" :class="isActive(withPrefix(['/????','?????','/??????','/????????'])) ? 'pl-10 py-1 ': 'pl-8 py-1 '" class="py-1 flex flex-col gap-2 duration-200">
-            <div :class="isActive(withPrefix(['/????'])) ? 'pe-4 ' : 'block  text-gray-700 hover:text-blue-700'" class="block">
-              <router-link :to="withPrefix('/????')" :class="isActive(withPrefix(['/????'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block active:scale-95 duration-150">
-              Link 1
-              </router-link>
-            </div>
-            <div :class="isActive(withPrefix(['?????'])) ? 'text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="block">
-              <router-link :to="withPrefix('?????')" :class="isActive(withPrefix(['?????'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block active:scale-95 duration-150">
-              Link 2
-              </router-link>
-            </div>
-            <div :class="isActive(withPrefix(['/??????'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="block">
-              <router-link :to="withPrefix('/??????')" :class="isActive(withPrefix(['/??????'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block  active:scale-95 duration-150">
-              Link 3
-              </router-link>
-            </div>
-            <div :class="isActive(withPrefix(['/????????'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="block">
-              <router-link :to="withPrefix('/????????')" :class="isActive(withPrefix(['/????????'])) ? ' text-blue-600 hover:bg-blue-50 rounded' : ' text-gray-700 hover:text-blue-700'" class="px-2 block  active:scale-95 duration-150">
-              Link 4s
-              </router-link>
-            </div>  
-          </div>
-        </div>
+      </div>
+
+      <!-- Navbar  -->
+      <nav class="mt-5">
+        <SidebarLink
+          :to="withPrefix('')"
+          :active="isActive(withPrefix(['','/']))"
+          :showLabel="showNavbar"
+          label="Dashboard"
+          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' />"
+        />
+
+        <SidebarLink
+          :to="withPrefix('/bimbingan')"
+          :active="isActive(withPrefix(['/bimbingan']))"
+          :showLabel="showNavbar"
+          label="Bimbingan"
+          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25' />"
+        />
+
+        <SidebarLink
+          :to="withPrefix('/proposal')"
+          :active="isActive(withPrefix(['/proposal']))"
+          :showLabel="showNavbar"
+          label="Proposal"
+          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z' />"
+        />
+
+        <SidebarLink
+          :to="withPrefix('/tugas-akhir')"
+          :active="isActive(withPrefix(['/tugas-akhir']))"
+          :showLabel="showNavbar"
+          label="Tugas Akhir"
+          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 0 1 9 9v.375M10.125 2.25A3.375 3.375 0 0 1 13.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 0 1 3.375 3.375M9 15l2.25 2.25L15 12' />"
+        />
 
       </nav>
+
     </div>
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col">
 
       <!-- Header -->
-      <header class="bg-white shadow-sm p-4 flex justify-between items-center">
+      <header class="bg-white shadow-sm p-4 flex justify-between items-center fixed w-full z-40">
         <div class="flex items-center">
-          <button class="text-gray-500 hover:text-gray-700 focus:outline-none ">
-            <svg @click="toggleNavbar" v-show="!showNavbar" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          <button @click="toggleNavbar" class="hover:bg-gray-100 rounded-full p-1 lg:hidden active:scale-90 duration-150">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 lg:hidden">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
             </svg>
           </button>
         </div>
@@ -151,54 +98,15 @@
         </div>
 
         <!-- notifikasi -->
-         <div id="notification-menu" class="absolute top-12 right-5  mt-2 w-64 lg:w-96 bg-white shadow-lg rounded-lg z-50 duration-200" v-show="showNotification">
-          <div class="">
-            <h3 class="text-lg font-bold border-b p-2 px-4">Notifikasi</h3>
-            <ul class="px-4 overflow-auto h-64">
-              <li :class="{'opacity-70': !newNotification2}" class="py-2 border-b border-gray-200">
-                <button @click="toggleReadNotification2" class="p-1 lg:p-4 hover:bg-gray-100 rounded-lg duration-200">
-                  <div class="flex items-center justify-between">
-                    <h4 class="font-semibold text-sm lg:text-base text-left">Validasi Proposal</h4>
-                    <span class="text-[10px] lg:text-xs text-gray-400">12/03/2024 12:03</span>
-                  </div>
-                  <div class="flex items-center justify-between relative">
-                    <p class="text-sm me-4 text-left">lorem ipsum dolor sit amet lorem ipsum dolor sit amet </p>
-                    <div v-show="newNotification2" class="absolute right-0 w-4 h-4 bg-blue-500 rounded-full border-2 border-white"></div>
-                  </div>
-                </button>
-              </li>
-              <li :class="{'opacity-70': !newNotification}" class="py-2 border-b border-gray-200">
-                <button @click="toggleReadNotification" class="p-4 hover:bg-gray-100 rounded-lg duration-200">
-                  <div class="flex items-center justify-between">
-                  <h4 class="font-semibold">Validasi Proposal</h4>
-                  <span class="text-xs text-gray-400">12-03-2024 12:03</span>
-                  </div>
-                  <div class="flex items-center justify-between relative">
-                    <p class="text-sm me-4 text-left">lorem ipsum dolor sit amet lorem ipsum dolor sit amet </p>
-                    <div v-show="newNotification" class="absolute right-0 w-4 h-4 bg-blue-500 rounded-full border-2 border-white"></div>
-                  </div>
-                </button>
-              </li>
-              <li :class="{'opacity-70': !newNotification1}" class="py-2  border-gray-200">
-                <button @click="toggleReadNotification1" class="p-4 hover:bg-gray-100 rounded-lg duration-200">
-                  <div class="flex items-center justify-between">
-                  <h4 class="font-semibold">Requst Pembimbing</h4>
-                  <span class="text-xs text-gray-400">12-03-2024 12:03</span>
-                  </div>
-                  <div class="flex items-center justify-between relative">
-                    <p class="text-sm me-4 text-left">lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet</p>
-                    <div v-show="newNotification1" class="absolute right-0 w-4 h-4 bg-blue-500 rounded-full border-2 border-white"></div>
-                  </div>
-                </button>
-              </li>              
-            </ul>
-            <div>
-              <button @click="toggleReadAll" class="w-full border-t text-center py-4 hover:bg-gray-100 duration-200">
-                Tanda semua sudah dibaca
-              </button>
-            </div>
-          </div>
-         </div>
+         <Notification
+            :notifications="notifications"
+            :showNotification="showNotification"
+            @markAllAsRead="markAllAsRead"
+            @markAsRead="markAsRead"
+          />
+
+
+         <!-- user menu -->
          <div id="user-menu" class="absolute top-12 right-5  mt-2 w-64 bg-white shadow-lg rounded-lg z-50 duration-200" v-show="showUser">
           <div class="p-4">
             <ul class="">
@@ -214,7 +122,7 @@
       </header>
 
       <!-- Dashboard Content -->
-      <main class="flex-1 p-6">
+      <main v-bind:class="{'lg:ml-64': showNavbar, 'lg:ml-20': !showNavbar}" class="flex-1 p-1 sm:p-6 ml-0  bg-gray-100 duration-200 mt-16">
         <router-view/>
       </main>
       
@@ -225,27 +133,72 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute} from 'vue-router'
-
-import SemproIcon from '@/assets/images/document-arrow-up.svg'
-import SemhasIcon from '@/assets/images/document-check.svg'
-import D3TILogo from '@/assets/images/d3ti-logo.png'
-
 const route = useRoute()
 
+import D3TILogo from '@/assets/images/d3ti-logo.png'
+
+// Notifikasi
+import Notification from '@/views/Dosen/Tugas-akhir/components/Notification.vue'
+const notifications = ref([
+  {
+    id: 1,
+    title: 'Prof. Dika Anjay',
+    message: 'Telah menerima request pembimbing anda. Telah menerima request pembimbing anda. Telah menerima request pembimbing anda.',
+    time: '09/03/2024 20:03',
+    isNew: true,
+  },
+  {
+    id: 2,
+    title: 'Prof. Dika Anjay',
+    message: 'Telah menerima request pembimbing anda. Telah menerima request pembimbing anda. Telah menerima request pembimbing anda.',
+    time: '09/03/2024 20:03',
+    isNew: true,
+  },
+  {
+    id: 3,
+    title: 'Prof. Dika Anjay',
+    message: 'Telah menerima request pembimbing anda. Telah menerima request pembimbing anda. Telah menerima request pembimbing anda.',
+    time: '09/03/2024 20:03',
+    isNew: true,
+  },
+  {
+    id: 4,
+    title: 'Prof. John Doe',
+    message: 'Bimbingan telah dijadwalkan.',
+    time: '08/03/2024 18:00',
+    isNew: true,
+  },
+]);
+
+const showNotification = ref(false);
+
+const markAsRead = (notificationId) => {
+  const index = notifications.value.findIndex(n => n.id === notificationId);
+  if (index !== -1) {
+    notifications.value[index].isNew = false;
+    checkNotification();
+  }
+};
+
+const markAllAsRead = () => {
+  notifications.value.forEach((notification) => (notification.isNew = false));
+  checkNotification();
+};
+
+const checkNotification = () => {
+  hasNotification.value = notifications.value.some((notification) => notification.isNew);
+};
+
+
 const showBimbingan = ref(false)
-const showProposal = ref(false)
 const showTugasAkhir = ref(false)
 const showNavbar = ref(false)
-const showNotification = ref(false)
 const showUser = ref(false)
 const isLgScreen = ref(false)
 const hasNotification = ref(false)
-const newNotification = ref(true) 
-const newNotification1 = ref(true) 
-const newNotification2 = ref(true) 
 
 const user = ref({
-  name: 'Admin', // Nama pengguna
+  name: 'Bu Sari', // Nama pengguna
   role: 'Admin',   // Peran pengguna
 });
 
@@ -260,16 +213,12 @@ const isActive = (paths) => {
   return paths.some((path) => path === route.path);
 };
 
-const checkNotification = () => {
-  if(newNotification.value || newNotification1.value || newNotification2.value) {
-    hasNotification.value = true
-  } else {
-    hasNotification.value = false
-  }
-}
 const checkScreenSize = () => {
   isLgScreen.value = window.innerWidth >= 1024 
-  showNavbar.value = isLgScreen.value
+  if (isLgScreen.value === false) {
+    showBimbingan.value = false
+    showTugasAkhir.value = false
+  }
 }
 // Tambahkan event listener untuk resize
 onMounted(() => {
@@ -314,20 +263,22 @@ const closeDropdownOnClickOutside = (event) => {
 
 const toggleBimbingan = () => {
   showBimbingan.value = !showBimbingan.value
-}
-
-const toggleProposal = () => {
-  showProposal.value = !showProposal.value
+  showNavbar.value = true
 }
 
 const toggleTugasAkhir = () => {
   showTugasAkhir.value = !showTugasAkhir.value
+  showNavbar.value = true
 }
 
 const toggleNavbar = () => {
   showNavbar.value = !showNavbar.value
-  showNotification.value = false
-
+  if (isLgScreen.value == false) {
+    showNotification.value = false
+    showUser.value = false
+  }
+  showBimbingan.value = false
+  showTugasAkhir.value = false
 }
 const toggleNotification = () => {
   showNotification.value = !showNotification.value
@@ -344,24 +295,7 @@ const toggleUser = () => {
   }
 }
 
-const toggleReadNotification = () => {
-  newNotification.value = false
-  checkNotification()
-
-}
-const toggleReadNotification1 = () => {
-  newNotification1.value = false
-  checkNotification()
-}
-const toggleReadNotification2 = () => {
-  newNotification2.value = false
-  checkNotification()
-}
-
-const toggleReadAll = () => {
-  newNotification.value = false
-  newNotification1.value = false
-  newNotification2.value = false
-  checkNotification()
-}
+// sidebar 
+import SidebarLink from '@/views/Dosen/Tugas-akhir/components/SidebarLink.vue'
+import SidebarDropdown from '@/views/Dosen/Tugas-akhir/components/SidebarDropdown.vue'
 </script>

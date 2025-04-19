@@ -68,6 +68,18 @@ const routes = [
         path: '',
         component: DashboardTAAdmin, // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
+      {
+        path: 'bimbingan',
+        component: DashboardTAAdmin, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'proposal',
+        component: DashboardTAAdmin, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'tugas-akhir',
+        component: DashboardTAAdmin, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
     ],
   },
   {
@@ -76,6 +88,18 @@ const routes = [
     children: [
       {
         path: '',
+        component: DashboardTAMhs, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'bimbingan',
+        component: DashboardTAMhs, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'proposal',
+        component: DashboardTAMhs, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+      },
+      {
+        path: 'tugas-akhir',
         component: DashboardTAMhs, // Konten halaman akan dirender di <router-view> dalam AdminLayout
       },
     ],
