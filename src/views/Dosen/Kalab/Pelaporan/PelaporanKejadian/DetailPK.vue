@@ -296,7 +296,7 @@ export default {
         formatStatus(status) {
             const statusMap = {
                 'unverified': 'Belum Diverifikasi',
-                'verified': 'Diverifikasi',
+                'verified': 'Diproses',
                 'rejected': 'Ditolak'
             };
             

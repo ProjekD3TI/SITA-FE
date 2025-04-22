@@ -105,9 +105,40 @@
             </div>
           </div>
           
-          <div v-if="laporan.tanggapan" class="card">
-            <h3>Tanggapan dari Kalab</h3>
-            <p class="tanggapan">{{ laporan.tanggapan }}</p>
+          <!-- Tanggapan Card - Updated to handle both string and array types -->
+          <div class="card" v-if="hasTanggapan">
+            <h3>
+              <i class="fas fa-comment-alt"></i> Tanggapan
+            </h3>
+            
+            <!-- For string tanggapan (old format) -->
+            <p class="tanggapan-text" v-if="typeof laporan.tanggapan === 'string'">
+              {{ laporan.tanggapan }}
+            </p>
+            
+            <!-- For array tanggapan (new format) -->
+            <div v-else class="tanggapan-list">
+              <div v-for="(item, index) in laporan.tanggapan" :key="index" class="tanggapan-item">
+                <div class="tanggapan-header">
+                  <span class="tanggapan-user">{{ item.user || 'Admin' }}</span>
+                  <span class="tanggapan-time">{{ formatDate(item.timestamp) }}</span>
+                </div>
+                <p class="tanggapan-text">{{ item.text }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Action Buttons - Tombol untuk admin -->
+          <div class="action-buttons" v-if="isAdmin">
+            <button class="btn btn-primary" @click="verifyReport" v-if="laporan.status === 'unverified'">
+              <i class="fas fa-check"></i> Verifikasi Laporan
+            </button>
+            <button class="btn btn-danger" @click="rejectReport" v-if="laporan.status === 'unverified'">
+              <i class="fas fa-times"></i> Tolak Laporan
+            </button>
+            <button class="btn btn-secondary" @click="showTanggapanModal = true">
+              <i class="fas fa-comment"></i> Tambah Tanggapan
+            </button>
           </div>
         </div>
         
@@ -122,6 +153,54 @@
             >
           </div>
         </div>
+        
+        <!-- Modal for adding tanggapan -->
+        <div class="modal-overlay" v-if="showTanggapanModal">
+          <div class="modal-container" @click.stop>
+            <div class="modal-header">
+              <h3>Tambah Tanggapan</h3>
+              <button class="close-button" @click="showTanggapanModal = false">&times;</button>
+            </div>
+            <div class="modal-body">
+              <textarea 
+                v-model="tanggapanText" 
+                placeholder="Masukkan tanggapan anda di sini..." 
+                rows="5"
+                class="tanggapan-textarea">
+              </textarea>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-cancel" @click="showTanggapanModal = false">Batal</button>
+              <button class="btn-save" @click="saveTanggapan" :disabled="!tanggapanText.trim()">
+                Simpan Tanggapan
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Verification confirmation modal -->
+        <div class="modal-overlay" v-if="showVerificationModal">
+          <div class="modal-container" @click.stop>
+            <div class="modal-header">
+              <h3>Konfirmasi Verifikasi</h3>
+              <button class="close-button" @click="showVerificationModal = false" :disabled="isVerifying">&times;</button>
+            </div>
+            <div class="modal-body">
+              <p>Apakah Anda yakin ingin memverifikasi laporan ini? Pastikan semua data sudah benar.</p>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-secondary" @click="showVerificationModal = false" :disabled="isVerifying">Batal</button>
+              <button class="btn-primary" @click="confirmVerification" :disabled="isVerifying">
+                <span v-if="isVerifying">
+                  <i class="fas fa-spinner fa-spin"></i> Memproses...
+                </span>
+                <span v-else>
+                  <i class="fas fa-check"></i> Yakin, Verifikasi
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
       <Footer />
     </div>
@@ -133,6 +212,7 @@ import Header from '../components/Header.vue';
 import Sidebar from '../components/Sidebar.vue';
 import Footer from '../components/Footer.vue';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 export default {
   components: {
@@ -152,12 +232,30 @@ export default {
       showVerificationModal: false,
       showTanggapanModal: false,
       tanggapanText: '',
-      isVerifying: false
+      isVerifying: false,
+      currentUser: localStorage.getItem('userName') || 'Miftahul',
     };
   },
   created() {
     this.laporanId = this.$route.params.id;
     console.log("ID dari route:", this.laporanId); // Debug log
+    
+    // Get current user information from localStorage or any other auth source
+    this.currentUser = localStorage.getItem('userName') || 'Miftahul';
+    
+    // If no user in localStorage, try to get from authenticated user object
+    if (this.currentUser === 'Miftahul' && localStorage.getItem('user')) {
+      try {
+        const userObj = JSON.parse(localStorage.getItem('user'));
+        if (userObj && userObj.name) {
+          this.currentUser = userObj.name;
+        }
+      } catch (e) {
+        console.error('Failed to parse user from localStorage', e);
+      }
+    }
+    
+    console.log("Current user:", this.currentUser);
     
     if (!this.laporanId) {
       this.error = "ID laporan tidak ditemukan";
@@ -177,6 +275,16 @@ export default {
         'rejected': 'status-rejected',
       };
       return statusMap[this.laporan.status] || 'status-default';
+    },
+    hasTanggapan() {
+      if (!this.laporan) return false;
+      if (!this.laporan.tanggapan) return false;
+      
+      if (Array.isArray(this.laporan.tanggapan)) {
+        return this.laporan.tanggapan.length > 0;
+      }
+      
+      return typeof this.laporan.tanggapan === 'string' && this.laporan.tanggapan.trim() !== '';
     }
   },
   methods: {
@@ -191,11 +299,11 @@ export default {
             }, {});
           } else {
             console.error('Unexpected category data format:', response.data);
-            this.categories = fallbackCategories;
+            this.categories = {};
           }
         } catch (apiError) {
           console.error('Error fetching categories:', apiError);
-          this.categories = fallbackCategories;
+          this.categories = {};
         }
       } catch (error) {
         console.error('Error in fetchCategories:', error);
@@ -219,7 +327,22 @@ export default {
           const response = await axios.get(`http://localhost:8000/api/laporan/${id}`);
           console.log("API Response:", response.data);
           this.laporan = response.data;
-          this.tanggapanText = this.laporan.tanggapan || '';
+          
+          // Process tanggapan data
+          if (this.laporan.tanggapan) {
+            // Try to parse if it's a JSON string
+            try {
+              const parsed = JSON.parse(this.laporan.tanggapan);
+              if (Array.isArray(parsed)) {
+                this.laporan.tanggapan = parsed;
+              }
+            } catch (e) {
+              // If it's not valid JSON, keep it as a string
+              console.log('Tanggapan is not in JSON format, keeping as string');
+            }
+          }
+          
+          this.tanggapanText = '';
           this.loading = false;
         } catch (apiError) {
           console.error('Error fetching laporan detail:', apiError);
@@ -229,7 +352,7 @@ export default {
 
           this.error = null;
           this.loading = false;
-          this.tanggapanText = this.laporan.tanggapan || '';
+          this.tanggapanText = '';
         }
       } catch (error) {
         console.error('Error in fetchLaporan:', error);
@@ -246,15 +369,33 @@ export default {
       if (!dateString) return '-';
       
       try {
+        // If the date is already in the YYYY-MM-DD HH:MM:SS format with no 'T' and 'Z'
+        // we need to convert it to a proper ISO format for the Date constructor
+        let date;
+        if (typeof dateString === 'string' && dateString.includes(' ') && !dateString.includes('T')) {
+          // Replace space with 'T' and add 'Z' for UTC if not present
+          const hasZ = dateString.endsWith('Z');
+          date = new Date((dateString.replace(' ', 'T') + (hasZ ? '' : '')));
+          
+          // Adjust for Indonesia timezone (GMT+7)
+          // This is needed if the date is coming as UTC and we need to add 7 hours
+          date = new Date(date.getTime() + (7 * 60 * 60 * 1000));
+        } else {
+          // If it's already in a proper format that JS Date can parse
+          date = new Date(dateString);
+        }
+        
+        // Format the date in Indonesian style
         const options = { 
           day: 'numeric', 
           month: 'long', 
           year: 'numeric',
           hour: '2-digit',
-          minute: '2-digit'
+          minute: '2-digit',
+          timeZone: 'Asia/Jakarta' // Set the timezone to Indonesia's timezone (GMT+7)
         };
         
-        return new Date(dateString).toLocaleDateString('id-ID', options);
+        return date.toLocaleDateString('id-ID', options);
       } catch (e) {
         console.error('Error formatting date:', e);
         return dateString;
@@ -304,6 +445,248 @@ export default {
     verifyReport() {
       this.showVerificationModal = true;
     },
+    
+    async confirmVerification() {
+      this.isVerifying = true;
+      
+      try {
+        // Your verification API call
+        await axios.put(`http://localhost:8000/api/laporan/update_status/${this.laporanId}`, {
+          status: 'verified'
+        });
+        
+        // Update local data after successful verification
+        this.laporan.status = 'verified';
+        
+        // Show success message
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Laporan berhasil diverifikasi',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        });
+      } catch (error) {
+        console.error('Verification failed:', error);
+        // Show error message
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal!',
+          text: 'Gagal memverifikasi laporan',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        });
+      } finally {
+        this.isVerifying = false;
+        this.showVerificationModal = false; // Close the modal after processing
+      }
+    },
+    
+    async rejectReport() {
+      try {
+        if (!this.laporanId) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Laporan ID tidak ditemukan',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+          });
+          return;
+        }
+        
+        // Log what we're sending to help debug
+        console.log('Rejecting report:', {
+          laporanId: this.laporanId
+        });
+        
+        // Make the API call using POST with _method: PUT
+        const formData = new FormData();
+        formData.append('_method', 'PUT');
+        formData.append('status', 'rejected');
+
+        const response = await axios.post(
+          `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+          formData
+        );
+                      
+        // Check if response has data
+        console.log('Response:', response);
+        
+        // Update local data after successful rejection
+        this.laporan.status = 'rejected';
+        
+        // Show success message with Swal
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Laporan berhasil ditolak',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        });
+        
+        // Refresh data
+        await this.fetchLaporan(this.laporanId);
+        
+      } catch (error) {
+        console.error('Error rejecting report:', error);
+        // Safely access error message with optional chaining
+        const errorMessage = error.response?.data?.message || 'Gagal menolak laporan';
+        
+        // Show error message with Swal
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal!',
+          text: `Gagal menolak laporan: ${errorMessage}`,
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        });
+      }
+    },
+    
+    async saveTanggapan() {
+      try {
+        if (!this.laporanId) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Laporan ID tidak ditemukan',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+          });
+          return;
+        }
+        
+        // Make the API call first to get updated_at value
+        const formData = new FormData();
+        formData.append('_method', 'PUT');
+        formData.append('tanggapan', this.tanggapanText); // Temporary single string for API call
+        
+        // Include the current status to maintain it
+        if (this.laporan && this.laporan.status) {
+          formData.append('status', this.laporan.status);
+        } else {
+          formData.append('status', 'pending');
+        }
+        
+        const response = await axios.post(
+          `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+          formData
+        );
+        
+        console.log('Response:', response);
+        
+        // Get the updated data to get the new updated_at timestamp
+        const updatedResponse = await axios.get(`http://localhost:8000/api/laporan/${this.laporanId}`);
+        const updatedData = updatedResponse.data;
+        
+        // Now create the tanggapan array with the new timestamp from updated_at
+        // Create a new response object with text and timestamp from the API's updated_at
+        const newTanggapan = {
+          text: this.tanggapanText,
+          timestamp: updatedData.updated_at, // Using the updated_at from API response
+          user: this.currentUser
+        };
+        
+        // Prepare the tanggapan array
+        let tanggapanArray = [];
+        
+        if (this.laporan.tanggapan) {
+          // If tanggapan exists and is already an array, use it
+          if (Array.isArray(this.laporan.tanggapan)) {
+            tanggapanArray = [...this.laporan.tanggapan];
+          } 
+          // If tanggapan exists but is a string (old format), convert it to array
+          else if (typeof this.laporan.tanggapan === 'string' && this.laporan.tanggapan.trim() !== '') {
+            tanggapanArray = [{
+              text: this.laporan.tanggapan,
+              timestamp: this.laporan.updated_at, // Use the previous update time 
+              user: 'Admin'
+            }];
+          }
+        }
+        
+        // Add the new response
+        tanggapanArray.push(newTanggapan);
+        
+        // Update tanggapan with the array format
+        const arrayFormData = new FormData();
+        arrayFormData.append('_method', 'PUT');
+        arrayFormData.append('tanggapan', JSON.stringify(tanggapanArray));
+        
+        // Include the current status to maintain it
+        if (this.laporan && this.laporan.status) {
+          arrayFormData.append('status', this.laporan.status);
+        } else {
+          arrayFormData.append('status', 'pending');
+        }
+
+        // Make second API call to update with the array
+        await axios.post(
+          `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+          arrayFormData
+        );
+        
+        // Update local data after successful submission
+        this.laporan.tanggapan = tanggapanArray;
+        this.laporan.updated_at = updatedData.updated_at;
+        
+        // Show success message
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Tanggapan berhasil disimpan',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        });
+        
+        // Reset and close modal
+        this.tanggapanText = '';
+        this.showTanggapanModal = false;
+        
+        // Refresh data
+        await this.fetchLaporan(this.laporanId);
+        
+      } catch (error) {
+        console.error('Error saving tanggapan:', error);
+        
+        // More detailed error logging for debugging
+        if (error.response) {
+          console.error('Error response data:', error.response.data);
+          console.error('Error response status:', error.response.status);
+          console.error('Error response headers:', error.response.headers);
+        }
+        
+        // Try to get a more specific error message
+        const errorMessage = error.response?.data?.message || 
+                      error.response?.data?.error || 
+                      'Gagal menyimpan tanggapan';
+        
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal!',
+          text: `Gagal menyimpan tanggapan: ${errorMessage}`,
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        });
+      }
+    }
   }
 };
 </script>
@@ -497,6 +880,7 @@ export default {
   display: flex;
   gap: 10px;
   margin-top: 20px;
+  margin-bottom: 30px;
 }
 
 .btn {
@@ -586,6 +970,8 @@ export default {
   font-weight: 600;
   color: #111827;
   margin: 0;
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 .close-button {
@@ -616,6 +1002,63 @@ export default {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+.btn-cancel, .btn-save {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background-color: #f3f4f6;
+  color: #4b5563;
+  border: 1px solid #d1d5db;
+}
+
+.btn-save {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+}
+
+/* Tanggapan styling from DetailPK.vue */
+.tanggapan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tanggapan-item {
+  border-left: 3px solid #3b82f6;
+  padding-left: 16px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.tanggapan-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.tanggapan-user {
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.tanggapan-time {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.tanggapan-text {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #374151;
+  white-space: pre-line;
+  margin: 0;
 }
 
 @media (max-width: 768px) {

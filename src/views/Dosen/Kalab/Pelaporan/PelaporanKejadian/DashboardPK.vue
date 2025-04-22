@@ -99,7 +99,7 @@
             >
               <option value="">Semua</option>
               <option value="Belum Diverifikasi">Belum Diverifikasi</option>
-              <option value="Diverifikasi">Diverifikasi</option>
+              <option value="Diproses">Diproses</option>
               <option value="Ditolak">Ditolak</option>
             </select>
           </div>
@@ -337,7 +337,7 @@ export default {
         // Map frontend status labels to actual status values in the data
         const statusMap = {
           'Belum Diverifikasi': 'unverified',
-          'Diverifikasi': 'verified',
+          'Diproses': 'verified',
           'Ditolak': 'rejected'
         };
         
@@ -406,7 +406,7 @@ export default {
         // Map frontend status labels to actual status values in the data
         const statusMap = {
           'Belum Diverifikasi': 'unverified',
-          'Diverifikasi': 'verified',
+          'Diproses': 'verified',
           'Ditolak': 'rejected'
         };
         
@@ -530,7 +530,7 @@ export default {
     formatStatus(status) {
       const statusMap = {
         'unverified': 'Belum Diverifikasi',
-        'verified': 'Diverifikasi',
+        'verified': 'Diproses',
         'rejected': 'Ditolak'
       };
       
