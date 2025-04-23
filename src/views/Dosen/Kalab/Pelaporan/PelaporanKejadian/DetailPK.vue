@@ -37,9 +37,20 @@
                 </div>
                 <p class="description">{{ laporan.deskripsi }}</p>
                 
-                <div v-if="laporan.image_path" class="image-container">
-                    <img :src="getImageUrl(laporan.image_path)" alt="Gambar Kejadian" class="evidence-image" @click="showFullImage = true">
-                    <div class="image-caption">Foto Bukti Kejadian (klik untuk memperbesar)</div>
+                <!-- Multiple images gallery -->
+                <div v-if="imageArray.length > 0" class="images-gallery">
+                    <h3 class="gallery-title">Foto Bukti Kejadian</h3>
+                    <div class="image-grid">
+                        <div 
+                            v-for="(image, index) in imageArray" 
+                            :key="index" 
+                            class="image-item"
+                            @click="openLightbox(index)"
+                        >
+                            <img :src="getImageUrl(image)" :alt="`Bukti Kejadian ${index + 1}`" class="evidence-image">
+                        </div>
+                    </div>
+                    <div class="image-caption">Klik foto untuk memperbesar</div>
                 </div>
             </div>
 
@@ -117,10 +128,21 @@
         </div>
 
         <!-- Modal for full image view -->
-        <div class="fullscreen-modal" v-if="showFullImage" @click="showFullImage = false">
+        <div class="fullscreen-modal" v-if="showLightbox" @click="closeLightbox">
             <div class="modal-content">
                 <span class="close-modal">&times;</span>
-                <img :src="getImageUrl(laporan.image_path)" alt="Bukti Kejadian" class="fullscreen-image">
+                <img :src="getImageUrl(imageArray[currentImageIndex])" alt="Bukti Kejadian" class="fullscreen-image">
+                
+                <!-- Navigation buttons for multiple images -->
+                <div class="lightbox-navigation" @click.stop v-if="imageArray.length > 1">
+                    <button class="nav-button prev" @click.stop="prevImage" v-if="currentImageIndex > 0">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div class="image-counter">{{ currentImageIndex + 1 }} / {{ imageArray.length }}</div>
+                    <button class="nav-button next" @click.stop="nextImage" v-if="currentImageIndex < imageArray.length - 1">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -188,7 +210,8 @@ export default {
             loading: false,
             loadingAction: false,
             error: null,
-            showFullImage: false,
+            showLightbox: false,
+            currentImageIndex: 0,
             showTanggapanModal: false,
             tanggapanText: '',
             showVerificationModal: false,
@@ -213,6 +236,34 @@ export default {
             }
             
             return typeof this.laporan.tanggapan === 'string' && this.laporan.tanggapan.trim() !== '';
+        },
+        
+        // Process image path to get an array of images
+        imageArray() {
+            if (!this.laporan || !this.laporan.image_path) return [];
+            
+            // If already an array, return it
+            if (Array.isArray(this.laporan.image_path)) {
+                return this.laporan.image_path;
+            }
+            
+            // If it's a JSON string, parse it
+            if (typeof this.laporan.image_path === 'string') {
+                try {
+                    const parsedArray = JSON.parse(this.laporan.image_path);
+                    if (Array.isArray(parsedArray)) {
+                        return parsedArray;
+                    }
+                } catch (e) {
+                    // Not a valid JSON or parsing error, treat as a single image
+                    console.log('Not a JSON string, treating as single image');
+                }
+                
+                // If not a parseable JSON array, return as single item array
+                return [this.laporan.image_path];
+            }
+            
+            return [];
         }
     },
     
@@ -312,7 +363,36 @@ export default {
         },
         
         getImageUrl(imagePath) {
+            if (!imagePath) return '';
             return `http://localhost:8000/storage/laporan/${imagePath}`;
+        },
+        
+        // Lightbox methods for multiple images
+        openLightbox(index) {
+            this.currentImageIndex = index;
+            this.showLightbox = true;
+            // Prevent scrolling when lightbox is open
+            document.body.style.overflow = 'hidden';
+        },
+        
+        closeLightbox() {
+            this.showLightbox = false;
+            // Restore scrolling
+            document.body.style.overflow = '';
+        },
+        
+        prevImage(e) {
+            if (e) e.stopPropagation();
+            if (this.currentImageIndex > 0) {
+                this.currentImageIndex--;
+            }
+        },
+        
+        nextImage(e) {
+            if (e) e.stopPropagation();
+            if (this.currentImageIndex < this.imageArray.length - 1) {
+                this.currentImageIndex++;
+            }
         },
         
         async updateStatus(newStatus) {
@@ -846,20 +926,43 @@ export default {
     white-space: pre-line;
 }
 
-.image-container {
-    margin-top: 20px;
+/* Updated styles for multiple images */
+.images-gallery {
+    margin-top: 24px;
+}
+
+.gallery-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 16px;
+}
+
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.image-item {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+}
+
+.image-item:hover {
+    transform: scale(1.03);
 }
 
 .evidence-image {
-    max-width: 100%;
-    max-height: 400px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.evidence-image:hover {
-    transform: scale(1.02);
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .image-caption {
@@ -1000,7 +1103,7 @@ export default {
     background-color: #4b5563;
 }
 
-/* Full image modal */
+/* Updated lightbox for multiple images */
 .fullscreen-modal {
     position: fixed;
     top: 0;
@@ -1028,6 +1131,44 @@ export default {
     font-size: 32px;
     font-weight: bold;
     cursor: pointer;
+}
+
+/* Navigation for image lightbox */
+.lightbox-navigation {
+    position: absolute;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-button {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.nav-button:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.image-counter {
+    color: white;
+    font-size: 1rem;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 6px 12px;
+    border-radius: 16px;
 }
 
 /* Tanggapan modal */
@@ -1161,6 +1302,16 @@ export default {
     .btn-primary, .btn-success, .btn-danger, .btn-secondary {
         width: 100%;
         justify-content: center;
+    }
+    
+    .image-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .image-grid {
+        grid-template-columns: 1fr;
     }
 }
 </style>
