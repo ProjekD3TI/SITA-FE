@@ -138,6 +138,7 @@
                           <option value="Belum Diverifikasi">Belum Diverifikasi</option>
                           <option value="Diverifikasi">Diverifikasi</option>
                           <option value="Ditolak">Ditolak</option>
+                          <option value="Selesai">Selesai</option>
                         </select>
                       </div>
                       
@@ -386,8 +387,8 @@ export default {
             
             // Apply status filter
             if (this.filters.status) {
-                const statusValue = this.filters.status === 'Selesai' ? 'verified' : 
-                                  this.filters.status === 'Dalam Proses' ? 'unverified' : null;
+                const statusValue = this.filters.status === 'Dalam Proses' ? 'verified' : 
+                                  this.filters.status === 'Dalam Antrian' ? 'unverified' : null;
                 
                 if (statusValue) {
                     result = result.filter(item => item.status === statusValue);
@@ -508,8 +509,9 @@ export default {
                 // Map the display status back to the database status values
                 const statusMap = {
                     'Belum Diverifikasi': 'unverified',
-                    'Diverifikasi': 'verified', 
-                    'Ditolak': 'rejected'
+                    'Diproses': 'verified', 
+                    'Ditolak': 'rejected',
+                    'Selesai': 'finished'
                 };
                 
                 const statusValue = statusMap[this.filters.status];
@@ -659,8 +661,8 @@ export default {
                 
                 // Calculate summary statistics
                 this.totalLaporan = this.laporan.length;
-                this.dalamProses = this.laporan.filter(item => item.status === 'unverified').length;
-                this.selesai = this.laporan.filter(item => item.status === 'verified').length;
+                this.dalamProses = this.laporan.filter(item => item.status === 'verified').length;
+                this.selesai = this.laporan.filter(item => item.status === 'finished').length;
                 
                 // Clear any previous errors
                 this.error = null;
@@ -690,11 +692,13 @@ export default {
             
             switch (status.toLowerCase()) {
                 case 'verified':
-                    return 'Diverifikasi';
+                    return 'Diproses';
                 case 'unverified':
                     return 'Belum Diverifikasi';
                 case 'rejected':
                     return 'Ditolak';
+                case 'finished':
+                    return 'Selesai';
                 default:
                     return status;
             }
@@ -717,8 +721,9 @@ export default {
         getStatusClass(status) {
             const classMap = {
                 'Belum Diverifikasi': 'px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800',
-                'Diverifikasi': 'px-2 py-1 text-xs rounded-full bg-green-100 text-green-800',
-                'Ditolak': 'px-2 py-1 text-xs rounded-full bg-red-100 text-red-800'
+                'Diproses': 'px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800', // Changed color for "Diproses"
+                'Ditolak': 'px-2 py-1 text-xs rounded-full bg-red-100 text-red-800',
+                'Selesai': 'px-2 py-1 text-xs rounded-full bg-green-100 text-green-800', // Added style for "Selesai"
             };
             
             return classMap[status] || 'px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800';
@@ -812,8 +817,9 @@ export default {
                 // Map frontend status labels to actual status values in the data
                 const statusMap = {
                 'Belum Diverifikasi': 'unverified',
-                'Diverifikasi': 'verified',
-                'Ditolak': 'rejected'
+                'Diproses': 'verified',
+                'Ditolak': 'rejected',
+                'Selesai': 'finished'
                 };
                 
                 const statusValue = statusMap[this.filters.status] || this.filters.status;

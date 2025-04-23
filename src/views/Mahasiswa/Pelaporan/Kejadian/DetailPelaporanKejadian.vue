@@ -17,12 +17,19 @@
         
         <div v-else class="detail-content">
           <div class="header-section">
-            <div class="back-button" @click="goBack">
-              <i class="fas fa-arrow-left"></i> Kembali
+            <!-- Back button at the top -->
+            <div class="w-full mb-3">
+              <div class="back-button" @click="goBack">
+                <i class="fas fa-arrow-left"></i> Kembali
+              </div>
             </div>
-            <h2>Detail Laporan Kejadian</h2>
-            <div class="laporan-id">{{ laporan.nomor_laporan }}</div>
-            <div class="status-badge" :class="getStatusClass">{{ formatStatus(laporan.status) }}</div>
+            
+            <!-- Detail information below the back button -->
+            <div class="flex flex-wrap items-center w-full">
+              <h2 class="text-2xl font-semibold mr-3">Detail Laporan Kejadian</h2>
+              <div class="laporan-id mr-3">{{ laporan.nomor_laporan }}</div>
+              <div class="status-badge" :class="getStatusClass">{{ formatStatus(laporan.status) }}</div>
+            </div>
           </div>
           
           <div class="card">
@@ -130,14 +137,11 @@
           
           <!-- Action Buttons - Tombol untuk admin -->
           <div class="action-buttons" v-if="isAdmin">
-            <button class="btn btn-primary" @click="verifyReport" v-if="laporan.status === 'unverified'">
-              <i class="fas fa-check"></i> Verifikasi Laporan
-            </button>
-            <button class="btn btn-danger" @click="rejectReport" v-if="laporan.status === 'unverified'">
-              <i class="fas fa-times"></i> Tolak Laporan
-            </button>
-            <button class="btn btn-secondary" @click="showTanggapanModal = true">
+            <button class="btn btn-secondary" @click="showTanggapanModal = true" v-if="laporan.status !== 'finished'">
               <i class="fas fa-comment"></i> Tambah Tanggapan
+            </button>
+            <button class="btn btn-success" @click="finishReport" v-if="laporan.status !== 'finished' && laporan.status !== 'unverified'">
+              <i class="fas fa-check-circle"></i> Tutup Kasus
             </button>
           </div>
         </div>
@@ -273,6 +277,7 @@ export default {
         'unverified': 'status-waiting',
         'verified': 'status-processing',
         'rejected': 'status-rejected',
+        'finished': 'status-completed',
       };
       return statusMap[this.laporan.status] || 'status-default';
     },
@@ -329,18 +334,30 @@ export default {
           this.laporan = response.data;
           
           // Process tanggapan data
+          console.log('Original tanggapan data:', this.laporan.tanggapan);
+          
           if (this.laporan.tanggapan) {
             // Try to parse if it's a JSON string
             try {
               const parsed = JSON.parse(this.laporan.tanggapan);
+              console.log('Successfully parsed tanggapan JSON:', parsed);
+              
               if (Array.isArray(parsed)) {
                 this.laporan.tanggapan = parsed;
+                console.log('Set tanggapan as array:', this.laporan.tanggapan);
+              } else {
+                console.log('Parsed JSON is not an array:', parsed);
               }
             } catch (e) {
               // If it's not valid JSON, keep it as a string
-              console.log('Tanggapan is not in JSON format, keeping as string');
+              console.log('Tanggapan is not in JSON format, keeping as string:', e.message);
             }
+          } else {
+            console.log('No tanggapan data received from API');
           }
+          
+          console.log('Final tanggapan value:', this.laporan.tanggapan);
+          console.log('hasTanggapan computed property:', this.hasTanggapan);
           
           this.tanggapanText = '';
           this.loading = false;
@@ -405,13 +422,9 @@ export default {
     formatStatus(status) {
       const statusMap = {
         'unverified': 'Belum Diverifikasi',
-        'verified': 'Diverifikasi',
+        'verified': 'Diproses',
         'rejected': 'Ditolak',
-        'completed': 'Selesai',
-        'Diproses': 'Diproses',
-        'Selesai': 'Selesai',
-        'Ditolak': 'Ditolak',
-        'Menunggu': 'Menunggu'
+        'finished': 'Laporan Selesai',
       };
       
       return statusMap[status] || status;
@@ -546,6 +559,114 @@ export default {
           icon: 'error',
           title: 'Gagal!',
           text: `Gagal menolak laporan: ${errorMessage}`,
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        });
+      }
+    },
+
+    async finishReport() {
+      try {
+        if (!this.laporanId) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Laporan ID tidak ditemukan',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+          });
+          return;
+        }
+        
+        console.log('Before finishing - Current tanggapan:', this.laporan.tanggapan);
+        
+        // Show confirmation dialog first
+        const result = await Swal.fire({
+          title: 'Tutup Kasus Laporan',
+          text: 'Apakah Anda yakin ingin menutup dan menyelesaikan kasus laporan ini?',
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Ya, Selesaikan!',
+          cancelButtonText: 'Batal'
+        });
+        
+        if (!result.isConfirmed) {
+          return; // User canceled
+        }
+        
+        // Make the API call using POST with _method: PUT
+        const formData = new FormData();
+        formData.append('_method', 'PUT');
+        formData.append('status', 'finished');
+        
+        // IMPORTANT: Preserve the existing tanggapan data
+        if (this.laporan.tanggapan) {
+          let tanggapanData = this.laporan.tanggapan;
+          
+          console.log('Type of tanggapan data:', typeof tanggapanData);
+          
+          // If it's already a string (old format), keep it as is
+          if (typeof tanggapanData !== 'string') {
+            // If it's an array (new format), convert it to JSON string
+            tanggapanData = JSON.stringify(tanggapanData);
+            console.log('Converted tanggapan data to string:', tanggapanData);
+          } else {
+            console.log('Tanggapan was already a string:', tanggapanData);
+          }
+          
+          formData.append('tanggapan', tanggapanData);
+        } else {
+          console.log('No tanggapan data to preserve');
+        }
+
+        // Log form data being sent
+        for (let [key, value] of formData.entries()) {
+          console.log(`${key}: ${value}`);
+        }
+
+        const response = await axios.post(
+          `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+          formData
+        );
+                      
+        // Check if response has data
+        console.log('Response from status update:', response.data);
+        
+        // Update local data after successful completion
+        this.laporan.status = 'finished';
+        
+        // Show success message with Swal
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Laporan berhasil ditutup dan selesai',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        });
+        
+        // Refresh data to ensure we have the latest tanggapan
+        await this.fetchLaporan(this.laporanId);
+        console.log('After refresh - tanggapan:', this.laporan.tanggapan);
+        console.log('After refresh - hasTanggapan:', this.hasTanggapan);
+        
+      } catch (error) {
+        console.error('Error finishing report:', error);
+        // Safely access error message with optional chaining
+        const errorMessage = error.response?.data?.message || 'Gagal menyelesaikan laporan';
+        
+        // Show error message with Swal
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal!',
+          text: `Gagal menyelesaikan laporan: ${errorMessage}`,
           toast: true,
           position: 'top-end',
           showConfirmButton: false,
@@ -733,13 +854,12 @@ export default {
 
 .header-section {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   margin-bottom: 20px;
-  flex-wrap: wrap;
 }
 
 .back-button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   color: #4b5563;
   font-weight: 500;
@@ -747,7 +867,8 @@ export default {
   padding: 8px 12px;
   border-radius: 6px;
   background-color: #f3f4f6;
-  margin-right: 16px;
+  margin-bottom: 10px;
+  width: fit-content;
   transition: background-color 0.2s;
 }
 
@@ -767,7 +888,6 @@ export default {
 .laporan-id {
   font-weight: 500;
   color: #666;
-  margin-right: 15px;
 }
 
 .status-badge {
@@ -778,8 +898,8 @@ export default {
 }
 
 .status-processing {
-  background-color: #e3f2fd;
-  color: #1976d2;
+  background-color: #fff3e0;
+  color: #ef6c00;
 }
 
 .status-completed {
@@ -1059,6 +1179,20 @@ export default {
   color: #374151;
   white-space: pre-line;
   margin: 0;
+}
+
+.btn-success {
+  background-color: #10b981;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #059669;
+}
+
+.status-finished {
+  background-color: #d1fae5;
+  color: #059669;
 }
 
 @media (max-width: 768px) {
