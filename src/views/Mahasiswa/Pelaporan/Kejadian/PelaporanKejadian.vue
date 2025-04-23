@@ -720,7 +720,7 @@ export default {
         // Get status class for styling
         getStatusClass(status) {
             const classMap = {
-                'Belum Diverifikasi': 'px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800',
+                'Belum Diverifikasi': 'px-2 py-1 text-xs rounded-full bg-slate-100 text-slate-800',
                 'Diproses': 'px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800', // Changed color for "Diproses"
                 'Ditolak': 'px-2 py-1 text-xs rounded-full bg-red-100 text-red-800',
                 'Selesai': 'px-2 py-1 text-xs rounded-full bg-green-100 text-green-800', // Added style for "Selesai"

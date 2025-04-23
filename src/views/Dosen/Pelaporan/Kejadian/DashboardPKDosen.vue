@@ -117,8 +117,9 @@
                         >
                           <option value="">Semua</option>
                           <option value="Belum Diverifikasi">Belum Diverifikasi</option>
-                          <option value="Diverifikasi">Diverifikasi</option>
+                          <option value="Diverifikasi">Diproses</option>
                           <option value="Ditolak">Ditolak</option>
+                          <option value="Selesai">Selesai</option>
                         </select>
                       </div>
                       
@@ -425,8 +426,8 @@ export default {
         
         // Calculate summary statistics
         this.totalLaporan = this.laporan.length;
-        this.dalamProses = this.laporan.filter(item => item.status === 'unverified').length;
-        this.selesai = this.laporan.filter(item => item.status === 'verified').length;
+        this.dalamProses = this.laporan.filter(item => item.status === 'verified').length;
+        this.selesai = this.laporan.filter(item => item.status === 'finished').length;
         
         console.log('Data loaded successfully:', this.laporan);
       } catch (error) {
@@ -454,8 +455,9 @@ export default {
     formatStatus(status) {
       const statusMap = {
         'unverified': 'Belum Diverifikasi',
-        'verified': 'Diverifikasi',
-        'rejected': 'Ditolak'
+        'verified': 'Diproses',
+        'rejected': 'Ditolak',
+        'finished': 'Selesai'
       };
       
       return statusMap[status] || status;
@@ -500,7 +502,8 @@ export default {
         const statusMap = {
           'Belum Diverifikasi': 'unverified',
           'Diverifikasi': 'verified', 
-          'Ditolak': 'rejected'
+          'Ditolak': 'rejected',
+          'Selesai': 'finished'
         };
         
         const statusValue = statusMap[this.filters.status];
@@ -604,9 +607,10 @@ export default {
     // Get status badge class
     getStatusClass(status) {
       const classMap = {
-        'Belum Diverifikasi': 'px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800',
-        'Diverifikasi': 'px-2 py-1 text-xs rounded-full bg-green-100 text-green-800',
-        'Ditolak': 'px-2 py-1 text-xs rounded-full bg-red-100 text-red-800'
+        'Belum Diverifikasi': 'px-2 py-1 text-xs rounded-full bg-slate-100 text-slate-800',
+        'Diproses': 'px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800',
+        'Ditolak': 'px-2 py-1 text-xs rounded-full bg-red-100 text-red-800',
+        'Selesai': 'px-2 py-1 text-xs rounded-full bg-green-100 text-green-800'
       };
       
       return classMap[status] || 'px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800';

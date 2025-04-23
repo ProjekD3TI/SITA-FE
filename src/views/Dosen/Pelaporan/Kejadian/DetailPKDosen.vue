@@ -80,10 +80,43 @@
                 </div>
             </div>
 
-            <div class="detail-card" v-if="laporan.tanggapan">
-                <h3 class="detail-section-title"><i class="fas fa-comment-alt"></i> Tanggapan</h3>
-                <p class="tanggapan-text">{{ laporan.tanggapan }}</p>
+            <!-- Tanggapan Card - Updated to handle both string and array types -->
+            <div class="card" v-if="hasTanggapan">
+                <h3>
+                    <i class="fas fa-comment-alt"></i> Tanggapan
+                </h3>
+                
+                <!-- For string tanggapan (old format) -->
+                <p class="tanggapan-text" v-if="typeof laporan.tanggapan === 'string'">
+                    {{ laporan.tanggapan }}
+                </p>
+                
+                <!-- For array tanggapan (new format) -->
+                <div v-else-if="Array.isArray(laporan.tanggapan)" class="tanggapan-list">
+                    <div v-for="(item, index) in laporan.tanggapan" :key="index" class="tanggapan-item">
+                        <div class="tanggapan-header">
+                            <span class="tanggapan-user">{{ item.user || 'Admin' }}</span>
+                            <span class="tanggapan-time">{{ formatDate(item.timestamp) }}</span>
+                        </div>
+                        <p class="tanggapan-text">{{ item.text }}</p>
+                    </div>
+                </div>
+                
+                <!-- Fallback for unexpected formats -->
+                <p v-else class="tanggapan-text">
+                    {{ JSON.stringify(laporan.tanggapan) }}
+                </p>
             </div>
+          
+          <!-- Action Buttons - Tombol untuk admin -->
+          <div class="action-buttons" v-if="isAdmin">
+            <button class="btn btn-secondary" @click="showTanggapanModal = true" v-if="laporan.status !== 'finished'">
+              <i class="fas fa-comment"></i> Tambah Tanggapan
+            </button>
+            <button class="btn btn-success" @click="finishReport" v-if="laporan.status !== 'finished' && laporan.status !== 'unverified'">
+              <i class="fas fa-check-circle"></i> Tutup Kasus
+            </button>
+          </div>
         </div>
 
         <!-- Modal for full image view -->
@@ -93,26 +126,48 @@
                 <img :src="getImageUrl(laporan.image_path)" alt="Bukti Kejadian" class="fullscreen-image">
             </div>
         </div>
-
-        <!-- Verification confirmation modal -->
-        <div class="modal-overlay" v-if="showVerificationModal">
+        <!-- Close report confirmation modal -->
+        <div class="modal-overlay" v-if="showCloseModal">
             <div class="modal-container" @click.stop>
                 <div class="modal-header">
-                    <h3>Konfirmasi Verifikasi</h3>
-                    <button class="close-button" @click="showVerificationModal = false" :disabled="isVerifying">&times;</button>
+                    <h3>Konfirmasi Tutup Laporan</h3>
+                    <button class="close-button" @click="showCloseModal = false" :disabled="isClosing">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <p>Apakah Anda yakin ingin memverifikasi laporan ini? Pastikan semua data sudah benar.</p>
+                    <p>Apakah Anda yakin ingin menutup laporan ini? Laporan yang sudah ditutup akan mendapatkan status Selesai.</p>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn-secondary" @click="showVerificationModal = false" :disabled="isVerifying">Batal</button>
-                    <button class="btn-primary" @click="confirmVerification" :disabled="isVerifying">
-                        <span v-if="isVerifying">
+                    <button class="btn-cancel" @click="showCloseModal = false" :disabled="isClosing">Batal</button>
+                    <button class="btn-success" @click="closeReport" :disabled="isClosing">
+                        <span v-if="isClosing">
                             <i class="fas fa-spinner fa-spin"></i> Memproses...
                         </span>
                         <span v-else>
-                            <i class="fas fa-check"></i> Yakin, Verifikasi
+                            <i class="fas fa-check"></i> Yakin, Tutup Laporan
                         </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Modal for adding tanggapan -->
+        <div class="modal-overlay" v-if="showTanggapanModal">
+            <div class="modal-container" @click.stop>
+                <div class="modal-header">
+                    <h3>Tambah Tanggapan</h3>
+                    <button class="close-button" @click="showTanggapanModal = false">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <textarea 
+                        v-model="tanggapanText" 
+                        placeholder="Masukkan tanggapan anda di sini..." 
+                        rows="5"
+                        class="tanggapan-textarea">
+                    </textarea>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-cancel" @click="showTanggapanModal = false">Batal</button>
+                    <button class="btn-save" @click="saveTanggapan" :disabled="!tanggapanText.trim()">
+                        Simpan Tanggapan
                     </button>
                 </div>
             </div>
@@ -139,6 +194,9 @@ export default {
             tanggapanText: '',
             showVerificationModal: false,
             isVerifying: false,
+            showCloseModal: false, // Add this
+            isClosing: false,      // Add this
+            isAdmin: true,       // Add this
         };
     },
     
@@ -146,6 +204,19 @@ export default {
         this.laporanId = this.$route.params.id;
         this.fetchCategories();
         this.fetchLaporanDetail();
+    },
+
+    computed: {
+        hasTanggapan() {
+            if (!this.laporan) return false;
+            if (!this.laporan.tanggapan) return false;
+            
+            if (Array.isArray(this.laporan.tanggapan)) {
+                return this.laporan.tanggapan.length > 0;
+            }
+            
+            return typeof this.laporan.tanggapan === 'string' && this.laporan.tanggapan.trim() !== '';
+        }
     },
     
     methods: {
@@ -168,7 +239,23 @@ export default {
             try {
                 const response = await axios.get(`http://localhost:8000/api/laporan/${this.laporanId}`);
                 this.laporan = response.data;
-                this.tanggapanText = this.laporan.tanggapan || '';
+                
+                // Process tanggapan data: Parse it if it's a JSON string
+                if (this.laporan.tanggapan && typeof this.laporan.tanggapan === 'string') {
+                    try {
+                        // Try to parse it as JSON
+                        const parsedTanggapan = JSON.parse(this.laporan.tanggapan);
+                        if (Array.isArray(parsedTanggapan)) {
+                            this.laporan.tanggapan = parsedTanggapan;
+                            console.log('Parsed tanggapan into array:', this.laporan.tanggapan);
+                        }
+                    } catch (parseError) {
+                        console.log('Tanggapan is not in JSON format:', parseError);
+                        // Keep it as a string if it's not valid JSON
+                    }
+                }
+                
+                this.tanggapanText = '';
             } catch (error) {
                 console.error('Error fetching laporan detail:', error);
                 this.error = 'Gagal memuat data laporan. Silakan coba lagi.';
@@ -198,8 +285,9 @@ export default {
         formatStatus(status) {
             const statusMap = {
                 'unverified': 'Belum Diverifikasi',
-                'verified': 'Diverifikasi',
-                'rejected': 'Ditolak'
+                'verified': 'Diproses',
+                'rejected': 'Ditolak',
+                'finished': 'Selesai'
             };
             
             return statusMap[status] || status;
@@ -233,29 +321,78 @@ export default {
                     return;
                 }
                 
-                console.log('Sending tanggapan:', {
-                    laporanId: this.laporanId,
-                    tanggapan: this.tanggapanText
-                });
+                console.log('Current tanggapan before adding new:', this.laporan.tanggapan);
+                
+                // Create a new tanggapan object
+                const newTanggapan = {
+                    text: this.tanggapanText,
+                    timestamp: new Date().toISOString(),
+                    user: 'miftahul01' // Using the current user information from the data
+                };
+                
+                // Create/update the tanggapan array
+                let tanggapanArray = [];
+                
+                // If there's existing tanggapan data
+                if (this.laporan.tanggapan) {
+                    // If it's already an array, use it
+                    if (Array.isArray(this.laporan.tanggapan)) {
+                        tanggapanArray = [...this.laporan.tanggapan];
+                    } 
+                    // If it's a string but looks like JSON, try to parse it
+                    else if (typeof this.laporan.tanggapan === 'string' && 
+                        (this.laporan.tanggapan.startsWith('[') || this.laporan.tanggapan.startsWith('{'))) {
+                        try {
+                            const parsed = JSON.parse(this.laporan.tanggapan);
+                            if (Array.isArray(parsed)) {
+                                tanggapanArray = parsed;
+                            } else {
+                                // If it parsed but isn't an array, create a new array with the parsed item
+                                tanggapanArray = [{
+                                    text: this.laporan.tanggapan,
+                                    timestamp: this.laporan.updated_at,
+                                    user: 'System'
+                                }];
+                            }
+                        } catch (e) {
+                            // If parsing failed, treat it as a regular string
+                            tanggapanArray = [{
+                                text: this.laporan.tanggapan,
+                                timestamp: this.laporan.updated_at,
+                                user: 'System'
+                            }];
+                        }
+                    } 
+                    // If it's a regular string, convert it to an array with one item
+                    else if (typeof this.laporan.tanggapan === 'string') {
+                        tanggapanArray = [{
+                            text: this.laporan.tanggapan,
+                            timestamp: this.laporan.updated_at,
+                            user: 'System'
+                        }];
+                    }
+                }
+                
+                // Add the new tanggapan to the array
+                tanggapanArray.push(newTanggapan);
+                
+                console.log('Tanggapan array to be sent:', tanggapanArray);
                 
                 // Make the API call using POST with _method: PUT
-                // Include both the status (preserving current status) and tanggapan
                 const formData = new FormData();
                 formData.append('_method', 'PUT');
-                formData.append('tanggapan', this.tanggapanText);
+                formData.append('tanggapan', JSON.stringify(tanggapanArray));
                 
                 // Include the current status to maintain it
-                // The API might be expecting status to always be present
                 if (this.laporan && this.laporan.status) {
                     formData.append('status', this.laporan.status);
                 } else {
-                    // Provide a default status if none exists
                     formData.append('status', 'pending');
                 }
 
                 // For debugging, log the FormData
                 for (let pair of formData.entries()) {
-                    console.log(pair[0] + ': ' + pair[1]);
+                    console.log(`${pair[0]}: ${pair[1] instanceof Blob ? 'File/Blob data' : pair[1]}`);
                 }
 
                 const response = await axios.post(
@@ -266,9 +403,7 @@ export default {
                 console.log('Response:', response);
                 
                 // Update local data after successful submission
-                if (this.laporan) {
-                    this.laporan.tanggapan = this.tanggapanText;
-                }
+                this.laporan.tanggapan = tanggapanArray;
                 
                 // Show success message
                 Swal.fire({
@@ -285,7 +420,7 @@ export default {
                 this.tanggapanText = '';
                 this.showTanggapanModal = false;
                 
-                // Refresh data
+                // Refresh data to ensure everything is up to date
                 await this.fetchLaporanDetail();
                 
             } catch (error) {
@@ -312,6 +447,172 @@ export default {
                     showConfirmButton: false,
                     timer: 3000
                 });
+            }
+        },
+
+        async finishReport() {
+            try {
+                if (!this.laporanId) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Laporan ID tidak ditemukan',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                    return;
+                }
+                
+                // Show confirmation dialog first
+                const result = await Swal.fire({
+                    title: 'Tutup Kasus Laporan',
+                    text: 'Apakah Anda yakin ingin menutup dan menyelesaikan kasus laporan ini?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Ya, Selesaikan!',
+                    cancelButtonText: 'Batal'
+                });
+                
+                if (!result.isConfirmed) {
+                    return; // User canceled
+                }
+                
+                // Make the API call using POST with _method: PUT
+                const formData = new FormData();
+                formData.append('_method', 'PUT');
+                formData.append('status', 'finished');
+                
+                // IMPORTANT: Preserve the existing tanggapan data
+                if (this.laporan.tanggapan) {
+                    let tanggapanData = this.laporan.tanggapan;
+                    
+                    // If it's already a string (old format), keep it as is
+                    if (typeof tanggapanData !== 'string') {
+                        // If it's an array (new format), convert it to JSON string
+                        tanggapanData = JSON.stringify(tanggapanData);
+                    }
+                    
+                    formData.append('tanggapan', tanggapanData);
+                }
+
+                const response = await axios.post(
+                    `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+                    formData
+                );
+                            
+                // Update local data after successful completion
+                this.laporan.status = 'finished';
+                
+                // Show success message with Swal
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Laporan berhasil ditutup dan selesai',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+                
+                // Refresh data
+                await this.fetchLaporanDetail();
+                
+            } catch (error) {
+                console.error('Error finishing report:', error);
+                // Safely access error message with optional chaining
+                const errorMessage = error.response?.data?.message || 'Gagal menyelesaikan laporan';
+                
+                // Show error message with Swal
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: `Gagal menyelesaikan laporan: ${errorMessage}`,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            }
+        },
+
+        async closeReport() {
+            try {
+                this.isClosing = true;
+                
+                if (!this.laporanId) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Laporan ID tidak ditemukan',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                    return;
+                }
+                
+                console.log('Closing report:', {
+                    laporanId: this.laporanId
+                });
+                
+                // Make the API call using POST with _method: PUT
+                const formData = new FormData();
+                formData.append('_method', 'PUT');
+                formData.append('status', 'finished');
+                
+                // If there's tanggapan, preserve it
+                if (this.laporan.tanggapan) {
+                    formData.append('tanggapan', this.laporan.tanggapan);
+                }
+
+                const response = await axios.post(
+                    `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+                    formData
+                );
+                        
+                console.log('Response:', response);
+                
+                // Update local data after successful completion
+                this.laporan.status = 'finished';
+                
+                // Show success message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Laporan berhasil ditutup dan dinyatakan selesai',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+                
+                // Refresh data
+                await this.fetchLaporanDetail();
+                
+            } catch (error) {
+                console.error('Error closing report:', error);
+                
+                // Safely access error message with optional chaining
+                const errorMessage = error.response?.data?.message || 'Gagal menutup laporan';
+                
+                // Show error message
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: `Gagal menutup laporan: ${errorMessage}`,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            } finally {
+                this.isClosing = false;
+                this.showCloseModal = false;
             }
         },
     }
@@ -613,6 +914,14 @@ export default {
     background-color: #4b5563;
 }
 
+.card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
 /* Full image modal */
 .fullscreen-modal {
     position: fixed;
@@ -759,6 +1068,52 @@ export default {
 .rejected {
     background-color: #fee2e2;
     color: #dc2626;
+}
+
+/* Add to the Status badge colors section */
+.finished {
+    background-color: #d1fae5;
+    color: #059669;
+}
+
+/* Tanggapan styling */
+.tanggapan-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tanggapan-item {
+    border-left: 3px solid #3b82f6;
+    padding-left: 16px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    background-color: #f9fafb;
+    border-radius: 0 6px 6px 0;
+}
+
+.tanggapan-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.tanggapan-user {
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.tanggapan-time {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.tanggapan-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #374151;
+    white-space: pre-line;
+    margin: 0;
 }
 
 /* Responsive design */

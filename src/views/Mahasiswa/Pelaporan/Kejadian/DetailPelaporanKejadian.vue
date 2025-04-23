@@ -141,7 +141,7 @@
               <i class="fas fa-comment"></i> Tambah Tanggapan
             </button>
             <button class="btn btn-success" @click="finishReport" v-if="laporan.status !== 'finished' && laporan.status !== 'unverified'">
-              <i class="fas fa-check-circle"></i> Tutup Kasus
+              <i class="fas fa-check-circle"></i> Tutup Laporan
             </button>
           </div>
         </div>
@@ -177,30 +177,6 @@
               <button class="btn-cancel" @click="showTanggapanModal = false">Batal</button>
               <button class="btn-save" @click="saveTanggapan" :disabled="!tanggapanText.trim()">
                 Simpan Tanggapan
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Verification confirmation modal -->
-        <div class="modal-overlay" v-if="showVerificationModal">
-          <div class="modal-container" @click.stop>
-            <div class="modal-header">
-              <h3>Konfirmasi Verifikasi</h3>
-              <button class="close-button" @click="showVerificationModal = false" :disabled="isVerifying">&times;</button>
-            </div>
-            <div class="modal-body">
-              <p>Apakah Anda yakin ingin memverifikasi laporan ini? Pastikan semua data sudah benar.</p>
-            </div>
-            <div class="modal-footer">
-              <button class="btn-secondary" @click="showVerificationModal = false" :disabled="isVerifying">Batal</button>
-              <button class="btn-primary" @click="confirmVerification" :disabled="isVerifying">
-                <span v-if="isVerifying">
-                  <i class="fas fa-spinner fa-spin"></i> Memproses...
-                </span>
-                <span v-else>
-                  <i class="fas fa-check"></i> Yakin, Verifikasi
-                </span>
               </button>
             </div>
           </div>
