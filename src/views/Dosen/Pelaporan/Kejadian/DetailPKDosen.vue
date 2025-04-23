@@ -1060,11 +1060,6 @@ export default {
     color: #d97706;
 }
 
-.completed {
-    background-color: #d1fae5;
-    color: #059669;
-}
-
 .rejected {
     background-color: #fee2e2;
     color: #dc2626;

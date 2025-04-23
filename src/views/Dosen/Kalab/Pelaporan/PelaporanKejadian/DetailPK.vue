@@ -107,8 +107,11 @@
                 <button class="btn-danger" @click="rejectReport" v-if="laporan.status === 'unverified'">
                     <i class="fas fa-times"></i> Tolak Laporan
                 </button>
-                <button class="btn-secondary" @click="showTanggapanModal = true">
+                <button class="btn btn-secondary" @click="showTanggapanModal = true" v-if="laporan.status !== 'finished'">
                     <i class="fas fa-comment"></i> Tambah Tanggapan
+                </button>
+                <button class="btn btn-success" @click="finishReport" v-if="laporan.status !== 'finished' && laporan.status !== 'unverified'">
+                    <i class="fas fa-check-circle"></i> Tutup Kasus
                 </button>
             </div>
         </div>
@@ -297,7 +300,8 @@ export default {
             const statusMap = {
                 'unverified': 'Belum Diverifikasi',
                 'verified': 'Diproses',
-                'rejected': 'Ditolak'
+                'rejected': 'Ditolak',
+                'finished': 'Selesai'
             };
             
             return statusMap[status] || status;
@@ -571,6 +575,95 @@ export default {
                     icon: 'error',
                     title: 'Gagal!',
                     text: `Gagal menyimpan tanggapan: ${errorMessage}`,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            }
+        },
+
+        async finishReport() {
+            try {
+                if (!this.laporanId) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Laporan ID tidak ditemukan',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                    return;
+                }
+                
+                // Show confirmation dialog first
+                const result = await Swal.fire({
+                    title: 'Tutup Kasus Laporan',
+                    text: 'Apakah Anda yakin ingin menutup dan menyelesaikan kasus laporan ini?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Ya, Selesaikan!',
+                    cancelButtonText: 'Batal'
+                });
+                
+                if (!result.isConfirmed) {
+                    return; // User canceled
+                }
+                
+                // Make the API call using POST with _method: PUT
+                const formData = new FormData();
+                formData.append('_method', 'PUT');
+                formData.append('status', 'finished');
+                
+                // IMPORTANT: Preserve the existing tanggapan data
+                if (this.laporan.tanggapan) {
+                    let tanggapanData = this.laporan.tanggapan;
+                    
+                    // If it's already a string (old format), keep it as is
+                    if (typeof tanggapanData !== 'string') {
+                        // If it's an array (new format), convert it to JSON string
+                        tanggapanData = JSON.stringify(tanggapanData);
+                    }
+                    
+                    formData.append('tanggapan', tanggapanData);
+                }
+
+                const response = await axios.post(
+                    `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+                    formData
+                );
+                            
+                // Update local data after successful completion
+                this.laporan.status = 'finished';
+                
+                // Show success message with Swal
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Laporan berhasil ditutup dan selesai',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+                
+                // Refresh data
+                await this.fetchLaporanDetail();
+                
+            } catch (error) {
+                console.error('Error finishing report:', error);
+                // Safely access error message with optional chaining
+                const errorMessage = error.response?.data?.message || 'Gagal menyelesaikan laporan';
+                
+                // Show error message with Swal
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: `Gagal menyelesaikan laporan: ${errorMessage}`,
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,
@@ -1045,7 +1138,7 @@ export default {
     color: #d97706;
 }
 
-.completed {
+.finished {
     background-color: #d1fae5;
     color: #059669;
 }

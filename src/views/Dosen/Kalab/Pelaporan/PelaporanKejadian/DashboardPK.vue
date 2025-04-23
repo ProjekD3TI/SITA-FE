@@ -101,6 +101,7 @@
               <option value="Belum Diverifikasi">Belum Diverifikasi</option>
               <option value="Diproses">Diproses</option>
               <option value="Ditolak">Ditolak</option>
+              <option value="Selesai">Selesai</option>
             </select>
           </div>
           
@@ -338,7 +339,8 @@ export default {
         const statusMap = {
           'Belum Diverifikasi': 'unverified',
           'Diproses': 'verified',
-          'Ditolak': 'rejected'
+          'Ditolak': 'rejected',
+          'Selesai': 'finished'
         };
         
         const statusValue = statusMap[this.filters.status] || this.filters.status;
@@ -466,11 +468,11 @@ export default {
     },
     
     unverifiedCount() {
-      return this.laporan.filter(item => item.status === 'unverified').length;
+      return this.laporan.filter(item => item.status === 'verified').length;
     },
     
     verifiedCount() {
-      return this.laporan.filter(item => item.status === 'verified').length;
+      return this.laporan.filter(item => item.status === 'finished').length;
     },
 
     // Display data should be based on filteredLaporan instead of laporan directly
@@ -531,7 +533,8 @@ export default {
       const statusMap = {
         'unverified': 'Belum Diverifikasi',
         'verified': 'Diproses',
-        'rejected': 'Ditolak'
+        'rejected': 'Ditolak',
+        'finished': 'Selesai'
       };
       
       return statusMap[status] || status;
@@ -1169,7 +1172,7 @@ export default {
   color: #d97706;
 }
 
-.completed {
+.finished {
   background-color: #d1fae5;
   color: #059669;
 }
