@@ -71,7 +71,10 @@
                 </div>
               </div>
             </div>
+          </div>
 
+          <!-- Right column - Detail Laporan lanjutan -->
+          <div class="form-column">
             <!-- Tambahkan field Lampiran Link -->
             <div class="form-group">
               <label for="lampiran_link">Lampiran Link</label>
@@ -114,11 +117,14 @@
               <div v-if="errors.tanggal_kejadian" class="invalid-feedback">{{ errors.tanggal_kejadian[0] }}</div>
             </div>
           </div>
+        </div>
+      </div>
 
-          <!-- Right column -->
+      <!-- Section 2: Informasi Pelapor -->
+      <div class="form-section">
+        <h2>Informasi Pelapor</h2>
+        <div class="form-row single-column">
           <div class="form-column">
-            <!-- Section 2: Informasi Pelapor -->
-            <h2>Informasi Pelapor</h2>
             <div class="form-group">
               <label for="nama_pelapor">Nama Pelapor</label>
               <input
@@ -155,9 +161,35 @@
         </div>
       </div>
 
+      <!-- Section 3: Pernyataan -->
+      <div class="form-section">
+        <h2>Pernyataan</h2>
+        <div class="statement-box">
+          <p>Dengan ini saya menyatakan bahwa:</p>
+          <ol>
+            <li>Segala informasi yang saya berikan dalam laporan ini adalah benar dan dapat dipertanggungjawabkan.</li>
+            <li>Saya bersedia memberikan keterangan lebih lanjut apabila diperlukan untuk proses penanganan laporan.</li>
+            <li>Saya memahami bahwa memberikan laporan palsu dapat dikenakan sanksi sesuai dengan peraturan yang berlaku.</li>
+          </ol>
+          <div class="form-check">
+            <input
+              type="checkbox"
+              id="agreement"
+              v-model="formData.agreement"
+              class="form-check-input"
+              required
+            />
+            <label for="agreement" class="form-check-label">
+              Saya menyetujui pernyataan di atas <span class="required">*</span>
+            </label>
+            <div v-if="errors.agreement" class="invalid-feedback">{{ errors.agreement[0] }}</div>
+          </div>
+        </div>
+      </div>
+
       <div class="form-actions">
         <button type="button" @click="goBack" class="btn btn-secondary">Kembali</button>
-        <button type="submit" class="btn btn-primary" :disabled="loading">
+        <button type="submit" class="btn btn-primary" :disabled="loading || !formData.agreement">
           <span v-if="loading">Mengirim...</span>
           <span v-else>Kirim Laporan</span>
         </button>
@@ -200,7 +232,8 @@ export default {
         nama_pelapor: '',
         ni_pelapor: '',
         nomor_telepon: '',
-        lampiran_link: '' // Menambahkan field lampiran link
+        lampiran_link: '', // Menambahkan field lampiran link
+        agreement: false // Tambahkan field agreement untuk pernyataan
       },
       imagePreviews: [], // Changed to array for multiple previews
       categories: [],
@@ -274,6 +307,11 @@ export default {
       this.formData.image_path.splice(index, 1);
     },
     submitForm() {
+      if (!this.formData.agreement) {
+        this.errors.agreement = ['Anda harus menyetujui pernyataan untuk melanjutkan'];
+        return;
+      }
+      
       this.loading = true;
       this.errors = {};
       
@@ -282,6 +320,7 @@ export default {
       formData.append('category_id', this.formData.category_id);
       formData.append('deskripsi', this.formData.deskripsi);
       formData.append('tanggal_kejadian', this.formData.tanggal_kejadian);
+      formData.append('agreement', this.formData.agreement);
       
       // Append each image to the form data with the same key name
       if (this.formData.image_path && this.formData.image_path.length > 0) {
@@ -334,7 +373,8 @@ export default {
         nama_pelapor: this.formData.nama_pelapor,
         ni_pelapor: this.formData.ni_pelapor,
         nomor_telepon: this.formData.nomor_telepon,
-        lampiran_link: '' // Reset lampiran link
+        lampiran_link: '', // Reset lampiran link
+        agreement: false // Reset agreement
       };
       this.imagePreviews = [];
       this.errors = {};
@@ -399,6 +439,11 @@ export default {
 .form-row {
   display: flex;
   gap: 2rem;
+}
+
+/* Tambahan untuk single-column */
+.form-row.single-column {
+  max-width: 600px;
 }
 
 .form-column {
@@ -503,6 +548,45 @@ label {
   color: #6c757d;
   font-size: 0.875rem;
   margin-top: 0.25rem;
+}
+
+/* Styling untuk section pernyataan */
+.statement-box {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.statement-box p {
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.statement-box ol {
+  margin-bottom: 1.5rem;
+  padding-left: 1.5rem;
+}
+
+.statement-box ol li {
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.form-check {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 1rem;
+}
+
+.form-check-input {
+  margin-top: 0.25rem;
+  margin-right: 0.5rem;
+}
+
+.form-check-label {
+  font-weight: 500;
 }
 
 .form-actions {

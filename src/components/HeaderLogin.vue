@@ -63,7 +63,7 @@
                   Lapor Kejadian
                 </router-link>
                 <router-link
-                  to="/laporks"
+                  to="/pelaporan/kekerasan-seksual"
                   class="block px-4 py-2 hover:bg-gray-700"
                 >
                   Lapor Kekerasan Seksual
