@@ -37,6 +37,15 @@
                 </div>
                 <p class="description">{{ laporan.deskripsi }}</p>
                 
+                <!-- Menampilkan Lampiran Link jika ada -->
+                <div v-if="laporan.lampiran_link" >
+                    <h3 class="link-title">Lampiran Link</h3>
+                    <a :href="laporan.lampiran_link" target="_blank" class="lampiran-link">
+                        {{ laporan.lampiran_link }}
+                        <i class="fas fa-external-link-alt"></i>
+                    </a>
+                </div>
+                
                 <!-- Multiple images gallery -->
                 <div v-if="imageArray.length > 0" class="images-gallery">
                     <h3 class="gallery-title">Foto Bukti Kejadian</h3>
@@ -924,6 +933,47 @@ export default {
     color: #374151;
     margin-bottom: 20px;
     white-space: pre-line;
+}
+
+/* Styles for Lampiran Link */
+.link-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.link-title i {
+    margin-right: 8px;
+    color: #3b82f6;
+}
+
+.lampiran-link {
+    display: block;
+    color: #2563eb;
+    font-size: 0.95rem;
+    word-break: break-all;
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background-color: #eff6ff;
+    transition: background-color 0.2s;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lampiran-link:hover {
+    background-color: #dbeafe;
+    text-decoration: underline;
+}
+
+.lampiran-link i {
+    margin-left: 8px;
+    font-size: 0.8rem;
+    vertical-align: top;
 }
 
 /* Updated styles for multiple images */

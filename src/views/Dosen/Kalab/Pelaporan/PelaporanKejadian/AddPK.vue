@@ -5,129 +5,152 @@
     </div>
 
     <form @submit.prevent="submitForm" class="pk-form">
-      <!-- Two column layout -->
-      <div class="form-row">
-        <!-- Left column -->
-        <div class="form-column">
-          <div class="form-group">
-            <label for="judul">Judul Laporan <span class="required">*</span></label>
-            <input
-              type="text"
-              id="judul"
-              v-model="formData.judul"
-              class="form-control"
-              :class="{ 'is-invalid': errors.judul }"
-              required
-            />
-            <div v-if="errors.judul" class="invalid-feedback">{{ errors.judul[0] }}</div>
-          </div>
-
-          <div class="form-group">
-            <label for="category_id">Kategori <span class="required">*</span></label>
-            <select
-              id="category_id"
-              v-model="formData.category_id"
-              class="form-control"
-              :class="{ 'is-invalid': errors.category_id }"
-              required
-            >
-              <option value="" disabled selected>Pilih Kategori</option>
-              <option 
-                v-for="category in filteredCategories" 
-                :key="category.category_id" 
-                :value="category.category_id"
-              >
-                {{ category.nama }}
-              </option>
-            </select>
-            <div v-if="errors.category_id" class="invalid-feedback">{{ errors.category_id[0] }}</div>
-          </div>
-
-          <div class="form-group">
-            <label for="image_path">Lampiran Foto <span class="required">*</span></label>
-            <div class="custom-file-upload">
+      <!-- Section 1: Detail Laporan -->
+      <div class="form-section">
+        <h2>Detail Laporan</h2>
+        <div class="form-row">
+          <!-- Left column -->
+          <div class="form-column">
+            <div class="form-group">
+              <label for="judul">Judul Laporan <span class="required">*</span></label>
               <input
-                type="file"
-                id="image_path"
-                @change="handleFileUpload"
+                type="text"
+                id="judul"
+                v-model="formData.judul"
                 class="form-control"
-                :class="{ 'is-invalid': errors['image_path.0'] || errors.image_path }"
-                accept="image/*"
-                multiple
+                :class="{ 'is-invalid': errors.judul }"
                 required
               />
-              <div v-if="errors['image_path.0']" class="invalid-feedback">{{ errors['image_path.0'][0] }}</div>
-              <div v-if="errors.image_path" class="invalid-feedback">{{ errors.image_path[0] }}</div>
-              <small class="text-muted">Anda dapat memilih beberapa foto sekaligus</small>
+              <div v-if="errors.judul" class="invalid-feedback">{{ errors.judul[0] }}</div>
             </div>
-            <div v-if="imagePreviews.length > 0" class="image-previews">
-              <div v-for="(preview, index) in imagePreviews" :key="index" class="image-preview-item">
-                <img :src="preview" alt="Preview" />
-                <button type="button" @click="removeImage(index)" class="remove-image">×</button>
+
+            <div class="form-group">
+              <label for="category_id">Kategori <span class="required">*</span></label>
+              <select
+                id="category_id"
+                v-model="formData.category_id"
+                class="form-control"
+                :class="{ 'is-invalid': errors.category_id }"
+                required
+              >
+                <option value="" disabled selected>Pilih Kategori</option>
+                <option 
+                  v-for="category in filteredCategories" 
+                  :key="category.category_id" 
+                  :value="category.category_id"
+                >
+                  {{ category.nama }}
+                </option>
+              </select>
+              <div v-if="errors.category_id" class="invalid-feedback">{{ errors.category_id[0] }}</div>
+            </div>
+
+            <div class="form-group">
+              <label for="image_path">Lampiran Foto <span class="required">*</span></label>
+              <div class="custom-file-upload">
+                <input
+                  type="file"
+                  id="image_path"
+                  @change="handleFileUpload"
+                  class="form-control"
+                  :class="{ 'is-invalid': errors['image_path.0'] || errors.image_path }"
+                  accept="image/*"
+                  multiple
+                  required
+                />
+                <div v-if="errors['image_path.0']" class="invalid-feedback">{{ errors['image_path.0'][0] }}</div>
+                <div v-if="errors.image_path" class="invalid-feedback">{{ errors.image_path[0] }}</div>
+                <div> 
+                  <small class="text-muted">Anda dapat memilih beberapa foto sekaligus</small>
+                </div>
+              </div>
+              <div v-if="imagePreviews.length > 0" class="image-previews">
+                <div v-for="(preview, index) in imagePreviews" :key="index" class="image-preview-item">
+                  <img :src="preview" alt="Preview" />
+                  <button type="button" @click="removeImage(index)" class="remove-image">×</button>
+                </div>
               </div>
             </div>
+
+            <!-- Tambahkan field Lampiran Link -->
+            <div class="form-group">
+              <label for="lampiran_link">Lampiran Link</label>
+              <input
+                type="text"
+                id="lampiran_link"
+                v-model="formData.lampiran_link"
+                class="form-control"
+                :class="{ 'is-invalid': errors.lampiran_link }"
+                placeholder="http://example.com"
+              />
+              <div v-if="errors.lampiran_link" class="invalid-feedback">{{ errors.lampiran_link[0] }}</div>
+              <small class="text-muted">Opsional: Masukkan URL yang berkaitan dengan laporan</small>
+            </div>
+
+            <div class="form-group">
+              <label for="deskripsi">Deskripsi <span class="required">*</span></label>
+              <textarea
+                id="deskripsi"
+                v-model="formData.deskripsi"
+                class="form-control"
+                :class="{ 'is-invalid': errors.deskripsi }"
+                rows="5"
+                placeholder="Berikan Deskripsi atau Kronologi Kejadian"
+                required
+              ></textarea>
+              <div v-if="errors.deskripsi" class="invalid-feedback">{{ errors.deskripsi[0] }}</div>
+            </div>
+
+            <div class="form-group">
+              <label for="tanggal_kejadian">Tanggal & Waktu Kejadian <span class="required">*</span></label>
+              <input
+                type="datetime-local"
+                id="tanggal_kejadian"
+                v-model="formData.tanggal_kejadian"
+                class="form-control"
+                :class="{ 'is-invalid': errors.tanggal_kejadian }"
+                required
+              />
+              <div v-if="errors.tanggal_kejadian" class="invalid-feedback">{{ errors.tanggal_kejadian[0] }}</div>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label for="deskripsi">Deskripsi <span class="required">*</span></label>
-            <textarea
-              id="deskripsi"
-              v-model="formData.deskripsi"
-              class="form-control"
-              :class="{ 'is-invalid': errors.deskripsi }"
-              rows="5"
-              required
-            ></textarea>
-            <div v-if="errors.deskripsi" class="invalid-feedback">{{ errors.deskripsi[0] }}</div>
-          </div>
+          <!-- Right column -->
+          <div class="form-column">
+            <!-- Section 2: Informasi Pelapor -->
+            <h2>Informasi Pelapor</h2>
+            <div class="form-group">
+              <label for="nama_pelapor">Nama Pelapor</label>
+              <input
+                type="text"
+                id="nama_pelapor"
+                v-model="formData.nama_pelapor"
+                class="form-control"
+                disabled
+              />
+            </div>
 
-          <div class="form-group">
-            <label for="tanggal_kejadian">Tanggal & Waktu Kejadian <span class="required">*</span></label>
-            <input
-              type="datetime-local"
-              id="tanggal_kejadian"
-              v-model="formData.tanggal_kejadian"
-              class="form-control"
-              :class="{ 'is-invalid': errors.tanggal_kejadian }"
-              required
-            />
-            <div v-if="errors.tanggal_kejadian" class="invalid-feedback">{{ errors.tanggal_kejadian[0] }}</div>
-          </div>
-        </div>
+            <div class="form-group">
+              <label for="ni_pelapor">NIM/NIK Pelapor</label>
+              <input
+                type="text"
+                id="ni_pelapor"
+                v-model="formData.ni_pelapor"
+                class="form-control"
+                disabled
+              />
+            </div>
 
-        <!-- Right column -->
-        <div class="form-column">
-          <div class="form-group">
-            <label for="nama_pelapor">Nama Pelapor</label>
-            <input
-              type="text"
-              id="nama_pelapor"
-              v-model="formData.nama_pelapor"
-              class="form-control"
-              disabled
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="ni_pelapor">NIM/NIK Pelapor</label>
-            <input
-              type="text"
-              id="ni_pelapor"
-              v-model="formData.ni_pelapor"
-              class="form-control"
-              disabled
-            />
-          </div>
-
-          <div class="form-group">
+            <div class="form-group">
               <label for="nomor_telepon">Nomor HP Pelapor</label>
               <input
-                  type="text"
-                  id="nomor_telepon"
-                  v-model="formData.nomor_telepon"
-                  class="form-control"
-                  disabled
+                type="text"
+                id="nomor_telepon"
+                v-model="formData.nomor_telepon"
+                class="form-control"
+                disabled
               />
+            </div>
           </div>
         </div>
       </div>
@@ -176,7 +199,8 @@ export default {
         image_path: [], // Changed to array for multiple images
         nama_pelapor: '',
         ni_pelapor: '',
-        nomor_telepon: ''
+        nomor_telepon: '',
+        lampiran_link: '' // Menambahkan field lampiran link
       },
       imagePreviews: [], // Changed to array for multiple previews
       categories: [],
@@ -265,6 +289,11 @@ export default {
           formData.append('image_path[]', this.formData.image_path[i]);
         }
       }
+      
+      // Append lampiran link jika ada
+      if (this.formData.lampiran_link) {
+        formData.append('lampiran_link', this.formData.lampiran_link);
+      }
 
       axios.post('http://localhost:8000/api/laporan/add_laporan', formData, {
         headers: {
@@ -304,7 +333,8 @@ export default {
         image_path: [],
         nama_pelapor: this.formData.nama_pelapor,
         ni_pelapor: this.formData.ni_pelapor,
-        nomor_telepon: this.formData.nomor_telepon
+        nomor_telepon: this.formData.nomor_telepon,
+        lampiran_link: '' // Reset lampiran link
       };
       this.imagePreviews = [];
       this.errors = {};
@@ -346,6 +376,18 @@ export default {
 .form-header h1 {
   font-size: 1.8rem;
   color: #333;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.form-section h2 {
+  font-size: 1.4rem;
+  color: #333;
+  margin-bottom: 1.5rem;
 }
 
 .pk-form {
