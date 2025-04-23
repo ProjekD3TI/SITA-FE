@@ -81,6 +81,58 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- New section for Saksi information -->
+            <div class="detail-card saksi-info" v-if="hasSaksiInfo">
+                <h3 class="detail-section-title"><i class="fas fa-users"></i> Informasi Saksi</h3>
+                
+                <!-- Primary Saksi (from database fields) -->
+                <div class="saksi-container primary-saksi">
+                    <h4 class="saksi-title">Saksi Utama</h4>
+                    <div class="info-grid">
+                        <div class="info-label">Nama:</div>
+                        <div class="info-value">{{ laporan.saksi_nama || 'Tidak ada' }}</div>
+                        
+                        <div class="info-label">Email:</div>
+                        <div class="info-value">{{ laporan.saksi_email || 'Tidak ada' }}</div>
+                        
+                        <div class="info-label">No. Telepon:</div>
+                        <div class="info-value">
+                            {{ laporan.saksi_nomor_telepon || 'Tidak ada' }}
+                            <button class="chat-icon-button" @click="startChatWithSaksi(laporan.saksi_nomor_telepon)" title="Chat dengan saksi" v-if="laporan.saksi_nomor_telepon">
+                                <i class="fas fa-comment"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Additional witnesses (parsed from description) -->
+                <div v-if="additionalWitnesses.length > 0" class="additional-saksi-section">
+                    <h4 class="saksi-title">Saksi Tambahan</h4>
+                    
+                    <div v-for="(saksi, index) in additionalWitnesses" :key="index" class="additional-saksi">
+                        <div class="saksi-header">
+                            <h5 class="saksi-number">Saksi {{ index + 2 }}</h5>
+                        </div>
+                        
+                        <div class="info-grid">
+                            <div class="info-label">Nama:</div>
+                            <div class="info-value">{{ saksi.nama }}</div>
+                            
+                            <div class="info-label">Email:</div>
+                            <div class="info-value">{{ saksi.email }}</div>
+                            
+                            <div class="info-label">No. Telepon:</div>
+                            <div class="info-value">
+                                {{ saksi.nomor_telepon }}
+                                <button class="chat-icon-button" @click="startChatWithSaksi(saksi.nomor_telepon)" title="Chat dengan saksi">
+                                    <i class="fas fa-comment"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Modal for full image view -->
@@ -130,7 +182,19 @@ export default {
             showFullImage: false,
             showTanggapanModal: false,
             tanggapanText: '',
+            additionalWitnesses: []
         };
+    },
+    
+    computed: {
+        hasSaksiInfo() {
+            return (
+                (this.laporan.saksi_nama && this.laporan.saksi_nama.trim() !== '') || 
+                (this.laporan.saksi_email && this.laporan.saksi_email.trim() !== '') || 
+                (this.laporan.saksi_nomor_telepon && this.laporan.saksi_nomor_telepon.trim() !== '') ||
+                this.additionalWitnesses.length > 0
+            );
+        }
     },
     
     created() {
@@ -196,11 +260,51 @@ export default {
                 });
                 
                 this.laporan = response.data;
+                
+                // Parse the description to extract additional witnesses
+                this.parseAdditionalWitnesses();
+                
                 this.loading = false;
             } catch (error) {
                 console.error('Error fetching laporan detail:', error);
                 this.error = 'Failed to load laporan detail';
                 this.loading = false;
+            }
+        },
+        
+        parseAdditionalWitnesses() {
+            if (!this.laporan.deskripsi) return;
+            
+            // Check for the pattern that indicates additional witnesses
+            if (this.laporan.deskripsi.includes('Saksi Tambahan:')) {
+                const descriptionParts = this.laporan.deskripsi.split('Saksi Tambahan:');
+                
+                // Keep the main description part
+                const mainDescription = descriptionParts[0].trim();
+                
+                // Extract the additional witnesses part
+                const witnessesSection = descriptionParts[1].trim();
+                
+                // Parse the witnesses data
+                const witnesses = [];
+                
+                // Regular expression to match witness information
+                // Format: "2. Nama Saksi (email@example.com, 08123456789)"
+                const witnessPattern = /\d+\.\s+(.+?)\s+\((.+?),\s*(.+?)\)/g;
+                
+                let match;
+                while ((match = witnessPattern.exec(witnessesSection)) !== null) {
+                    witnesses.push({
+                        nama: match[1].trim(),
+                        email: match[2].trim(),
+                        nomor_telepon: match[3].trim()
+                    });
+                }
+                
+                this.additionalWitnesses = witnesses;
+                
+                // Update the description to only include the main part
+                this.laporan.deskripsi = mainDescription;
             }
         },
         
@@ -294,11 +398,101 @@ export default {
                 });
             }
         },
+        
+        startChatWithSaksi(phoneNumber) {
+            if (phoneNumber) {
+                // Remove any non-digit characters
+                phoneNumber = phoneNumber.replace(/\D/g, '');
+                
+                // Add country code if not present (assuming Indonesia +62)
+                if (phoneNumber.startsWith('0')) {
+                    phoneNumber = '62' + phoneNumber.substring(1);
+                } else if (!phoneNumber.startsWith('62')) {
+                    phoneNumber = '62' + phoneNumber;
+                }
+                
+                // Create WhatsApp URL
+                const whatsappUrl = `https://wa.me/${phoneNumber}`;
+                
+                // Open WhatsApp in a new tab
+                window.open(whatsappUrl, '_blank');
+            } else {
+                this.$notify({
+                    type: 'error',
+                    text: 'Nomor telepon tidak tersedia'
+                });
+            }
+        }
     }
 };
 </script>
 
 <style scoped>
+/* All existing styles ... */
+
+/* Additional styles for the Saksi section */
+.saksi-info {
+    margin-top: 24px;
+}
+
+.saksi-container {
+    margin-bottom: 20px;
+}
+
+.primary-saksi {
+    background-color: #f9fafb;
+    padding: 16px;
+    border-radius: 6px;
+    margin-bottom: 24px;
+}
+
+.additional-saksi-section {
+    margin-top: 24px;
+}
+
+.additional-saksi {
+    background-color: #f9fafb;
+    padding: 16px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    border-left: 3px solid #6b7280;
+}
+
+.saksi-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 16px;
+}
+
+.saksi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.saksi-number {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #4b5563;
+    margin: 0;
+}
+
+/* Existing styles from your code */
+.detail-ks-container {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.detail-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+
 .detail-ks-container {
     padding: 24px;
     max-width: 1200px;
