@@ -19,7 +19,7 @@
             <button class="retry-button" @click="fetchLaporanDetail">Coba Lagi</button>
         </div>
 
-        <div v-else class="detail-content">
+        <div v-else-if="laporan" class="detail-content">
             <div class="status-header">
                 <div class="laporan-number">{{ laporan.nomor_laporan }}</div>
                 <div :class="['status-badge', laporan.status]">
@@ -74,10 +74,20 @@
                         <div class="info-value">{{ laporan.ni_pelapor }}</div>
                         
                         <div class="info-label">Email:</div>
-                        <div class="info-value">{{ laporan.email }}</div>
+                        <div class="info-value">{{ laporan.email || '-' }}</div>
                         
                         <div class="info-label">No. Telepon:</div>
                         <div class="info-value">{{ laporan.nomor_telepon }}</div>
+                        
+                        <!-- Display new fields if they exist -->
+                        <div v-if="laporan.profesi" class="info-label">Profesi:</div>
+                        <div v-if="laporan.profesi" class="info-value">{{ laporan.profesi }}</div>
+                        
+                        <div v-if="laporan.jenis_kelamin" class="info-label">Jenis Kelamin:</div>
+                        <div v-if="laporan.jenis_kelamin" class="info-value">{{ formatJenisKelamin(laporan.jenis_kelamin) }}</div>
+                        
+                        <div v-if="laporan.umur_pelapor" class="info-label">Rentang Umur:</div>
+                        <div v-if="laporan.umur_pelapor" class="info-value">{{ formatUmur(laporan.umur_pelapor) }}</div>
                     </div>
                 </div>
 
@@ -127,10 +137,10 @@
                 <button class="btn-danger" @click="rejectReport" v-if="laporan.status === 'unverified'">
                     <i class="fas fa-times"></i> Tolak Laporan
                 </button>
-                <button class="btn btn-secondary" @click="showTanggapanModal = true" v-if="laporan.status !== 'finished'">
+                <button class="btn-secondary" @click="showTanggapanModal = true" v-if="laporan.status !== 'finished'">
                     <i class="fas fa-comment"></i> Tambah Tanggapan
                 </button>
-                <button class="btn btn-success" @click="finishReport" v-if="laporan.status !== 'finished' && laporan.status !== 'unverified'">
+                <button class="btn-success" @click="finishReport" v-if="laporan.status === 'verified' || laporan.status === 'processed'">
                     <i class="fas fa-check-circle"></i> Tutup Kasus
                 </button>
             </div>
@@ -140,7 +150,7 @@
         <div class="fullscreen-modal" v-if="showLightbox" @click="closeLightbox">
             <div class="modal-content">
                 <span class="close-modal">&times;</span>
-                <img :src="getImageUrl(imageArray[currentImageIndex])" alt="Bukti Kejadian" class="fullscreen-image">
+                <img :src="currentImageIndex >= 0 && imageArray.length > currentImageIndex ? getImageUrl(imageArray[currentImageIndex]) : ''" alt="Bukti Kejadian" class="fullscreen-image">
                 
                 <!-- Navigation buttons for multiple images -->
                 <div class="lightbox-navigation" @click.stop v-if="imageArray.length > 1">
@@ -216,7 +226,7 @@ export default {
             laporanId: null,
             laporan: null,
             categories: {},
-            loading: false,
+            loading: true,
             loadingAction: false,
             error: null,
             showLightbox: false,
@@ -327,33 +337,52 @@ export default {
         formatDate(dateString) {
             if (!dateString) return '-';
             
-            // If the date is already in the YYYY-MM-DD HH:MM:SS format with no 'T' and 'Z'
-            // we need to convert it to a proper ISO format for the Date constructor
-            let date;
-            if (typeof dateString === 'string' && dateString.includes(' ') && !dateString.includes('T')) {
-                // Replace space with 'T' and add 'Z' for UTC if not present
-                const hasZ = dateString.endsWith('Z');
-                date = new Date((dateString.replace(' ', 'T') + (hasZ ? '' : '')));
+            try {
+                // If the date is already in the YYYY-MM-DD HH:MM:SS format with no 'T' and 'Z'
+                // we need to convert it to a proper ISO format for the Date constructor
+                let date;
+                if (typeof dateString === 'string' && dateString.includes(' ') && !dateString.includes('T')) {
+                    // Replace space with 'T' and add 'Z' for UTC if not present
+                    const hasZ = dateString.endsWith('Z');
+                    date = new Date((dateString.replace(' ', 'T') + (hasZ ? '' : 'Z')));
+                } else {
+                    // If it's already in a proper format that JS Date can parse
+                    date = new Date(dateString);
+                }
                 
-                // Adjust for Indonesia timezone (GMT+7)
-                // This is needed if the date is coming as UTC and we need to add 7 hours
-                date = new Date(date.getTime() + (7 * 60 * 60 * 1000));
-            } else {
-                // If it's already in a proper format that JS Date can parse
-                date = new Date(dateString);
+                // Check if date is valid
+                if (isNaN(date.getTime())) {
+                    return '-';
+                }
+                
+                // Format the date in Indonesian style
+                const options = { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'Asia/Jakarta' // Set the timezone to Indonesia's timezone (GMT+7)
+                };
+                
+                return date.toLocaleDateString('id-ID', options);
+            } catch (error) {
+                console.error('Error formatting date:', error);
+                return dateString || '-';
             }
-            
-            // Format the date in Indonesian style
-            const options = { 
-                day: 'numeric', 
-                month: 'long', 
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                timeZone: 'Asia/Jakarta' // Set the timezone to Indonesia's timezone (GMT+7)
-            };
-            
-            return date.toLocaleDateString('id-ID', options);
+        },
+        
+        formatJenisKelamin(jenis) {
+            if (jenis === 'laki-laki') return 'Laki-laki';
+            if (jenis === 'perempuan') return 'Perempuan';
+            return jenis;
+        },
+        
+        formatUmur(umur) {
+            if (umur === '<20') return 'Kurang dari 20 tahun';
+            if (umur === '20-40') return '20 - 40 tahun';
+            if (umur === '40<') return 'Lebih dari 40 tahun';
+            return umur;
         },
         
         formatStatus(status) {
@@ -404,44 +433,7 @@ export default {
             }
         },
         
-        async updateStatus(newStatus) {
-            try {
-                if (!this.laporanId) {
-                    throw new Error('Laporan ID tidak ditemukan');
-                }
-                
-                // Log what we're sending to help debug
-                console.log('Updating status:', {
-                    laporanId: this.laporanId,
-                    newStatus: newStatus
-                });
-                
-                // Make the API call using POST with _method: PUT
-                const formData = new FormData();
-                formData.append('_method', 'PUT');
-                formData.append('status', newStatus);
-
-                const response = await axios.post(`http://localhost:8000/api/laporan/update_status/${this.laporanId}`, formData);
-                                
-                // Check if response has data
-                console.log('Response:', response);
-                
-                // Just proceed if we get a 2xx response
-                this.laporan.status = newStatus;
-                this.$toast.success('Status berhasil diperbarui');
-                
-                // Refresh data
-                await this.fetchLaporanDetail();
-                
-            } catch (error) {
-                console.error('Error updating status:', error);
-                // Safely access error message with optional chaining
-                const errorMessage = error.response?.data?.message || 'Gagal memperbarui status';
-                this.$toast.error(`Gagal memperbarui status: ${errorMessage}`);
-            }
-        },
-        
-        // Add specific methods for verification and rejection
+        // Verification methods
         verifyReport() {
             this.showVerificationModal = true;
         },
@@ -450,20 +442,43 @@ export default {
             this.isVerifying = true;
             
             try {
-                // Your verification API call
-                await axios.put(`http://localhost:8000/api/laporan/update_status/${this.laporanId}`, {
-                    status: 'verified'
-                });
+                // Use FormData for consistency with other methods
+                const formData = new FormData();
+                formData.append('_method', 'PUT');
+                formData.append('status', 'verified');
+                
+                // Make the API call using POST with _method: PUT for compatibility
+                await axios.post(`http://localhost:8000/api/laporan/update_status/${this.laporanId}`, formData);
                 
                 // Update local data after successful verification
                 this.laporan.status = 'verified';
                 
-                // Show success message (optional)
-                this.$toast.success('Laporan berhasil diverifikasi');
+                // Show success message using Swal for consistency
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Laporan berhasil diverifikasi',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+                
+                // Refresh data
+                await this.fetchLaporanDetail();
             } catch (error) {
                 console.error('Verification failed:', error);
-                // Show error message (optional)
-                this.$toast.error('Gagal memverifikasi laporan');
+                
+                // Show error message
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: 'Gagal memverifikasi laporan',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
             } finally {
                 this.isVerifying = false;
                 this.showVerificationModal = false; // Close the modal after processing
@@ -485,28 +500,20 @@ export default {
                     return;
                 }
                 
-                // Log what we're sending to help debug
-                console.log('Rejecting report:', {
-                    laporanId: this.laporanId
-                });
-                
                 // Make the API call using POST with _method: PUT
                 const formData = new FormData();
                 formData.append('_method', 'PUT');
                 formData.append('status', 'rejected');
 
-                const response = await axios.post(
+                await axios.post(
                     `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
                     formData
                 );
-                                
-                // Check if response has data
-                console.log('Response:', response);
-                
+                              
                 // Update local data after successful rejection
                 this.laporan.status = 'rejected';
                 
-                // Show success message with Swal instead of toast
+                // Show success message with Swal
                 Swal.fire({
                     icon: 'success',
                     title: 'Berhasil!',
@@ -553,38 +560,20 @@ export default {
                     return;
                 }
                 
-                // Make the API call first to get updated_at value
-                const formData = new FormData();
-                formData.append('_method', 'PUT');
-                formData.append('tanggapan', this.tanggapanText); // Temporary single string for API call
-                
-                // Include the current status to maintain it
-                if (this.laporan && this.laporan.status) {
-                    formData.append('status', this.laporan.status);
-                } else {
-                    formData.append('status', 'pending');
+                if (!this.tanggapanText.trim()) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Tanggapan tidak boleh kosong',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                    return;
                 }
                 
-                const response = await axios.post(
-                    `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
-                    formData
-                );
-                
-                console.log('Response:', response);
-                
-                // Get the updated data to get the new updated_at timestamp
-                const updatedResponse = await axios.get(`http://localhost:8000/api/laporan/${this.laporanId}`);
-                const updatedData = updatedResponse.data;
-                
-                // Now create the tanggapan array with the new timestamp from updated_at
-                // Create a new response object with text and timestamp from the API's updated_at
-                const newTanggapan = {
-                    text: this.tanggapanText,
-                    timestamp: updatedData.updated_at, // Using the updated_at from API response
-                    user: this.currentUser
-                };
-                
-                // Prepare the tanggapan array
+                // Prepare tanggapan array
                 let tanggapanArray = [];
                 
                 if (this.laporan.tanggapan) {
@@ -602,30 +591,30 @@ export default {
                     }
                 }
                 
-                // Add the new response
+                // Create a new tanggapan object
+                const newTanggapan = {
+                    text: this.tanggapanText,
+                    timestamp: new Date().toISOString(), // Use current time
+                    user: this.currentUser
+                };
+                
+                // Add the new tanggapan
                 tanggapanArray.push(newTanggapan);
                 
-                // Update tanggapan with the array format
-                const arrayFormData = new FormData();
-                arrayFormData.append('_method', 'PUT');
-                arrayFormData.append('tanggapan', JSON.stringify(tanggapanArray));
+                // Make the API call
+                const formData = new FormData();
+                formData.append('_method', 'PUT');
+                formData.append('tanggapan', JSON.stringify(tanggapanArray));
                 
                 // Include the current status to maintain it
                 if (this.laporan && this.laporan.status) {
-                    arrayFormData.append('status', this.laporan.status);
-                } else {
-                    arrayFormData.append('status', 'pending');
+                    formData.append('status', this.laporan.status);
                 }
 
-                // Make second API call to update with the array
                 await axios.post(
                     `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
-                    arrayFormData
+                    formData
                 );
-                
-                // Update local data after successful submission
-                this.laporan.tanggapan = tanggapanArray;
-                this.laporan.updated_at = updatedData.updated_at;
                 
                 // Show success message
                 Swal.fire({
@@ -647,13 +636,6 @@ export default {
                 
             } catch (error) {
                 console.error('Error saving tanggapan:', error);
-                
-                // More detailed error logging for debugging
-                if (error.response) {
-                    console.error('Error response data:', error.response.data);
-                    console.error('Error response status:', error.response.status);
-                    console.error('Error response headers:', error.response.headers);
-                }
                 
                 // Try to get a more specific error message
                 const errorMessage = error.response?.data?.message || 
@@ -721,7 +703,7 @@ export default {
                     formData.append('tanggapan', tanggapanData);
                 }
 
-                const response = await axios.post(
+                await axios.post(
                     `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
                     formData
                 );
@@ -765,6 +747,7 @@ export default {
 </script>
 
 <style scoped>
+/* Your CSS styles remain unchanged */
 .detail-pk-container {
     padding: 24px;
     max-width: 1200px;

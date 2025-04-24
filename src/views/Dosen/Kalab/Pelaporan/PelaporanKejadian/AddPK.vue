@@ -123,7 +123,8 @@
       <!-- Section 2: Informasi Pelapor -->
       <div class="form-section">
         <h2>Informasi Pelapor</h2>
-        <div class="form-row single-column">
+        <div class="form-row">
+          <!-- Left column for personal info -->
           <div class="form-column">
             <div class="form-group">
               <label for="nama_pelapor">Nama Pelapor</label>
@@ -156,6 +157,90 @@
                 class="form-control"
                 disabled
               />
+            </div>
+            
+            <div class="form-group">
+              <label for="profesi">Profesi <span class="required">*</span></label>
+              <select
+                id="profesi"
+                v-model="formData.profesi"
+                class="form-control"
+                :class="{ 'is-invalid': errors.profesi }"
+                required
+              >
+                <option value="" disabled selected>Pilih Profesi</option>
+                <option value="Mahasiswa">Mahasiswa</option>
+                <option value="Dosen">Dosen</option>
+                <option value="Staff">Staff</option>
+                <option value="Lainnya">Lainnya</option>
+              </select>
+              <div v-if="errors.profesi" class="invalid-feedback">{{ errors.profesi[0] }}</div>
+            </div>
+          </div>
+          
+          <!-- Right column for new fields -->
+          <div class="form-column">
+            <!-- Replace dropdown with radio buttons for jenis_kelamin -->
+            <div class="form-group">
+              <label>Jenis Kelamin <span class="required">*</span></label>
+              <div class="radio-group" :class="{ 'is-invalid': errors.jenis_kelamin }">
+                <div class="radio-option">
+                  <input
+                    type="radio"
+                    id="laki-laki"
+                    v-model="formData.jenis_kelamin"
+                    value="laki-laki"
+                    required
+                  />
+                  <label for="laki-laki">Laki-laki</label>
+                </div>
+                <div class="radio-option">
+                  <input
+                    type="radio"
+                    id="perempuan"
+                    v-model="formData.jenis_kelamin"
+                    value="perempuan"
+                  />
+                  <label for="perempuan">Perempuan</label>
+                </div>
+              </div>
+              <div v-if="errors.jenis_kelamin" class="invalid-feedback">{{ errors.jenis_kelamin[0] }}</div>
+            </div>
+
+            <!-- Replace dropdown with radio buttons for umur_pelapor -->
+            <div class="form-group">
+              <label>Rentang Umur <span class="required">*</span></label>
+              <div class="radio-group" :class="{ 'is-invalid': errors.umur_pelapor }">
+                <div class="radio-option">
+                  <input
+                    type="radio"
+                    id="below20"
+                    v-model="formData.umur_pelapor"
+                    value="<20"
+                    required
+                  />
+                  <label for="below20">Kurang dari 20 tahun</label>
+                </div>
+                <div class="radio-option">
+                  <input
+                    type="radio"
+                    id="20to40"
+                    v-model="formData.umur_pelapor"
+                    value="20-40"
+                  />
+                  <label for="20to40">20 - 40 tahun</label>
+                </div>
+                <div class="radio-option">
+                  <input
+                    type="radio"
+                    id="above40"
+                    v-model="formData.umur_pelapor"
+                    value="40<"
+                  />
+                  <label for="above40">Lebih dari 40 tahun</label>
+                </div>
+              </div>
+              <div v-if="errors.umur_pelapor" class="invalid-feedback">{{ errors.umur_pelapor[0] }}</div>
             </div>
           </div>
         </div>
@@ -233,6 +318,10 @@ export default {
         ni_pelapor: '',
         nomor_telepon: '',
         lampiran_link: '', // Menambahkan field lampiran link
+        // Tambahkan field baru
+        profesi: '',
+        jenis_kelamin: '',
+        umur_pelapor: '',
         agreement: false // Tambahkan field agreement untuk pernyataan
       },
       imagePreviews: [], // Changed to array for multiple previews
@@ -322,6 +411,11 @@ export default {
       formData.append('tanggal_kejadian', this.formData.tanggal_kejadian);
       formData.append('agreement', this.formData.agreement);
       
+      // Tambahkan field baru ke formData
+      formData.append('profesi', this.formData.profesi);
+      formData.append('jenis_kelamin', this.formData.jenis_kelamin);
+      formData.append('umur_pelapor', this.formData.umur_pelapor);
+      
       // Append each image to the form data with the same key name
       if (this.formData.image_path && this.formData.image_path.length > 0) {
         for (let i = 0; i < this.formData.image_path.length; i++) {
@@ -374,6 +468,10 @@ export default {
         ni_pelapor: this.formData.ni_pelapor,
         nomor_telepon: this.formData.nomor_telepon,
         lampiran_link: '', // Reset lampiran link
+        // Reset field baru
+        profesi: '',
+        jenis_kelamin: '',
+        umur_pelapor: '',
         agreement: false // Reset agreement
       };
       this.imagePreviews = [];
@@ -457,6 +555,28 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+/* Radio Button Styling */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+}
+
+.radio-option input[type="radio"] {
+  margin-right: 0.5rem;
+}
+
+.radio-option label {
+  font-weight: normal;
+  margin-bottom: 0;
 }
 
 label {
