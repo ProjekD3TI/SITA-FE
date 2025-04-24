@@ -63,6 +63,50 @@
                 </div>
             </div>
 
+            <!-- SECTION TERLAPOR/TERDUGA -->
+            <div class="detail-card" v-if="terlaporArray && terlaporArray.length > 0">
+                <h3 class="detail-section-title"><i class="fas fa-user-times"></i> Identitas Terlapor/Terduga</h3>
+                
+                <div v-for="(terlapor, index) in terlaporArray" :key="`terlapor-${index}`" class="terlapor-item">
+                    <h4 class="sub-title">Terlapor #{{ index + 1 }}</h4>
+                    <div class="info-grid">
+                        <div class="info-label">Nama Lengkap:</div>
+                        <div class="info-value">{{ terlapor.nama_lengkap }}</div>
+                        
+                        <div class="info-label">Email:</div>
+                        <div class="info-value">{{ terlapor.email || '-' }}</div>
+                        
+                        <div class="info-label">Nomor Telepon:</div>
+                        <div class="info-value">{{ terlapor.nomor_telepon || '-' }}</div>
+                        
+                        <div class="info-label">Status Warga:</div>
+                        <div class="info-value">{{ formatStatusWarga(terlapor.status_warga) }}</div>
+                        
+                        <div class="info-label">Unit Kerja:</div>
+                        <div class="info-value">{{ terlapor.unit_kerja }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION SAKSI -->
+            <div class="detail-card" v-if="saksiArray && saksiArray.length > 0">
+                <h3 class="detail-section-title"><i class="fas fa-user-shield"></i> Saksi</h3>
+                
+                <div v-for="(saksi, index) in saksiArray" :key="`saksi-${index}`" class="saksi-item">
+                    <h4 class="sub-title">Saksi #{{ index + 1 }}</h4>
+                    <div class="info-grid">
+                        <div class="info-label">Nama Lengkap:</div>
+                        <div class="info-value">{{ saksi.nama_lengkap }}</div>
+                        
+                        <div class="info-label">Email:</div>
+                        <div class="info-value">{{ saksi.email || '-' }}</div>
+                        
+                        <div class="info-label">Nomor Telepon:</div>
+                        <div class="info-value">{{ saksi.nomor_telepon || '-' }}</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="detail-cards-row">
                 <div class="detail-card">
                     <h3 class="detail-section-title"><i class="fas fa-user"></i> Informasi Pelapor</h3>
@@ -283,6 +327,54 @@ export default {
             }
             
             return [];
+        },
+        
+        // Process terlapor data to get an array
+        terlaporArray() {
+            if (!this.laporan || !this.laporan.terlapor) return [];
+            
+            // If already an array, return it
+            if (Array.isArray(this.laporan.terlapor)) {
+                return this.laporan.terlapor;
+            }
+            
+            // If it's a JSON string, parse it
+            if (typeof this.laporan.terlapor === 'string') {
+                try {
+                    const parsedArray = JSON.parse(this.laporan.terlapor);
+                    if (Array.isArray(parsedArray)) {
+                        return parsedArray;
+                    }
+                } catch (e) {
+                    console.log('Terlapor is not a valid JSON string', e);
+                }
+            }
+            
+            return [];
+        },
+        
+        // Process saksi data to get an array
+        saksiArray() {
+            if (!this.laporan || !this.laporan.saksi) return [];
+            
+            // If already an array, return it
+            if (Array.isArray(this.laporan.saksi)) {
+                return this.laporan.saksi;
+            }
+            
+            // If it's a JSON string, parse it
+            if (typeof this.laporan.saksi === 'string') {
+                try {
+                    const parsedArray = JSON.parse(this.laporan.saksi);
+                    if (Array.isArray(parsedArray)) {
+                        return parsedArray;
+                    }
+                } catch (e) {
+                    console.log('Saksi is not a valid JSON string', e);
+                }
+            }
+            
+            return [];
         }
     },
     
@@ -383,6 +475,17 @@ export default {
             if (umur === '20-40') return '20 - 40 tahun';
             if (umur === '40<') return 'Lebih dari 40 tahun';
             return umur;
+        },
+        
+        formatStatusWarga(status) {
+            const statusMap = {
+                'dosen': 'Dosen',
+                'mahasiswa': 'Mahasiswa', 
+                'staff': 'Staff',
+                'lainnya': 'Lainnya'
+            };
+            
+            return statusMap[status] || status;
         },
         
         formatStatus(status) {
@@ -752,6 +855,28 @@ export default {
     padding: 24px;
     max-width: 1200px;
     margin: 0 auto;
+}
+
+/* Add new styles for terlapor and saksi sections */
+.terlapor-item, .saksi-item {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+    border-left: 4px solid #3b82f6;
+}
+
+.terlapor-item:last-child, .saksi-item:last-child {
+    margin-bottom: 0;
+}
+
+.sub-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 8px;
 }
 
 .detail-header {

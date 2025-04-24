@@ -246,7 +246,203 @@
         </div>
       </div>
 
-      <!-- Section 3: Pernyataan -->
+      <!-- Section 3: Identitas Terlapor/Terduga -->
+      <div class="form-section">
+        <h2>Identitas Terlapor/Terduga <span class="required">*</span></h2>
+        <div v-if="errors.terlapor" class="alert alert-danger">
+          {{ typeof errors.terlapor === 'string' ? errors.terlapor : 'Harap isi data terlapor dengan benar' }}
+        </div>
+        
+        <div v-for="(item, index) in formData.terlapor" :key="`terlapor-${index}`" class="terlapor-card">
+          <div class="item-header">
+            <h3>Terlapor #{{ index + 1 }}</h3>
+            <button 
+              type="button" 
+              class="btn-remove" 
+              @click="removeTerlapor(index)" 
+              :disabled="formData.terlapor.length <= 1"
+            >
+              <i class="fas fa-times"></i> Hapus
+            </button>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-column">
+              <div class="form-group">
+                <label :for="`terlapor-nama-${index}`">Nama Lengkap <span class="required">*</span></label>
+                <input
+                  type="text"
+                  :id="`terlapor-nama-${index}`"
+                  v-model="item.nama_lengkap"
+                  class="form-control"
+                  :class="{ 'is-invalid': errors[`terlapor.${index}.nama_lengkap`] }"
+                  required
+                />
+                <div v-if="errors[`terlapor.${index}.nama_lengkap`]" class="invalid-feedback">
+                  {{ errors[`terlapor.${index}.nama_lengkap`][0] }}
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label :for="`terlapor-email-${index}`">Email</label>
+                <input
+                  type="email"
+                  :id="`terlapor-email-${index}`"
+                  v-model="item.email"
+                  class="form-control"
+                  :class="{ 'is-invalid': errors[`terlapor.${index}.email`] }"
+                />
+                <div v-if="errors[`terlapor.${index}.email`]" class="invalid-feedback">
+                  {{ errors[`terlapor.${index}.email`][0] }}
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label :for="`terlapor-telepon-${index}`">Nomor Telepon</label>
+                <input
+                  type="text"
+                  :id="`terlapor-telepon-${index}`"
+                  v-model="item.nomor_telepon"
+                  class="form-control"
+                  :class="{ 'is-invalid': errors[`terlapor.${index}.nomor_telepon`] }"
+                />
+                <div v-if="errors[`terlapor.${index}.nomor_telepon`]" class="invalid-feedback">
+                  {{ errors[`terlapor.${index}.nomor_telepon`][0] }}
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-column">
+              <div class="form-group">
+                <label :for="`terlapor-status-${index}`">Status Warga UNS <span class="required">*</span></label>
+                <select
+                  :id="`terlapor-status-${index}`"
+                  v-model="item.status_warga"
+                  class="form-control"
+                  :class="{ 'is-invalid': errors[`terlapor.${index}.status_warga`] }"
+                  required
+                >
+                  <option value="" disabled selected>Pilih Status</option>
+                  <option value="dosen">Dosen</option>
+                  <option value="mahasiswa">Mahasiswa</option>
+                  <option value="staff">Staff</option>
+                  <option value="lainnya">Lainnya</option>
+                </select>
+                <div v-if="errors[`terlapor.${index}.status_warga`]" class="invalid-feedback">
+                  {{ errors[`terlapor.${index}.status_warga`][0] }}
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label :for="`terlapor-unit-${index}`">Unit Kerja <span class="required">*</span></label>
+                <select
+                  :id="`terlapor-unit-${index}`"
+                  v-model="item.unit_kerja"
+                  class="form-control"
+                  :class="{ 'is-invalid': errors[`terlapor.${index}.unit_kerja`] }"
+                  required
+                >
+                  <option value="" disabled selected>Pilih Unit Kerja</option>
+                  <option value="Fakultas Teknik">Fakultas Teknik</option>
+                  <option value="Fakultas MIPA">Fakultas MIPA</option>
+                  <option value="Fakultas Ekonomi">Fakultas Ekonomi</option>
+                  <option value="Fakultas Hukum">Fakultas Hukum</option>
+                  <option value="Fakultas Kedokteran">Fakultas Kedokteran</option>
+                  <option value="Fakultas Pertanian">Fakultas Pertanian</option>
+                  <option value="Fakultas KIP">Fakultas KIP</option>
+                  <option value="Fakultas Ilmu Sosial dan Politik">Fakultas Ilmu Sosial dan Politik</option>
+                  <option value="Fakultas Ilmu Budaya">Fakultas Ilmu Budaya</option>
+                  <option value="Fakultas Seni Rupa dan Desain">Fakultas Seni Rupa dan Desain</option>
+                </select>
+                <div v-if="errors[`terlapor.${index}.unit_kerja`]" class="invalid-feedback">
+                  {{ errors[`terlapor.${index}.unit_kerja`][0] }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <button type="button" class="btn btn-outline-primary add-button" @click="addTerlapor">
+          <i class="fas fa-plus"></i> Tambah Terlapor
+        </button>
+      </div>
+
+      <!-- Section 4: Saksi -->
+      <div class="form-section">
+        <h2>Saksi <span class="required">*</span></h2>
+        <div v-if="errors.saksi" class="alert alert-danger">
+          {{ typeof errors.saksi === 'string' ? errors.saksi : 'Harap isi data saksi dengan benar' }}
+        </div>
+        
+        <div v-for="(item, index) in formData.saksi" :key="`saksi-${index}`" class="saksi-card">
+          <div class="item-header">
+            <h3>Saksi #{{ index + 1 }}</h3>
+            <button 
+              type="button" 
+              class="btn-remove" 
+              @click="removeSaksi(index)" 
+              :disabled="formData.saksi.length <= 1"
+            >
+              <i class="fas fa-times"></i> Hapus
+            </button>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-column">
+              <div class="form-group">
+                <label :for="`saksi-nama-${index}`">Nama Lengkap <span class="required">*</span></label>
+                <input
+                  type="text"
+                  :id="`saksi-nama-${index}`"
+                  v-model="item.nama_lengkap"
+                  class="form-control"
+                  :class="{ 'is-invalid': errors[`saksi.${index}.nama_lengkap`] }"
+                  required
+                />
+                <div v-if="errors[`saksi.${index}.nama_lengkap`]" class="invalid-feedback">
+                  {{ errors[`saksi.${index}.nama_lengkap`][0] }}
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-column">
+              <div class="form-group">
+                <label :for="`saksi-email-${index}`">Email</label>
+                <input
+                  type="email"
+                  :id="`saksi-email-${index}`"
+                  v-model="item.email"
+                  class="form-control"
+                  :class="{ 'is-invalid': errors[`saksi.${index}.email`] }"
+                />
+                <div v-if="errors[`saksi.${index}.email`]" class="invalid-feedback">
+                  {{ errors[`saksi.${index}.email`][0] }}
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label :for="`saksi-telepon-${index}`">Nomor Telepon</label>
+                <input
+                  type="text"
+                  :id="`saksi-telepon-${index}`"
+                  v-model="item.nomor_telepon"
+                  class="form-control"
+                  :class="{ 'is-invalid': errors[`saksi.${index}.nomor_telepon`] }"
+                />
+                <div v-if="errors[`saksi.${index}.nomor_telepon`]" class="invalid-feedback">
+                  {{ errors[`saksi.${index}.nomor_telepon`][0] }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <button type="button" class="btn btn-outline-primary add-button" @click="addSaksi">
+          <i class="fas fa-plus"></i> Tambah Saksi
+        </button>
+      </div>
+
+      <!-- Section 5: Pernyataan -->
       <div class="form-section">
         <h2>Pernyataan</h2>
         <div class="statement-box">
@@ -313,18 +509,35 @@ export default {
         category_id: '',
         deskripsi: '',
         tanggal_kejadian: '',
-        image_path: [], // Changed to array for multiple images
+        image_path: [],
         nama_pelapor: '',
         ni_pelapor: '',
         nomor_telepon: '',
-        lampiran_link: '', // Menambahkan field lampiran link
-        // Tambahkan field baru
+        lampiran_link: '',
         profesi: '',
         jenis_kelamin: '',
         umur_pelapor: '',
-        agreement: false // Tambahkan field agreement untuk pernyataan
+        terlapor: [
+          // Initialize with one empty terlapor record
+          {
+            nama_lengkap: '',
+            email: '',
+            nomor_telepon: '',
+            status_warga: '',
+            unit_kerja: ''
+          }
+        ],
+        saksi: [
+          // Initialize with one empty saksi record
+          {
+            nama_lengkap: '',
+            email: '',
+            nomor_telepon: ''
+          }
+        ],
+        agreement: false
       },
-      imagePreviews: [], // Changed to array for multiple previews
+      imagePreviews: [],
       categories: [],
       errors: {},
       loading: false,
@@ -340,7 +553,6 @@ export default {
   },
   computed: {
     filteredCategories() {
-      // Filter out categories that start with "Kekerasan"
       return this.categories.filter(category => 
         !category.nama.startsWith('Kekerasan')
       );
@@ -372,17 +584,14 @@ export default {
         return;
       }
       
-      // Reset the image paths and previews
       if (!this.formData.image_path) {
         this.formData.image_path = [];
       }
       
-      // Process all selected files
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         this.formData.image_path.push(file);
         
-        // Create image preview for each file
         const reader = new FileReader();
         reader.onload = e => {
           this.imagePreviews.push(e.target.result);
@@ -391,13 +600,77 @@ export default {
       }
     },
     removeImage(index) {
-      // Remove the image from the preview and form data
       this.imagePreviews.splice(index, 1);
       this.formData.image_path.splice(index, 1);
+    },
+    // Methods for terlapor management
+    addTerlapor() {
+      this.formData.terlapor.push({
+        nama_lengkap: '',
+        email: '',
+        nomor_telepon: '',
+        status_warga: '',
+        unit_kerja: ''
+      });
+    },
+    removeTerlapor(index) {
+      // Ensure we always have at least one terlapor
+      if (this.formData.terlapor.length > 1) {
+        this.formData.terlapor.splice(index, 1);
+      }
+    },
+    // Methods for saksi management
+    addSaksi() {
+      this.formData.saksi.push({
+        nama_lengkap: '',
+        email: '',
+        nomor_telepon: ''
+      });
+    },
+    removeSaksi(index) {
+      // Ensure we always have at least one saksi
+      if (this.formData.saksi.length > 1) {
+        this.formData.saksi.splice(index, 1);
+      }
+    },
+    validateTerlapor() {
+      // Validate each terlapor entry
+      const invalidEntries = this.formData.terlapor.filter(item => 
+        !item.nama_lengkap || !item.status_warga || !item.unit_kerja
+      );
+      
+      return invalidEntries.length === 0;
+    },
+    validateSaksi() {
+      // Validate each saksi entry
+      const invalidEntries = this.formData.saksi.filter(item => 
+        !item.nama_lengkap
+      );
+      
+      return invalidEntries.length === 0;
     },
     submitForm() {
       if (!this.formData.agreement) {
         this.errors.agreement = ['Anda harus menyetujui pernyataan untuk melanjutkan'];
+        return;
+      }
+      
+      // Validate terlapor and saksi entries
+      if (!this.validateTerlapor()) {
+        this.errors.terlapor = 'Harap lengkapi data terlapor dengan benar';
+        // Scroll to terlapor section
+        this.$nextTick(() => {
+          document.querySelector('.terlapor-card').scrollIntoView({ behavior: 'smooth' });
+        });
+        return;
+      }
+      
+      if (!this.validateSaksi()) {
+        this.errors.saksi = 'Harap lengkapi data saksi dengan benar';
+        // Scroll to saksi section
+        this.$nextTick(() => {
+          document.querySelector('.saksi-card').scrollIntoView({ behavior: 'smooth' });
+        });
         return;
       }
       
@@ -411,21 +684,43 @@ export default {
       formData.append('tanggal_kejadian', this.formData.tanggal_kejadian);
       formData.append('agreement', this.formData.agreement);
       
-      // Tambahkan field baru ke formData
+      // Basic fields
       formData.append('profesi', this.formData.profesi);
       formData.append('jenis_kelamin', this.formData.jenis_kelamin);
       formData.append('umur_pelapor', this.formData.umur_pelapor);
       
-      // Append each image to the form data with the same key name
+      // Handle each terlapor item individually
+      this.formData.terlapor.forEach((item, index) => {
+        formData.append(`terlapor[${index}][nama_lengkap]`, item.nama_lengkap);
+        formData.append(`terlapor[${index}][email]`, item.email || '');
+        formData.append(`terlapor[${index}][nomor_telepon]`, item.nomor_telepon || '');
+        formData.append(`terlapor[${index}][status_warga]`, item.status_warga);
+        formData.append(`terlapor[${index}][unit_kerja]`, item.unit_kerja);
+      });
+      
+      // Handle each saksi item individually
+      this.formData.saksi.forEach((item, index) => {
+        formData.append(`saksi[${index}][nama_lengkap]`, item.nama_lengkap);
+        formData.append(`saksi[${index}][email]`, item.email || '');
+        formData.append(`saksi[${index}][nomor_telepon]`, item.nomor_telepon || '');
+      });
+      
+      // Images
       if (this.formData.image_path && this.formData.image_path.length > 0) {
         for (let i = 0; i < this.formData.image_path.length; i++) {
           formData.append('image_path[]', this.formData.image_path[i]);
         }
       }
       
-      // Append lampiran link jika ada
+      // Optional link
       if (this.formData.lampiran_link) {
         formData.append('lampiran_link', this.formData.lampiran_link);
+      }
+
+      // Log the form data for debugging
+      console.log('Form data entries:');
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + (pair[1] instanceof File ? pair[1].name : pair[1]));
       }
 
       axios.post('http://localhost:8000/api/laporan/add_laporan', formData, {
@@ -439,18 +734,29 @@ export default {
             title: 'Berhasil!',
             text: 'Laporan berhasil ditambahkan.',
             icon: 'success',
-            timer: 2000,                // Auto-close after 2 seconds (2000ms)
-            timerProgressBar: true,     // Show a progress bar counting down
-            showConfirmButton: false    // Hide the confirmation button
+            timer: 2000,
+            timerProgressBar: true,
+            showConfirmButton: false
           }).then(() => {
-            // After the timer finishes or alert is closed
             this.$router.push('/kalab/pelaporankejadiankalab');
           });
           this.resetForm();
         })
         .catch(error => {
           this.loading = false;
+          console.error("Error response:", error.response);
+          
           if (error.response && error.response.status === 400) {
+            if (error.response.data.terlapor) {
+              // Handle terlapor validation errors
+              console.error("Terlapor validation errors:", error.response.data.terlapor);
+            }
+            
+            if (error.response.data.saksi) {
+              // Handle saksi validation errors
+              console.error("Saksi validation errors:", error.response.data.saksi);
+            }
+            
             this.errors = error.response.data;
           } else {
             this.showNotification('Error', 'Terjadi kesalahan saat mengirim laporan.', false);
@@ -467,12 +773,29 @@ export default {
         nama_pelapor: this.formData.nama_pelapor,
         ni_pelapor: this.formData.ni_pelapor,
         nomor_telepon: this.formData.nomor_telepon,
-        lampiran_link: '', // Reset lampiran link
-        // Reset field baru
+        lampiran_link: '',
         profesi: '',
         jenis_kelamin: '',
         umur_pelapor: '',
-        agreement: false // Reset agreement
+        terlapor: [
+          // Always have at least one empty terlapor record
+          {
+            nama_lengkap: '',
+            email: '',
+            nomor_telepon: '',
+            status_warga: '',
+            unit_kerja: ''
+          }
+        ],
+        saksi: [
+          // Always have at least one empty saksi record
+          {
+            nama_lengkap: '',
+            email: '',
+            nomor_telepon: ''
+          }
+        ],
+        agreement: false
       };
       this.imagePreviews = [];
       this.errors = {};
@@ -539,7 +862,6 @@ export default {
   gap: 2rem;
 }
 
-/* Tambahan untuk single-column */
 .form-row.single-column {
   max-width: 600px;
 }
@@ -620,7 +942,6 @@ label {
   position: relative;
 }
 
-/* Updated styles for multiple image previews */
 .image-previews {
   display: flex;
   flex-wrap: wrap;
@@ -668,6 +989,20 @@ label {
   color: #6c757d;
   font-size: 0.875rem;
   margin-top: 0.25rem;
+}
+
+/* Alert style */
+.alert {
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+}
+
+.alert-danger {
+  color: #721c24;
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
 }
 
 /* Styling untuk section pernyataan */
@@ -724,12 +1059,17 @@ label {
   transition: background-color 0.2s;
 }
 
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .btn-primary {
   background-color: #007bff;
   color: white;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   background-color: #0069d9;
 }
 
@@ -738,13 +1078,8 @@ label {
   color: white;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
   background-color: #5a6268;
-}
-
-.btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
 }
 
 /* Modal styles */
@@ -794,6 +1129,84 @@ label {
   padding: 1rem;
   display: flex;
   justify-content: center;
+}
+
+/* Styles for Terlapor and Saksi cards */
+.terlapor-card, .saksi-card {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.item-header h3 {
+  font-size: 1.2rem;
+  margin: 0;
+  color: #333;
+  font-weight: 600;
+}
+
+.btn-remove {
+  background-color: transparent;
+  color: #dc3545;
+  border: 1px solid #dc3545;
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.btn-remove:hover:not(:disabled) {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #6c757d;
+  color: #6c757d;
+}
+
+.add-button {
+  display: block;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px dashed #007bff;
+  background-color: #f8f9fa;
+  color: #007bff;
+  text-align: center;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 1rem;
+}
+
+.add-button:hover {
+  background-color: #e6f2ff;
+}
+
+.btn-outline-primary {
+  background-color: transparent;
+  border: 1px solid #007bff;
+  color: #007bff;
+}
+
+.btn-outline-primary:hover {
+  background-color: #007bff;
+  color: white;
 }
 
 /* Responsive layout */
