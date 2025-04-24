@@ -333,6 +333,35 @@
                   {{ errors[`terlapor.${index}.nomor_telepon`][0] }}
                 </div>
               </div>
+              
+              <!-- New Gender Radio Button Group for Terlapor -->
+              <div class="form-group">
+                <label>Jenis Kelamin <span class="required">*</span></label>
+                <div class="radio-group" :class="{ 'is-invalid': errors[`terlapor.${index}.jenis_kelamin`] }">
+                  <div class="radio-option">
+                    <input
+                      type="radio"
+                      :id="`terlapor-laki-${index}`"
+                      v-model="item.jenis_kelamin"
+                      value="laki-laki"
+                      required
+                    />
+                    <label :for="`terlapor-laki-${index}`">Laki-laki</label>
+                  </div>
+                  <div class="radio-option">
+                    <input
+                      type="radio"
+                      :id="`terlapor-perempuan-${index}`"
+                      v-model="item.jenis_kelamin"
+                      value="perempuan"
+                    />
+                    <label :for="`terlapor-perempuan-${index}`">Perempuan</label>
+                  </div>
+                </div>
+                <div v-if="errors[`terlapor.${index}.jenis_kelamin`]" class="invalid-feedback d-block">
+                  {{ errors[`terlapor.${index}.jenis_kelamin`][0] }}
+                </div>
+              </div>
             </div>
             
             <div class="form-column">
@@ -643,7 +672,8 @@ export default {
         email: '',
         nomor_telepon: '',
         status_warga: '',
-        unit_kerja: ''
+        unit_kerja: '',
+        jenis_kelamin: ''
       });
     },
     removeTerlapor(index) {
@@ -669,7 +699,7 @@ export default {
     validateTerlapor() {
       // Validate each terlapor entry
       const invalidEntries = this.formData.terlapor.filter(item => 
-        !item.nama_lengkap || !item.status_warga || !item.unit_kerja
+        !item.nama_lengkap || !item.status_warga || !item.unit_kerja || !item.jenis_kelamin
       );
       
       return invalidEntries.length === 0;
@@ -765,6 +795,7 @@ export default {
         formData.append(`terlapor[${index}][nomor_telepon]`, item.nomor_telepon || '');
         formData.append(`terlapor[${index}][status_warga]`, item.status_warga);
         formData.append(`terlapor[${index}][unit_kerja]`, item.unit_kerja);
+        formData.append(`terlapor[${index}][jenis_kelamin]`, item.jenis_kelamin);
       });
       
       // Handle each saksi item individually

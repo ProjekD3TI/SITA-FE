@@ -88,6 +88,9 @@
                         
                         <div class="info-label">Nomor Telepon:</div>
                         <div class="info-value">{{ terlapor.nomor_telepon || '-' }}</div>
+
+                        <div class="info-label">Jenis Kelamin:</div>
+                        <div class="info-value">{{ formatJenisKelamin(terlapor.jenis_kelamin) || '-' }}</div>
                         
                         <div class="info-label">Status Warga:</div>
                         <div class="info-value">{{ formatStatusWarga(terlapor.status_warga) }}</div>
