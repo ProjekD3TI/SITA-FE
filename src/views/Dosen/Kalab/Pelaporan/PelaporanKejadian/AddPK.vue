@@ -71,6 +71,29 @@
                 </div>
               </div>
             </div>
+
+            <div class="form-group">
+              <h2>Bukti Pelanggaran <span class="required">*</span></h2>
+              <div v-if="errors.bukti_pelanggaran" class="alert alert-danger">
+                {{ typeof errors.bukti_pelanggaran === 'string' ? errors.bukti_pelanggaran : 'Harap pilih minimal satu alat bukti' }}
+              </div>
+              
+              <div class="checkbox-group">
+                <div class="checkbox-option" v-for="(option, index) in buktiOptions" :key="index">
+                  <input 
+                    type="checkbox" 
+                    :id="`bukti-${index}`"
+                    :value="option.value" 
+                    v-model="formData.bukti_pelanggaran"
+                    class="checkbox-input"
+                  />
+                  <label :for="`bukti-${index}`" class="checkbox-label">
+                    {{ option.label }}
+                    <span v-if="option.description" class="option-desc">{{ option.description }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Right column - Detail Laporan lanjutan -->
@@ -517,6 +540,7 @@ export default {
         profesi: '',
         jenis_kelamin: '',
         umur_pelapor: '',
+        bukti_pelanggaran: [], // Array to store selected options
         terlapor: [
           // Initialize with one empty terlapor record
           {
@@ -537,6 +561,15 @@ export default {
         ],
         agreement: false
       },
+      // Define available options for bukti_pelanggaran
+      buktiOptions: [
+        { value: 'bukti_transfer', label: 'Bukti transfer, cek, bukti penyetoran, dan rekening koran bank' },
+        { value: 'dokumen_rekaman', label: 'Dokumen dan/atau rekaman' },
+        { value: 'foto_dokumentasi', label: 'Foto dokumentasi' },
+        { value: 'surat_disposisi', label: 'Surat disposisi perintah' },
+        { value: 'identitas_sumber', label: 'Identitas sumber informasi' },
+        { value: 'lainnya', label: 'Lainnya' },
+      ],
       imagePreviews: [],
       categories: [],
       errors: {},
@@ -649,33 +682,64 @@ export default {
       
       return invalidEntries.length === 0;
     },
-    submitForm() {
+    validateForm() {
+      let isValid = true;
+      this.errors = {};
+
       if (!this.formData.agreement) {
         this.errors.agreement = ['Anda harus menyetujui pernyataan untuk melanjutkan'];
-        return;
+        isValid = false;
+      }
+
+      // Validate bukti_pelanggaran (at least one must be selected)
+      if (!this.formData.bukti_pelanggaran || this.formData.bukti_pelanggaran.length === 0) {
+        this.errors.bukti_pelanggaran = ['Harap pilih minimal satu alat bukti'];
+        isValid = false;
       }
       
       // Validate terlapor and saksi entries
       if (!this.validateTerlapor()) {
         this.errors.terlapor = 'Harap lengkapi data terlapor dengan benar';
-        // Scroll to terlapor section
-        this.$nextTick(() => {
-          document.querySelector('.terlapor-card').scrollIntoView({ behavior: 'smooth' });
-        });
-        return;
+        isValid = false;
       }
       
       if (!this.validateSaksi()) {
         this.errors.saksi = 'Harap lengkapi data saksi dengan benar';
-        // Scroll to saksi section
-        this.$nextTick(() => {
-          document.querySelector('.saksi-card').scrollIntoView({ behavior: 'smooth' });
-        });
+        isValid = false;
+      }
+
+      return isValid;
+    },
+    submitForm() {
+      // Validate form first
+      if (!this.validateForm()) {
+        // If errors with bukti_pelanggaran, scroll there
+        if (this.errors.bukti_pelanggaran) {
+          this.$nextTick(() => {
+            document.querySelector('.checkbox-group').scrollIntoView({ behavior: 'smooth' });
+          });
+          return;
+        }
+
+        // If validation fails, scroll to the appropriate section with error
+        if (this.errors.terlapor) {
+          this.$nextTick(() => {
+            document.querySelector('.terlapor-card').scrollIntoView({ behavior: 'smooth' });
+          });
+          return;
+        }
+        
+        if (this.errors.saksi) {
+          this.$nextTick(() => {
+            document.querySelector('.saksi-card').scrollIntoView({ behavior: 'smooth' });
+          });
+          return;
+        }
+        
         return;
       }
       
       this.loading = true;
-      this.errors = {};
       
       const formData = new FormData();
       formData.append('judul', this.formData.judul);
@@ -688,6 +752,11 @@ export default {
       formData.append('profesi', this.formData.profesi);
       formData.append('jenis_kelamin', this.formData.jenis_kelamin);
       formData.append('umur_pelapor', this.formData.umur_pelapor);
+      
+      // Add bukti_pelanggaran to the form data as individual items
+      this.formData.bukti_pelanggaran.forEach((bukti, index) => {
+        formData.append(`bukti_pelanggaran[${index}]`, bukti);
+      });
       
       // Handle each terlapor item individually
       this.formData.terlapor.forEach((item, index) => {
@@ -717,12 +786,6 @@ export default {
         formData.append('lampiran_link', this.formData.lampiran_link);
       }
 
-      // Log the form data for debugging
-      console.log('Form data entries:');
-      for (let pair of formData.entries()) {
-        console.log(pair[0] + ': ' + (pair[1] instanceof File ? pair[1].name : pair[1]));
-      }
-
       axios.post('http://localhost:8000/api/laporan/add_laporan', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -748,13 +811,15 @@ export default {
           
           if (error.response && error.response.status === 400) {
             if (error.response.data.terlapor) {
-              // Handle terlapor validation errors
               console.error("Terlapor validation errors:", error.response.data.terlapor);
             }
             
             if (error.response.data.saksi) {
-              // Handle saksi validation errors
               console.error("Saksi validation errors:", error.response.data.saksi);
+            }
+
+            if (error.response.data.bukti_pelanggaran) {
+              console.error("Bukti pelanggaran validation errors:", error.response.data.bukti_pelanggaran);
             }
             
             this.errors = error.response.data;
@@ -777,8 +842,8 @@ export default {
         profesi: '',
         jenis_kelamin: '',
         umur_pelapor: '',
+        bukti_pelanggaran: [], // Reset bukti_pelanggaran
         terlapor: [
-          // Always have at least one empty terlapor record
           {
             nama_lengkap: '',
             email: '',
@@ -788,7 +853,6 @@ export default {
           }
         ],
         saksi: [
-          // Always have at least one empty saksi record
           {
             nama_lengkap: '',
             email: '',
@@ -899,6 +963,41 @@ export default {
 .radio-option label {
   font-weight: normal;
   margin-bottom: 0;
+}
+
+/* Checkbox Group Styling */
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 1.25rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.checkbox-option {
+  display: flex;
+  align-items: flex-start;
+}
+
+.checkbox-input {
+  margin-top: 0.25rem;
+  margin-right: 0.75rem;
+  cursor: pointer;
+}
+
+.checkbox-label {
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.option-desc {
+  font-size: 0.9em;
+  color: #6b7280;
+  display: inline-block;
+  font-weight: normal;
 }
 
 label {

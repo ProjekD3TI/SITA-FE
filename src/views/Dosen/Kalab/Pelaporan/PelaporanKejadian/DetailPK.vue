@@ -45,6 +45,16 @@
                         <i class="fas fa-external-link-alt"></i>
                     </a>
                 </div>
+
+                <div v-if="buktiPelanggaranArray && buktiPelanggaranArray.length > 0" class="bukti-section">
+                    <h3 class="bukti-title"><i class="fas fa-file-alt"></i> Bukti Pelanggaran</h3>
+                    <div class="bukti-list">
+                        <div v-for="(bukti, index) in buktiPelanggaranArray" :key="`bukti-${index}`" class="bukti-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>{{ formatBuktiPelanggaran(bukti) }}</span>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- Multiple images gallery -->
                 <div v-if="imageArray.length > 0" class="images-gallery">
@@ -375,7 +385,30 @@ export default {
             }
             
             return [];
-        }
+        },
+
+        buktiPelanggaranArray() {
+            if (!this.laporan || !this.laporan.bukti_pelanggaran) return [];
+            
+            // If already an array, return it
+            if (Array.isArray(this.laporan.bukti_pelanggaran)) {
+                return this.laporan.bukti_pelanggaran;
+            }
+            
+            // If it's a JSON string, parse it
+            if (typeof this.laporan.bukti_pelanggaran === 'string') {
+                try {
+                    const parsedArray = JSON.parse(this.laporan.bukti_pelanggaran);
+                    if (Array.isArray(parsedArray)) {
+                        return parsedArray;
+                    }
+                } catch (e) {
+                    console.log('bukti_pelanggaran is not a valid JSON string', e);
+                }
+            }
+            
+            return [];
+        },
     },
     
     methods: {
@@ -844,6 +877,19 @@ export default {
                     timer: 3000
                 });
             }
+        },
+
+        formatBuktiPelanggaran(bukti) {
+            const buktiMap = {
+                'bukti_transfer': 'Bukti transfer, cek, bukti penyetoran, dan rekening koran bank',
+                'dokumen_rekaman': 'Dokumen dan/atau rekaman',
+                'foto_dokumentasi': 'Foto dokumentasi',
+                'surat_disposisi': 'Surat disposisi perintah',
+                'identitas_sumber': 'Identitas sumber informasi',
+                'lainnya': 'Lainnya'
+            };
+            
+            return buktiMap[bukti] || bukti;
         },
     }
 };
@@ -1445,6 +1491,52 @@ export default {
 .rejected {
     background-color: #fee2e2;
     color: #dc2626;
+}
+
+/* Bukti Pelanggaran styles */
+.bukti-section {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.bukti-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.bukti-title i {
+    margin-right: 8px;
+    color: #3b82f6;
+}
+
+.bukti-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: #f9fafb;
+    border-radius: 6px;
+    padding: 12px 16px;
+}
+
+.bukti-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+}
+
+.bukti-item i {
+    color: #10b981;
+    font-size: 1rem;
+}
+
+.bukti-item span {
+    color: #374151;
+    font-size: 0.95rem;
 }
 
 /* Responsive design */
