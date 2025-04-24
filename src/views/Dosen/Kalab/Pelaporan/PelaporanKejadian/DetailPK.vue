@@ -33,7 +33,7 @@
                     <i class="fas fa-tag"></i> {{ getCategoryName(laporan.category_id) }}
                 </div>
                 <div class="date-info">
-                    <i class="fas fa-calendar-alt"></i> Tanggal Kejadian: {{ formatDate(laporan.tanggal_kejadian) }}
+                    <i class="fas fa-calendar-alt"></i> Tanggal Kejadian: {{ formatedDate(laporan.tanggal_kejadian) }}
                 </div>
                 <p class="description">{{ laporan.deskripsi }}</p>
                 
@@ -463,15 +463,35 @@ export default {
             if (!dateString) return '-';
             
             try {
-                // If the date is already in the YYYY-MM-DD HH:MM:SS format with no 'T' and 'Z'
-                // we need to convert it to a proper ISO format for the Date constructor
                 let date;
-                if (typeof dateString === 'string' && dateString.includes(' ') && !dateString.includes('T')) {
-                    // Replace space with 'T' and add 'Z' for UTC if not present
-                    const hasZ = dateString.endsWith('Z');
-                    date = new Date((dateString.replace(' ', 'T') + (hasZ ? '' : 'Z')));
-                } else {
-                    // If it's already in a proper format that JS Date can parse
+                
+                // Special case for tanggal_kejadian - Apply timezone adjustment for MySQL format
+                if (typeof dateString === 'string' && this.laporan && dateString === this.laporan.tanggal_kejadian) {
+                    const [datePart, timePart] = dateString.split(' ');
+                    const [year, month, day] = datePart.split('-').map(Number);
+                    const [hours, minutes, seconds] = timePart.split(':').map(Number);
+                    
+                    // For tanggal_kejadian, assume it's UTC and add 7 hours for Jakarta
+                    date = new Date(Date.UTC(year, month-1, day, hours, minutes, seconds));
+                    date.setTime(date.getTime() + (7 * 60 * 60 * 1000)); // Add 7 hours
+                }
+                // For tanggapan timestamps (typically in ISO format)
+                else if (typeof dateString === 'string' && dateString.includes('T')) {
+                    // Parse ISO format but don't add hours because tanggapan timestamps are already in Jakarta time
+                    date = new Date(dateString);
+                }
+                // For all other dates (like created_at, updated_at in MySQL format)
+                else if (typeof dateString === 'string' && dateString.includes(' ')) {
+                    // Parse MySQL date format
+                    const [datePart, timePart] = dateString.split(' ');
+                    const [year, month, day] = datePart.split('-').map(Number);
+                    const [hours, minutes, seconds] = timePart.split(':').map(Number);
+                    
+                    // For regular MySQL dates, assume they're already in local time
+                    date = new Date(year, month-1, day, hours, minutes, seconds);
+                }
+                else {
+                    // Fallback for any other format
                     date = new Date(dateString);
                 }
                 
@@ -480,17 +500,87 @@ export default {
                     return '-';
                 }
                 
-                // Format the date in Indonesian style
-                const options = { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    timeZone: 'Asia/Jakarta' // Set the timezone to Indonesia's timezone (GMT+7)
-                };
+                // Format using Indonesian month names
+                const monthNames = [
+                    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+                ];
                 
-                return date.toLocaleDateString('id-ID', options);
+                const day = date.getDate();
+                const month = monthNames[date.getMonth()];
+                const year = date.getFullYear();
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                
+                // Return formatted date
+                return `${day} ${month} ${year} pukul ${hours}:${minutes}`;
+            } catch (error) {
+                console.error('Error formatting date:', error);
+                return dateString || '-';
+            }
+        },
+
+        formatedDate(dateString) {
+            if (!dateString) return '-';
+            
+            try {
+                // Parse the date string
+                let date;
+                
+                if (typeof dateString === 'string') {
+                    // Handle different date formats
+                    if (dateString.includes(' ') && !dateString.includes('T')) {
+                        // MySQL format: "2025-04-24 11:01:00" - Assume this is already in Jakarta time
+                        const [datePart, timePart] = dateString.split(' ');
+                        const [year, month, day] = datePart.split('-').map(Number);
+                        const [hours, minutes] = timePart.split(':').map(Number);
+                        
+                        // Create date object directly without timezone adjustment
+                        // since we assume the time is already in Jakarta time
+                        date = new Date(year, month-1, day, hours, minutes);
+                    } 
+                    else if (dateString.includes('T')) {
+                        // ISO format: "2025-04-24T04:01:38.000000Z"
+                        // This is in UTC, so we need to adjust to Jakarta time
+                        const utcDate = new Date(dateString);
+                        
+                        // Adjust for Jakarta timezone (UTC+7)
+                        const jakartaOffset = 7 * 60 * 60 * 1000; // 7 hours in milliseconds
+                        date = new Date(utcDate.getTime() + jakartaOffset);
+                    }
+                    else {
+                        // Other format
+                        date = new Date(dateString);
+                    }
+                } else {
+                    date = new Date(dateString);
+                }
+                
+                // Check if date is valid
+                if (isNaN(date.getTime())) {
+                    return '-';
+                }
+                
+                // Format manually using Indonesian month names
+                const monthNames = [
+                    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+                ];
+                
+                const day = date.getDate();
+                const month = monthNames[date.getMonth()];
+                const year = date.getFullYear();
+                
+                // Format time with leading zeros
+                let hours = date.getHours();
+                let minutes = date.getMinutes();
+                
+                // Ensure two digits for hours and minutes
+                hours = hours.toString().padStart(2, '0');
+                minutes = minutes.toString().padStart(2, '0');
+                
+                // Return formatted date with "pukul" for time
+                return `${day} ${month} ${year} pukul ${hours}:${minutes}`;
             } catch (error) {
                 console.error('Error formatting date:', error);
                 return dateString || '-';
