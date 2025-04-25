@@ -21,8 +21,8 @@
 
         <div v-else class="detail-content">
             <div class="status-header">
-                <div class="laporan-number">{{ laporan.nomor_laporan }}</div>
-                <div :class="['status-badge', laporan.status]">
+                <div class="laporan-number">{{ laporan.nomor_laporan_kekerasan }}</div>
+                <div :class="['status-badge', laporan.status || 'unverified']">
                     {{ formatStatus(laporan.status) }}
                 </div>
             </div>
@@ -38,7 +38,9 @@
                 <p class="description">{{ laporan.deskripsi }}</p>
                 
                 <div v-if="laporan.image_path" class="image-container">
-                    <img :src="getImageUrl(laporan.image_path)" alt="Gambar Kejadian" class="evidence-image" @click="showFullImage = true">
+                    <div v-for="(image, index) in processedImages" :key="index" class="image-item">
+                        <img :src="getImageUrl(image)" alt="Gambar Kejadian" class="evidence-image" @click="showFullImage = true; currentImageIndex = index">
+                    </div>
                     <div class="image-caption">Foto Bukti Kejadian (klik untuk memperbesar)</div>
                 </div>
             </div>
@@ -50,13 +52,13 @@
                         <div class="info-label">Nama:</div>
                         <div class="info-value">{{ laporan.nama_pelapor }}</div>
                         
-                        <div class="info-label">NI Pelapor:</div>
+                        <div class="info-label">NIM Pelapor:</div>
                         <div class="info-value">{{ laporan.nim_pelapor }}</div>
                         
                         <div class="info-label">No. Telepon:</div>
                         <div class="info-value">
                             {{ laporan.nomor_telepon || 'Tidak ada' }}
-                            <button class="chat-icon-button" @click="startChat" title="Chat dengan pengguna">
+                            <button class="chat-icon-button" @click="startChat" title="Chat dengan pengguna" v-if="laporan.nomor_telepon">
                                 <i class="fas fa-comment"></i>
                             </button>
                         </div>
@@ -68,7 +70,7 @@
                     <div class="info-grid">
                         <div class="info-label">Status:</div>
                         <div class="info-value">
-                            <span :class="['status-badge', laporan.status]">
+                            <span :class="['status-badge', laporan.status || 'unverified']">
                                 {{ formatStatus(laporan.status) }}
                             </span>
                         </div>
@@ -82,56 +84,84 @@
                 </div>
             </div>
             
-            <!-- New section for Saksi information -->
-            <div class="detail-card saksi-info" v-if="hasSaksiInfo">
-                <h3 class="detail-section-title"><i class="fas fa-users"></i> Informasi Saksi</h3>
-                
-                <!-- Primary Saksi (from database fields) -->
-                <div class="saksi-container primary-saksi">
-                    <h4 class="saksi-title">Saksi Utama</h4>
+            <!-- Display bukti_pelanggaran if available -->
+            <div class="detail-card" v-if="hasBuktiPelanggaran">
+                <h3 class="detail-section-title"><i class="fas fa-file-alt"></i> Bukti Pelanggaran</h3>
+                <div class="bukti-list">
+                    <ul>
+                        <li v-for="(bukti, index) in processedBuktiPelanggaran" :key="index">{{ bukti }}</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Display terlapor information if available -->
+            <div class="detail-card" v-if="hasTerlapor">
+                <h3 class="detail-section-title"><i class="fas fa-user-shield"></i> Informasi Terlapor</h3>
+                <div v-for="(person, index) in processedTerlapor" :key="index" class="terlapor-item">
+                    <h4>Terlapor {{ index + 1 }}</h4>
                     <div class="info-grid">
                         <div class="info-label">Nama:</div>
-                        <div class="info-value">{{ laporan.saksi_nama || 'Tidak ada' }}</div>
+                        <div class="info-value">{{ person.nama_lengkap || 'Tidak ada' }}</div>
                         
                         <div class="info-label">Email:</div>
-                        <div class="info-value">{{ laporan.saksi_email || 'Tidak ada' }}</div>
+                        <div class="info-value">{{ person.email || 'Tidak ada' }}</div>
                         
                         <div class="info-label">No. Telepon:</div>
                         <div class="info-value">
-                            {{ laporan.saksi_nomor_telepon || 'Tidak ada' }}
-                            <button class="chat-icon-button" @click="startChatWithSaksi(laporan.saksi_nomor_telepon)" title="Chat dengan saksi" v-if="laporan.saksi_nomor_telepon">
+                            {{ person.nomor_telepon || 'Tidak ada' }}
+                            <button class="chat-icon-button" 
+                                @click="startChatWithPerson(person.nomor_telepon)" 
+                                title="Chat dengan terlapor"
+                                v-if="person.nomor_telepon">
+                                <i class="fas fa-comment"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="info-label">Status:</div>
+                        <div class="info-value">{{ person.status_warga || 'Tidak ada' }}</div>
+                        
+                        <div class="info-label">Unit Kerja:</div>
+                        <div class="info-value">{{ person.unit_kerja || 'Tidak ada' }}</div>
+                        
+                        <div class="info-label">Jenis Kelamin:</div>
+                        <div class="info-value">{{ formatJenisKelamin(person.jenis_kelamin) }}</div>
+
+                        <div class="info-label">Rentang Umur:</div>
+                        <div class="info-value">{{ formatUmur(person.umur_terlapor) || '-' }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Display saksi information if available -->
+            <div class="detail-card" v-if="hasSaksi">
+                <h3 class="detail-section-title"><i class="fas fa-users"></i> Informasi Saksi</h3>
+                <div v-for="(saksi, index) in processedSaksi" :key="index" class="saksi-item">
+                    <h4>Saksi {{ index + 1 }}</h4>
+                    <div class="info-grid">
+                        <div class="info-label">Nama:</div>
+                        <div class="info-value">{{ saksi.nama_lengkap || 'Tidak ada' }}</div>
+                        
+                        <div class="info-label">Email:</div>
+                        <div class="info-value">{{ saksi.email || 'Tidak ada' }}</div>
+                        
+                        <div class="info-label">No. Telepon:</div>
+                        <div class="info-value">
+                            {{ saksi.nomor_telepon || 'Tidak ada' }}
+                            <button class="chat-icon-button" 
+                                @click="startChatWithPerson(saksi.nomor_telepon)" 
+                                title="Chat dengan saksi"
+                                v-if="saksi.nomor_telepon">
                                 <i class="fas fa-comment"></i>
                             </button>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Additional witnesses (parsed from description) -->
-                <div v-if="additionalWitnesses.length > 0" class="additional-saksi-section">
-                    <h4 class="saksi-title">Saksi Tambahan</h4>
-                    
-                    <div v-for="(saksi, index) in additionalWitnesses" :key="index" class="additional-saksi">
-                        <div class="saksi-header">
-                            <h5 class="saksi-number">Saksi {{ index + 2 }}</h5>
-                        </div>
-                        
-                        <div class="info-grid">
-                            <div class="info-label">Nama:</div>
-                            <div class="info-value">{{ saksi.nama }}</div>
-                            
-                            <div class="info-label">Email:</div>
-                            <div class="info-value">{{ saksi.email }}</div>
-                            
-                            <div class="info-label">No. Telepon:</div>
-                            <div class="info-value">
-                                {{ saksi.nomor_telepon }}
-                                <button class="chat-icon-button" @click="startChatWithSaksi(saksi.nomor_telepon)" title="Chat dengan saksi">
-                                    <i class="fas fa-comment"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            </div>
+            
+            <!-- Display tanggapan if available -->
+            <div class="detail-card" v-if="laporan.tanggapan">
+                <h3 class="detail-section-title"><i class="fas fa-comment-dots"></i> Tanggapan</h3>
+                <p class="tanggapan-text">{{ laporan.tanggapan }}</p>
             </div>
         </div>
 
@@ -139,7 +169,7 @@
         <div class="fullscreen-modal" v-if="showFullImage" @click="showFullImage = false">
             <div class="modal-content">
                 <span class="close-modal">&times;</span>
-                <img :src="getImageUrl(laporan.image_path)" alt="Bukti Kejadian" class="fullscreen-image">
+                <img :src="currentImageSrc" alt="Bukti Kejadian" class="fullscreen-image">
             </div>
         </div>
 
@@ -180,20 +210,154 @@ export default {
             loading: true,
             error: null,
             showFullImage: false,
+            currentImageIndex: 0,
             showTanggapanModal: false,
-            tanggapanText: '',
-            additionalWitnesses: []
+            tanggapanText: ''
         };
     },
     
     computed: {
-        hasSaksiInfo() {
-            return (
-                (this.laporan.saksi_nama && this.laporan.saksi_nama.trim() !== '') || 
-                (this.laporan.saksi_email && this.laporan.saksi_email.trim() !== '') || 
-                (this.laporan.saksi_nomor_telepon && this.laporan.saksi_nomor_telepon.trim() !== '') ||
-                this.additionalWitnesses.length > 0
-            );
+        // Process images for display
+        processedImages() {
+            if (!this.laporan.image_path) return [];
+            
+            try {
+                // Check if image_path is already an array
+                if (Array.isArray(this.laporan.image_path)) {
+                    return this.laporan.image_path;
+                }
+                
+                // Check if it's a JSON string
+                if (typeof this.laporan.image_path === 'string') {
+                    try {
+                        const parsed = JSON.parse(this.laporan.image_path);
+                        if (Array.isArray(parsed)) {
+                            return parsed;
+                        }
+                    } catch (e) {
+                        // Not JSON, treat as a single image
+                    }
+                }
+                
+                // Fallback to treating as a single image
+                return [this.laporan.image_path];
+                
+            } catch (error) {
+                console.error('Error processing images:', error);
+                return [this.laporan.image_path];
+            }
+        },
+        
+        // Get current image for fullscreen view
+        currentImageSrc() {
+            if (!this.processedImages || this.processedImages.length === 0) return '';
+            return this.getImageUrl(this.processedImages[this.currentImageIndex]);
+        },
+        
+        // Process bukti_pelanggaran for display
+        processedBuktiPelanggaran() {
+            if (!this.laporan.bukti_pelanggaran) return [];
+            
+            try {
+                // Check if already an array
+                if (Array.isArray(this.laporan.bukti_pelanggaran)) {
+                    return this.laporan.bukti_pelanggaran;
+                }
+                
+                // Check if it's a JSON string
+                if (typeof this.laporan.bukti_pelanggaran === 'string') {
+                    try {
+                        const parsed = JSON.parse(this.laporan.bukti_pelanggaran);
+                        if (Array.isArray(parsed)) {
+                            return parsed;
+                        }
+                    } catch (e) {
+                        // Not JSON, return as is
+                        return [this.laporan.bukti_pelanggaran];
+                    }
+                }
+                
+                return [];
+            } catch (error) {
+                console.error('Error processing bukti_pelanggaran:', error);
+                return [];
+            }
+        },
+        
+        // Process terlapor for display
+        processedTerlapor() {
+            if (!this.laporan.terlapor) return [];
+            
+            try {
+                // Check if already an array
+                if (Array.isArray(this.laporan.terlapor)) {
+                    return this.laporan.terlapor;
+                }
+                
+                // Check if it's a JSON string
+                if (typeof this.laporan.terlapor === 'string') {
+                    try {
+                        const parsed = JSON.parse(this.laporan.terlapor);
+                        if (Array.isArray(parsed)) {
+                            return parsed;
+                        } else if (typeof parsed === 'object') {
+                            return [parsed];
+                        }
+                    } catch (e) {
+                        // Not JSON, return as is
+                        return [];
+                    }
+                }
+                
+                return [];
+            } catch (error) {
+                console.error('Error processing terlapor:', error);
+                return [];
+            }
+        },
+        
+        // Process saksi for display
+        processedSaksi() {
+            if (!this.laporan.saksi) return [];
+            
+            try {
+                // Check if already an array
+                if (Array.isArray(this.laporan.saksi)) {
+                    return this.laporan.saksi;
+                }
+                
+                // Check if it's a JSON string
+                if (typeof this.laporan.saksi === 'string') {
+                    try {
+                        const parsed = JSON.parse(this.laporan.saksi);
+                        if (Array.isArray(parsed)) {
+                            return parsed;
+                        } else if (typeof parsed === 'object') {
+                            return [parsed];
+                        }
+                    } catch (e) {
+                        // Not JSON, return as is
+                        return [];
+                    }
+                }
+                
+                return [];
+            } catch (error) {
+                console.error('Error processing saksi:', error);
+                return [];
+            }
+        },
+        
+        hasBuktiPelanggaran() {
+            return this.processedBuktiPelanggaran && this.processedBuktiPelanggaran.length > 0;
+        },
+        
+        hasTerlapor() {
+            return this.processedTerlapor && this.processedTerlapor.length > 0;
+        },
+        
+        hasSaksi() {
+            return this.processedSaksi && this.processedSaksi.length > 0;
         }
     },
     
@@ -260,51 +424,13 @@ export default {
                 });
                 
                 this.laporan = response.data;
-                
-                // Parse the description to extract additional witnesses
-                this.parseAdditionalWitnesses();
+                console.log('Laporan data:', this.laporan);
                 
                 this.loading = false;
             } catch (error) {
                 console.error('Error fetching laporan detail:', error);
                 this.error = 'Failed to load laporan detail';
                 this.loading = false;
-            }
-        },
-        
-        parseAdditionalWitnesses() {
-            if (!this.laporan.deskripsi) return;
-            
-            // Check for the pattern that indicates additional witnesses
-            if (this.laporan.deskripsi.includes('Saksi Tambahan:')) {
-                const descriptionParts = this.laporan.deskripsi.split('Saksi Tambahan:');
-                
-                // Keep the main description part
-                const mainDescription = descriptionParts[0].trim();
-                
-                // Extract the additional witnesses part
-                const witnessesSection = descriptionParts[1].trim();
-                
-                // Parse the witnesses data
-                const witnesses = [];
-                
-                // Regular expression to match witness information
-                // Format: "2. Nama Saksi (email@example.com, 08123456789)"
-                const witnessPattern = /\d+\.\s+(.+?)\s+\((.+?),\s*(.+?)\)/g;
-                
-                let match;
-                while ((match = witnessPattern.exec(witnessesSection)) !== null) {
-                    witnesses.push({
-                        nama: match[1].trim(),
-                        email: match[2].trim(),
-                        nomor_telepon: match[3].trim()
-                    });
-                }
-                
-                this.additionalWitnesses = witnesses;
-                
-                // Update the description to only include the main part
-                this.laporan.deskripsi = mainDescription;
             }
         },
         
@@ -332,10 +458,29 @@ export default {
                 'verified': 'Diverifikasi',
                 'processed': 'Diproses',
                 'completed': 'Selesai',
-                'rejected': 'Ditolak'
+                'rejected': 'Ditolak',
+                'finished': 'Selesai'
             };
             
-            return statusMap[status] || status;
+            return statusMap[status] || 'Belum Diverifikasi';
+        },
+        
+        formatJenisKelamin(jenisKelamin) {
+            if (!jenisKelamin) return 'Tidak ada';
+            
+            const formattedMap = {
+                'laki-laki': 'Laki-laki',
+                'perempuan': 'Perempuan'
+            };
+            
+            return formattedMap[jenisKelamin] || jenisKelamin;
+        },
+
+        formatUmur(umur) {
+            if (umur === '<20') return 'Kurang dari 20 tahun';
+            if (umur === '20-40') return '20 - 40 tahun';
+            if (umur === '40<') return 'Lebih dari 40 tahun';
+            return umur;
         },
         
         getCategoryName(categoryId) {
@@ -343,6 +488,7 @@ export default {
         },
         
         getImageUrl(imagePath) {
+            if (!imagePath) return '';
             return `http://localhost:8000/storage/laporankekerasan/${imagePath}`;
         },
         
@@ -373,8 +519,10 @@ export default {
         startChat() {
             // Get the phone number from the laporan data
             let phoneNumber = this.laporan.nomor_telepon;
-            
-            // Validate and format the phone number
+            this.startChatWithPerson(phoneNumber);
+        },
+        
+        startChatWithPerson(phoneNumber) {
             if (phoneNumber) {
                 // Remove any non-digit characters
                 phoneNumber = phoneNumber.replace(/\D/g, '');
@@ -399,28 +547,38 @@ export default {
             }
         },
         
-        startChatWithSaksi(phoneNumber) {
-            if (phoneNumber) {
-                // Remove any non-digit characters
-                phoneNumber = phoneNumber.replace(/\D/g, '');
-                
-                // Add country code if not present (assuming Indonesia +62)
-                if (phoneNumber.startsWith('0')) {
-                    phoneNumber = '62' + phoneNumber.substring(1);
-                } else if (!phoneNumber.startsWith('62')) {
-                    phoneNumber = '62' + phoneNumber;
-                }
-                
-                // Create WhatsApp URL
-                const whatsappUrl = `https://wa.me/${phoneNumber}`;
-                
-                // Open WhatsApp in a new tab
-                window.open(whatsappUrl, '_blank');
-            } else {
+        async saveTanggapan() {
+            if (!this.tanggapanText.trim()) {
                 this.$notify({
                     type: 'error',
-                    text: 'Nomor telepon tidak tersedia'
+                    text: 'Tanggapan tidak boleh kosong'
                 });
+                return;
+            }
+            
+            try {
+                this.loading = true;
+                
+                const response = await axios.put(`http://localhost:8000/api/laporan_kekerasan/${this.laporanId}/tanggapan`, {
+                    tanggapan: this.tanggapanText
+                });
+                
+                this.laporan.tanggapan = this.tanggapanText;
+                this.showTanggapanModal = false;
+                this.tanggapanText = '';
+                
+                this.$notify({
+                    type: 'success',
+                    text: 'Tanggapan berhasil disimpan'
+                });
+            } catch (error) {
+                console.error('Error saving tanggapan:', error);
+                this.$notify({
+                    type: 'error',
+                    text: 'Gagal menyimpan tanggapan'
+                });
+            } finally {
+                this.loading = false;
             }
         }
     }
@@ -428,71 +586,6 @@ export default {
 </script>
 
 <style scoped>
-/* All existing styles ... */
-
-/* Additional styles for the Saksi section */
-.saksi-info {
-    margin-top: 24px;
-}
-
-.saksi-container {
-    margin-bottom: 20px;
-}
-
-.primary-saksi {
-    background-color: #f9fafb;
-    padding: 16px;
-    border-radius: 6px;
-    margin-bottom: 24px;
-}
-
-.additional-saksi-section {
-    margin-top: 24px;
-}
-
-.additional-saksi {
-    background-color: #f9fafb;
-    padding: 16px;
-    border-radius: 6px;
-    margin-bottom: 16px;
-    border-left: 3px solid #6b7280;
-}
-
-.saksi-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #4b5563;
-    margin-bottom: 16px;
-}
-
-.saksi-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-}
-
-.saksi-number {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #4b5563;
-    margin: 0;
-}
-
-/* Existing styles from your code */
-.detail-ks-container {
-    padding: 24px;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.detail-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 24px;
-}
-
-
 .detail-ks-container {
     padding: 24px;
     max-width: 1200px;
@@ -664,23 +757,35 @@ export default {
 }
 
 .image-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
     margin-top: 20px;
 }
 
-.evidence-image {
-    max-width: 100%;
-    max-height: 400px;
+.image-item {
+    width: 200px;
+    height: 200px;
     border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.evidence-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     cursor: pointer;
     transition: transform 0.2s;
 }
 
 .evidence-image:hover {
-    transform: scale(1.02);
+    transform: scale(1.05);
 }
 
 .image-caption {
-    margin-top: 8px;
+    width: 100%;
+    margin-top: 12px;
     font-size: 0.875rem;
     color: #6b7280;
     text-align: center;
@@ -720,6 +825,8 @@ export default {
 
 .info-value {
     color: #111827;
+    display: flex;
+    align-items: center;
 }
 
 .tanggapan-text {
@@ -729,62 +836,27 @@ export default {
     white-space: pre-line;
 }
 
-.action-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 24px;
+.bukti-list ul {
+    list-style-type: disc;
+    padding-left: 20px;
 }
 
-.btn-primary, .btn-success, .btn-danger, .btn-secondary {
-    padding: 10px 16px;
-    border: none;
+.bukti-list li {
+    margin-bottom: 8px;
+}
+
+.terlapor-item, .saksi-item {
+    border: 1px solid #e5e7eb;
     border-radius: 6px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    transition: background-color 0.2s;
+    padding: 16px;
+    margin-bottom: 16px;
 }
 
-.btn-primary i, .btn-success i, .btn-danger i, .btn-secondary i {
-    margin-right: 8px;
-}
-
-.btn-primary {
-    background-color: #2563eb;
-    color: white;
-}
-
-.btn-primary:hover {
-    background-color: #1d4ed8;
-}
-
-.btn-success {
-    background-color: #059669;
-    color: white;
-}
-
-.btn-success:hover {
-    background-color: #047857;
-}
-
-.btn-danger {
-    background-color: #dc2626;
-    color: white;
-}
-
-.btn-danger:hover {
-    background-color: #b91c1c;
-}
-
-.btn-secondary {
-    background-color: #6b7280;
-    color: white;
-}
-
-.btn-secondary:hover {
-    background-color: #4b5563;
+.terlapor-item h4, .saksi-item h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    color: #4b5563;
 }
 
 /* Full image modal */
@@ -925,7 +997,7 @@ export default {
     color: #d97706;
 }
 
-.completed {
+.completed, .finished {
     background-color: #d1fae5;
     color: #059669;
 }
@@ -935,80 +1007,45 @@ export default {
     color: #dc2626;
 }
 
+.chat-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: #4B5563;
+    color: white;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 8px;
+    transition: background-color 0.2s;
+}
+
+.chat-icon-button:hover {
+    background-color: #374151;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .detail-cards-row {
         grid-template-columns: 1fr;
     }
     
-    .action-buttons {
-        flex-direction: column;
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
     }
     
-    .btn-primary, .btn-success, .btn-danger, .btn-secondary {
-        width: 100%;
-        justify-content: center;
+    .info-label {
+        font-weight: 600;
+        margin-top: 8px;
     }
-}
-
-.phone-section {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.chat-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: #4B5563;
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.chat-button:hover {
-  background-color: #374151;
-}
-
-.field-row {
-  display: flex;
-  margin-bottom: 12px;
-}
-
-.field-label {
-  font-weight: 500;
-  width: 150px;
-  flex-shrink: 0;
-}
-
-.field-value {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.chat-icon-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background-color: #4B5563;
-  color: white;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  margin-left: 8px;
-  transition: background-color 0.2s;
-}
-
-.chat-icon-button:hover {
-  background-color: #374151;
+    
+    .image-item {
+        width: 100%;
+        height: auto;
+    }
 }
 </style>

@@ -289,6 +289,43 @@
               </div>
             </div>
 
+            <div class="form-group">
+              <label>Rentang Umur <span class="required">*</span></label>
+              <div class="radio-group" :class="{ 'is-invalid': errors[`terlapor.${index}.umur_terlapor`] }">
+                <div class="radio-option">
+                  <input
+                    type="radio"
+                    :id="`terlapor-below20-${index}`"
+                    v-model="terduga.umur_terlapor"
+                    value="<20"
+                    required
+                  />
+                  <label :for="`terlapor-below20-${index}`">Kurang dari 20 tahun</label>
+                </div>
+                <div class="radio-option">
+                  <input
+                    type="radio"
+                    :id="`terlapor-20to40-${index}`"
+                    v-model="terduga.umur_terlapor"
+                    value="20-40"
+                  />
+                  <label :for="`terlapor-20to40-${index}`">20 - 40 tahun</label>
+                </div>
+                <div class="radio-option">
+                  <input
+                    type="radio"
+                    :id="`terlapor-above40-${index}`"
+                    v-model="terduga.umur_terlapor"
+                    value="40<"
+                  />
+                  <label :for="`terlapor-above40-${index}`">Lebih dari 40 tahun</label>
+                </div>
+              </div>
+              <div v-if="errors[`terlapor.${index}.umur_terlapor`]" class="invalid-feedback d-block">
+                {{ errors[`terlapor.${index}.umur_terlapor`][0] }}
+              </div>
+            </div>
+
             <div class="form-column">
               <div class="form-group">
                 <label :for="'terduga_status_warga_' + index">Status Warga <span class="required">*</span></label>
@@ -600,7 +637,8 @@ export default {
         nomor_telepon: '',
         status_warga: '',
         unit_kerja: '',
-        jenis_kelamin: ''
+        jenis_kelamin: '',
+        umur_terlapor:''
       });
     },
     removeTerduga(index) {
@@ -633,7 +671,7 @@ export default {
         return;
       }
       
-      // Update bukti_pelanggaran array one more time before submission
+      // Update bukti_pelanggaran array before submission
       this.updateBuktiPelanggaran();
       
       // Validate bukti_pelanggaran
@@ -659,14 +697,36 @@ export default {
         formData.append('lampiran_link', this.formData.lampiran_link);
       }
       
-      // Add bukti_pelanggaran as JSON string array
-      formData.append('bukti_pelanggaran', JSON.stringify(this.formData.bukti_pelanggaran));
+      // Add bukti_pelanggaran as array
+      if (this.formData.bukti_pelanggaran && this.formData.bukti_pelanggaran.length > 0) {
+        for (let i = 0; i < this.formData.bukti_pelanggaran.length; i++) {
+          formData.append('bukti_pelanggaran[]', this.formData.bukti_pelanggaran[i]);
+        }
+      }
       
-      // Add terlapor as JSON string
-      formData.append('terlapor', JSON.stringify(this.formData.terlapor.filter(t => t.nama_lengkap.trim() !== '')));
+      // Add terlapor with proper array format for Laravel
+      const terlaporFiltered = this.formData.terlapor.filter(t => t.nama_lengkap.trim() !== '');
+      if (terlaporFiltered.length > 0) {
+        terlaporFiltered.forEach((item, index) => {
+          Object.keys(item).forEach(key => {
+            if (item[key]) { // Only append if value exists
+              formData.append(`terlapor[${index}][${key}]`, item[key]);
+            }
+          });
+        });
+      }
       
-      // Add saksi as JSON string
-      formData.append('saksi', JSON.stringify(this.formData.saksi.filter(s => s.nama_lengkap.trim() !== '')));
+      // Add saksi with proper array format for Laravel
+      const saksiFiltered = this.formData.saksi.filter(s => s.nama_lengkap.trim() !== '');
+      if (saksiFiltered.length > 0) {
+        saksiFiltered.forEach((item, index) => {
+          Object.keys(item).forEach(key => {
+            if (item[key]) { // Only append if value exists
+              formData.append(`saksi[${index}][${key}]`, item[key]);
+            }
+          });
+        });
+      }
       
       // Append multiple files if they exist
       if (this.formData.image_path && this.formData.image_path.length > 0) {
@@ -677,22 +737,6 @@ export default {
       
       // Agreement field
       formData.append('agreement', this.formData.agreement);
-
-      // Log form data before sending
-      console.log('Sending form data:', {
-        judul: this.formData.judul,
-        category_id: this.formData.category_id,
-        deskripsi: this.formData.deskripsi,
-        tanggal_kejadian: this.formData.tanggal_kejadian,
-        nama_pelapor: this.formData.nama_pelapor,
-        nim_pelapor: this.formData.nim_pelapor,
-        nomor_telepon: this.formData.nomor_telepon,
-        lampiran_link: this.formData.lampiran_link,
-        bukti_pelanggaran: this.formData.bukti_pelanggaran,
-        terlapor: this.formData.terlapor,
-        saksi: this.formData.saksi,
-        image_files: this.selectedFiles.map(f => f.name)
-      });
 
       axios.post('http://localhost:8000/api/laporan_kekerasan/add_laporan', formData, {
         headers: {
@@ -718,14 +762,6 @@ export default {
           if (error.response && error.response.status === 400) {
             this.errors = error.response.data;
             console.error('Validation errors:', this.errors);
-            
-            // Special handling for array validation errors
-            if (this.errors.bukti_pelanggaran && this.errors.bukti_pelanggaran[0] === "The bukti pelanggaran must be an array.") {
-              console.error('Special handling for bukti_pelanggaran array error');
-              // Try to re-format and resubmit
-              this.handleBuktiPelanggaranError();
-              return;
-            }
           } else {
             console.error('Error submitting form:', error);
             Swal.fire({
@@ -827,7 +863,8 @@ export default {
           nomor_telepon: '',
           status_warga: '',
           unit_kerja: '',
-          jenis_kelamin: ''
+          jenis_kelamin: '',
+          umur_terlapor:''
         }],
         saksi: [{ 
           nama_lengkap: '',
