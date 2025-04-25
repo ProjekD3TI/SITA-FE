@@ -62,13 +62,11 @@
                 <div v-if="errors['image_path.0']" class="invalid-feedback">{{ errors['image_path.0'][0] }}</div>
                 <div v-if="errors.image_path" class="invalid-feedback">{{ errors.image_path[0] }}</div>
               </div>
-              <div v-if="selectedFiles.length > 0" class="selected-files mt-2">
-                <p class="mb-1">File yang dipilih:</p>
-                <ul>
-                  <li v-for="(file, index) in selectedFiles" :key="index">
-                    {{ file.name }} ({{ (file.size/1024).toFixed(2) }} KB)
-                  </li>
-                </ul>
+              <div v-if="imagePreviews.length > 0" class="image-previews">
+                <div v-for="(preview, index) in imagePreviews" :key="index" class="image-preview-item">
+                  <img :src="preview" alt="Preview" />
+                  <button type="button" @click="removeImage(index)" class="remove-image">×</button>
+                </div>
               </div>
             </div>
 
@@ -541,7 +539,8 @@ export default {
       showBuktiWarning: false,
       categories: [],
       errors: {},
-      loading: false
+      loading: false,
+      imagePreviews: [],
     };
   },
   computed: {
@@ -608,10 +607,40 @@ export default {
         });
     },
     handleFileUpload(event) {
-      // Store selected files for display in UI
+      // Store selected files for form submission
       this.selectedFiles = Array.from(event.target.files);
       // Update the formData.image_path for form submission
       this.formData.image_path = event.target.files;
+      
+      // Generate preview images
+      this.imagePreviews = [];
+      for (let i = 0; i < event.target.files.length; i++) {
+        const file = event.target.files[i];
+        const reader = new FileReader();
+        reader.onload = e => {
+          this.imagePreviews.push(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+    
+    // Add this new method
+    removeImage(index) {
+      // Remove from previews
+      this.imagePreviews.splice(index, 1);
+      
+      // Remove from selectedFiles array
+      this.selectedFiles.splice(index, 1);
+      
+      // Create a new FileList-like object from the remaining files
+      const dataTransfer = new DataTransfer();
+      this.selectedFiles.forEach(file => {
+        dataTransfer.items.add(file);
+      });
+      
+      // Update the input element's files and form data
+      this.formData.image_path = dataTransfer.files;
+      document.getElementById('image_path').files = dataTransfer.files;
     },
     goBack() {
       this.$router.go(-1);
@@ -1193,6 +1222,50 @@ label {
 
 .terduga-add, .saksi-add {
   margin-top: 1rem;
+}
+
+/* Image preview styles */
+.image-previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.image-preview-item {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-image {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(255, 255, 255, 0.7);
+  border: none;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: bold;
+  color: #dc3545;
+}
+
+.remove-image:hover {
+  background: rgba(255, 255, 255, 0.9);
 }
 
 /* Responsive layout */

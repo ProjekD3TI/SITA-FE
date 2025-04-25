@@ -834,117 +834,117 @@ export default {
       const formData = new FormData();
       
       // Add basic fields
-  formData.append('judul', this.formData.judul);
-  formData.append('category_id', this.formData.category_id);
-  formData.append('deskripsi', this.formData.deskripsi);
-  formData.append('tanggal_kejadian', this.formData.tanggal_kejadian);
-  formData.append('agreement', this.formData.agreement ? 1 : 0);
-  formData.append('profesi', this.formData.profesi);
-  formData.append('jenis_kelamin', this.formData.jenis_kelamin);
-  formData.append('umur_pelapor', this.formData.umur_pelapor);
-  
-  // Add bukti_pelanggaran to the form data as individual items
-  this.formData.bukti_pelanggaran.forEach((bukti, index) => {
-    formData.append(`bukti_pelanggaran[${index}]`, bukti);
-  });
-  
-  // Optional link
-  if (this.formData.lampiran_link) {
-    formData.append('lampiran_link', this.formData.lampiran_link);
-  }
-  
-  // CRITICAL FIX: Handle terlapor ONLY if there are valid entries
-  const validTerlapor = this.formData.terlapor.filter(item => 
-    item.nama_lengkap || item.email || item.nomor_telepon || item.status_warga || 
-    item.unit_kerja || item.jenis_kelamin || item.umur_terlapor
-  );
-  
-  if (validTerlapor.length > 0) {
-    validTerlapor.forEach((item, index) => {
-      // Only add fields that have values
-      if (item.nama_lengkap) formData.append(`terlapor[${index}][nama_lengkap]`, item.nama_lengkap);
-      if (item.email) formData.append(`terlapor[${index}][email]`, item.email);
-      if (item.nomor_telepon) formData.append(`terlapor[${index}][nomor_telepon]`, item.nomor_telepon);
-      if (item.status_warga) formData.append(`terlapor[${index}][status_warga]`, item.status_warga);
-      if (item.unit_kerja) formData.append(`terlapor[${index}][unit_kerja]`, item.unit_kerja);
-      if (item.jenis_kelamin) formData.append(`terlapor[${index}][jenis_kelamin]`, item.jenis_kelamin);
-      if (item.umur_terlapor) formData.append(`terlapor[${index}][umur_terlapor]`, item.umur_terlapor);
-    });
-  }
-  // IMPORTANT: Do NOT add any terlapor field if there are no valid entries
-  
-  // CRITICAL FIX: Handle saksi ONLY if there are valid entries
-  const validSaksi = this.formData.saksi.filter(item => 
-    item.nama_lengkap || item.email || item.nomor_telepon
-  );
-  
-  if (validSaksi.length > 0) {
-    validSaksi.forEach((item, index) => {
-      // Only add fields that have values
-      if (item.nama_lengkap) formData.append(`saksi[${index}][nama_lengkap]`, item.nama_lengkap);
-      if (item.email) formData.append(`saksi[${index}][email]`, item.email);
-      if (item.nomor_telepon) formData.append(`saksi[${index}][nomor_telepon]`, item.nomor_telepon);
-    });
-  }
-  // IMPORTANT: Do NOT add any saksi field if there are no valid entries
-  
-  // Add images
-  if (this.formData.image_path && this.formData.image_path.length > 0) {
-    for (let i = 0; i < this.formData.image_path.length; i++) {
-      formData.append('image_path[]', this.formData.image_path[i]);
-    }
-  }
-
-  // Debug what is being sent
-  console.log("Submitting form data:");
-  for (let [key, value] of formData.entries()) {
-    console.log(`${key}: ${value}`);
-  }
-
-  axios.post('http://localhost:8000/api/laporan/add_laporan', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
-    .then(response => {
-      this.loading = false;
-      Swal.fire({
-        title: 'Berhasil!',
-        text: 'Laporan berhasil ditambahkan.',
-        icon: 'success',
-        timer: 2000,
-        timerProgressBar: true,
-        showConfirmButton: false
-      }).then(() => {
-        this.$router.push('/kalab/pelaporankejadiankalab');
-      });
-      this.resetForm();
-    })
-    .catch(error => {
-      this.loading = false;
-      console.error("Error response:", error.response);
+      formData.append('judul', this.formData.judul);
+      formData.append('category_id', this.formData.category_id);
+      formData.append('deskripsi', this.formData.deskripsi);
+      formData.append('tanggal_kejadian', this.formData.tanggal_kejadian);
+      formData.append('agreement', this.formData.agreement ? 1 : 0);
+      formData.append('profesi', this.formData.profesi);
+      formData.append('jenis_kelamin', this.formData.jenis_kelamin);
+      formData.append('umur_pelapor', this.formData.umur_pelapor);
       
-      if (error.response && error.response.status === 400) {
-        console.log("Full error data:", error.response.data);
-        
-        if (error.response.data.terlapor) {
-          console.error("Terlapor validation errors:", error.response.data.terlapor);
-        }
-        
-        if (error.response.data.saksi) {
-          console.error("Saksi validation errors:", error.response.data.saksi);
-        }
-
-        if (error.response.data.bukti_pelanggaran) {
-          console.error("Bukti pelanggaran validation errors:", error.response.data.bukti_pelanggaran);
-        }
-        
-        this.errors = error.response.data;
-      } else {
-        this.showNotification('Error', 'Terjadi kesalahan saat mengirim laporan.', false);
+      // Add bukti_pelanggaran to the form data as individual items
+      this.formData.bukti_pelanggaran.forEach((bukti, index) => {
+        formData.append(`bukti_pelanggaran[${index}]`, bukti);
+      });
+      
+      // Optional link
+      if (this.formData.lampiran_link) {
+        formData.append('lampiran_link', this.formData.lampiran_link);
       }
-    });
-},
+      
+      // CRITICAL FIX: Handle terlapor ONLY if there are valid entries
+      const validTerlapor = this.formData.terlapor.filter(item => 
+        item.nama_lengkap || item.email || item.nomor_telepon || item.status_warga || 
+        item.unit_kerja || item.jenis_kelamin || item.umur_terlapor
+      );
+      
+      if (validTerlapor.length > 0) {
+        validTerlapor.forEach((item, index) => {
+          // Only add fields that have values
+          if (item.nama_lengkap) formData.append(`terlapor[${index}][nama_lengkap]`, item.nama_lengkap);
+          if (item.email) formData.append(`terlapor[${index}][email]`, item.email);
+          if (item.nomor_telepon) formData.append(`terlapor[${index}][nomor_telepon]`, item.nomor_telepon);
+          if (item.status_warga) formData.append(`terlapor[${index}][status_warga]`, item.status_warga);
+          if (item.unit_kerja) formData.append(`terlapor[${index}][unit_kerja]`, item.unit_kerja);
+          if (item.jenis_kelamin) formData.append(`terlapor[${index}][jenis_kelamin]`, item.jenis_kelamin);
+          if (item.umur_terlapor) formData.append(`terlapor[${index}][umur_terlapor]`, item.umur_terlapor);
+        });
+      }
+      // IMPORTANT: Do NOT add any terlapor field if there are no valid entries
+      
+      // CRITICAL FIX: Handle saksi ONLY if there are valid entries
+      const validSaksi = this.formData.saksi.filter(item => 
+        item.nama_lengkap || item.email || item.nomor_telepon
+      );
+      
+      if (validSaksi.length > 0) {
+        validSaksi.forEach((item, index) => {
+          // Only add fields that have values
+          if (item.nama_lengkap) formData.append(`saksi[${index}][nama_lengkap]`, item.nama_lengkap);
+          if (item.email) formData.append(`saksi[${index}][email]`, item.email);
+          if (item.nomor_telepon) formData.append(`saksi[${index}][nomor_telepon]`, item.nomor_telepon);
+        });
+      }
+      // IMPORTANT: Do NOT add any saksi field if there are no valid entries
+      
+      // Add images
+      if (this.formData.image_path && this.formData.image_path.length > 0) {
+        for (let i = 0; i < this.formData.image_path.length; i++) {
+          formData.append('image_path[]', this.formData.image_path[i]);
+        }
+      }
+
+      // Debug what is being sent
+      console.log("Submitting form data:");
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+      }
+
+      axios.post('http://localhost:8000/api/laporan/add_laporan', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+        .then(response => {
+          this.loading = false;
+          Swal.fire({
+            title: 'Berhasil!',
+            text: 'Laporan berhasil ditambahkan.',
+            icon: 'success',
+            timer: 2000,
+            timerProgressBar: true,
+            showConfirmButton: false
+          }).then(() => {
+            this.$router.push('/kalab/pelaporankejadiankalab');
+          });
+          this.resetForm();
+        })
+        .catch(error => {
+          this.loading = false;
+          console.error("Error response:", error.response);
+          
+          if (error.response && error.response.status === 400) {
+            console.log("Full error data:", error.response.data);
+            
+            if (error.response.data.terlapor) {
+              console.error("Terlapor validation errors:", error.response.data.terlapor);
+            }
+            
+            if (error.response.data.saksi) {
+              console.error("Saksi validation errors:", error.response.data.saksi);
+            }
+
+            if (error.response.data.bukti_pelanggaran) {
+              console.error("Bukti pelanggaran validation errors:", error.response.data.bukti_pelanggaran);
+            }
+            
+            this.errors = error.response.data;
+          } else {
+            this.showNotification('Error', 'Terjadi kesalahan saat mengirim laporan.', false);
+          }
+        });
+    },
 
     resetForm() {
       this.formData = {
