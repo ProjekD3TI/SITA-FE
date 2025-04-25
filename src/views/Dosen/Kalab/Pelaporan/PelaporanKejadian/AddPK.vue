@@ -363,6 +363,43 @@
                 </div>
               </div>
             </div>
+
+            <div class="form-group">
+              <label>Rentang Umur <span class="required">*</span></label>
+              <div class="radio-group" :class="{ 'is-invalid': errors[`terlapor.${index}.umur_terlapor`] }">
+                <div class="radio-option">
+                  <input
+                    type="radio"
+                    :id="`terlapor-below20-${index}`"
+                    v-model="item.umur_terlapor"
+                    value="<20"
+                    required
+                  />
+                  <label :for="`terlapor-below20-${index}`">Kurang dari 20 tahun</label>
+                </div>
+                <div class="radio-option">
+                  <input
+                    type="radio"
+                    :id="`terlapor-20to40-${index}`"
+                    v-model="item.umur_terlapor"
+                    value="20-40"
+                  />
+                  <label :for="`terlapor-20to40-${index}`">20 - 40 tahun</label>
+                </div>
+                <div class="radio-option">
+                  <input
+                    type="radio"
+                    :id="`terlapor-above40-${index}`"
+                    v-model="item.umur_terlapor"
+                    value="40<"
+                  />
+                  <label :for="`terlapor-above40-${index}`">Lebih dari 40 tahun</label>
+                </div>
+              </div>
+              <div v-if="errors[`terlapor.${index}.umur_terlapor`]" class="invalid-feedback d-block">
+                {{ errors[`terlapor.${index}.umur_terlapor`][0] }}
+              </div>
+            </div>
             
             <div class="form-column">
               <div class="form-group">
@@ -673,7 +710,8 @@ export default {
         nomor_telepon: '',
         status_warga: '',
         unit_kerja: '',
-        jenis_kelamin: ''
+        jenis_kelamin: '',
+        umur_terlapor:''
       });
     },
     removeTerlapor(index) {
@@ -699,7 +737,7 @@ export default {
     validateTerlapor() {
       // Validate each terlapor entry
       const invalidEntries = this.formData.terlapor.filter(item => 
-        !item.nama_lengkap || !item.status_warga || !item.unit_kerja || !item.jenis_kelamin
+        !item.nama_lengkap || !item.status_warga || !item.unit_kerja || !item.jenis_kelamin || !item.umur_terlapor
       );
       
       return invalidEntries.length === 0;
@@ -796,6 +834,7 @@ export default {
         formData.append(`terlapor[${index}][status_warga]`, item.status_warga);
         formData.append(`terlapor[${index}][unit_kerja]`, item.unit_kerja);
         formData.append(`terlapor[${index}][jenis_kelamin]`, item.jenis_kelamin);
+        formData.append(`terlapor[${index}][umur_terlapor]`, item.umur_terlapor);
       });
       
       // Handle each saksi item individually
