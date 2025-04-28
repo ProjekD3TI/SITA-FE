@@ -281,7 +281,6 @@
           </div>
         </div>
 
-        <!-- Modified Pelaporan section for Kalab (including Dosen as Kalab) & regular Petugas - moved to main sidebar -->
         <!-- Kategori Laporan Kejadian -->
         <router-link
           :to="getRouteByJabatan('kategoripelaporan')"
@@ -306,15 +305,16 @@
           <span class="ml-3 font-medium" :class="{ hidden: isCollapsed && !isMobile }">Pelaporan Kejadian</span>
         </router-link>
 
-        <!-- Pelaporan Kekerasan Seksual for all roles -->
+        <!-- Separate Pelaporan Kekerasan Seksual links for Kalab and Petugas -->
+        <!-- For Petugas -->
         <router-link
-          :to="getRouteByJabatan('pelaporankekerasanseksual')"
+          :to="{ name: 'PelaporanKekerasanSeksualPetugas' }"
           class="flex items-center px-3 py-2 rounded-md hover:bg-blue-500 hover:text-white transition-colors mt-2"
-          :class="{'bg-blue-500': isActiveRoute('pelaporankekerasanseksual'), 'text-white': isActiveRoute('pelaporankekerasanseksual'), 'text-gray-700': !isActiveRoute('pelaporankekerasanseksual')}"
+          :class="{'bg-blue-500': isActiveRoute('pelaporankekerasanseksualpetugas'), 'text-white': isActiveRoute('pelaporankekerasanseksualpetugas'), 'text-gray-700': !isActiveRoute('pelaporankekerasanseksualpetugas')}"
           @click="closeSidebar"
-          v-if="hasAccess(['Kalab']) || hasAccess(['Petugas'])"
+          v-if="hasAccess(['Petugas'])"
         >
-          <i class="fas fa-shield-alt text-xl" :class="{'text-white': isActiveRoute('pelaporankekerasanseksual'), 'text-gray-700': !isActiveRoute('pelaporankekerasanseksual')}"></i>
+          <i class="fas fa-shield-alt text-xl" :class="{'text-white': isActiveRoute('pelaporankekerasanseksualpetugas'), 'text-gray-700': !isActiveRoute('pelaporankekerasanseksualpetugas')}"></i>
           <span class="ml-3 font-medium" :class="{ hidden: isCollapsed && !isMobile }">Pelaporan KS</span>
         </router-link>
         

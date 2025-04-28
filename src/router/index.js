@@ -263,21 +263,6 @@ const routes = [
     ],
   },
 
-  // jabatan kaprodi
-  {
-    path: "/kaprodi",
-    component: DosenLayout,
-    meta: { requiresAuth: true, userType: "dosen", requiredJabatan: "Kaprodi" },
-    children: [
-      {
-        path: "dashboard",
-        name: "DashboardKaprodi",
-        component: () => import("../views/Dosen/Kaprodi/Dashboard.vue"),
-      },
-      // route yg laen
-    ],
-  },
-
   // jabatan petugas
   {
     path: "/petugas",
@@ -288,6 +273,36 @@ const routes = [
         path: "dashboard",
         name: "DashboardPetugas",
         component: () => import("../views/Dosen/Petugas/Dashboard.vue"),
+      },
+      {
+        path: "pelaporankekerasanseksualpetugas",
+        name: "PelaporanKekerasanSeksualPetugas",
+        component: () => import("../views/Dosen/Petugas/KekerasanSeksual/DashboardKS.vue"),
+      },
+      {
+        path: "addpelaporankspetugas",
+        name: "AddPelaporanKSPetugas",
+        component: () => import("../views/Dosen/Petugas/KekerasanSeksual/AddKS.vue"),
+      },
+      {
+        path: "/laporan_kekerasan/:id",
+        name: "DetailKS",
+        component: () => import("../views/Dosen/Petugas/KekerasanSeksual/DetailKS.vue"),
+      },
+      // route yg laen
+    ],
+  },
+
+  // jabatan kaprodi
+  {
+    path: "/kaprodi",
+    component: DosenLayout,
+    meta: { requiresAuth: true, userType: "dosen", requiredJabatan: "Kaprodi" },
+    children: [
+      {
+        path: "dashboard",
+        name: "DashboardKaprodi",
+        component: () => import("../views/Dosen/Kaprodi/Dashboard.vue"),
       },
       // route yg laen
     ],
