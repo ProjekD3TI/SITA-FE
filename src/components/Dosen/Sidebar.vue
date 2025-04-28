@@ -200,7 +200,7 @@
           >
             <div class="flex items-center">
               <i class="fas fa-exclamation-triangle text-xl" :class="{'text-white': isDropdownActive(['dashboardpkdosen', 'dashboardksdosen']), 'text-gray-700': !isDropdownActive(['dashboardpkdosen', 'dashboardksdosen'])}"></i>
-              <span class="ml-3 font-medium" :class="{ hidden: isCollapsed && !isMobile }">Pelaporan Kejadian</span>
+              <span class="ml-3 font-medium" :class="{ hidden: isCollapsed && !isMobile }">Pelaporan</span>
             </div>
             <i
               class="fas"
