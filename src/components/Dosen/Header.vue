@@ -1,9 +1,9 @@
 <template>
-  <nav class="bg-indigo-600 shadow-md px-4 py-2 mb-4 sticky top-0 z-10">
+  <nav class="bg-white px-4 py-2 mb-4 sticky top-0 z-10 border-b border-gray-300">
     <ul class="flex items-center justify-end">
       <li class="relative mx-1">
         <button
-          class="flex items-center text-white p-2 rounded-full hover:bg-indigo-700 transition-colors"
+          class="flex items-center text-gray-700 p-2 rounded-full hover:bg-blue-50 transition-colors"
           @click="toggleNotifications"
         >
           <i class="fas fa-bell"></i>
@@ -17,23 +17,23 @@
 
         <div
           v-if="notificationsOpen"
-          class="absolute right-0 mt-2 w-80 md:w-96 max-h-[80vh] overflow-y-auto bg-white rounded-lg shadow-lg z-20"
+          class="absolute right-0 mt-2 w-80 md:w-96 max-h-[80vh] overflow-y-auto bg-white rounded-lg border border-gray-300 z-20"
         >
-          <div class="p-3 bg-gray-100 border-b border-gray-200">
-            <h6 class="font-medium text-gray-700">Notifications Center</h6>
+          <div class="p-3 bg-blue-50 border-b border-gray-200">
+            <h6 class="font-medium text-blue-500">Notifications Center</h6>
           </div>
 
           <ul class="divide-y divide-gray-200">
             <li v-for="notification in notifications" :key="notification.id">
               <button
-                class="w-full p-3 flex items-start hover:bg-gray-50 transition-colors"
+                class="w-full p-3 flex items-start hover:bg-blue-50 transition-colors"
                 @click="markAsRead(notification)"
               >
                 <div class="flex-shrink-0 mr-3">
                   <div
                     :class="[
                       'w-10 h-10 flex items-center justify-center rounded-full',
-                      `bg-${notification.type || 'blue'}-500`,
+                      notification.type === 'blue' || !notification.type ? 'bg-blue-500' : `bg-${notification.type}-500`,
                     ]"
                   >
                     <i
@@ -66,7 +66,7 @@
           </div>
 
           <div class="p-2 text-center border-t border-gray-200">
-            <button class="text-sm text-indigo-600 hover:text-indigo-800">
+            <button class="text-sm text-blue-500 hover:text-blue-600">
               Show All Notifications
             </button>
           </div>
@@ -75,7 +75,7 @@
 
       <li class="relative">
         <button
-          class="flex items-center text-white p-2 rounded-full hover:bg-indigo-700 transition-colors"
+          class="flex items-center text-gray-700 p-2 rounded-full hover:bg-blue-50 transition-colors"
           @click="toggleUserMenu"
         >
           <span class="mr-2 text-sm hidden sm:block">{{
@@ -90,20 +90,20 @@
 
         <div
           v-if="userMenuOpen"
-          class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-20"
+          class="absolute right-0 mt-2 w-48 bg-white rounded-lg border border-gray-300 z-20"
         >
           <router-link
             :to="{ name: 'ProfileDosen' }"
-            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50"
           >
-            <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+            <i class="fas fa-user fa-sm fa-fw mr-2 text-blue-500"></i>
             Profile
           </router-link>
           <button
-            class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50"
             @click="showLogoutModal"
           >
-            <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+            <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-blue-500"></i>
             Logout
           </button>
         </div>
@@ -115,7 +115,7 @@
     v-if="isLogoutModalOpen"
     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
   >
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4">
+    <div class="bg-white rounded-lg border border-gray-300 w-full max-w-md mx-4">
       <div
         class="flex items-center justify-between p-4 border-b border-gray-200"
       >
@@ -141,7 +141,7 @@
         </button>
         <button
           @click="handleLogout"
-          class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
         >
           Logout
         </button>
@@ -195,32 +195,6 @@ onMounted(() => {
   document.addEventListener("click", handleClickOutside);
   fetchUserData();
 });
-
-// const fetchNotifications = async () => {
-//   try {
-//     const token = VueCookies.get("auth_token");
-//     if (!token) return;
-
-//     const response = await axios.get("api/notification", {
-//       headers: {
-//         Accept: "application/json",
-//         Authorization: `Bearer ${token}`,
-//       },
-//       withCredentials: true,
-//     });
-
-//     notifications.value = response.data.map((notification) => ({
-//       id: notification.id_notification,
-//       type: notification.type || "blue",
-//       icon: notification.icon || "fa-info-circle",
-//       message: notification.message,
-//       title: notification.title,
-//       date: notification.date || new Date().toISOString().split("T")[0],
-//     }));
-//   } catch (error) {
-//     console.error("Error fetching notifications:", error);
-//   }
-// };
 
 const unreadNotifications = computed(() => notifications.value.length);
 
@@ -279,3 +253,42 @@ const handleLogout = () => {
   logout();
 };
 </script>
+
+<style scoped>
+.bg-blue-50 {
+  background-color: #CFE9FD;
+}
+
+.text-blue-500 {
+  color: #56B3F7;
+}
+
+.bg-blue-500 {
+  background-color: #00A2EA;
+}
+
+.bg-blue-600 {
+  background-color: #0091D4;
+}
+
+.hover\:bg-blue-50:hover {
+  background-color: #CFE9FD;
+}
+
+.hover\:bg-blue-600:hover {
+  background-color: #0091D4;
+}
+
+.hover\:text-blue-600:hover {
+  color: #0091D4;
+}
+
+.border-gray-300 {
+  border-color: #BBBBBB;
+}
+
+.fas {
+  font-family: 'Font Awesome 5 Free' !important;
+  font-weight: 900 !important;
+}
+</style>
