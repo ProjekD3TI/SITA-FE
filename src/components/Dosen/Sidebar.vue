@@ -281,29 +281,49 @@
           </div>
         </div>
 
-        <!-- Kategori Laporan Kejadian -->
-        <router-link
-          :to="getRouteByJabatan('kategoripelaporan')"
-          class="flex items-center px-3 py-2 rounded-md hover:bg-blue-500 hover:text-white transition-colors mt-2"
-          :class="{'bg-blue-500': isActiveRoute('kategoripelaporan'), 'text-white': isActiveRoute('kategoripelaporan'), 'text-gray-700': !isActiveRoute('kategoripelaporan')}"
-          @click="closeSidebar"
-          v-if="hasAccess(['Kalab']) || (hasAccess(['Petugas']) && !isDosenAsStaff)"
-        >
-          <i class="fas fa-list-alt text-xl" :class="{'text-white': isActiveRoute('kategoripelaporan'), 'text-gray-700': !isActiveRoute('kategoripelaporan')}"></i>
-          <span class="ml-3 font-medium" :class="{ hidden: isCollapsed && !isMobile }">Kategori Laporan</span>
-        </router-link>
+        <!-- Pelaporan dropdown for Kalab & Petugas (not Dosen as Petugas) -->
+        <div class="mt-2" v-if="hasAccess(['Kalab']) || (hasAccess(['Petugas']) && !isDosenAsStaff)">
+          <button
+            class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-blue-500 hover:text-white transition-colors"
+            :class="{'bg-blue-500': isDropdownActive(['kategoripelaporan', 'pelaporankejadiankalab']), 'text-white': isDropdownActive(['kategoripelaporan', 'pelaporankejadiankalab']), 'text-gray-700': !isDropdownActive(['kategoripelaporan', 'pelaporankejadiankalab'])}"
+            @click="handleDropdownClick(8)"
+          >
+            <div class="flex items-center">
+              <i class="fas fa-clipboard-list text-xl" :class="{'text-white': isDropdownActive(['kategoripelaporan', 'pelaporankejadiankalab']), 'text-gray-700': !isDropdownActive(['kategoripelaporan', 'pelaporankejadiankalab'])}"></i>
+              <span class="ml-3 font-medium" :class="{ hidden: isCollapsed && !isMobile }">Pelaporan</span>
+            </div>
+            <i
+              class="fas"
+              :class="[
+                dropdownStates[8] ? 'fa-chevron-up' : 'fa-chevron-down',
+                { hidden: isCollapsed && !isMobile },
+                {'text-white': isDropdownActive(['kategoripelaporan', 'pelaporankejadiankalab']), 'text-gray-700': !isDropdownActive(['kategoripelaporan', 'pelaporankejadiankalab'])}
+              ]"
+            ></i>
+          </button>
 
-        <!-- Pelaporan Kejadian for Kalab & Petugas -->
-        <router-link
-          :to="getRouteByJabatan('pelaporankejadiankalab')"
-          class="flex items-center px-3 py-2 rounded-md hover:bg-blue-500 hover:text-white transition-colors mt-2"
-          :class="{'bg-blue-500': isActiveRoute('pelaporankejadiankalab'), 'text-white': isActiveRoute('pelaporankejadiankalab'), 'text-gray-700': !isActiveRoute('pelaporankejadiankalab')}"
-          @click="closeSidebar"
-          v-if="hasAccess(['Kalab']) || (hasAccess(['Petugas']) && !isDosenAsStaff)"
-        >
-          <i class="fas fa-exclamation-circle text-xl" :class="{'text-white': isActiveRoute('pelaporankejadiankalab'), 'text-gray-700': !isActiveRoute('pelaporankejadiankalab')}"></i>
-          <span class="ml-3 font-medium" :class="{ hidden: isCollapsed && !isMobile }">Pelaporan Kejadian</span>
-        </router-link>
+          <div v-if="dropdownStates[8]" class="pl-4 mt-1 space-y-1">
+            <!-- Kategori Laporan Submenu -->
+            <router-link
+              :to="getRouteByJabatan('kategoripelaporan')"
+              class="flex items-center px-3 py-2 rounded-md hover:bg-blue-500 hover:text-white transition-colors"
+              :class="{'bg-blue-500': isActiveRoute('kategoripelaporan'), 'text-white': isActiveRoute('kategoripelaporan'), 'text-gray-700': !isActiveRoute('kategoripelaporan')}"
+              @click.native="closeSidebar"
+            >
+              <span>Kategori Laporan</span>
+            </router-link>
+            
+            <!-- Pelaporan Kejadian Submenu -->
+            <router-link
+              :to="getRouteByJabatan('pelaporankejadiankalab')"
+              class="flex items-center px-3 py-2 rounded-md hover:bg-blue-500 hover:text-white transition-colors"
+              :class="{'bg-blue-500': isActiveRoute('pelaporankejadiankalab'), 'text-white': isActiveRoute('pelaporankejadiankalab'), 'text-gray-700': !isActiveRoute('pelaporankejadiankalab')}"
+              @click.native="closeSidebar"
+            >
+              <span>Pelaporan Kejadian</span>
+            </router-link>
+          </div>
+        </div>
 
         <!-- Separate Pelaporan Kekerasan Seksual links for Kalab and Petugas -->
         <!-- For Petugas -->
@@ -448,7 +468,7 @@ const emit = defineEmits(["toggle-sidebar"]);
 
 const isCollapsed = ref(props.isCollapsed);
 const isMobile = ref(props.isMobile);
-const dropdownStates = ref([]);
+const dropdownStates = ref(Array(9).fill(false));
 const router = useRouter();
 const route = useRoute();
 

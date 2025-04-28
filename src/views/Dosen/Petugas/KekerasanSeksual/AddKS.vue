@@ -47,25 +47,37 @@
 
             <div class="form-group">
               <label for="image_path">Lampiran Foto <span class="required">*</span></label>
-              <div class="custom-file-upload">
-                <input
-                  type="file"
-                  id="image_path"
-                  @change="handleFileUpload"
-                  class="form-control"
-                  :class="{ 'is-invalid': errors['image_path.0'] || errors.image_path }"
-                  accept="image/*"
-                  multiple
-                  required
-                />
-                <small class="text-muted">Anda dapat memilih beberapa file foto</small>
+              <div class="file-upload-container">
+                <div class="file-upload-box">
+                  <input
+                    type="file"
+                    id="image_path"
+                    @change="handleFileUpload"
+                    class="file-input"
+                    :class="{ 'is-invalid': errors['image_path.0'] || errors.image_path }"
+                    accept="image/*"
+                    multiple
+                    required
+                  />
+                  <div class="upload-icon-container">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Klik atau seret beberapa file foto</p>
+                    <small>Format: JPG, PNG, GIF (Maks 5MB)</small>
+                  </div>
+                </div>
                 <div v-if="errors['image_path.0']" class="invalid-feedback">{{ errors['image_path.0'][0] }}</div>
                 <div v-if="errors.image_path" class="invalid-feedback">{{ errors.image_path[0] }}</div>
               </div>
-              <div v-if="imagePreviews.length > 0" class="image-previews">
-                <div v-for="(preview, index) in imagePreviews" :key="index" class="image-preview-item">
-                  <img :src="preview" alt="Preview" />
-                  <button type="button" @click="removeImage(index)" class="remove-image">×</button>
+              
+              <div v-if="imagePreviews.length > 0" class="image-previews-container">
+                <h4>Preview Foto ({{ imagePreviews.length }} file)</h4>
+                <div class="image-previews">
+                  <div v-for="(preview, index) in imagePreviews" :key="index" class="image-preview-item">
+                    <img :src="preview" alt="Preview" />
+                    <button type="button" @click="removeImage(index)" class="remove-image" title="Hapus Foto">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -289,34 +301,37 @@
 
             <div class="form-group">
               <label>Rentang Umur <span class="required">*</span></label>
-              <div class="radio-group" :class="{ 'is-invalid': errors[`terlapor.${index}.umur_terlapor`] }">
-                <div class="radio-option">
+              <div class="radio-group standard-radio" :class="{ 'is-invalid': errors[`terlapor.${index}.umur_terlapor`] }">
+                <div class="form-check">
                   <input
                     type="radio"
                     :id="`terlapor-below20-${index}`"
                     v-model="terduga.umur_terlapor"
                     value="<20"
+                    class="form-check-input"
                     required
                   />
-                  <label :for="`terlapor-below20-${index}`">Kurang dari 20 tahun</label>
+                  <label :for="`terlapor-below20-${index}`" class="form-check-label">Kurang dari 20 tahun</label>
                 </div>
-                <div class="radio-option">
+                <div class="form-check">
                   <input
                     type="radio"
                     :id="`terlapor-20to40-${index}`"
                     v-model="terduga.umur_terlapor"
                     value="20-40"
+                    class="form-check-input"
                   />
-                  <label :for="`terlapor-20to40-${index}`">20 - 40 tahun</label>
+                  <label :for="`terlapor-20to40-${index}`" class="form-check-label">20 - 40 tahun</label>
                 </div>
-                <div class="radio-option">
+                <div class="form-check">
                   <input
                     type="radio"
                     :id="`terlapor-above40-${index}`"
                     v-model="terduga.umur_terlapor"
                     value="40<"
+                    class="form-check-input"
                   />
-                  <label :for="`terlapor-above40-${index}`">Lebih dari 40 tahun</label>
+                  <label :for="`terlapor-above40-${index}`" class="form-check-label">Lebih dari 40 tahun</label>
                 </div>
               </div>
               <div v-if="errors[`terlapor.${index}.umur_terlapor`]" class="invalid-feedback d-block">
@@ -1223,49 +1238,140 @@ label {
 .terduga-add, .saksi-add {
   margin-top: 1rem;
 }
+.file-upload-container {
+  margin-bottom: 1rem;
+}
 
-/* Image preview styles */
-.image-previews {
+.file-upload-box {
+  position: relative;
+  border: 2px dashed #ced4da;
+  border-radius: 8px;
+  padding: 2rem 1rem;
+  text-align: center;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  transition: border-color 0.3s, background-color 0.3s;
+}
+
+.file-upload-box:hover {
+  border-color: #80bdff;
+  background-color: #e8f0fe;
+}
+
+.file-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.upload-icon-container {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 1rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.upload-icon-container i {
+  font-size: 2rem;
+  color: #6c757d;
+}
+
+.upload-icon-container p {
+  margin: 0;
+  font-weight: 600;
+  color: #495057;
+}
+
+.upload-icon-container small {
+  color: #6c757d;
+}
+
+/* Perbaikan untuk Image Preview */
+.image-previews-container {
+  margin-top: 1.5rem;
+}
+
+.image-previews-container h4 {
+  font-size: 1rem;
+  color: #495057;
+  margin-bottom: 0.75rem;
+}
+
+.image-previews {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
 }
 
 .image-preview-item {
   position: relative;
-  width: 150px;
-  height: 150px;
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid #ddd;
-}
-
-.image-preview-item img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .remove-image {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  background: rgba(255, 255, 255, 0.7);
+  top: 8px;
+  right: 8px;
+  background: rgba(220, 53, 69, 0.8);
   border: none;
   border-radius: 50%;
-  width: 25px;
-  height: 25px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-weight: bold;
-  color: #dc3545;
+  transition: background 0.2s;
+  color: white;
+  font-size: 14px;
 }
 
 .remove-image:hover {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(220, 53, 69, 1);
+}
+
+/* Styling untuk Radio Button Rentang Umur */
+.standard-radio {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+}
+
+.standard-radio.is-invalid {
+  border-color: #dc3545;
+}
+
+/* Perbaikan untuk vertical alignment pada radio buttons */
+.standard-radio .form-check {
+  margin-bottom: 5px;
+  padding-left: 10px;
+  display: flex;
+  align-items: center; /* Menambahkan ini untuk vertical alignment */
+}
+
+.standard-radio .form-check-input {
+  margin-right: 10px;
+  margin-top: 0; /* Menghilangkan margin-top default */
+}
+
+.standard-radio .form-check-label {
+  font-weight: normal;
+  cursor: pointer;
+  display: inline-block; /* Memastikan label bersifat inline */
+  line-height: 1; /* Mengatur line-height agar lebih pendek */
 }
 
 /* Responsive layout */
