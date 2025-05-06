@@ -4,7 +4,6 @@ import App from "./App.vue";
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
 import axios from "axios";
-
 import "./style.css";
 
 import VueCookies from "vue-cookies";

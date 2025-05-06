@@ -5,9 +5,71 @@
 @tailwind components;
 @tailwind utilities;
 
+
 @layer components {
+  .card-rounded {
+    @apply rounded-[16px];
+  }
+  .button-rounded {
+    @apply rounded-[8px];
+  }
+  .label-rounded {
+    @apply rounded-[6px];
+  }
+  .input-rounded {
+    @apply rounded-[10px];
+  }
+  /* display  */
+  .display{
+    @apply text-[64px] font-bold;
+  }
+  
+  /* heading  */
   .heading1 {
-    @apply text-sm font-normal text-red-500;
+    @apply text-[48px] font-bold;
+  }
+  .heading2 {
+    @apply text-[40px] font-bold;
+  }
+  .heading3 {
+    @apply text-[32px] font-bold;
+  }
+  .heading4 {
+    @apply text-[28px] font-bold;
+  }
+  .heading5 {
+    @apply text-[24px] font-bold;
+  }
+
+  .body1 {
+    @apply text-[20px] font-normal;
+  }
+  .body1-bold {
+    @apply text-[20px] font-medium;
+  }
+  .body2 {
+    @apply text-[18px] font-normal;
+  }
+  .body2-bold {
+    @apply text-[18px] font-medium;
+  }
+  .body3 {
+    @apply text-[16px] font-normal;
+  }
+  .body3-bold {
+    @apply text-[16px] font-medium;
+  }
+  .body4 {
+    @apply text-[14px] font-normal;
+  }
+  .body4-bold {
+    @apply text-[14px] font-medium;
+  }
+  .body5 {
+    @apply text-[12px] font-normal;
+  }
+  .body5-bold {
+    @apply text-[12px] font-medium;
   }
 }
 

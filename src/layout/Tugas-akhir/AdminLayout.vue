@@ -3,7 +3,7 @@
 
     <!-- Sidebar -->
     <div v-bind:class="{'translate-x-0  w-64': showNavbar, '-translate-x-full lg:translate-x-0 w-20': !showNavbar}" 
-      class=" bg-white border-r shadow-sm duration-200 fixed top-0 left-0 h-full z-50 transform">
+      class=" bg-white duration-200 fixed top-0 left-0 h-full z-50 transform shadow-md">
       <div class="absolute top-4 -right-4">
         <button @click="toggleNavbar"  class="hidden lg:block hover:text-gray-700 focus:outline-none p-2 border bg-white rounded-full shadow-md ">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" :class="{'transform rotate-180' : showNavbar}" class="h-4 w-4 transition-transform duration-500">
@@ -13,7 +13,9 @@
       </div>
 
       <div class="p-4 flex justify-between items-center duration-200">
-        <img :src="D3TILogo" alt=""  v-bind:class="{'w-20': showNavbar,'w-9 my-2' : !showNavbar}">
+        <router-link to="/">
+          <img :src="D3TILogo" alt=""  v-bind:class="{'w-20': showNavbar,'w-9 my-2' : !showNavbar}">
+        </router-link>
         <div v-show="showNavbar">
           <button  @click="toggleNavbar" class="hover:bg-gray-100 rounded-full p-2 lg:hidden active:scale-90 duration-150">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 lg:hidden">
@@ -67,8 +69,11 @@
     <div class="flex-1 flex flex-col">
 
       <!-- Header -->
-      <header class="bg-white shadow-sm p-4 flex justify-between items-center fixed w-full z-40">
+      <header class="bg-white p-4 flex justify-between items-center fixed w-full z-40 shadow-sm">
         <div class="flex items-center">
+          <router-link to="/">
+            <img :src="D3TILogo" alt="" class="w-16 lg:hidden">
+          </router-link>  
           <button @click="toggleNavbar" class="hover:bg-gray-100 rounded-full p-1 lg:hidden active:scale-90 duration-150">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 lg:hidden">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -122,7 +127,7 @@
       </header>
 
       <!-- Dashboard Content -->
-      <main v-bind:class="{'lg:ml-64': showNavbar, 'lg:ml-20': !showNavbar}" class="flex-1 p-1 sm:p-6 ml-0  bg-gray-100 duration-200 mt-16">
+      <main v-bind:class="{'lg:ml-64': showNavbar, 'lg:ml-20': !showNavbar}" class="flex-1 p-4 sm:p-8 ml-0  bg-gray-100 duration-200 mt-16">
         <router-view/>
       </main>
       

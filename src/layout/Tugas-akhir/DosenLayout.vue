@@ -3,7 +3,7 @@
 
     <!-- Sidebar -->
     <div v-bind:class="{'translate-x-0  w-64': showNavbar, '-translate-x-full lg:translate-x-0 w-20': !showNavbar}" 
-      class=" bg-white border-r shadow-sm duration-200 fixed top-0 left-0 h-full z-50 transform">
+      class=" bg-white  duration-200 fixed top-0 left-0 h-full z-50 transform shadow-md">
       <div class="absolute top-4 -right-4">
         <button @click="toggleNavbar"  class="hidden lg:block hover:text-gray-700 focus:outline-none p-2 border bg-white rounded-full shadow-md ">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" :class="{'transform rotate-180' : showNavbar}" class="h-4 w-4 transition-transform duration-500">
@@ -13,7 +13,9 @@
       </div>
 
       <div class="p-4 flex justify-between items-center duration-200">
-        <img :src="D3TILogo" alt=""  v-bind:class="{'w-20': showNavbar,'w-9 my-2' : !showNavbar}">
+        <router-link to="/">
+          <img :src="D3TILogo" alt=""  v-bind:class="{'w-20': showNavbar,'w-9 my-2' : !showNavbar}">
+        </router-link>        
         <div v-show="showNavbar">
           <button  @click="toggleNavbar" class="hover:bg-gray-100 rounded-full p-2 lg:hidden active:scale-90 duration-150">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 lg:hidden">
@@ -35,25 +37,12 @@
           icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' />"
         />
 
-        <SidebarDropdown
-          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' />"
-          label="Bimbingan"
-          :active="isActive(withPrefix(['/request-pembimbing', '/daftar-bimbingan']))"
-          :isOpen="showBimbingan"
+        <SidebarLink
+          :to="withPrefix('/bimbingan')"
+          :active="isActive(withPrefix(['/bimbingan']))"
           :showLabel="showNavbar"
-          :subItems="[
-            { 
-              path: withPrefix('/request-pembimbing'), 
-              label: 'Request Pembimbing', 
-              active: isActive(withPrefix(['/request-pembimbing']))
-            },
-            { 
-              path: withPrefix('/daftar-bimbingan'), 
-              label: 'Daftar Bimbingan', 
-              active: isActive(withPrefix(['/daftar-bimbingan']))
-            }
-          ]"
-          @toggle="toggleBimbingan"
+          label="Bimbingan"
+          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' />"
         />
 
         <SidebarLink
@@ -72,36 +61,15 @@
           icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z' />"
         />
 
-        <SidebarDropdown
-          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />"
-          label="Ujian TA"
-          :active="isActive(withPrefix(['/jadwal-menguji', '/input-nilai-ujian', '/revisi-ujian', '/jadwal-sempro']))"
-          :isOpen="showTugasAkhir"
+        <SidebarLink
+          :to="withPrefix('/ujian-ta')"
+          :active="isActive(withPrefix(['/ujian-ta']))"
           :showLabel="showNavbar"
-          :subItems="[
-            { 
-              path: withPrefix('/jadwal-menguji'), 
-              label: 'Jadwal Menguji', 
-              active: isActive(withPrefix(['/jadwal-menguji']))
-            },
-            { 
-              path: withPrefix('/input-nilai-ujian'), 
-              label: 'Input Nilai Ujian TA', 
-              active: isActive(withPrefix(['/input-nilai-ujian']))
-            },
-            { 
-              path: withPrefix('/revisi-ujian'), 
-              label: 'Revisi Ujian TA', 
-              active: isActive(withPrefix(['/revisi-ujian']))
-            },
-            { 
-              path: withPrefix('/jadwal-sempro'), 
-              label: 'Jadwal Sempro', 
-              active: isActive(withPrefix(['/jadwal-sempro']))
-            }
-          ]"
-          @toggle="toggleTugasAkhir"
+          label="Ujian TA"
+          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />"
         />
+
+
       </nav>
 
     </div>
@@ -110,8 +78,11 @@
     <div class="flex-1 flex flex-col">
 
       <!-- Header -->
-      <header class="bg-white shadow-sm p-4 flex justify-between items-center fixed w-full z-40">
+      <header class="bg-white  p-4 flex justify-between items-center fixed w-full z-40 shadow-sm">
         <div class="flex items-center">
+          <router-link to="/">
+            <img :src="D3TILogo" alt="" class="w-16 lg:hidden">
+          </router-link>          
           <button @click="toggleNavbar" class="hover:bg-gray-100 rounded-full p-1 lg:hidden active:scale-90 duration-150">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 lg:hidden">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -133,7 +104,7 @@
             </button>
           </div>
           <div class="flex items-center">
-            <span class="text-sm font-medium mr-2">{{ user.name }}</span>
+            <span class="text-sm font-medium mr-2 hidden sm:inline">{{ user.name }}</span>
             <button id="user-button" @click="toggleUser" class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center active:scale-90 duration-150">
               <span class="text-sm font-medium text-gray-600">{{ user.name.charAt(0) }}</span>            
             </button>
@@ -165,7 +136,7 @@
       </header>
 
       <!-- Dashboard Content -->
-      <main v-bind:class="{'lg:ml-64': showNavbar, 'lg:ml-20': !showNavbar}" class="flex-1 p-1 sm:p-6 ml-0  bg-gray-100 duration-200 mt-16">
+      <main v-bind:class="{'lg:ml-64': showNavbar, 'lg:ml-20': !showNavbar}" class="flex-1 p-4 sm:p-8 ml-0  bg-gray-100 duration-200 mt-16">
         <router-view/>
       </main>
       

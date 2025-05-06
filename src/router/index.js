@@ -14,105 +14,116 @@ import ProposalforAdmin from "../views/Admin/AdminTa/Proposal.vue";
 import TugasAkhirforAdmin from "../views/Admin/AdminTa/TugasAkhir.vue";
 // Route Mhs TA
 import DashboardTAMhs from "../views/Mahasiswa/Tugas-akhir/Dashboard.vue";
-import BimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan.vue";
+import BimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan/Index.vue";
+import TambahBimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan/Create.vue";
 import ProposalforMhs from "../views/Mahasiswa/Tugas-akhir/Proposal.vue";
-import TugasAkhirforMhs from "../views/Mahasiswa/Tugas-akhir/TugasAkhir.vue";
+import TugasAkhirforMhs from "../views/Mahasiswa/Tugas-akhir/Ujian.vue";
 // Route Dosen TA 
 import DashboardTADosen from "../views/Dosen/Tugas-akhir/Dashboard.vue";
-import RequestBimbinganforDosen from "../views/Dosen/Tugas-akhir/RequestBimbingan.vue";
-import DaftarBimbinganforDosen from "../views/Dosen/Tugas-akhir/DaftarBimbingan.vue";
+import BimbinganforDosen from "../views/Dosen/Tugas-akhir/Bimbingan.vue";
 import SeminarProposalforDosen from "../views/Dosen/Tugas-akhir/SeminarProposal.vue";
 import SeminarHasilforDosen from "../views/Dosen/Tugas-akhir/SeminarHasil.vue";
-import JadwalMengujiforDosen from "../views/Dosen/Tugas-akhir/JadwalMenguji.vue";
+import UjianTAforDosen from "../views/Dosen/Tugas-akhir/UjianTA.vue";
+import path from "path";
 
 //define a routes
 const routes = [
   {
     path: '/dosen/tugas-akhir',
     component: DosenLayout, // Gunakan AdminLayout sebagai layout
+    meta: {
+      breadcrumb: 'Tugas Akhir'
+    },
     children: [
       {
         path: '',
-        component: DashboardTADosen, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: DashboardTADosen,
+        meta: {
+          breadcrumb: 'Dashboard'
+        } 
       },
       {
-        path: 'request-pembimbing',
-        component: RequestBimbinganforDosen, // Konten halaman akan dirender di <router-view> dalam AdminLayout
-      },
-      {
-        path: 'daftar-bimbingan',
-        component: DaftarBimbinganforDosen // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        path: 'bimbingan',
+        component: BimbinganforDosen, 
+        meta: {
+          breadcrumb: 'Bimbingan'
+        },
+        // children: [
+        //   {
+        //     path: 'bimbingan/:id',
+        //     component: DetailBimbinganforDosen,
+        //     meta:{
+        //       breadcrumb: 'Detail Bimbingan'
+        //     }
+        //   }
+        // ]
       },
       {
         path: 'seminar-proposal',
-        component: SeminarProposalforDosen // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: SeminarProposalforDosen ,
+        meta: {
+          breadcrumb: 'Seminar Proposal'
+        }
       },
       {
         path: 'seminar-hasil',
-        component: SeminarHasilforDosen // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: SeminarHasilforDosen, 
+        meta: {
+          breadcrumb: 'Seminar Hasil'
+        }
       },
       {
-        path: 'jadwal-menguji',
-        component: JadwalMengujiforDosen // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        path: 'ujian-ta',
+        component: UjianTAforDosen, 
+        meta: {
+          breadcrumb: 'Ujian Tugas Akhir'
+        }
       },
-      {
-        path: 'input-nilai-ujian',
-        component: DashboardTADosen // Konten halaman akan dirender di <router-view> dalam AdminLayout
-      },
-      {
-        path: 'revisi-ujian',
-        component: DashboardTADosen // Konten halaman akan dirender di <router-view> dalam AdminLayout
-      },
-      {
-        path: 'jadwal-sempro',
-        component: DashboardTADosen // Konten halaman akan dirender di <router-view> dalam AdminLayout
-      },
+
     ],
+  },
+  {
+    path:'/testcok',
+    component: () => import('../views/Mahasiswa/Tugas-akhir/Test.vue'),
   },
   {
     path: '/admin/tugas-akhir',
     component: AdminLayout, // Gunakan AdminLayout sebagai layout
+    meta: {
+      breadcrumb: 'Tugas Akhir'
+    },
     children: [
       {
         path: '',
-        component: DashboardTAAdmin, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: DashboardTAAdmin,
+        meta: {
+          breadcrumb: 'Dashboard'
+        } 
       },
       {
         path: 'bimbingan',
-        component: BimbinganforAdmin, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: BimbinganforAdmin,
+        meta: {
+          breadcrumb: 'Bimbingan'
+        } 
       },
       {
         path: 'proposal',
-        component: ProposalforAdmin, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: ProposalforAdmin,
+        meta: {
+          breadcrumb: 'Proposal'
+        } 
       },
       {
         path: 'tugas-akhir',
-        component: TugasAkhirforAdmin, // Konten halaman akan dirender di <router-view> dalam AdminLayout
+        component: TugasAkhirforAdmin,
+        meta: {
+          breadcrumb: 'tugas-akhir'
+        } 
       },
     ],
   },
-  {
-    path: '/mahasiswa/tugas-akhir',
-    component: UserLayout, // Gunakan AdminLayout sebagai layout
-    children: [
-      {
-        path: '',
-        component: DashboardTAMhs, // Konten halaman akan dirender di <router-view> dalam AdminLayout
-      },
-      {
-        path: 'bimbingan',
-        component: BimbinganforMhs, // Konten halaman akan dirender di <router-view> dalam AdminLayout
-      },
-      {
-        path: 'proposal',
-        component: ProposalforMhs, // Konten halaman akan dirender di <router-view> dalam AdminLayout
-      },
-      {
-        path: 'tugas-akhir',
-        component: TugasAkhirforMhs, // Konten halaman akan dirender di <router-view> dalam AdminLayout
-      },
-    ],
-  },
+  
   {
     path: "/",
     name: "Landing",
@@ -211,20 +222,19 @@ const routes = [
     component: () =>
       import(/* webpackChunkName: "login" */ "../views/404/404.vue"),
   },
-  {
-    path: "/dashboard",
-    name: "dashboard-login",
-    component: () => import("../views/Landing/LandingLogin.vue"),
-    meta: { requiresAuth: true },
-  },
+
 
 
   // Mahasiswa
   {
     path: "/mahasiswa",
-    component: UserLayout,
-    meta: { requiresAuth: true, userType: "mahasiswa" },
+    // meta: { requiresAuth: true, userType: "mahasiswa" },
     children: [
+      {
+        path: "",
+        name: "PortalMahasiswa",
+        component: () => import("../views/Mahasiswa/Portal.vue"),
+      },
       {
         path: "dashboard",
         name: "DashboardMahasiswa",
@@ -235,7 +245,51 @@ const routes = [
         name: "ProfileMahasiswa",
         component: () => import("../views/Mahasiswa/Profile.vue"),
       },
-      // route mahasiswa yg laenya
+      {
+        path: 'tugas-akhir',
+        component: UserLayout, // Gunakan AdminLayout sebagai layout
+        meta: {
+          breadcrumb: 'Tugas Akhir'
+        },
+        name: 'DashboardTugasAkhirMhs',
+        children: [
+          {
+            path: '',
+            component: DashboardTAMhs,         
+            meta: {
+              breadcrumb: 'Dashboard'
+            }
+          },
+          {
+            path: 'bimbingan',
+            component: BimbinganforMhs,         
+            meta: {
+              breadcrumb: 'Bimbingan'
+            },
+          },
+          {
+            path: 'tambah-bimbingan',
+            component : TambahBimbinganforMhs,
+            meta: {
+              breadcrumb: 'Tambah Bimbingan'
+            }
+          },
+          {
+            path: 'proposal',
+            component: ProposalforMhs,         
+            meta: {
+              breadcrumb: 'Proposal'
+            }
+          },
+          {
+            path: 'tugas-akhir',
+            component: TugasAkhirforMhs,         
+            meta: {
+              breadcrumb: 'Tugas Akhir'
+            }
+          },
+        ],
+      },
     ],
   },
 
@@ -489,7 +543,7 @@ router.beforeEach(async (to, from, next) => {
           next({ name: "DashboardAdmin" });
           break;
         case "mahasiswa":
-          next({ name: "DashboardMahasiswa" });
+          next({ name: "DashboardTugasAkhirMhs" });
           break;
         default:
           next();

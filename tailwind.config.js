@@ -28,6 +28,15 @@ export default {
   				DEFAULT: 'hsl(var(--popover))',
   				foreground: 'hsl(var(--popover-foreground))'
   			},
+			odd: {
+				DEFAULT: '#FFFFFF'
+			},
+			even: {
+				DEFAULT: '#EEEEEE'
+			},
+			placeholder: {
+				DEFAULT: '#9A9A9A'
+			},
   			primary: {
 				DEFAULT: '#00A2EA',
 				bg: '#eff6ff',
@@ -37,17 +46,18 @@ export default {
 				bg: '#fef2f2',
 			},
 			warning: {
-				DEFAULT: '#ca8a04',
-				bg: '#fef9c3',
+				DEFAULT: '#FFA756',
+				bg: '#FFA756',
 			},
 			success: {
-				DEFAULT: '#4ADE80',
+				DEFAULT: '#4AD991',
 				bg: '#dcfce7',
 			},
 			danger: {
-				DEFAULT: '#ff0000',
-				bg: '#fee2e2',
+				DEFAULT: '#EF3826',
+				bg: '#EF3826',
 			},
+
   			muted: {
   				DEFAULT: 'hsl(var(--muted))',
   				foreground: 'hsl(var(--muted-foreground))'

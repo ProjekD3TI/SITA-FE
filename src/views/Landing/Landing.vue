@@ -1,7 +1,9 @@
 <template>
   <div class="h-screen flex flex-col bg-white">
     <!-- Header -->
-    <Header />
+    <HeaderLogin v-if="isAuthenticated"/>
+    <Header v-else/>
+
     <!-- Landing Page Content -->
     <div class="flex-grow flex items-center justify-center">
       <div
@@ -39,18 +41,72 @@
 </template>
 
 <script>
+import { ref, onMounted } from 'vue';
 import Header from "../../components/Header.vue";
+import HeaderLogin from "@/components/HeaderLogin.vue";
 import Footer from "../../components/Footer.vue";
+import VueCookies from "vue-cookies";
+import { getUserData } from "@/services/authMahasiswa";
 
 export default {
   name: "AppComponent",
   components: {
     Header,
+    HeaderLogin,
     Footer,
   },
-  mounted() {
-    console.log("Routing is working!");
-  },
+  setup() {
+    const isAuthenticated = ref(false);
+    const userData = ref(null);
+
+    const checkAuthentication = () => {
+      const authToken = VueCookies.get("auth_token");
+      const user = getUserData();
+      
+      if (authToken && user) {
+        isAuthenticated.value = true;
+        userData.value = user;
+      } else {
+        isAuthenticated.value = false;
+        userData.value = null;
+      }
+    };
+
+    const redirectToUserDashboard = () => {
+      if (!userData.value) return { name: 'Landing' };
+      
+      switch (userData.value.type) {
+        case "mahasiswa":
+          return { name: "DashboardMahasiswa" };
+        case "dosen":
+          // Redirect berdasarkan jabatan dosen
+          if (userData.value.jabatan === "Kalab") {
+            return { name: "DashboardKalab" };
+          } else if (userData.value.jabatan === "Kaprodi") {
+            return { name: "DashboardKaprodi" };
+          } else if (userData.value.jabatan === "Petugas") {
+            return { name: "DashboardPetugas" };
+          } else {
+            return { name: "DashboardDosen" };
+          }
+        case "admin":
+          return { name: "DashboardAdmin" };
+        default:
+          return { name: "Landing" };
+      }
+    };
+
+    onMounted(() => {
+      checkAuthentication();
+      console.log("Routing is working!");
+    });
+
+    return {
+      isAuthenticated,
+      userData,
+      redirectToUserDashboard
+    };
+  }
 };
 </script>
 

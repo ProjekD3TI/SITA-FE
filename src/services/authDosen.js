@@ -206,7 +206,7 @@ export function authDosen() {
       case "Petugas":
         return "/petugas/dashboard";
       default:
-        return "/dosen/dashboard";
+        return "/";
     }
   };
 

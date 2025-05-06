@@ -1,9 +1,9 @@
 <template>
-  <div class="flex min-h-screen bg-gray-100">
+  <div class="min-h-screen bg-gray-100">
 
     <!-- Sidebar -->
     <div v-bind:class="{'translate-x-0  w-64': showNavbar, '-translate-x-full lg:translate-x-0 w-20': !showNavbar}" 
-      class=" bg-white border-r shadow-sm duration-200 fixed top-0 left-0 h-full z-50 transform">
+      class=" bg-white shadow-md duration-200 fixed top-0 left-0 h-full z-50 transform">
       <div class="absolute top-4 -right-4">
         <button @click="toggleNavbar"  class="hidden lg:block hover:text-gray-700 focus:outline-none p-2 border bg-white rounded-full shadow-md ">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" :class="{'transform rotate-180' : showNavbar}" class="h-4 w-4 transition-transform duration-500">
@@ -13,7 +13,9 @@
       </div>
 
       <div class="p-4 flex justify-between items-center duration-200">
-        <img :src="D3TILogo" alt=""  v-bind:class="{'w-20': showNavbar,'w-9 my-2' : !showNavbar}">
+        <router-link to="/">
+          <img :src="D3TILogo" alt=""  v-bind:class="{'w-20': showNavbar,'w-9 my-2' : !showNavbar}">
+        </router-link>
         <div v-show="showNavbar">
           <button  @click="toggleNavbar" class="hover:bg-gray-100 rounded-full p-2 lg:hidden active:scale-90 duration-150">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 lg:hidden">
@@ -68,7 +70,10 @@
 
       <!-- Header -->
       <header class="bg-white shadow-sm p-4 flex justify-between items-center fixed w-full z-40">
-        <div class="flex items-center">
+        <div class="flex items-center gap-4">
+          <router-link to="/">
+            <img :src="D3TILogo" alt="" class="w-16 lg:hidden">
+          </router-link>
           <button @click="toggleNavbar" class="hover:bg-gray-100 rounded-full p-1 lg:hidden active:scale-90 duration-150">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 lg:hidden">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -90,7 +95,7 @@
             </button>
           </div>
           <div class="flex items-center">
-            <span class="text-sm font-medium mr-2">{{ user.name }}</span>
+            <span class="text-sm font-medium mr-2 hidden sm:inline">{{ user.name }}</span>
             <button id="user-button" @click="toggleUser" class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center active:scale-90 duration-150">
               <span class="text-sm font-medium text-gray-600">{{ user.name.charAt(0) }}</span>            
             </button>
@@ -114,7 +119,7 @@
                 <button class="py-2 active:scale-95 duration-150">Profile</button>
               </li>
               <li class=" px-2 hover:bg-gray-100 rounded duration-200">
-                <button class="py-2 text-danger">Log Out</button>
+                <button class="py-2 text-danger active:scale-90 duration-200" @click="handleLogout">Log Out</button>
               </li>
             </ul>
           </div>
@@ -122,7 +127,7 @@
       </header>
 
       <!-- Dashboard Content -->
-      <main v-bind:class="{'lg:ml-64': showNavbar, 'lg:ml-20': !showNavbar}" class="flex-1 p-1 sm:p-6 ml-0  bg-gray-100 duration-200 mt-16">
+      <main v-bind:class="{'lg:ml-64': showNavbar, 'lg:ml-20': !showNavbar}" class=" p-4 sm:p-8 ml-0  bg-gray-100 duration-200 mt-16">
         <router-view/>
       </main>
       
@@ -132,9 +137,9 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useRoute} from 'vue-router'
+import { useRoute, useRouter} from 'vue-router'
 const route = useRoute()
-
+const router = useRouter();
 import D3TILogo from '@/assets/images/d3ti-logo.png'
 
 // Notifikasi
@@ -298,4 +303,17 @@ const toggleUser = () => {
 // sidebar 
 import SidebarLink from '@/components/Tugas-akhir/SidebarLink.vue'
 import SidebarDropdown from '@/components/Tugas-akhir/SidebarDropdown.vue'
+import { authMahasiswa } from '@/services/authMahasiswa'
+import { useToast } from 'vue-toastification';
+const { logout } = authMahasiswa();
+const toast = useToast();
+const handleLogout = () => {
+      try {
+        logout();
+        toast.success("Berhasil Logout!");
+        router.push('/');
+      } catch (error) {
+        toast.error("Terjadi kesalahan saat logout.");
+      }
+    };
 </script>

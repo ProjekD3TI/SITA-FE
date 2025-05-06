@@ -1,7 +1,8 @@
 <template>
     <div class="min-h-screen flex flex-col">
       <!-- Header -->
-      <Header />
+      <HeaderLogin v-if="isAuthenticated"/>
+      <Header v-else/>
       
       <!-- Main Content -->
       <div class="flex-grow container mx-auto px-4 py-28">

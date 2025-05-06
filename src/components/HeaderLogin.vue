@@ -125,6 +125,28 @@
                     Profile
                   </div>
                 </router-link>
+                <router-link
+                  :to="getTaskRoute()"
+                  class="block px-4 py-2 hover:bg-gray-100"
+                >
+                  <div class="flex items-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-5 w-5 mr-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5"
+                      />
+                    </svg>
+                    Tugas Akhir
+                  </div>
+                </router-link>
                 <button
                   @click="handleLogout"
                   class="block w-full text-left px-4 py-2 hover:bg-gray-100"
@@ -160,7 +182,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
-import { authMahasiswa } from '../services/authMahasiswa';
+import { authMahasiswa, getUserData } from '../services/authMahasiswa';
 
 export default {
   name: "HeaderComponent",
@@ -169,22 +191,44 @@ export default {
     const toast = useToast();
     const { logout } = authMahasiswa();
     const username = ref('');
+    const userType = ref('');
 
     onMounted(() => {
-      // Get username from cookies or localStorage if available
-      // This is a placeholder - adjust based on how you store user info
-      try {
-        const userInfo = JSON.parse(localStorage.getItem('user'));
-        if (userInfo && userInfo.username) {
-          username.value = userInfo.username;
-        } else if (userInfo && userInfo.email) {
-          // If no username, use email or first part of email
-          username.value = userInfo.email.split('@')[0];
+      // Mendapatkan data user dari cookie
+      const userData = getUserData();
+      if (userData) {
+        username.value = userData.name || userData.email?.split('@')[0] || 'User';
+        userType.value = userData.type || 'mahasiswa';
+      } else {
+        try {
+          const userInfo = JSON.parse(localStorage.getItem('user'));
+          if (userInfo && userInfo.username) {
+            username.value = userInfo.username;
+          } else if (userInfo && userInfo.email) {
+            username.value = userInfo.email.split('@')[0];
+          }
+        } catch (error) {
+          console.log('No user data found');
         }
-      } catch (error) {
-        console.log('No user data found');
       }
     });
+
+    const getTaskRoute = () => {
+      const userData = getUserData();
+      if (userData) {
+        switch (userData.type) {
+          case 'admin':
+            return '/admin/tugas-akhir';
+          case 'dosen':
+            return '/dosen/tugas-akhir';
+          case 'mahasiswa':
+            return '/mahasiswa/tugas-akhir';
+          default:
+            return '/mahasiswa/tugas-akhir';
+        }
+      }
+      return '/mahasiswa/tugas-akhir'; // Default route jika tidak ada userData
+    };
 
     const handleLogout = () => {
       try {
@@ -198,13 +242,15 @@ export default {
 
     return {
       username,
-      handleLogout
+      userType,
+      handleLogout,
+      getTaskRoute
     };
   },
   data() {
     return {
-      isMenuOpen: false, // State untuk mengontrol tampilan menu
-      isProfileDropdownOpen: false, // State untuk mengontrol dropdown profil
+      isMenuOpen: false,
+      isProfileDropdownOpen: false,
     };
   },
   // Close dropdown when clicking outside

@@ -88,7 +88,7 @@ export function authMahasiswa() {
         ] = `Bearer ${token.value}`;
 
         toast.success(response.data.message || "Login Mahasiswa berhasil!");
-        router.push("/dashboard");
+        router.push("/");
       } else {
         toast.error(response.data.message || "Login gagal");
       }

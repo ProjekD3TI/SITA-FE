@@ -10,13 +10,13 @@ const verifiedCount = ref(14);
 const totalDocuments = ref(26);
 </script>
 <template>
-  <div id="app" class=" mx-auto p-4 bg-gray-100">
+  <div id="app" class=" mx-auto">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- Welcome Card -->
       <div class="bg-white rounded-lg shadow-md overflow-hidden col-span-1 md:col-span-2 relative">
         <img :src="HeroAsset" alt="" class="z-10 scale-125 right-8 md:top-0 md:scale-100 md:right-0 absolute">
         <div class="flex flex-col md:flex-row items-center duration-200">
-          <div class="p-6 md:w-1/2 z-20">
+          <div class="p-6 md:w-1/2">
             <h2 class="text-sky-500 text-4xl font-bold max-w-xs xl:max-w-md mx-auto duration-200">Welcome Back!</h2>
             <h3 class="text-gray-800 text-2xl font-bold mt-2 max-w-xs xl:max-w-md mx-auto duration-200">{{ adminName }}</h3>
           </div>
@@ -27,7 +27,7 @@ const totalDocuments = ref(26);
       </div>
 
       <!-- Total Bimbingan Card -->
-      <div class="bg-white p-4 rounded-lg shadow-sm flex items-center justify-between">
+      <div class="bg-white p-4 rounded-lg shadow-md flex items-center justify-between">
         <div class="flex items-center">
           <div class="bg-danger-bg p-2 rounded-full mr-4">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -42,7 +42,7 @@ const totalDocuments = ref(26);
       </div>
 
       <!-- Proposal Tugas Akhir Card -->
-      <div class="bg-white p-4 rounded-lg shadow-sm flex items-center justify-between">
+      <div class="bg-white p-4 rounded-lg shadow-md flex items-center justify-between">
         <div class="flex items-center">
           <div class="bg-success-bg p-2 rounded-full mr-4">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -56,13 +56,13 @@ const totalDocuments = ref(26);
         </div>
       </div>
 
-      <div class="bg-white p-4 rounded-lg shadow-sm min-h-64">
+      <div class="bg-white p-4 rounded-lg shadow-md min-h-64">
         <h3 class="text-gray-700 text-sm">Aktivitas</h3>
         <!-- Empty area for future content -->
       </div>
 
       <!-- Verification Status Card -->
-      <div class="bg-white p-4 rounded-lg shadow-sm">
+      <div class="bg-white p-4 rounded-lg shadow-md">
         <h3 class="text-gray-700 text-sm mb-4">Total Berkas Belum Terverifikasi</h3>
         <div class="flex justify-center items-center">
           <div class="relative w-40 h-40">

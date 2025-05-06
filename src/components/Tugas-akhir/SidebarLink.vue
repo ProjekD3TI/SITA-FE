@@ -24,11 +24,11 @@ defineProps({
 </script>
 
 <template>
-  <div class="ms-4 me-4 py-2">
+  <div class="ms-4 me-4 py-1">
     <router-link 
       :to="to"
       :class="active ? 'border-l-4 border-primary bg-primary-bg text-primary hover:bg-primary-bg px-2' : 'hover:text-primary'" 
-      class="rounded duration-150 justify-start flex items-center active:scale-95"
+      class="py-2 rounded duration-150 justify-start flex items-center active:scale-95"
     >
       <div class="mr-0 py-1">
         <svg 
