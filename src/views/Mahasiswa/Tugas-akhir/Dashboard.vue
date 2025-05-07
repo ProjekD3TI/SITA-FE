@@ -5,21 +5,26 @@ import Breadcrumb from '@/components/Tugas-akhir/Breadcrumb.vue'
 import FlowBar from '@/components/Tugas-akhir/FlowBar.vue';
 import Button from '@/components/Tugas-akhir/Button.vue';
 import ModalTimer from '@/components/Tugas-akhir/Modals/ModalTimer.vue';
+import ModalYesNo from '@/components/Tugas-akhir/Modals/ModalYesNo.vue';
+import ModalDetailBimbingan from '@/components/Tugas-akhir/Modals/ModalDetailBimbingan.vue';
 
 const modalRef = ref(null);
-
+const modal2Ref = ref(null);
+const modal3Ref = ref(null);
 const showModal = () => {
   modalRef.value.open();
 };
+const showModal2 = () => {
+  modal2Ref.value.open();
+};
+const showModal3 = () => {
+  modal3Ref.value.open();
+};
 
-const studentName = ref('Mahasiswa 1');
-const bimbinganProgress = ref({
-  completed: 5,
-  total: 9,
-});
-const proposalStatus = ref('Terverifikasi');
-const pendaftaranStatus = ref('Belum Tersedia');
-const revisiStatus = ref('Belum Tersedia');
+const handleAccept = () => {
+  console.log('Permintaan diterima!');
+  // Lakukan aksi lain setelah diterima
+};
 </script>
 <template>
   <Breadcrumb :items="breadcrumbItems" />
@@ -42,13 +47,6 @@ const revisiStatus = ref('Belum Tersedia');
       </div>
     </div>
   </div>
-  <div class="card-rounded bg-white p-4 lg:p-8 mt-4">
-    <Button
-      @click="showModal"
-      variant="primary"
-      size="lg"
-    >Mulai Bimbingan</Button>
-    <ModalTimer ref="modalRef" />
-  </div>
+
 
 </template>

@@ -85,7 +85,7 @@ export function authAdmin() {
         ] = `Bearer ${token.value}`;
 
         toast.success(response.data.message || "Login Admin berhasil!");
-        router.push("/admin/dashboard");
+        router.push("/");
       } else {
         toast.error(response.data.message || "Login gagal");
       }

@@ -136,11 +136,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted,computed } from 'vue'
 import { useRoute, useRouter} from 'vue-router'
 const route = useRoute()
 const router = useRouter();
 import D3TILogo from '@/assets/images/d3ti-logo.png'
+
 
 // Notifikasi
 import Notification from '@/components/Tugas-akhir/Notification.vue'
@@ -202,11 +203,6 @@ const showUser = ref(false)
 const isLgScreen = ref(false)
 const hasNotification = ref(false)
 
-const user = ref({
-  name: 'Raffael Aldrich Setiawan', // Nama pengguna
-  role: 'Mahasiswa',   // Peran pengguna
-});
-
 const withPrefix = (paths) => {
   if (typeof paths === 'string') {
     return `/mahasiswa/tugas-akhir${paths}`;
@@ -227,8 +223,34 @@ const checkScreenSize = () => {
 }
 // Tambahkan event listener untuk resize
 onMounted(() => {
+    // Gunakan pendekatan yang sama dengan Header.vue
+  const userData = getUserData();
+  
+  if (userData) {
+    username.value = userData.name || userData.email?.split('@')[0] || 'User';
+    console.log('Username set from getUserData:', username.value);
+  } else {
+    // Fallback: coba ambil dari localStorage langsung
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('user'));
+      console.log('User info from localStorage:', userInfo);
+      
+      if (userInfo && userInfo.name) {
+        username.value = userInfo.name;
+      } else if (userInfo && userInfo.username) {
+        username.value = userInfo.username;
+      } else if (userInfo && userInfo.email) {
+        username.value = userInfo.email.split('@')[0];
+      }
+      console.log('Username set from localStorage:', username.value);
+    } catch (error) {
+      console.error('Error getting user data from localStorage:', error);
+    }
+  }
+
   checkScreenSize()
   checkNotification()
+
   window.addEventListener('resize', checkScreenSize)
   document.addEventListener('click', closeDropdownOnClickOutside);
 
@@ -303,10 +325,26 @@ const toggleUser = () => {
 // sidebar 
 import SidebarLink from '@/components/Tugas-akhir/SidebarLink.vue'
 import SidebarDropdown from '@/components/Tugas-akhir/SidebarDropdown.vue'
-import { authMahasiswa } from '@/services/authMahasiswa'
+
+// Ganti import ini untuk menggunakan getUserData langsung
+import { authMahasiswa, getUserData } from '@/services/authMahasiswa'
 import { useToast } from 'vue-toastification';
-const { logout } = authMahasiswa();
+
 const toast = useToast();
+const { logout } = authMahasiswa();
+
+// Referensi untuk nama user
+const username = ref('');
+
+// Computed property yang lebih sederhana
+const user = computed(() => {
+  return {
+    name: username.value || 'Mahasiswa',
+    role: 'Mahasiswa'
+  };
+});
+
+
 const handleLogout = () => {
       try {
         logout();

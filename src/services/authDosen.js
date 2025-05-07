@@ -198,7 +198,7 @@ export function authDosen() {
   const jabatanRoute = (jabatanName) => {
     switch (jabatanName) {
       case "Dosen":
-        return "/dosen/dashboard";
+        return "/"; //tes default ke landing
       case "Kalab":
         return "/kalab/dashboard";
       case "Kaprodi":

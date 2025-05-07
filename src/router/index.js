@@ -3,9 +3,11 @@ import { createRouter, createWebHistory } from "vue-router";
 import { getUserData } from "../services/authDosen";
 import VueCookies from "vue-cookies";
 import { useToast } from "vue-toastification";
-import UserLayout from "../layout/Tugas-akhir/UserLayout.vue";
+import UserLayoutTA from "../layout/Tugas-akhir/UserLayout.vue";
 import DosenLayout from "../layout/Tugas-akhir/DosenLayout.vue";
-import AdminLayout from "../layout/Tugas-akhir/AdminLayout.vue";
+import AdminLayoutTA from "../layout/Tugas-akhir/AdminLayout.vue";
+
+import AdminLayout from "../layout/AdminLayout.vue";
 
 // Route Admin TA
 import DashboardTAAdmin from "../views/Admin/AdminTa/Dashboard.vue";
@@ -28,102 +30,64 @@ import path from "path";
 
 //define a routes
 const routes = [
-  {
-    path: '/dosen/tugas-akhir',
-    component: DosenLayout, // Gunakan AdminLayout sebagai layout
-    meta: {
-      breadcrumb: 'Tugas Akhir'
-    },
-    children: [
-      {
-        path: '',
-        component: DashboardTADosen,
-        meta: {
-          breadcrumb: 'Dashboard'
-        } 
-      },
-      {
-        path: 'bimbingan',
-        component: BimbinganforDosen, 
-        meta: {
-          breadcrumb: 'Bimbingan'
-        },
-        // children: [
-        //   {
-        //     path: 'bimbingan/:id',
-        //     component: DetailBimbinganforDosen,
-        //     meta:{
-        //       breadcrumb: 'Detail Bimbingan'
-        //     }
-        //   }
-        // ]
-      },
-      {
-        path: 'seminar-proposal',
-        component: SeminarProposalforDosen ,
-        meta: {
-          breadcrumb: 'Seminar Proposal'
-        }
-      },
-      {
-        path: 'seminar-hasil',
-        component: SeminarHasilforDosen, 
-        meta: {
-          breadcrumb: 'Seminar Hasil'
-        }
-      },
-      {
-        path: 'ujian-ta',
-        component: UjianTAforDosen, 
-        meta: {
-          breadcrumb: 'Ujian Tugas Akhir'
-        }
-      },
+  // {
+  //   path: '/dosen/tugas-akhir',
+  //   component: DosenLayout, // Gunakan AdminLayout sebagai layout
+  //   meta: {
+  //     breadcrumb: 'Tugas Akhir'
+  //   },
+  //   children: [
+  //     {
+  //       path: '',
+  //       component: DashboardTADosen,
+  //       meta: {
+  //         breadcrumb: 'Dashboard'
+  //       } 
+  //     },
+  //     {
+  //       path: 'bimbingan',
+  //       component: BimbinganforDosen, 
+  //       meta: {
+  //         breadcrumb: 'Bimbingan'
+  //       },
+  //       // children: [
+  //       //   {
+  //       //     path: 'bimbingan/:id',
+  //       //     component: DetailBimbinganforDosen,
+  //       //     meta:{
+  //       //       breadcrumb: 'Detail Bimbingan'
+  //       //     }
+  //       //   }
+  //       // ]
+  //     },
+  //     {
+  //       path: 'seminar-proposal',
+  //       component: SeminarProposalforDosen ,
+  //       meta: {
+  //         breadcrumb: 'Seminar Proposal'
+  //       }
+  //     },
+  //     {
+  //       path: 'seminar-hasil',
+  //       component: SeminarHasilforDosen, 
+  //       meta: {
+  //         breadcrumb: 'Seminar Hasil'
+  //       }
+  //     },
+  //     {
+  //       path: 'ujian-ta',
+  //       component: UjianTAforDosen, 
+  //       meta: {
+  //         breadcrumb: 'Ujian Tugas Akhir'
+  //       }
+  //     },
 
-    ],
-  },
+  //   ],
+  // },
   {
     path:'/testcok',
     component: () => import('../views/Mahasiswa/Tugas-akhir/Test.vue'),
   },
-  {
-    path: '/admin/tugas-akhir',
-    component: AdminLayout, // Gunakan AdminLayout sebagai layout
-    meta: {
-      breadcrumb: 'Tugas Akhir'
-    },
-    children: [
-      {
-        path: '',
-        component: DashboardTAAdmin,
-        meta: {
-          breadcrumb: 'Dashboard'
-        } 
-      },
-      {
-        path: 'bimbingan',
-        component: BimbinganforAdmin,
-        meta: {
-          breadcrumb: 'Bimbingan'
-        } 
-      },
-      {
-        path: 'proposal',
-        component: ProposalforAdmin,
-        meta: {
-          breadcrumb: 'Proposal'
-        } 
-      },
-      {
-        path: 'tugas-akhir',
-        component: TugasAkhirforAdmin,
-        meta: {
-          breadcrumb: 'tugas-akhir'
-        } 
-      },
-    ],
-  },
-  
   {
     path: "/",
     name: "Landing",
@@ -228,7 +192,7 @@ const routes = [
   // Mahasiswa
   {
     path: "/mahasiswa",
-    // meta: { requiresAuth: true, userType: "mahasiswa" },
+    meta: { requiresAuth: true, userType: "mahasiswa" },
     children: [
       {
         path: "",
@@ -247,7 +211,7 @@ const routes = [
       },
       {
         path: 'tugas-akhir',
-        component: UserLayout, // Gunakan AdminLayout sebagai layout
+        component: UserLayoutTA, // Gunakan AdminLayout sebagai layout
         meta: {
           breadcrumb: 'Tugas Akhir'
         },
@@ -268,7 +232,7 @@ const routes = [
             },
           },
           {
-            path: 'tambah-bimbingan',
+            path: 'bimbingan/tambah-bimbingan',
             component : TambahBimbinganforMhs,
             meta: {
               breadcrumb: 'Tambah Bimbingan'
@@ -296,7 +260,7 @@ const routes = [
   //Dosen
   {
     path: "/dosen",
-    component: DosenLayout,
+    // component: DosenLayout,
     meta: { requiresAuth: true, userType: "dosen" },
     children: [
       {
@@ -304,7 +268,60 @@ const routes = [
         name: "ProfileDosen",
         component: () => import("../views/Dosen/Profile.vue"),
       },
-      // route yg laen
+      {
+        path: 'tugas-akhir',
+        component: DosenLayout, // Gunakan AdminLayout sebagai layout
+        meta: {
+          breadcrumb: 'Tugas Akhir'
+        },
+        children: [
+          {
+            path: '',
+            component: DashboardTADosen,
+            meta: {
+              breadcrumb: 'Dashboard'
+            } 
+          },
+          {
+            path: 'bimbingan',
+            component: BimbinganforDosen, 
+            meta: {
+              breadcrumb: 'Bimbingan'
+            },
+            // children: [
+            //   {
+            //     path: 'bimbingan/:id',
+            //     component: DetailBimbinganforDosen,
+            //     meta:{
+            //       breadcrumb: 'Detail Bimbingan'
+            //     }
+            //   }
+            // ]
+          },
+          {
+            path: 'seminar-proposal',
+            component: SeminarProposalforDosen ,
+            meta: {
+              breadcrumb: 'Seminar Proposal'
+            }
+          },
+          {
+            path: 'seminar-hasil',
+            component: SeminarHasilforDosen, 
+            meta: {
+              breadcrumb: 'Seminar Hasil'
+            }
+          },
+          {
+            path: 'ujian-ta',
+            component: UjianTAforDosen, 
+            meta: {
+              breadcrumb: 'Ujian Tugas Akhir'
+            }
+          },
+    
+        ],
+      },
     ],
   },
 
@@ -319,7 +336,6 @@ const routes = [
         name: "DashboardDosen",
         component: () => import("../views/Dosen/Dashboard.vue"),
       },
-      // route yg laen
     ],
   },
 
@@ -400,16 +416,38 @@ const routes = [
 
   // admin ta
   {
-    path: "/admin-ta",
-    component: AdminLayout,
-    meta: { requiresAuth: true, userType: "admin", requiredRole: "admin_ta" },
+    path: "/admin-ta/tugas-akhir",
+    component: AdminLayoutTA,
+    meta: { requiresAuth: true, userType: "admin", requiredRole: "admin_ta", breadcrumb: 'Tugas Akhir' },
     children: [
       {
-        path: "dashboard",
-        name: "DashboardAdminTa",
-        component: () => import("../views/Admin/AdminTa/Dashboard.vue"),
+        path: '',
+        component: DashboardTAAdmin,
+        meta: {
+          breadcrumb: 'Dashboard'
+        } 
       },
-      // route yg laen
+      {
+        path: 'bimbingan',
+        component: BimbinganforAdmin,
+        meta: {
+          breadcrumb: 'Bimbingan'
+        } 
+      },
+      {
+        path: 'proposal',
+        component: ProposalforAdmin,
+        meta: {
+          breadcrumb: 'Proposal'
+        } 
+      },
+      {
+        path: 'tugas-akhir',
+        component: TugasAkhirforAdmin,
+        meta: {
+          breadcrumb: 'tugas-akhir'
+        } 
+      },
     ],
   },
 

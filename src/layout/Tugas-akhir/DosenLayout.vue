@@ -128,7 +128,7 @@
                 <button class="py-2 active:scale-95 duration-150">Profile</button>
               </li>
               <li class=" px-2 hover:bg-gray-100 rounded duration-200">
-                <button class="py-2 text-danger">Log Out</button>
+                <button class="py-2 text-danger" @click="handleLogout">Log Out</button>
               </li>
             </ul>
           </div>
@@ -145,14 +145,26 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRoute} from 'vue-router'
-const route = useRoute()
 
 import D3TILogo from '@/assets/images/d3ti-logo.png'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { authMahasiswa, getUserData } from '@/services/authMahasiswa'
+import { useToast } from 'vue-toastification'
+
+// sidebar 
+import SidebarLink from '@/components/Tugas-akhir/SidebarLink.vue'
+import SidebarDropdown from '@/components/Tugas-akhir/SidebarDropdown.vue'
+
+const route = useRoute()
+const router = useRouter()
+const toast = useToast()
+const { logout } = authMahasiswa()
+
 
 // Notifikasi
 import Notification from '@/components/Tugas-akhir/Notification.vue'
+
 const notifications = ref([
   {
     id: 1,
@@ -211,11 +223,6 @@ const showUser = ref(false)
 const isLgScreen = ref(false)
 const hasNotification = ref(false)
 
-const user = ref({
-  name: 'Eko Harry Pratisto S.Kom.', // Nama pengguna
-  role: 'Dosen',   // Peran pengguna
-});
-
 const withPrefix = (paths) => {
   if (typeof paths === 'string') {
     return `/dosen/tugas-akhir${paths}`;
@@ -234,14 +241,7 @@ const checkScreenSize = () => {
     showTugasAkhir.value = false
   }
 }
-// Tambahkan event listener untuk resize
-onMounted(() => {
-  checkScreenSize()
-  checkNotification()
-  window.addEventListener('resize', checkScreenSize)
-  document.addEventListener('click', closeDropdownOnClickOutside);
 
-})
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkScreenSize)
@@ -309,7 +309,69 @@ const toggleUser = () => {
   }
 }
 
-// sidebar 
-import SidebarLink from '@/components/Tugas-akhir/SidebarLink.vue'
-import SidebarDropdown from '@/components/Tugas-akhir/SidebarDropdown.vue'
+// Referensi untuk nama user
+const username = ref('')
+const userRole = ref('Dosen') // Default role
+
+// Computed property untuk user data
+const user = computed(() => {
+  return {
+    name: username.value || 'Dosen',
+    role: userRole.value
+  }
+})
+
+// Tambahkan event listener untuk resize
+onMounted(() => {
+  // Ambil data user menggunakan getUserData()
+  const userData = getUserData()
+  
+  if (userData) {
+    username.value = userData.name || userData.email?.split('@')[0] || 'Dosen'
+    userRole.value = userData.role || 'Dosen'
+    console.log('Username set from getUserData:', username.value)
+  } else {
+    // Fallback: coba ambil dari localStorage langsung
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('user'))
+      console.log('User info from localStorage:', userInfo)
+      
+      if (userInfo && userInfo.name) {
+        username.value = userInfo.name
+      } else if (userInfo && userInfo.username) {
+        username.value = userInfo.username
+      } else if (userInfo && userInfo.email) {
+        username.value = userInfo.email.split('@')[0]
+      }
+      
+      // Set role jika ada
+      if (userInfo && userInfo.role) {
+        userRole.value = userInfo.role
+      }
+      
+      console.log('Username set from localStorage:', username.value)
+    } catch (error) {
+      console.error('Error parsing user data from localStorage:', error)
+    }
+  }
+
+  checkScreenSize()
+  checkNotification()
+
+  window.addEventListener('resize', checkScreenSize)
+  document.addEventListener('click', closeDropdownOnClickOutside)
+})
+
+const handleLogout = () => {
+  try {
+    logout()
+    username.value = '' // Reset username
+    toast.success("Berhasil Logout!")
+    router.push('/')
+  } catch (error) {
+    toast.error("Terjadi kesalahan saat logout.")
+  }
+}
+
+
 </script>

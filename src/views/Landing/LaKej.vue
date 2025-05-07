@@ -1,8 +1,7 @@
 <template>
     <div class="min-h-screen flex flex-col">
       <!-- Header -->
-      <HeaderLogin v-if="isAuthenticated"/>
-      <Header v-else/>
+      <Header/>
       
       <!-- Main Content -->
       <div class="flex-grow container mx-auto px-4 py-28">
@@ -57,21 +56,37 @@
     </div>
   </template>
   
-  <script>
-  import Header from "../../components/Header.vue";
-  import Footer from "../../components/Footer.vue";
+  <script setup>
+import { ref, onMounted } from 'vue';
+import Header from "@/components/Header.vue";
+import Footer from "../../components/Footer.vue";
+import VueCookies from "vue-cookies";
+import { getUserData } from "@/services/authMahasiswa";
+
+// State
+const isAuthenticated = ref(false);
+const userData = ref(null);
+
+// Functions
+const checkAuthentication = () => {
+  const authToken = VueCookies.get("auth_token");
+  const user = getUserData();
   
-  export default {
-    name: "LaKejComponent",
-    components: {
-      Header,
-      Footer,
-    },
-    mounted() {
-      console.log("Laporan kejadian information page loaded!");
-    },
-  };
-  </script>
+  if (authToken && user) {
+    isAuthenticated.value = true;
+    userData.value = user;
+  } else {
+    isAuthenticated.value = false;
+    userData.value = null;
+  }
+};
+
+// Lifecycle hooks
+onMounted(() => {
+  checkAuthentication();
+  console.log("Routing is working!");
+});
+</script>
   
   <style>
   /* Animasi fade-in */

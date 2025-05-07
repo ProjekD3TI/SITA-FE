@@ -1,8 +1,7 @@
 <template>
     <div class="min-h-screen flex flex-col">
       <!-- Header -->
-      <HeaderLogin v-if="isAuthenticated"/>
-      <Header v-else/>
+      <Header/>
       
       <!-- Main Content -->
       <div class="flex-grow container mx-auto px-4 py-28">
@@ -57,20 +56,37 @@
     </div>
   </template>
   
-  <script>
-  import Header from "../../components/Header.vue";
+
+  <script setup>
+  import { ref, onMounted } from 'vue';
+  import Header from "@/components/Header.vue";
   import Footer from "../../components/Footer.vue";
+  import VueCookies from "vue-cookies";
+  import { getUserData } from "@/services/authMahasiswa";
   
-  export default {
-    name: "TAComponent",
-    components: {
-      Header,
-      Footer,
-    },
-    mounted() {
-      console.log("TA information page loaded!");
-    },
+  // State
+  const isAuthenticated = ref(false);
+  const userData = ref(null);
+  
+  // Functions
+  const checkAuthentication = () => {
+    const authToken = VueCookies.get("auth_token");
+    const user = getUserData();
+    
+    if (authToken && user) {
+      isAuthenticated.value = true;
+      userData.value = user;
+    } else {
+      isAuthenticated.value = false;
+      userData.value = null;
+    }
   };
+  
+  // Lifecycle hooks
+  onMounted(() => {
+    checkAuthentication();
+    console.log("Routing is working!");
+  });
   </script>
   
   <style>

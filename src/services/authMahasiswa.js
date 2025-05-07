@@ -10,6 +10,7 @@ export function authMahasiswa() {
   const token = ref(null);
   const router = useRouter();
   const toast = useToast();
+  const authUser = ref(null);
 
   const setupAxiosInterceptors = () => {
     axios.interceptors.request.use(
@@ -167,6 +168,31 @@ export function authMahasiswa() {
     return null;
   };
 
+  const getAuthUser = () => {
+    console.log('getAuthUser called');
+    
+    // Cek localStorage - tampilkan semua kunci yang ada
+    console.log('All localStorage keys:', Object.keys(localStorage));
+    
+    // Coba ambil data user dari localStorage
+    const storedUser = localStorage.getItem('user');
+    console.log('Raw data from localStorage:', storedUser);
+    
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        console.log('Parsed user data:', userData);
+        return userData;
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+        return null;
+      }
+    } else {
+      console.warn('No user data found in localStorage');
+      return null;
+    }
+  };
+
   const initializeAuth = () => {
     setupAxiosInterceptors();
     return checkAuth();
@@ -183,6 +209,7 @@ export function authMahasiswa() {
     logout,
     checkAuth,
     initializeAuth,
+    getAuthUser
   };
 }
 
