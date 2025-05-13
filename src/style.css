@@ -8,7 +8,7 @@
 
 @layer components {
   .card-rounded {
-    @apply rounded-[16px];
+    @apply rounded-[16px] ;
   }
   .button-rounded {
     @apply rounded-[8px];

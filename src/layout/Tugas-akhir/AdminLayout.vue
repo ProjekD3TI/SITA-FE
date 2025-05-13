@@ -105,7 +105,7 @@
             </button>
           </div>
           <div class="flex items-center">
-            <span class="text-sm font-medium mr-2">{{ user.name }}</span>
+            <span class="text-sm font-medium mr-2 hidden sm:inline">{{ user.name }}</span>
             <button id="user-button" @click="toggleUser" class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center active:scale-90 duration-150">
               <span class="text-sm font-medium text-gray-600">{{ user.name.charAt(0) }}</span>            
             </button>

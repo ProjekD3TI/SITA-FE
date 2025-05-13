@@ -14,6 +14,7 @@ import DashboardTAAdmin from "../views/Admin/AdminTa/Dashboard.vue";
 import BimbinganforAdmin from "../views/Admin/AdminTa/Bimbingan.vue";
 import ProposalforAdmin from "../views/Admin/AdminTa/Proposal.vue";
 import TugasAkhirforAdmin from "../views/Admin/AdminTa/TugasAkhir.vue";
+import RuangSesiforAdmin from "../views/Admin/AdminTa/RuangSesi.vue";
 // Route Mhs TA
 import DashboardTAMhs from "../views/Mahasiswa/Tugas-akhir/Dashboard.vue";
 import BimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan/Index.vue";
@@ -27,64 +28,9 @@ import BimbinganforDosen from "../views/Dosen/Tugas-akhir/Bimbingan.vue";
 import SeminarProposalforDosen from "../views/Dosen/Tugas-akhir/SeminarProposal.vue";
 import SeminarHasilforDosen from "../views/Dosen/Tugas-akhir/SeminarHasil.vue";
 import UjianTAforDosen from "../views/Dosen/Tugas-akhir/UjianTA.vue";
-import path from "path";
 
 //define a routes
 const routes = [
-  // {
-  //   path: '/dosen/tugas-akhir',
-  //   component: DosenLayout, // Gunakan AdminLayout sebagai layout
-  //   meta: {
-  //     breadcrumb: 'Tugas Akhir'
-  //   },
-  //   children: [
-  //     {
-  //       path: '',
-  //       component: DashboardTADosen,
-  //       meta: {
-  //         breadcrumb: 'Dashboard'
-  //       } 
-  //     },
-  //     {
-  //       path: 'bimbingan',
-  //       component: BimbinganforDosen, 
-  //       meta: {
-  //         breadcrumb: 'Bimbingan'
-  //       },
-  //       // children: [
-  //       //   {
-  //       //     path: 'bimbingan/:id',
-  //       //     component: DetailBimbinganforDosen,
-  //       //     meta:{
-  //       //       breadcrumb: 'Detail Bimbingan'
-  //       //     }
-  //       //   }
-  //       // ]
-  //     },
-  //     {
-  //       path: 'seminar-proposal',
-  //       component: SeminarProposalforDosen ,
-  //       meta: {
-  //         breadcrumb: 'Seminar Proposal'
-  //       }
-  //     },
-  //     {
-  //       path: 'seminar-hasil',
-  //       component: SeminarHasilforDosen, 
-  //       meta: {
-  //         breadcrumb: 'Seminar Hasil'
-  //       }
-  //     },
-  //     {
-  //       path: 'ujian-ta',
-  //       component: UjianTAforDosen, 
-  //       meta: {
-  //         breadcrumb: 'Ujian Tugas Akhir'
-  //       }
-  //     },
-
-  //   ],
-  // },
   {
     path: "/",
     name: "Landing",
@@ -192,9 +138,8 @@ const routes = [
     meta: { requiresAuth: true, userType: "mahasiswa" },
     children: [
       {
-        path: "",
-        name: "PortalMahasiswa",
-        component: () => import("../views/Mahasiswa/Portal.vue"),
+        path: '',
+        redirect: '/'
       },
       {
         path: "dashboard",
@@ -272,6 +217,10 @@ const routes = [
     meta: { requiresAuth: true, userType: "dosen" },
     children: [
       {
+        path: '',
+        redirect: '/'
+      },
+      {
         path: "profile",
         name: "ProfileDosen",
         component: () => import("../views/Dosen/Profile.vue"),
@@ -296,15 +245,6 @@ const routes = [
             meta: {
               breadcrumb: 'Bimbingan'
             },
-            // children: [
-            //   {
-            //     path: 'bimbingan/:id',
-            //     component: DetailBimbinganforDosen,
-            //     meta:{
-            //       breadcrumb: 'Detail Bimbingan'
-            //     }
-            //   }
-            // ]
           },
           {
             path: 'seminar-proposal',
@@ -424,12 +364,17 @@ const routes = [
 
   // admin ta
   {
-    path: "/admin-ta/tugas-akhir",
+    path: "/admin-ta",
+    name: "DashboardAdminTa",
     component: AdminLayoutTA,
     meta: { requiresAuth: true, userType: "admin", requiredRole: "admin_ta", breadcrumb: 'Tugas Akhir' },
     children: [
       {
         path: '',
+        redirect: '/admin-ta/tugas-akhir'
+      },
+      {
+        path: 'tugas-akhir',
         component: DashboardTAAdmin,
         meta: {
           breadcrumb: 'Dashboard'
@@ -458,7 +403,7 @@ const routes = [
       },
       {
         path: 'ruang-sesi',
-        component: TugasAkhirforAdmin,
+        component: RuangSesiforAdmin,
         meta: {
           breadcrumb: 'ruang-sesi'
         } 
@@ -483,6 +428,11 @@ const routes = [
       },
     ],
   },
+
+  {
+    path: "/:pathMatch(.*)*",
+    redirect: "/404"
+  }
 
 
   // {
@@ -517,16 +467,27 @@ router.beforeEach(async (to, from, next) => {
     }
 
     if (to.meta.userType && userData.type !== to.meta.userType) {
-      // toast.error("Anda tidak memiliki akses ke halaman ini");
-      // gausa di pake biar lebh aman?
-
+      // Modify this switch case to handle admin roles more specifically
       switch (userData.type) {
         case "dosen":
           redirectTo(next, userData.jabatan);
           return;
         case "admin":
-          next({ name: "DashboardAdmin" });
-          return;
+          // Check admin role and redirect accordingly
+          switch (userData.role) {
+            case "superadmin":
+              next({ name: "DashboardSuperadmin" });
+              return;
+            case "admin_ta":
+              next({ name: "DashboardAdminTa" });
+              return;
+            case "admin_pengelola":
+              next({ name: "DashboardAdminPengelola" });
+              return;
+            default:
+              next({ name: "DashboardAdmin" });
+              return;
+          }
         case "mahasiswa":
           next({ name: "DashboardMahasiswa" });
           return;
