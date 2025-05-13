@@ -42,7 +42,7 @@ defineProps({
       </div>
       <span 
         :class="{'inline': showLabel, 'hidden': !showLabel}" 
-        class="uppercase"
+        class="uppercase body3-bold"
       >{{ label }}</span>
     </router-link>
   </div>

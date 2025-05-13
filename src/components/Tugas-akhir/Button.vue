@@ -1,7 +1,7 @@
 <template>
   <button
     :class="[
-      'button-rounded focus:outline-none transition-all flex items-center justify-center gap-2 active:scale-90 duration-200',
+      'button-rounded focus:outline-none transition-all flex items-center justify-center gap-2 active:scale-90 duration-200 ',
       variantClass,
       sizeClass,
       { 'opacity-50 cursor-not-allowed': disabled }
@@ -141,13 +141,13 @@ const variantClass = computed(() => {
 const sizeClass = computed(() => {
   switch (props.size) {
     case 'sm':
-      return 'body5-bold px-3 py-1';
+      return 'body5-bold px-3 py-1 min-w-[100px]';
     case 'lg':
-      return 'body3-bold px-5 py-2';
+      return 'body3-bold px-5 py-2 min-w-[150px]';
     case 'xl':
-      return 'body2-bold px-5 py-3';
+      return 'body2-bold px-5 py-3 min-w-[150px]';
     default:
-      return 'body4-bold px-4 py-2';
+      return 'body4-bold px-4 py-2 min-w-[125px]';
   }
 });
 </script>

@@ -17,9 +17,10 @@ import TugasAkhirforAdmin from "../views/Admin/AdminTa/TugasAkhir.vue";
 // Route Mhs TA
 import DashboardTAMhs from "../views/Mahasiswa/Tugas-akhir/Dashboard.vue";
 import BimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan/Index.vue";
-import TambahBimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan/Create.vue";
+import TambahBimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan/Tambah.vue";
 import ProposalforMhs from "../views/Mahasiswa/Tugas-akhir/Proposal.vue";
-import TugasAkhirforMhs from "../views/Mahasiswa/Tugas-akhir/Ujian.vue";
+import TugasAkhirforMhs from "../views/Mahasiswa/Tugas-akhir/UjianTA/Daftar.vue";
+import detailUjianTAforMhs from "../views/Mahasiswa/Tugas-akhir/UjianTA/Detail.vue";
 // Route Dosen TA 
 import DashboardTADosen from "../views/Dosen/Tugas-akhir/Dashboard.vue";
 import BimbinganforDosen from "../views/Dosen/Tugas-akhir/Bimbingan.vue";
@@ -84,10 +85,6 @@ const routes = [
 
   //   ],
   // },
-  {
-    path:'/testcok',
-    component: () => import('../views/Mahasiswa/Tugas-akhir/Test.vue'),
-  },
   {
     path: "/",
     name: "Landing",
@@ -230,27 +227,38 @@ const routes = [
             meta: {
               breadcrumb: 'Bimbingan'
             },
-          },
-          {
-            path: 'bimbingan/tambah-bimbingan',
-            component : TambahBimbinganforMhs,
-            meta: {
-              breadcrumb: 'Tambah Bimbingan'
-            }
+            children: [
+              {
+                path: 'tambah-bimbingan',
+                component: TambahBimbinganforMhs,
+                meta: {
+                  breadcrumb: 'Tambah Bimbingan'
+                }
+              }
+            ]
           },
           {
             path: 'proposal',
             component: ProposalforMhs,         
             meta: {
               breadcrumb: 'Proposal'
-            }
+            },
           },
           {
-            path: 'tugas-akhir',
+            path: 'ujian-ta',
             component: TugasAkhirforMhs,         
             meta: {
               breadcrumb: 'Tugas Akhir'
-            }
+            },
+            children: [
+              {
+                path: 'detail-ujian-ta',
+                component: detailUjianTAforMhs,
+                meta: {
+                  breadcrumb: 'Detail'
+                }
+              }
+            ]
           },
         ],
       },
@@ -442,10 +450,17 @@ const routes = [
         } 
       },
       {
-        path: 'tugas-akhir',
+        path: 'ujian-ta',
         component: TugasAkhirforAdmin,
         meta: {
-          breadcrumb: 'tugas-akhir'
+          breadcrumb: 'ujian-ta'
+        } 
+      },
+      {
+        path: 'ruang-sesi',
+        component: TugasAkhirforAdmin,
+        meta: {
+          breadcrumb: 'ruang-sesi'
         } 
       },
     ],

@@ -1,5 +1,5 @@
 <template>
-    <div v-if="isOpen" @mousedown.self="handleBackdropClick" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+    <div @mousedown.self="handleBackdropClick" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
       <div class="bg-white card-rounded p-6 max-w-md w-11/12">
         <div class="flex justify-between items-center ">
           <p class="body2-bold">{{ headText }}</p>
@@ -32,7 +32,7 @@
   </template>
   
   <script setup>
-  import { ref, onUnmounted, watch } from 'vue';
+  import { ref,onMounted, onUnmounted, watch } from 'vue';
   import Button from '@/components/Tugas-akhir/Button.vue';
   
   const props = defineProps({
@@ -75,10 +75,9 @@
   });
   
   // Event emitter
-  const emit = defineEmits(['submit']);
+  const emit = defineEmits(['submit', 'close']);
   
   // State
-  const isOpen = ref(false);
   const countdown = ref(0);
   let timerInterval = null;
   
@@ -97,14 +96,9 @@
     }
   };
   
-  const open = () => {
-    isOpen.value = true;
-    startTimer();
-  };
-  
   const close = () => {
-    isOpen.value = false;
     clearInterval(timerInterval);
+    emit('close');
   };
 
   const handleBackdropClick = () => {
@@ -120,25 +114,17 @@
     }
   };
   
-  // Watch for changes in isOpen
-  watch(isOpen, (newValue) => {
-    if (newValue) {
-      startTimer();
-    } else {
-      clearInterval(timerInterval);
-    }
-  });
   
   // Clean up timer when component is unmounted
   onUnmounted(() => {
     clearInterval(timerInterval);
   });
-  
-  // Expose methods to parent components
-  defineExpose({
-    open,
-    close
+
+  onMounted(() => {
+    // Start the timer when the modal is opened
+    startTimer();
   });
+  
   </script>
   
   <style scoped>

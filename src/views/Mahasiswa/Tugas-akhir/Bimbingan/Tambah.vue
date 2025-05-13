@@ -1,0 +1,169 @@
+<script setup>
+import { ref, computed, onMounted } from 'vue';
+import InputDate from '@/components/Tugas-akhir/Forms/InputDate.vue';
+import InputDropdown from '@/components/Tugas-akhir/Forms/InputDropdown.vue';
+import InputTextArea from '@/components/Tugas-akhir/Forms/InputTextarea.vue';
+import Button from '@/components/Tugas-akhir/Button.vue';
+import Breadcrumb from '@/components/Tugas-akhir/Breadcrumb.vue';
+import { general } from '@/services/general';
+import { useRouter } from 'vue-router';
+
+// ============================================
+// STATE MANAGEMENT
+// ============================================
+
+// Inisialisasi router untuk navigasi
+const router = useRouter();
+
+// Form state
+const today = ref(new Date().toISOString().split('T')[0]); // Format YYYY-MM-DD untuk hari ini
+const bimbinganDate = ref(today.value); // Tanggal default untuk bimbingan
+const selectedBAB = ref(''); // BAB yang dipilih
+const catatan = ref(''); // Catatan bimbingan
+const isSubmitting = ref(false); // Status submit form
+
+// Service initialization
+const { getDefaultTahunAjaran, tahunAjaran } = general();
+
+// ============================================
+// COMPUTED PROPERTIES
+// ============================================
+
+// Opsi BAB untuk dropdown
+const babOptions = computed(() => [
+  { value: '1', label: 'BAB I' },
+  { value: '2', label: 'BAB II' },
+  { value: '3', label: 'BAB III' },
+  { value: '4', label: 'BAB IV' },
+  { value: '5', label: 'BAB V' }
+]);
+
+// Validasi form
+const isFormValid = computed(() => {
+  return bimbinganDate.value && selectedBAB.value && catatan.value;
+});
+
+// ============================================
+// METHODS
+// ============================================
+
+/**
+ * Menangani submit form bimbingan
+ * Menyimpan data bimbingan ke API dan kembali ke halaman bimbingan
+ */
+const handleSubmit = async () => {
+  if (!isFormValid.value) {
+    alert('Mohon lengkapi semua field yang diperlukan');
+    return;
+  }
+  
+  try {
+    isSubmitting.value = true;
+    
+    // Data yang akan dikirim
+    const formData = {
+      tanggal_bimbingan: bimbinganDate.value,
+      bab: selectedBAB.value,
+      catatan: catatan.value
+    };
+    
+    console.log('Mengirim data bimbingan:', formData);
+    
+    // TODO: Implementasi API call untuk menyimpan data
+    // Contoh:
+    // await bimbinganService.create(formData);
+    
+    // Redirect kembali ke halaman bimbingan setelah berhasil
+    router.push('/tugas-akhir/bimbingan');
+  } catch (error) {
+    console.error('Error saat menyimpan bimbingan:', error);
+    alert('Terjadi kesalahan saat menyimpan data bimbingan');
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+/**
+ * Membatalkan input dan kembali ke halaman bimbingan
+ */
+const handleCancel = () => {
+  router.push('/tugas-akhir/bimbingan');
+};
+
+// ============================================
+// LIFECYCLE HOOKS
+// ============================================
+
+onMounted(async () => {
+  try {
+    // Ambil tahun ajaran default
+    await getDefaultTahunAjaran();
+  } catch (error) {
+    console.error('Error saat memuat data tahun ajaran:', error);
+  }
+});
+</script>
+
+<template>
+  <!-- Navigation Breadcrumb -->
+  <Breadcrumb :items="breadcrumbItems" />
+  
+  <!-- Card Form Tambah Bimbingan -->
+  <div class="card-rounded bg-white p-4 lg:p-8">
+    <div class="flex flex-col gap-4 max-w-screen-2xl mx-auto">
+      <!-- Judul Form -->
+      <h5 class="body2-bold font-bold sm:font-bold sm:body1-bold lg:heading5 xl:heading4">
+        Tambah Bimbingan
+      </h5>
+      
+      <!-- Form Bimbingan -->
+      <form @submit.prevent="handleSubmit" class="flex flex-col gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Input Tanggal Bimbingan -->
+          <InputDate
+            id="date-input"
+            label="Tanggal Bimbingan"
+            placeholder="Pilih tanggal bimbingan"
+            v-model="bimbinganDate"
+            :value="today"
+            :max="today"
+            required
+          />
+          
+          <!-- Input BAB -->
+          <InputDropdown
+            id="bab-dropdown"
+            label="BAB"
+            :options="babOptions"
+            placeholder="Pilih BAB yang dibahas"
+            v-model="selectedBAB"
+            required
+          />
+          
+          <!-- Input Catatan -->
+          <InputTextArea
+            class="sm:col-span-2"
+            id="catatan-input"
+            label="Catatan Bimbingan"
+            placeholder="Masukkan ringkasan hasil bimbingan atau progress yang dicapai"
+            v-model="catatan"
+            required
+          />
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-end gap-3 mt-2">
+          <!-- Submit Button -->
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            :disabled="!isFormValid || isSubmitting"
+          >
+            {{ isSubmitting ? 'Mengirim...' : 'Kirim' }}
+          </Button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>

@@ -36,7 +36,7 @@
           v-if="index < steps.length - 1" 
           :class="[
             'flex-1 h-2', 
-            index < currentStep ? 'bg-success-bg' : 'bg-placeholder/20'
+            index < currentStep + 1 ? 'bg-success-bg' : 'bg-placeholder/20'
           ]"
         ></div>
       </template>
