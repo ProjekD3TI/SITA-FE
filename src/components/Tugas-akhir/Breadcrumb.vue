@@ -39,7 +39,7 @@ const breadcrumbItems = computed(() => {
 </script>
 
 <template>
-  <div class="pb-6">
+  <div class="pb-2 sm:pb-6">
     <div class="flex gap-2 sm:gap-4 items-center">
       <svg 
         v-if="homeIcon" 

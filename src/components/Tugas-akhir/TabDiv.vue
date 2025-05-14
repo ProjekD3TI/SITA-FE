@@ -1,15 +1,15 @@
 <template>
   <div class="mx-auto">
     <!-- Tab Navigation -->
-    <div class="flex -space-x-1 lg:-space-x-2">
+    <div class="flex -space-x-1 2xl:-space-x-2">
       <button
         v-for="tab in tabItems"
         :key="tab.id"
-        class="py-2 lg:py-4 ps-4 lg:ps-6 pe-6 lg:pe-12 body3-bold flex gap-2 items-center duration-200 transition-all ease-in-out"
+        class="py-3 xl:py-4 body3-bold flex gap-2 items-center duration-200 transition-all ease-in-out"
         :class="[
           activeTab === tab.id 
-            ? 'text-primary trapezium-tab z-10' 
-            : 'hover:opacity-100 trapezium-tab opacity-50'
+            ? 'text-primary trapezium-tab z-10 pe-8 lg:pe-12  ps-4 lg:ps-6 ' 
+            : 'hover:opacity-100 trapezium-tab opacity-50 pe-5 xl:pe-8 2xl:pe-12  ps-4 xl:ps-6 '
         ]"
         @click="selectTab(tab.id)"
       >
@@ -51,7 +51,7 @@
             {{ tab.count }}
           </span>
         </span>
-        <div v-if="tab.count !== undefined && activeTab != tab.id" class="2xl:hidden absolute top-2 left-3 lg:top-4 lg:left-5 w-3 h-3 bg-primary rounded-full border-2 border-white z-20 duration-200"></div>
+        <div v-if="tab.count !== undefined && activeTab != tab.id" class="2xl:hidden absolute top-2 left-3 xl:top-4 xl:left-5 w-3 h-3 bg-primary rounded-full border-2 border-white z-20 duration-200"></div>
       </button>
     </div>
     
