@@ -1,11 +1,11 @@
 <template>
-  <div class="mx-auto p-4">
+  <div class="mx-auto">
     <!-- Tab Navigation -->
     <div class="flex -space-x-1 lg:-space-x-2">
       <button
         v-for="tab in tabItems"
         :key="tab.id"
-        class="py-2 lg:py-4 ps-4 lg:ps-6 pe-6 lg:pe-12 body3-bold relative flex gap-2 items-center duration-200 transition-all ease-in-out"
+        class="py-2 lg:py-4 ps-4 lg:ps-6 pe-6 lg:pe-12 body3-bold flex gap-2 items-center duration-200 transition-all ease-in-out"
         :class="[
           activeTab === tab.id 
             ? 'text-primary trapezium-tab z-10' 
@@ -14,22 +14,28 @@
         @click="selectTab(tab.id)"
       >
         <!-- Icon Tab (jika ada) -->
-        <svg 
-          v-if="tab.icon" 
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="w-6 h-6 relative z-20"
-        >
-          <path :d="tab.icon" />
-        </svg>
+          <svg 
+            v-if="tab.icon" 
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="w-6 h-6 relative z-20"
+          >
+            <path :d="tab.icon" />
+          </svg>
+
 
         <!-- Teks Tab -->
-        <span class="hidden lg:inline relative z-20">
+        <span class="2xl:inline relative z-20" 
+            :class="[
+            activeTab === tab.id 
+              ? 'hidden sm:inline' 
+              : 'hidden'
+          ]">
           {{ tab.label }} 
           <!-- Counter/Badge (jika ada) -->
           <span 
@@ -45,6 +51,7 @@
             {{ tab.count }}
           </span>
         </span>
+        <div v-if="tab.count !== undefined && activeTab != tab.id" class="2xl:hidden absolute top-2 left-3 lg:top-4 lg:left-5 w-3 h-3 bg-primary rounded-full border-2 border-white z-20 duration-200"></div>
       </button>
     </div>
     

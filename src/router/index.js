@@ -364,17 +364,17 @@ const routes = [
 
   // admin ta
   {
-    path: "/admin-ta",
+    path: "/admin-ta/tugas-akhir",
     name: "DashboardAdminTa",
     component: AdminLayoutTA,
     meta: { requiresAuth: true, userType: "admin", requiredRole: "admin_ta", breadcrumb: 'Tugas Akhir' },
     children: [
+      // {
+      //   path: '',
+      //   redirect: '/admin-ta/tugas-akhir/dashboard'
+      // },
       {
         path: '',
-        redirect: '/admin-ta/tugas-akhir'
-      },
-      {
-        path: 'tugas-akhir',
         component: DashboardTAAdmin,
         meta: {
           breadcrumb: 'Dashboard'
