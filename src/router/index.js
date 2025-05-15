@@ -27,8 +27,6 @@ import DashboardTADosen from "../views/Dosen/Tugas-akhir/Dashboard.vue";
 import BimbinganforDosen from "../views/Dosen/Tugas-akhir/Bimbingan.vue";
 import DetailBimbinganforDosen from "../views/Dosen/Tugas-akhir/DetailBimbingan.vue";
 import InputNilaiBimbinganforDosen from "@/views/Dosen/Tugas-akhir/InputNilaiBimbingan.vue";
-import SeminarProposalforDosen from "../views/Dosen/Tugas-akhir/SeminarProposal.vue";
-import SeminarHasilforDosen from "../views/Dosen/Tugas-akhir/SeminarHasil.vue";
 import UjianTAforDosen from "../views/Dosen/Tugas-akhir/UjianTA.vue";
 import detailUjianTAforDosen from "@/views/Dosen/Tugas-akhir/DetailUjianTA.vue";
 import path from "path";
