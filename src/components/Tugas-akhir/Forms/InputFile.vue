@@ -45,6 +45,8 @@
       class="hidden"
       @change="handleFileChange"
       :disabled="disabled"
+      required
+      accept=".pdf"
     />
   </div>
 </template>

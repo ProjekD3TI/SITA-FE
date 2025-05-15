@@ -15,6 +15,9 @@ import BimbinganforAdmin from "../views/Admin/AdminTa/Bimbingan.vue";
 import ProposalforAdmin from "../views/Admin/AdminTa/Proposal.vue";
 import TugasAkhirforAdmin from "../views/Admin/AdminTa/TugasAkhir.vue";
 import RuangSesiforAdmin from "../views/Admin/AdminTa/RuangSesi.vue";
+import PlottingPengujiForAdmin from "../views/Admin/AdminTa//UjianTA/PlottingPenguji.vue";
+import DetailPendaftarForAdmin from "../views/Admin/AdminTa/UjianTA/DetailPendaftar.vue";
+import PenjadwalanForAdmin from "../views/Admin/AdminTa/UjianTA/Penjadwalan.vue";
 // Route Mhs TA
 import DashboardTAMhs from "../views/Mahasiswa/Tugas-akhir/Dashboard.vue";
 import BimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan/Index.vue";
@@ -135,7 +138,7 @@ const routes = [
   // Mahasiswa
   {
     path: "/mahasiswa",
-    // meta: { requiresAuth: true, userType: "mahasiswa" },
+    meta: { requiresAuth: true, userType: "mahasiswa" },
     children: [
       {
         path: "",
