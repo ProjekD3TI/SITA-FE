@@ -79,8 +79,8 @@
     <div class="flex-1 flex flex-col">
 
       <!-- Header -->
-      <header class="bg-white p-4 flex justify-between items-center fixed w-full z-40 shadow-sm">
-        <div class="flex items-center">
+      <header class="bg-white p-4 flex justify-between items-center fixed w-full z-40">
+        <div class="flex items-center gap-4">
           <router-link to="/">
             <img :src="D3TILogo" alt="" class="w-16 lg:hidden">
           </router-link>  
@@ -137,7 +137,7 @@
       </header>
 
       <!-- Dashboard Content -->
-      <main v-bind:class="{'lg:ml-64': showNavbar, 'lg:ml-20': !showNavbar}" class="flex-1 p-4 sm:p-8 ml-0  bg-gray-100 duration-200 mt-16">
+      <main v-bind:class="{'lg:ml-64': showNavbar, 'lg:ml-20': !showNavbar}" class=" p-4 sm:p-8 ml-0  bg-gray-100 duration-200 mt-16">
         <router-view/>
       </main>
       

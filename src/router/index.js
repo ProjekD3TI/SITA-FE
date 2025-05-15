@@ -135,7 +135,7 @@ const routes = [
   // Mahasiswa
   {
     path: "/mahasiswa",
-    meta: { requiresAuth: true, userType: "mahasiswa" },
+    // meta: { requiresAuth: true, userType: "mahasiswa" },
     children: [
       {
         path: '',
@@ -367,7 +367,7 @@ const routes = [
     path: "/admin-ta/tugas-akhir",
     name: "DashboardAdminTa",
     component: AdminLayoutTA,
-    meta: { requiresAuth: true, userType: "admin", requiredRole: "admin_ta", breadcrumb: 'Tugas Akhir' },
+    // meta: { requiresAuth: true, userType: "admin", requiredRole: "admin_ta", breadcrumb: 'Tugas Akhir' },
     children: [
       // {
       //   path: '',

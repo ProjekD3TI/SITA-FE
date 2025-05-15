@@ -1,7 +1,7 @@
 <template>
     <div class="overflow-x-auto">
         <div class="min-w-[700px]">
-            <table class="min-w-[700px] w-full">
+            <table class="w-full">
                 <thead>
                 <tr class="bg-primary text-white rounded-full body5-bold sm:body4-bold">
                     <th

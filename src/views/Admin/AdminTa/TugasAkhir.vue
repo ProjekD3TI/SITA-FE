@@ -1,11 +1,12 @@
 <script setup>
 import TabDiv from '@/components/Tugas-akhir/TabDiv.vue';
-import { ref } from 'vue';
+import { ref,computed } from 'vue';
 import SearchBar from '@/components/Tugas-akhir/Forms/SearchBar.vue';
 import ModalFilter from '@/components/Tugas-akhir/Modals/ModalFilter.vue';
 import StatusLabel from '@/components/Tugas-akhir/Label.vue';
 import Slider from '@/components/Tugas-akhir/Slider.vue';
 import Table from '@/components/Tugas-akhir/Table.vue';
+import DefaultAvatar from '@/assets/images/Profile Avatar.svg';
 
 const statuses = [
   { id: '1', label: 'Disetujui' },
@@ -44,33 +45,79 @@ const plottingPenguji = ref([
   {
     nim: '12345678',
     nama: 'John Doe',
+    img: DefaultAvatar,
     judul_proposal_ta: 'Sistem Informasi Akademik',
     dosen_pembimbing: 'Dr. Budi Santoso',
-    status: 'approved',
+    status: '1',
   },
   {
     nim: '87654321',
     nama: 'Jane Smith',
+    img: DefaultAvatar,
     judul_proposal_ta: 'Pengembangan Aplikasi Mobile',
     dosen_pembimbing: 'Prof. Andi Wijaya',
-    status: 'pending',
+    status: '0',
   },
   {
     nim: '11223344',
     nama: 'Alice Johnson',
+    img: DefaultAvatar,
     judul_proposal_ta: 'Analisis Data Big Data',
     dosen_pembimbing: 'Dr. Clara Susanti',
-    status: 'rejected',
+    status: '2',
   },
 ]);
 
+const pendaftarUjian = ref([
+  {
+    nim: '13579246',
+    nama: 'Budi Prasetyo',
+    img: DefaultAvatar,
+    judul_ta: 'Optimasi Algoritma Genetika',
+    tanggal: '2025-05-10',
+    status: '1',
+    jadwal: '2025-05-20',
+  },
+  {
+    nim: '24681357',
+    nama: 'Siti Aminah',
+    img: DefaultAvatar,
+    judul_ta: 'Penerapan Machine Learning pada Prediksi Cuaca',
+    tanggal: '2025-05-12',
+    status: '0',
+    jadwal: null,
+  },
+  {
+    nim: '19283746',
+    nama: 'Rizky Ramadhan',
+    img: DefaultAvatar,
+    judul_ta: 'Analisis Sistem Informasi Rumah Sakit',
+    tanggal: '2025-05-15',
+    status: '2',
+    jadwal: null,
+  },
+]);
+
+const pendaftarUjianDisetujui = computed(() =>
+  pendaftarUjian.value.filter(item => item.status === '1')
+);
+
+const formatTanggal = (tanggal) => {
+  const bulan = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+    'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+  ];
+  const [year, month, day] = tanggal.split('-');
+  return `${day} ${bulan[parseInt(month, 10) - 1]} ${year}`;
+};
+
 const getStatusClass = (status) => {
   switch (status) {
-    case 'approved':
+    case '1':
       return 'success';
-    case 'pending':
+    case '0':
       return 'warning';
-    case 'rejected':
+    case '2':
       return 'danger';
     default:
       return 'default';
@@ -79,11 +126,11 @@ const getStatusClass = (status) => {
 
 const getStatusLabel = (status) => {
   switch (status) {
-    case 'approved':
+    case '1':
       return 'Disetujui';
-    case 'pending':
+    case '0':
       return 'Menunggu';
-    case 'rejected':
+    case '2':
       return 'Ditolak';
     default:
       return 'Tidak Diketahui';
@@ -93,6 +140,20 @@ const getStatusLabel = (status) => {
 const handleRowClick = (item) => {
   console.log('Baris yang diklik:', item);
 };
+
+// Search and filter functions
+const searchQuery = ref('');
+const selectedStatuses = ref([]);
+
+const handleSearch = (query) => {
+  console.log('Searching for:', query);
+  // Implement search logic here
+};
+
+const handleFilter = (filters) => {
+  console.log('Filters applied:', filters);
+  // Implement filter logic here
+};
 </script>
 
 <template>
@@ -101,8 +162,6 @@ const handleRowClick = (item) => {
     :use-named-slots="true"
   >
     <template #tab1>
-      <!-- Tambahkan pembungkus dengan overflow-x-auto -->
-      <div class="overflow-x-auto">
         <div class="flex gap-4 justify-between items-center mb-4">
           <ModalFilter
             title="Status"
@@ -114,61 +173,212 @@ const handleRowClick = (item) => {
           />
           <SearchBar
             v-model="searchQuery"
-            placeholder="Cari bimbingan..."
+            @search="handleSearch"
+            filterKey="bimbingan"
+          />
+        </div>
+        
+          <Table
+            :headers="['NIM', 'Nama','Judul Proposal Tugas Akhir', 'Dosen Pembimbing' , 'Status']"
+            :items="plottingPenguji"
+            @rowClick="handleRowClick"
+          >
+            <template #row="{ item }">
+              <!-- Kolom NIM -->
+              <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-l-lg">
+                {{ item.nim }}
+              </td>
+              
+              <!-- Kolom Nama -->
+              <td class="sm:py-3 py-3 sm:px-4 px-1">
+                <div class="flex items-center gap-2 justify-center">
+                  <img
+                    v-if="item.img"
+                    :src="item.img"
+                    alt="Profile Image"
+                    class="w-8 h-8 rounded-full"
+                  />
+                  {{ item.nama }}
+                </div>
+              </td>
+              
+              <!-- Kolom Judul Proposal -->
+              <td class="sm:py-3 py-3 sm:px-4 px-1">
+                {{ item.judul_proposal_ta }}
+              </td>
+              
+              <!-- Kolom Dosen Pembimbing -->
+              <td class="py-3 px-1 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-3 sm:px-4">
+                {{ item.dosen_pembimbing }}
+              </td>
+              
+              <!-- Kolom Status -->
+              <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-r-lg">
+                <!-- Desktop Status -->
+                <StatusLabel
+                  class="w-fit hidden lg:block mx-auto"
+                  :status="getStatusClass(item.status)"
+                  size="md"
+                  :label="getStatusLabel(item.status)"
+                />
+                
+                <!-- Mobile Status -->
+                <StatusLabel
+                  class="w-fit lg:hidden block mx-auto"
+                  :status="getStatusClass(item.status)"
+                  size="sm"
+                  :label="getStatusLabel(item.status)"
+                />
+              </td>
+            </template>
+          </Table>
+    </template>
+
+    <template #tab2>
+        <div class="flex gap-4 justify-between items-center mb-4">
+          <ModalFilter
+            title="Status"
+            :items="statuses"
+            filterType="status"
+            @apply="handleFilter"
+            triggerText="Status"
+            :preselectedValues="selectedStatuses"
+          />
+          <SearchBar
+            v-model="searchQuery"
             @search="handleSearch"
             filterKey="bimbingan"
           />
           <Slider/>
         </div>
-        <!-- Tambahkan min-w-[700px] pada tabel -->
-        <Table
-          class="min-w-[700px]"
-          :headers="['NIM', 'Nama','Judul Proposal Tugas Akhir', 'Dosen Pembimbing' , 'Status']"
-          :items="plottingPenguji"
-          @rowClick="handleRowClick"
-        >
-          <template #row="{ item }">
-            <!-- Kolom NIM -->
-            <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-l-lg">
-              {{ item.nim }}
-            </td>
-            
-            <!-- Kolom Nama -->
-            <td class="sm:py-3 py-3 sm:px-4 px-1">
-              {{ item.nama }}
-            </td>
-            
-            <!-- Kolom Judul Proposal -->
-            <td class="sm:py-3 py-3 sm:px-4 px-1">
-              {{ item.judul_proposal_ta }}
-            </td>
-            
-            <!-- Kolom Dosen Pembimbing -->
-            <td class="py-3 px-1 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-3 sm:px-4">
-              {{ item.dosen_pembimbing }}
-            </td>
-            
-            <!-- Kolom Status -->
-            <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-r-lg">
-              <!-- Desktop Status -->
-              <StatusLabel
-                class="w-fit hidden lg:block mx-auto"
-                :status="getStatusClass(item.status)"
-                size="md"
-                :label="getStatusLabel(item.status)"
-              />
+        
+          <Table
+            :headers="['NIM', 'Nama','Judul Tugas Akhir', 'Tanggal' , 'Status']"
+            :items="pendaftarUjian"
+            @rowClick="handleRowClick"
+          >
+            <template #row="{ item }">
+              <!-- Kolom NIM -->
+              <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-l-lg">
+                {{ item.nim }}
+              </td>
               
-              <!-- Mobile Status -->
-              <StatusLabel
-                class="w-fit lg:hidden block mx-auto"
-                :status="getStatusClass(item.status)"
-                size="sm"
-                :label="getStatusLabel(item.status)"
-              />
-            </td>
-          </template>
-        </Table>
-      </div>
+              <!-- Kolom Nama -->
+              <td class="sm:py-3 py-3 sm:px-4 px-1">
+                <div class="flex items-center gap-2 justify-center">
+                  <img
+                    v-if="item.img"
+                    :src="item.img"
+                    alt="Profile Image"
+                    class="w-8 h-8 rounded-full"
+                  />
+                  {{ item.nama }}
+                </div>
+              </td>
+              
+              <!-- Kolom Judul Proposal -->
+              <td class="sm:py-3 py-3 sm:px-4 px-1">
+                {{ item.judul_ta }}
+              </td>
+              
+              <!-- Kolom Dosen Pembimbing -->
+              <td class="py-3 px-1 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-3 sm:px-4">
+                {{ formatTanggal(item.tanggal) }}
+              </td>
+              
+              <!-- Kolom Status -->
+              <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-r-lg">
+                <!-- Desktop Status -->
+                <StatusLabel
+                  class="w-fit hidden lg:block mx-auto"
+                  :status="getStatusClass(item.status)"
+                  size="md"
+                  :label="getStatusLabel(item.status)"
+                />
+                
+                <!-- Mobile Status -->
+                <StatusLabel
+                  class="w-fit lg:hidden block mx-auto"
+                  :status="getStatusClass(item.status)"
+                  size="sm"
+                  :label="getStatusLabel(item.status)"
+                />
+              </td>
+            </template>
+          </Table>
+    </template>
+
+        <template #tab3>
+        <div class="flex gap-4 justify-between items-center mb-4">
+          <ModalFilter
+            title="Status"
+            :items="statuses"
+            filterType="status"
+            @apply="handleFilter"
+            triggerText="Status"
+            :preselectedValues="selectedStatuses"
+          />
+          <SearchBar
+            v-model="searchQuery"
+            @search="handleSearch"
+            filterKey="bimbingan"
+          />
+        </div>
+        
+          <Table
+            :headers="['NIM', 'Nama','Judul Tugas Akhir', 'Tanggal' , 'Status']"
+            :items="pendaftarUjianDisetujui"
+            @rowClick="handleRowClick"
+          >
+            <template #row="{ item }">
+              <!-- Kolom NIM -->
+              <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-l-lg">
+                {{ item.nim }}
+              </td>
+              
+              <!-- Kolom Nama -->
+              <td class="sm:py-3 py-3 sm:px-4 px-1">
+                <div class="flex items-center gap-2 justify-center">
+                  <img
+                    v-if="item.img"
+                    :src="item.img"
+                    alt="Profile Image"
+                    class="w-8 h-8 rounded-full"
+                  />
+                  {{ item.nama }}
+                </div>
+              </td>
+              
+              <!-- Kolom Judul Proposal -->
+              <td class="sm:py-3 py-3 sm:px-4 px-1">
+                {{ item.judul_ta }}
+              </td>
+              
+              <!-- Kolom Dosen Pembimbing -->
+              <td class="py-3 px-1 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-3 sm:px-4">
+                {{ formatTanggal(item.tanggal) }}
+              </td>
+              
+              <!-- Kolom Status -->
+              <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-r-lg">
+                <!-- Desktop Status -->
+                <StatusLabel
+                  class="w-fit hidden lg:block mx-auto"
+                  :status="getStatusClass(item.status)"
+                  size="md"
+                  :label="getStatusLabel(item.status)"
+                />
+                
+                <!-- Mobile Status -->
+                <StatusLabel
+                  class="w-fit lg:hidden block mx-auto"
+                  :status="getStatusClass(item.status)"
+                  size="sm"
+                  :label="getStatusLabel(item.status)"
+                />
+              </td>
+            </template>
+          </Table>
     </template>
   </TabDiv>
 </template>

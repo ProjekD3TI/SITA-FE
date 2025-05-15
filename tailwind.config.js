@@ -32,7 +32,7 @@ export default {
 				DEFAULT: '#FFFFFF'
 			},
 			even: {
-				DEFAULT: '#EEEEEE'
+				DEFAULT: '#FBFBFB'
 			},
 			placeholder: {
 				DEFAULT: '#9A9A9A'

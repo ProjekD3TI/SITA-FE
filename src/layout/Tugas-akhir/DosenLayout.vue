@@ -136,7 +136,7 @@
       </header>
 
       <!-- Dashboard Content -->
-      <main v-bind:class="{'lg:ml-64': showNavbar, 'lg:ml-20': !showNavbar}" class="flex-1 p-4 sm:p-8 ml-0  bg-gray-100 duration-200 mt-16">
+      <main v-bind:class="{'lg:ml-64': showNavbar, 'lg:ml-20': !showNavbar}" class="p-4 sm:p-8 ml-0  bg-gray-100 duration-200 mt-16">
         <router-view/>
       </main>
       
