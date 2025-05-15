@@ -352,90 +352,61 @@ parseImagePaths(imagePath) {
 },
 
 getImageUrlForPath(path) {
-  console.log('[DEBUG] getImageUrlForPath input:', path);
+  if (!path) return '';
   
-  if (!path) {
-    console.log('[DEBUG] Empty path provided');
-    return '';
-  }
-  
-  // Check if path is already a full URL
+  // Periksa apakah path sudah berupa URL lengkap
   if (path.startsWith('http')) {
-    console.log('[DEBUG] Path is already a full URL');
     return path;
   }
   
-  // Clean the path
-  // Replace any special characters or weird sequences
-  let cleanPath = path;
+  // Bersihkan path dari karakter yang tidak diinginkan
+  const cleanPath = path.replace(/['"]/g, '');
   
-  // Remove quotes if present
-  if (cleanPath.startsWith('"') && cleanPath.endsWith('"')) {
-    cleanPath = cleanPath.substring(1, cleanPath.length - 1);
-  }
-  
-  // Remove any characters that aren't part of filenames
-  cleanPath = cleanPath.replace(/[^\w\-\.\/]/g, '');
-  
-  console.log('[DEBUG] Cleaned path:', cleanPath);
-  
-  // Try all possible URL formats based on your server structure
-  // Return the most likely URL format
+  // Base URL domain untuk aplikasi
   const baseUrl = 'https://v3422040.mhs.d3tiuns.com';
   
-  // If the image was just uploaded, it might be in the storage/laporan folder
-  const url = `${baseUrl}/storage/laporan/${cleanPath}`;
-  console.log('[DEBUG] Returning URL:', url);
-  return url;
+  // Pada CWP, lokasi file biasanya di /home/username/public_html/
+  // yang diakses melalui URL: https://domain.com/
+  
+  // Ini adalah lokasi paling umum untuk file upload pada Laravel + CWP
+  return `${baseUrl}/storage/app/public/storage/laporan/${cleanPath}`;
 },
 
+// Tambahkan fungsi error handler untuk mencoba alternatif path jika gambar tidak ditemukan
 handleImageError(event, index) {
-  console.log(`[DEBUG] Image at index ${index} failed to load:`, this.imagePaths[index]);
-  
-  // Try alternative URL formats as fallbacks
   const img = event.target;
   const originalSrc = img.src;
   const path = this.imagePaths[index];
   
-  // If we've already tried all fallbacks, show placeholder
-  if (originalSrc.includes('fallback=3')) {
-    console.log('[DEBUG] All fallbacks exhausted, showing placeholder');
-    img.src = 'https://via.placeholder.com/150?text=Not+Found';
+  // Jika sudah mencoba semua fallback, tampilkan placeholder
+  if (originalSrc.includes('fallback=4')) {
+    img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
     return;
   }
   
-  // Try different paths in sequence based on fallback count
-  const fallbackCount = originalSrc.includes('fallback=') ? 
-    parseInt(originalSrc.split('fallback=')[1][0]) + 1 : 1;
-    
-  console.log('[DEBUG] Trying fallback', fallbackCount);
+  const baseDomain = 'https://v3422040.mhs.d3tiuns.com'; // Ganti dengan domain Anda
+  let newUrl;
   
-  const baseUrl = 'https://v3422040.mhs.d3tiuns.com';
-  let newSrc;
-  
-  // Clean the path for better compatibility
-  const cleanPath = path.replace(/[^\w\-\.]/g, '');
-  
-  switch(fallbackCount) {
-    case 1:
-      // Try public/storage path
-      newSrc = `${baseUrl}/public/storage/laporan/${cleanPath}?fallback=1`;
-      break;
-    case 2:
-      // Try storage/app/public path
-      newSrc = `${baseUrl}/storage/app/public/laporan/${cleanPath}?fallback=2`;
-      break;
-    case 3:
-      // Try without laporan subfolder
-      newSrc = `${baseUrl}/storage/${cleanPath}?fallback=3`;
-      break;
-    default:
-      // Final fallback to placeholder
-      newSrc = 'https://via.placeholder.com/150?text=Not+Found';
+  // Mencoba beberapa kemungkinan lokasi file pada server CWP
+  if (!originalSrc.includes('fallback=')) {
+    // Opsi 1: Cek di direktori /storage/ (symlink Laravel)
+    newUrl = `${baseDomain}/storage/laporan/${path}?fallback=1`;
+  } else if (originalSrc.includes('fallback=1')) {
+    // Opsi 2: Cek di direktori /public/storage/ (tanpa symlink)
+    newUrl = `${baseDomain}/public/storage/laporan/${path}?fallback=2`;
+  } else if (originalSrc.includes('fallback=2')) {
+    // Opsi 3: Cek di direktori /uploads/ (lokasi alternatif)
+    newUrl = `${baseDomain}/uploads/laporan/${path}?fallback=3`;
+  } else if (originalSrc.includes('fallback=3')) {
+    // Opsi 4: Coba tanpa subfolder laporan
+    newUrl = `${baseDomain}/storage/${path}?fallback=4`;
+  } else {
+    // Default fallback
+    newUrl = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
   }
   
-  console.log('[DEBUG] Trying URL:', newSrc);
-  img.src = newSrc;
+  console.log('Mencoba URL alternatif:', newUrl);
+  img.src = newUrl;
 },
 
 async fetchLaporan(id) {
