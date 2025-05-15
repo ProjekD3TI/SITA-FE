@@ -724,21 +724,55 @@ export default {
   },
   computed: {
     filteredCategories() {
-      // Pastikan categories ada sebelum melakukan filter
-      if (!this.categories || !Array.isArray(this.categories) || this.categories.length === 0) {
+      // Check if categories exists and has items
+      if (!this.categories || (Array.isArray(this.categories) && this.categories.length === 0) || 
+          (typeof this.categories === 'object' && Object.keys(this.categories).length === 0)) {
         return [];
       }
       
-      // Filter kategori, sesuaikan dengan property yang tersedia
-      return this.categories.filter(category => {
+      // Convert to array if it's an object
+      const categoryArray = Array.isArray(this.categories) 
+        ? this.categories 
+        : Object.entries(this.categories).map(([id, name]) => ({ 
+            category_id: id, 
+            nama: typeof name === 'string' ? name : name.nama || name.name 
+          }));
+      
+      // Track unique category names
+      const uniqueNames = new Set();
+      
+      // Filter out duplicates and categories starting with 'Kekerasan'
+      return categoryArray.filter(category => {
+        // Get the name regardless of property name used (nama or name)
         const name = category.nama || category.name || '';
-        return !name.startsWith('Kekerasan');
+        
+        // If name already exists in our set or starts with 'Kekerasan', skip it
+        if (uniqueNames.has(name) || name.startsWith('Kekerasan')) {
+          return false;
+        }
+        
+        // Otherwise add to unique set and keep this category
+        uniqueNames.add(name);
+        return true;
       });
     }
   },
   created() {
-    // Coba ambil token dari cookie
-    this.getAuthTokenFromCookie();
+    // Set the base URL for all axios requests
+    axios.defaults.baseURL = 'https://v3422040.mhs.d3tiuns.com';
+    
+    // Get the auth token
+    if (!this.getAuthTokenFromCookie()) {
+      // If no token is found, show a notification
+      this.$nextTick(() => {
+        this.showNotification('Sesi Login', 'Sesi login Anda mungkin sudah berakhir. Silakan login kembali.', false);
+        
+        // Optional: Redirect to login after a delay
+        setTimeout(() => {
+          this.$router.push('/mahasiswa/login');
+        }, 2000);
+      });
+    }
   },
   mounted() {
     this.fetchCategories();
@@ -747,27 +781,35 @@ export default {
   methods: {
     getAuthTokenFromCookie() {
       try {
-        // Cek jika ada cookie token langsung
-        let token = VueCookies.get('token');
-        if (token) {
-          this.token = token;
+        // First try auth_token cookie (this is what your auth services use)
+        let authToken = VueCookies.get('auth_token');
+        if (authToken) {
+          this.token = authToken;
           axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
-          console.log('Token set from direct cookie');
-          return;
+          return true;
         }
         
-        // Cek dari user_session
+        // Then check from user_session
         const encryptedUserData = VueCookies.get("user_session");
         if (encryptedUserData) {
-          const userData = decryptData(encryptedUserData);
-          if (userData && userData.token) {
-            this.token = userData.token;
-            axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
-            console.log('Token set from user_session');
+          try {
+            const userData = decryptData(encryptedUserData);
+            if (userData && userData.token) {
+              this.token = userData.token;
+              axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
+              console.log('Token set from user_session');
+              return true;
+            }
+          } catch (decryptError) {
+            console.error('Error decrypting user_session:', decryptError);
           }
         }
+        
+        console.warn('No auth token found in cookies');
+        return false;
       } catch (error) {
         console.error('Error getting auth token:', error);
+        return false;
       }
     },
     loadUserData() {
@@ -792,9 +834,8 @@ export default {
         };
       }
       
-      axios.get('http://localhost:8000/api/category', config)
+      axios.get('https://v3422040.mhs.d3tiuns.com/api/category', config)
         .then(response => {
-          console.log('Categories response:', response.data);
           
           // Handle berbagai format respons
           if (Array.isArray(response.data)) {
@@ -816,36 +857,63 @@ export default {
         });
     },
     handleFileUpload(event) {
-      const files = event.target.files;
+      const fileInput = event.target;
+      const files = fileInput.files;
+      
+      // Validate files
       if (!files || files.length === 0) {
+        this.errors.image_path = ['Tidak ada file yang dipilih'];
         return;
       }
       
-      // Initialize image_path as array if it's not already
-      if (!this.form.image_path) {
-        this.form.image_path = [];
-      }
+      // Reset image arrays
+      this.form.image_path = [];
+      this.imagePreviews = [];
       
-      // Process each selected file
+      // Debug log
+      console.log(`${files.length} files selected`);
+      
+      // Create a promise for each file to load
+      const filePromises = [];
+      
+      // Process each file
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        // Check file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          this.errors.image_path = ['Ukuran file maksimal 5MB'];
-          continue; // Skip this file but continue with others
+        // Basic validation
+        if (!file.type.startsWith('image/')) {
+          console.error('Skipping non-image file:', file.name, file.type);
+          continue;
         }
         
-        // Add file to image_path array
+        // Add file to array
         this.form.image_path.push(file);
         
-        // Create image preview
-        const reader = new FileReader();
-        reader.onload = e => {
-          this.imagePreviews.push(e.target.result);
-        };
-        reader.readAsDataURL(file);
+        // Create promise for image preview
+        const promise = new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            this.imagePreviews.push(e.target.result);
+            resolve();
+          };
+          reader.readAsDataURL(file);
+        });
+        
+        filePromises.push(promise);
       }
+      
+      // After all files are processed
+      Promise.all(filePromises).then(() => {
+        console.log('All files processed. Total images:', this.form.image_path.length);
+        
+        // Reset errors if we have files
+        if (this.form.image_path.length > 0) {
+          this.errors.image_path = null;
+          this.errors['image_path.0'] = null;
+        } else {
+          this.errors.image_path = ['Tidak ada file gambar yang valid'];
+        }
+      });
     },
     removeImage(index) {
       // Remove both the preview and the file from arrays
@@ -994,174 +1062,195 @@ export default {
       return isValid;
     },
     submitForm() {
-      // Validate form first
-      if (!this.validateForm()) {
-        // Scroll to first error
-        this.$nextTick(() => {
-          const firstError = document.querySelector('.border-red-500');
-          if (firstError) {
-            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        });
-        return;
+  // Validate form first
+  if (!this.validateForm()) {
+    this.$nextTick(() => {
+      const firstError = document.querySelector('.border-red-500');
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-      
-      this.loading = true;
-      this.errors = {};
-      
-      const formData = new FormData();
-      
-      // Append basic fields
-      formData.append('judul', this.form.judul);
-      formData.append('category_id', this.form.category_id);
-      formData.append('deskripsi', this.form.deskripsi);
-      formData.append('tanggal_kejadian', this.form.tanggal_kejadian);
-      formData.append('profesi', this.form.profesi);
-      formData.append('jenis_kelamin', this.form.jenis_kelamin);
-      formData.append('umur_pelapor', this.form.umur_pelapor);
-      formData.append('agreement', this.form.agreement ? 1 : 0);
-      
-      // Append optional link if provided
-      if (this.form.lampiran_link) {
-        formData.append('lampiran_link', this.form.lampiran_link);
-      }
-      
-      // Append bukti_pelanggaran to the form data as individual items
-      this.form.bukti_pelanggaran.forEach((bukti, index) => {
-        formData.append(`bukti_pelanggaran[${index}]`, bukti);
-      });
-      
-      // Append multiple images with array notation
-      if (this.form.image_path && this.form.image_path.length > 0) {
-        for (let i = 0; i < this.form.image_path.length; i++) {
-          formData.append('image_path[]', this.form.image_path[i]);
-        }
-      }
-      
-      // Process terlapor data - only include valid entries
-      const validTerlapor = this.form.terlapor.filter(item => 
-        item.nama_lengkap || item.email || item.nomor_telepon || item.status_warga || 
-        item.unit_kerja || item.jenis_kelamin || item.umur_terlapor
-      );
-      
-      if (validTerlapor.length > 0) {
-        validTerlapor.forEach((item, index) => {
-          // Only add fields that have values
-          if (item.nama_lengkap) formData.append(`terlapor[${index}][nama_lengkap]`, item.nama_lengkap);
-          if (item.email) formData.append(`terlapor[${index}][email]`, item.email);
-          if (item.nomor_telepon) formData.append(`terlapor[${index}][nomor_telepon]`, item.nomor_telepon);
-          if (item.status_warga) formData.append(`terlapor[${index}][status_warga]`, item.status_warga);
-          if (item.unit_kerja) formData.append(`terlapor[${index}][unit_kerja]`, item.unit_kerja);
-          if (item.jenis_kelamin) formData.append(`terlapor[${index}][jenis_kelamin]`, item.jenis_kelamin);
-          if (item.umur_terlapor) formData.append(`terlapor[${index}][umur_terlapor]`, item.umur_terlapor);
-        });
-      }
-      
-      // Process saksi data - only include valid entries
-      const validSaksi = this.form.saksi.filter(item => 
-        item.nama_lengkap || item.email || item.nomor_telepon
-      );
-      
-      if (validSaksi.length > 0) {
-        validSaksi.forEach((item, index) => {
-          // Only add fields that have values
-          if (item.nama_lengkap) formData.append(`saksi[${index}][nama_lengkap]`, item.nama_lengkap);
-          if (item.email) formData.append(`saksi[${index}][email]`, item.email);
-          if (item.nomor_telepon) formData.append(`saksi[${index}][nomor_telepon]`, item.nomor_telepon);
-        });
-      }
+    });
+    return;
+  }
+  
+  // Extra validation for images
+  if (!this.form.image_path || !Array.isArray(this.form.image_path) || this.form.image_path.length === 0) {
+    this.errors.image_path = ['Lampiran foto harus diunggah'];
+    return;
+  }
+  
+  this.loading = true;
+  this.errors = {};
+  
+  // Re-check the token before submitting
+  if (!this.getAuthTokenFromCookie()) {
+    this.loading = false;
+    this.showNotification('Error Autentikasi', 'Sesi login Anda telah berakhir. Silakan login kembali untuk melanjutkan.', false);
+    
+    setTimeout(() => {
+      this.$router.push('/mahasiswa/login');
+    }, 2000);
+    return;
+  }
+  
+  const formData = new FormData();
+  
+  // Append basic fields
+  formData.append('judul', this.form.judul);
+  formData.append('category_id', this.form.category_id);
+  formData.append('deskripsi', this.form.deskripsi);
+  formData.append('tanggal_kejadian', this.form.tanggal_kejadian);
+  formData.append('profesi', this.form.profesi);
+  formData.append('jenis_kelamin', this.form.jenis_kelamin);
+  formData.append('umur_pelapor', this.form.umur_pelapor);
+  formData.append('agreement', this.form.agreement ? 1 : 0);
+  
+  // Append optional link if provided
+  if (this.form.lampiran_link) {
+    formData.append('lampiran_link', this.form.lampiran_link);
+  }
+  
+  // Append bukti_pelanggaran
+  if (this.form.bukti_pelanggaran && this.form.bukti_pelanggaran.length > 0) {
+    this.form.bukti_pelanggaran.forEach((bukti) => {
+      formData.append('bukti_pelanggaran[]', bukti);
+    });
+  }
+  
+  // CRITICAL FIX: Handle images with proper FormData attachment
+  console.log("Images to upload:", this.form.image_path.length);
+  
+  // Append images using the PHP-style indexed array notation
+  this.form.image_path.forEach((file, index) => {
+    formData.append(`image_path[${index}]`, file);
+  });
+  
+  // Process terlapor data
+  const validTerlapor = this.form.terlapor.filter(item => 
+    item.nama_lengkap || item.email || item.nomor_telepon || item.status_warga || 
+    item.unit_kerja || item.jenis_kelamin || item.umur_terlapor
+  );
+  
+  if (validTerlapor.length > 0) {
+    validTerlapor.forEach((item, index) => {
+      if (item.nama_lengkap) formData.append(`terlapor[${index}][nama_lengkap]`, item.nama_lengkap);
+      if (item.email) formData.append(`terlapor[${index}][email]`, item.email);
+      if (item.nomor_telepon) formData.append(`terlapor[${index}][nomor_telepon]`, item.nomor_telepon);
+      if (item.status_warga) formData.append(`terlapor[${index}][status_warga]`, item.status_warga);
+      if (item.unit_kerja) formData.append(`terlapor[${index}][unit_kerja]`, item.unit_kerja);
+      if (item.jenis_kelamin) formData.append(`terlapor[${index}][jenis_kelamin]`, item.jenis_kelamin);
+      if (item.umur_terlapor) formData.append(`terlapor[${index}][umur_terlapor]`, item.umur_terlapor);
+    });
+  }
+  
+  // Process saksi data
+  const validSaksi = this.form.saksi.filter(item => 
+    item.nama_lengkap || item.email || item.nomor_telepon
+  );
+  
+  if (validSaksi.length > 0) {
+    validSaksi.forEach((item, index) => {
+      if (item.nama_lengkap) formData.append(`saksi[${index}][nama_lengkap]`, item.nama_lengkap);
+      if (item.email) formData.append(`saksi[${index}][email]`, item.email);
+      if (item.nomor_telepon) formData.append(`saksi[${index}][nomor_telepon]`, item.nomor_telepon);
+    });
+  }
 
-      // Log for debugging
-      console.log('Submitting form with data:', {
-        judul: this.form.judul,
-        category_id: this.form.category_id,
-        deskripsi: this.form.deskripsi,
-        tanggal_kejadian: this.form.tanggal_kejadian,
-        lampiran_link: this.form.lampiran_link,
-        profesi: this.form.profesi,
-        jenis_kelamin: this.form.jenis_kelamin,
-        umur_pelapor: this.form.umur_pelapor,
-        bukti_pelanggaran: this.form.bukti_pelanggaran,
-        image_count: this.form.image_path ? this.form.image_path.length : 0,
-        terlapor_count: validTerlapor.length,
-        saksi_count: validSaksi.length,
-        agreement: this.form.agreement
-      });
+  // Get auth token
+  const authToken = this.token || VueCookies.get('auth_token');
+  if (!authToken) {
+    this.loading = false;
+    this.showNotification('Error Autentikasi', 'Token autentikasi tidak ditemukan. Silakan login kembali.', false);
+    
+    setTimeout(() => {
+      this.$router.push('/mahasiswa/login');
+    }, 2000);
+    return;
+  }
 
-      // Siapkan konfigurasi dengan header yang benar
-      const config = {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        }
-      };
-      
-      // Tambahkan token jika tersedia
-      if (this.token) {
-        config.headers['Authorization'] = `Bearer ${this.token}`;
-        console.log('Adding token to request');
-      } else {
-        console.warn('No token available for request');
-        
-        // Coba refresh token sekali lagi
-        this.getAuthTokenFromCookie();
-        if (this.token) {
-                    // Refresh token if necessary
-          config.headers['Authorization'] = `Bearer ${this.token}`;
-          console.log('Token refreshed and added to request');
-        }
-      }
-
-      // Kirim permintaan ke backend dengan header yang sudah disiapkan
-      axios.post('http://localhost:8000/api/laporan/add_laporan', formData, config)
-        .then(response => {
-          this.loading = false;
-          console.log('Success response:', response);
-          Swal.fire({
-            title: 'Berhasil!',
-            text: 'Laporan berhasil ditambahkan.',
-            icon: 'success',
-            timer: 2000,
-            timerProgressBar: true,
-            showConfirmButton: false
-          }).then(() => {
-            // After the timer finishes or alert is closed
-            this.$router.push('/pelaporan/kejadian');
-          });
-          this.resetForm();
-        })
-        .catch(error => {
-          this.loading = false;
-          console.error('Error submitting form:', error);
-          
-          if (error.response) {
-            if (error.response.status === 401) {
-              this.showNotification('Error Autentikasi', 'Sesi login telah berakhir. Silakan login kembali untuk melanjutkan.', false);
-              
-              // Optional: Redirect to login after a delay
-              setTimeout(() => {
-                this.$router.push('/mahasiswa/login');
-              }, 3000);
-            } else if (error.response.status === 400) {
-              this.errors = error.response.data;
-            } else if (error.response.status === 422 && error.response.data.errors) {
-              // Handle Laravel validation errors
-              const validationErrors = error.response.data.errors;
-              this.errors = {};
-              
-              // Convert Laravel validation errors to our format
-              Object.keys(validationErrors).forEach(key => {
-                this.errors[key] = validationErrors[key];
-              });
-            } else {
-              this.showNotification('Error', `Terjadi kesalahan saat mengirim laporan. (${error.response.status})`, false);
-            }
-          } else if (error.request) {
-            this.showNotification('Error Koneksi', 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.', false);
-          } else {
-            this.showNotification('Error', 'Terjadi kesalahan saat mengirim laporan.', false);
-          }
-        });
+  // Create config with authorization header
+  // CRITICAL FIX: Add transformRequest: null to prevent Axios from trying to JSON-stringify FormData
+  const config = {
+    headers: {
+      'Authorization': `Bearer ${authToken}`
     },
+    transformRequest: null  // THIS IS THE KEY FIX - prevent Axios from processing FormData
+  };
+
+  console.log("Sending form with images:", this.form.image_path.length);
+  
+  // Send the request using a native XMLHttpRequest to avoid Axios transformation issues
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan/add_laporan', true);
+  xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+  
+  xhr.onload = () => {
+    this.loading = false;
+    
+    if (xhr.status >= 200 && xhr.status < 300) {
+      // Success
+      Swal.fire({
+        title: 'Berhasil!',
+        text: 'Laporan berhasil ditambahkan.',
+        icon: 'success',
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false
+      }).then(() => {
+        this.$router.push('/pelaporan/kejadian');
+      });
+      this.resetForm();
+    } else {
+      // Error handling
+      console.error('Error response:', xhr.status, xhr.responseText);
+      
+      try {
+        const errorData = JSON.parse(xhr.responseText);
+        
+        if (xhr.status === 401) {
+          VueCookies.remove("auth_token");
+          VueCookies.remove("user_session");
+          this.token = null;
+          
+          this.showNotification('Error Autentikasi', 'Sesi login Anda telah berakhir. Silakan login kembali untuk melanjutkan.', false);
+          
+          setTimeout(() => {
+            this.$router.push('/mahasiswa/login');
+          }, 2000);
+        } else if (xhr.status === 400 || xhr.status === 422) {
+          // Handle validation errors
+          this.errors = errorData.errors || errorData;
+          
+          // Special handling for image_path.0 error
+          if (this.errors['image_path.0']) {
+            this.errors.image_path = this.errors['image_path.0'];
+          }
+          
+          // Scroll to the first error
+          this.$nextTick(() => {
+            const firstError = document.querySelector('.border-red-500');
+            if (firstError) {
+              firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          });
+        } else {
+          const errorMessage = errorData.message || 'Terjadi kesalahan saat mengirim laporan.';
+          this.showNotification('Error', `${errorMessage} (${xhr.status})`, false);
+        }
+      } catch (e) {
+        this.showNotification('Error', 'Terjadi kesalahan saat memproses respons server.', false);
+      }
+    }
+  };
+  
+  xhr.onerror = () => {
+    this.loading = false;
+    this.showNotification('Error Koneksi', 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.', false);
+  };
+  
+  // Send the FormData
+  xhr.send(formData);
+},
     resetForm() {
       this.form = {
         judul: '',

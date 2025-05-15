@@ -111,9 +111,7 @@ export default {
     // Configure axios to maintain session across page navigations
     axios.defaults.withCredentials = true;
   },
-  mounted() {
-    console.log("Landing page mounted!");
-    
+  mounted() {    
     // Check for existing session
     this.checkSession();
     

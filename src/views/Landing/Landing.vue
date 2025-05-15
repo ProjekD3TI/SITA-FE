@@ -48,9 +48,6 @@ export default {
     Header,
     Footer,
   },
-  mounted() {
-    console.log("Routing is working!");
-  },
 };
 </script>
 

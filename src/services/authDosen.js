@@ -5,6 +5,10 @@ import { useToast } from "vue-toastification";
 import VueCookies from "vue-cookies";
 import { encryptData, decryptData } from "./encrypt";
 
+// Set the base URL for all axios requests
+axios.defaults.baseURL = 'https://v3422040.mhs.d3tiuns.com';
+axios.defaults.withCredentials = true;
+
 export function authDosen() {
   const user = ref(null);
   const token = ref(null);
@@ -15,12 +19,28 @@ export function authDosen() {
   const isLoading = ref(false);
 
   const setupAxiosInterceptors = () => {
+    // Clear any existing interceptors to avoid duplicates
+    if (axios.interceptors.request.handlers && axios.interceptors.request.handlers.length > 0) {
+      axios.interceptors.request.handlers = [];
+    }
+    if (axios.interceptors.response.handlers && axios.interceptors.response.handlers.length > 0) {
+      axios.interceptors.response.handlers = [];
+    }
+
     axios.interceptors.request.use(
       (config) => {
         const authToken = VueCookies.get("auth_token");
         if (authToken) {
           config.headers["Authorization"] = `Bearer ${authToken}`;
         }
+        
+        // Ensure every request uses the correct baseURL
+        config.baseURL = 'https://v3422040.mhs.d3tiuns.com';
+        
+        // Add common headers
+        config.headers["Accept"] = "application/json";
+        config.headers["Content-Type"] = "application/json";
+        
         return config;
       },
       (error) => {
@@ -51,6 +71,8 @@ export function authDosen() {
   const loginDosen = async (email, password) => {
     try {
       isLoading.value = true;
+      console.log("Attempting login with API:", axios.defaults.baseURL);
+      
       const response = await axios.post(
         "/api/login/dosen",
         {
@@ -64,6 +86,8 @@ export function authDosen() {
           },
         }
       );
+
+      console.log("Login response received:", response.status);
 
       if (response.data.status) {
         user.value = response.data.data.dosen;
@@ -85,9 +109,9 @@ export function authDosen() {
           },
         });
 
-        axios.defaults.headers.common[
-          "Authorization"
-        ] = `Bearer ${token.value}`;
+        // Set token for future requests
+        axios.defaults.headers.common["Authorization"] = `Bearer ${token.value}`;
+        console.log("Auth token set in headers:", token.value ? "Yes" : "No");
 
         toast.success(response.data.message || "Login Dosen berhasil!");
 
@@ -97,6 +121,12 @@ export function authDosen() {
         return false;
       }
     } catch (error) {
+      console.error("Login error details:", {
+        status: error.response?.status,
+        message: error.response?.data?.message,
+        error: error.message
+      });
+      
       if (error.response?.status === 401) {
         const errMessage = error.response?.data?.message;
 
@@ -111,7 +141,6 @@ export function authDosen() {
             "Gagal melakukan login. Silakan coba lagi."
         );
       }
-      // console.error("Login error:", error.response?.data);
     } finally {
       isLoading.value = false;
     }
@@ -169,14 +198,12 @@ export function authDosen() {
         }, 100);
         toast.success(response.data.message || "Berhasil mengganti jabatan");
 
-        // console.log("Switched to jabatan:", newJabatan);
-        // console.log(userData);
         return true;
       }
 
       return false;
     } catch (error) {
-      // console.error("Switch jabatan error:", error);
+      console.error("Switch jabatan error:", error.message);
       return false;
     } finally {
       isLoading.value = false;
@@ -184,7 +211,12 @@ export function authDosen() {
   };
 
   const storeAuthData = ({ token: authToken, userData }) => {
-    VueCookies.set("auth_token", authToken, "4h");
+    // Store token with better options
+    VueCookies.set("auth_token", authToken, {
+      expires: "4h",
+      secure: window.location.protocol === "https:",
+      sameSite: "Lax"
+    });
 
     const dataWithTimestamp = {
       ...userData,
@@ -192,7 +224,11 @@ export function authDosen() {
     };
 
     const encryptedUserData = encryptData(dataWithTimestamp);
-    VueCookies.set("user_session", encryptedUserData, "4h");
+    VueCookies.set("user_session", encryptedUserData, {
+      expires: "4h",
+      secure: window.location.protocol === "https:",
+      sameSite: "Lax"
+    });
   };
 
   const jabatanRoute = (jabatanName) => {
@@ -215,7 +251,7 @@ export function authDosen() {
 
     router.push(route).catch((err) => {
       if (err.name !== "NavigationDuplicated") {
-        // console.error("Navigation error:", err);
+        console.error("Navigation error:", err.message);
         window.location.href = route;
       }
     });
@@ -278,6 +314,7 @@ export function authDosen() {
         availableJabatan: availableJabatan.value,
       };
     } catch (error) {
+      console.error("Get user jabatan error:", error.message);
       if (error.response?.status === 401) {
         logout();
       }
@@ -289,22 +326,29 @@ export function authDosen() {
 
   const logout = async () => {
     try {
-      await axios.post("/api/logout", null, {
-        headers: {
-          Authorization: `Bearer ${token.value}`,
-        },
-      });
+      // Get current token
+      const currentToken = VueCookies.get("auth_token");
+      
+      if (currentToken) {
+        await axios.post("/api/logout", null, {
+          headers: {
+            Authorization: `Bearer ${currentToken}`,
+          },
+        });
+      }
     } catch (error) {
-      // console.error("Logout error:", error);
+      console.error("Logout error:", error.message);
     } finally {
       user.value = null;
       token.value = null;
       currentJabatan.value = null;
       availableJabatan.value = [];
 
+      // Clear cookies
       VueCookies.remove("auth_token");
       VueCookies.remove("user_session");
 
+      // Clear authorization header
       delete axios.defaults.headers.common["Authorization"];
 
       router.push({ name: "logindosen" });
@@ -315,9 +359,17 @@ export function authDosen() {
     const storedToken = VueCookies.get("auth_token");
     const userData = getUserData();
 
+    console.log("Auth check - Token exists:", !!storedToken);
+    console.log("Auth check - User data exists:", !!userData);
+    
+    if (userData) {
+      console.log("User type:", userData.type);
+    }
+
     if (storedToken && userData && userData.type === "dosen") {
       token.value = storedToken;
       axios.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
+      console.log("Authorization header set:", !!axios.defaults.headers.common["Authorization"]);
 
       if (userData.jabatan) {
         currentJabatan.value = {
@@ -328,6 +380,8 @@ export function authDosen() {
 
       return true;
     }
+    
+    console.log("Auth check failed - missing token or user data");
     return false;
   };
 
@@ -357,9 +411,12 @@ export function authDosen() {
   };
 
   const initializeAuth = () => {
+    console.log("Initializing auth...");
     setupAxiosInterceptors();
     initializeFromCookies();
-    return checkAuth();
+    const result = checkAuth();
+    console.log("Auth initialization result:", result);
+    return result;
   };
 
   onMounted(() => {
@@ -389,11 +446,23 @@ export function getUserData() {
       const userData = decryptData(encryptedUserData);
       return userData;
     } catch (error) {
-      // console.error("Error decrypting user data:", error);
+      console.error("Error decrypting user data:", error.message);
       VueCookies.remove("auth_token");
       VueCookies.remove("user_session");
       return null;
     }
   }
   return null;
+}
+
+// Helper function to validate token
+export function validateToken(token) {
+  if (!token) return false;
+  
+  try {
+    // Simple validation - check if token is a non-empty string
+    return typeof token === 'string' && token.length > 0;
+  } catch (e) {
+    return false;
+  }
 }

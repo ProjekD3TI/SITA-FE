@@ -10,9 +10,10 @@
         </div>
         
         <div v-else-if="error" class="loading-container">
-          <div class="spinner"></div>
-          <p>{{ error }}</p>
-          <button @click="fetchLaporan(laporanId)" class="btn btn-primary">Coba Lagi</button>
+          <div class="error-container">
+            <p>{{ error }}</p>
+            <button @click="fetchLaporan(laporanId)" class="btn btn-primary">Coba Lagi</button>
+          </div>
         </div>
         
         <div v-else class="detail-content">
@@ -53,42 +54,48 @@
             <h3>Detail Kejadian</h3>
             <h4 v-if="laporan.judul" class="kejadian-judul">{{ laporan.judul }}</h4>
             <p class="deskripsi">{{ laporan.deskripsi || laporan.deskripsi_kejadian }}</p>
-            <div v-if="laporan.image_path || laporan.foto_kejadian" class="foto-section">
+            
+            <!-- Image Section - Updated for multiple images -->
+            <div v-if="imagePaths && imagePaths.length > 0" class="foto-section">
               <h4>Foto Kejadian</h4>
-              <div style="text-align: center;">
-                <img 
-                  :src="laporan.image_path ? getImageUrl(laporan.image_path) : laporan.foto_kejadian" 
-                  alt="Foto Kejadian" 
-                  class="kejadian-image" 
-                  style="max-width: 100%; max-height: 300px; object-fit: contain;" 
-                  @click="showFullImage = true"
-                >
+              
+              <!-- Image grid for all images -->
+              <div class="image-grid">
+                <div v-for="(path, index) in imagePaths" :key="index" class="image-item">
+                  <img 
+                    :src="getImageUrlForPath(path)"
+                    :alt="`Foto Kejadian ${index + 1}`"
+                    class="kejadian-image-thumbnail" 
+                    @click="openFullImage(index)"
+                  >
+                </div>
               </div>
+              
               <div class="image-caption">Klik untuk memperbesar gambar</div>
             </div>
           </div>
           
           <div class="card">
-          <h3>Informasi Pelapor</h3>
-          <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 40px; row-gap: 20px;">
-            <div class="info-item">
-              <div class="label">Nama</div>
-              <div class="value">{{ laporan.nama_pelapor }}</div>
-            </div>
-            <div class="info-item">
-              <div class="label">NI Pelapor</div>
-              <div class="value">{{ laporan.ni_pelapor || "-" }}</div>
-            </div>
-            <div class="info-item">
-              <div class="label">Email</div>
-              <div class="value" style="word-break: break-word; overflow-wrap: break-word;">{{ laporan.email || laporan.email_pelapor || "-" }}</div>
-            </div>
-            <div class="info-item">
-              <div class="label">Telepon</div>
-              <div class="value">{{ laporan.nomor_telepon || laporan.telepon_pelapor || "-" }}</div>
+            <h3>Informasi Pelapor</h3>
+            <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 40px; row-gap: 20px;">
+              <div class="info-item">
+                <div class="label">Nama</div>
+                <div class="value">{{ laporan.nama_pelapor }}</div>
+              </div>
+              <div class="info-item">
+                <div class="label">NI Pelapor</div>
+                <div class="value">{{ laporan.ni_pelapor || laporan.nim_pelapor || "-" }}</div>
+              </div>
+              <div class="info-item">
+                <div class="label">Email</div>
+                <div class="value" style="word-break: break-word; overflow-wrap: break-word;">{{ laporan.email || laporan.email_pelapor || "-" }}</div>
+              </div>
+              <div class="info-item">
+                <div class="label">Telepon</div>
+                <div class="value">{{ laporan.nomor_telepon || laporan.telepon_pelapor || "-" }}</div>
+              </div>
             </div>
           </div>
-        </div>
           
           <div class="card">
             <h3>Status Laporan</h3>
@@ -112,7 +119,7 @@
             </div>
           </div>
           
-          <!-- Tanggapan Card - Updated to handle both string and array types -->
+          <!-- Tanggapan Card -->
           <div class="card" v-if="hasTanggapan">
             <h3>
               <i class="fas fa-comment-alt"></i> Tanggapan
@@ -151,10 +158,17 @@
           <div class="modal-content">
             <span class="close-modal">&times;</span>
             <img 
-              :src="laporan.image_path ? getImageUrl(laporan.image_path) : laporan.foto_kejadian" 
+              :src="currentFullImageUrl"
               alt="Bukti Kejadian" 
               class="fullscreen-image"
             >
+            
+            <!-- Navigation buttons for multiple images -->
+            <div v-if="imagePaths && imagePaths.length > 1" class="image-navigation">
+              <button class="nav-button prev" @click.stop="prevImage">&lt;</button>
+              <div class="image-counter">{{ currentImageIndex + 1 }} / {{ imagePaths.length }}</div>
+              <button class="nav-button next" @click.stop="nextImage">&gt;</button>
+            </div>
           </div>
         </div>
         
@@ -209,33 +223,22 @@ export default {
       error: null,
       isAdmin: false,
       showFullImage: false,
-      showVerificationModal: false,
       showTanggapanModal: false,
       tanggapanText: '',
-      isVerifying: false,
       currentUser: localStorage.getItem('userName') || 'Miftahul',
+      apiBaseUrl: 'https://v3422040.mhs.d3tiuns.com/api',
+      
+      // New properties for better image handling
+      imagePaths: [],
+      currentImageIndex: 0,
+      currentFullImageUrl: ''
     };
   },
   created() {
     this.laporanId = this.$route.params.id;
-    console.log("ID dari route:", this.laporanId); // Debug log
     
-    // Get current user information from localStorage or any other auth source
-    this.currentUser = localStorage.getItem('userName') || 'Miftahul';
-    
-    // If no user in localStorage, try to get from authenticated user object
-    if (this.currentUser === 'Miftahul' && localStorage.getItem('user')) {
-      try {
-        const userObj = JSON.parse(localStorage.getItem('user'));
-        if (userObj && userObj.name) {
-          this.currentUser = userObj.name;
-        }
-      } catch (e) {
-        console.error('Failed to parse user from localStorage', e);
-      }
-    }
-    
-    console.log("Current user:", this.currentUser);
+    // Get current user information
+    this.getCurrentUser();
     
     if (!this.laporanId) {
       this.error = "ID laporan tidak ditemukan";
@@ -269,31 +272,294 @@ export default {
     }
   },
   methods: {
+    getCurrentUser() {
+      // Get current user information from localStorage or any other auth source
+      this.currentUser = localStorage.getItem('userName') || 'Miftahul';
+      
+      // If no user in localStorage, try to get from authenticated user object
+      if (this.currentUser === 'Miftahul' && localStorage.getItem('user')) {
+        try {
+          const userObj = JSON.parse(localStorage.getItem('user'));
+          if (userObj && userObj.name) {
+            this.currentUser = userObj.name;
+          }
+        } catch (e) {
+          console.error('Failed to parse user from localStorage', e);
+        }
+      }
+    },
+    
+    // First, remove the duplicate parseImagePaths method - you have two versions defined
+// Keep only this version with improvements:
+
+parseImagePaths(imagePath) {
+  console.log('[DEBUG] parseImagePaths input:', imagePath);
+  
+  if (!imagePath) {
+    console.log('[DEBUG] parseImagePaths: empty input');
+    return [];
+  }
+  
+  // If it's a string, handle different formats
+  if (typeof imagePath === 'string') {
+    // Check if it looks like JSON format
+    if ((imagePath.startsWith('[') && imagePath.endsWith(']')) || 
+        (imagePath.startsWith('"[') && imagePath.endsWith(']"'))) {
+      
+      console.log('[DEBUG] Attempting to parse as JSON array');
+      try {
+        // Clean up the string for parsing
+        let cleanedPath = imagePath.replace(/\\/g, '');
+        
+        // If it's double-quoted JSON string, remove outer quotes
+        if (cleanedPath.startsWith('"') && cleanedPath.endsWith('"')) {
+          cleanedPath = cleanedPath.substring(1, cleanedPath.length - 1);
+        }
+        
+        console.log('[DEBUG] Cleaned JSON string:', cleanedPath);
+        
+        const parsed = JSON.parse(cleanedPath);
+        if (Array.isArray(parsed)) {
+          console.log('[DEBUG] Successfully parsed as array with length:', parsed.length);
+          return parsed;
+        } else {
+          console.log('[DEBUG] JSON parsing result is not an array');
+        }
+      } catch (e) {
+        console.error('[DEBUG] Error parsing JSON:', e);
+      }
+    }
+    
+    // If string contains commas, it might be a comma-separated list
+    if (imagePath.includes(',')) {
+      console.log('[DEBUG] Treating as comma-separated list');
+      return imagePath.split(',').map(item => item.trim());
+    }
+    
+    // If none of the above worked, treat as single path
+    console.log('[DEBUG] Treating as single file path');
+    return [imagePath];
+  }
+  
+  // Handle case where image_path is already an array
+  if (Array.isArray(imagePath)) {
+    console.log('[DEBUG] Input is already an array with length:', imagePath.length);
+    return imagePath;
+  }
+  
+  console.log('[DEBUG] Could not process input, returning empty array');
+  return [];
+},
+
+getImageUrlForPath(path) {
+  console.log('[DEBUG] getImageUrlForPath input:', path);
+  
+  if (!path) {
+    console.log('[DEBUG] Empty path provided');
+    return '';
+  }
+  
+  // Check if path is already a full URL
+  if (path.startsWith('http')) {
+    console.log('[DEBUG] Path is already a full URL');
+    return path;
+  }
+  
+  // Clean the path
+  // Replace any special characters or weird sequences
+  let cleanPath = path;
+  
+  // Remove quotes if present
+  if (cleanPath.startsWith('"') && cleanPath.endsWith('"')) {
+    cleanPath = cleanPath.substring(1, cleanPath.length - 1);
+  }
+  
+  // Remove any characters that aren't part of filenames
+  cleanPath = cleanPath.replace(/[^\w\-\.\/]/g, '');
+  
+  console.log('[DEBUG] Cleaned path:', cleanPath);
+  
+  // Try all possible URL formats based on your server structure
+  // Return the most likely URL format
+  const baseUrl = 'https://v3422040.mhs.d3tiuns.com';
+  
+  // If the image was just uploaded, it might be in the storage/laporan folder
+  const url = `${baseUrl}/storage/laporan/${cleanPath}`;
+  console.log('[DEBUG] Returning URL:', url);
+  return url;
+},
+
+handleImageError(event, index) {
+  console.log(`[DEBUG] Image at index ${index} failed to load:`, this.imagePaths[index]);
+  
+  // Try alternative URL formats as fallbacks
+  const img = event.target;
+  const originalSrc = img.src;
+  const path = this.imagePaths[index];
+  
+  // If we've already tried all fallbacks, show placeholder
+  if (originalSrc.includes('fallback=3')) {
+    console.log('[DEBUG] All fallbacks exhausted, showing placeholder');
+    img.src = 'https://via.placeholder.com/150?text=Not+Found';
+    return;
+  }
+  
+  // Try different paths in sequence based on fallback count
+  const fallbackCount = originalSrc.includes('fallback=') ? 
+    parseInt(originalSrc.split('fallback=')[1][0]) + 1 : 1;
+    
+  console.log('[DEBUG] Trying fallback', fallbackCount);
+  
+  const baseUrl = 'https://v3422040.mhs.d3tiuns.com';
+  let newSrc;
+  
+  // Clean the path for better compatibility
+  const cleanPath = path.replace(/[^\w\-\.]/g, '');
+  
+  switch(fallbackCount) {
+    case 1:
+      // Try public/storage path
+      newSrc = `${baseUrl}/public/storage/laporan/${cleanPath}?fallback=1`;
+      break;
+    case 2:
+      // Try storage/app/public path
+      newSrc = `${baseUrl}/storage/app/public/laporan/${cleanPath}?fallback=2`;
+      break;
+    case 3:
+      // Try without laporan subfolder
+      newSrc = `${baseUrl}/storage/${cleanPath}?fallback=3`;
+      break;
+    default:
+      // Final fallback to placeholder
+      newSrc = 'https://via.placeholder.com/150?text=Not+Found';
+  }
+  
+  console.log('[DEBUG] Trying URL:', newSrc);
+  img.src = newSrc;
+},
+
+async fetchLaporan(id) {
+  if (!id) {
+    this.error = "ID laporan tidak valid";
+    this.loading = false;
+    return;
+  }
+  
+  this.loading = true;
+  this.error = null;
+  
+  try {
+    const response = await axios.get(`${this.apiBaseUrl}/laporan/${id}`);
+    console.log('[DEBUG] API response:', response.data);
+    
+    // Handle different response formats
+    if (response.data && response.data.data) {
+      this.laporan = response.data.data;
+    } else {
+      this.laporan = response.data;
+    }
+    
+    // Log the raw image_path data from the API
+    console.log('[DEBUG] Raw image_path from API:', this.laporan.image_path);
+    
+    // Check data type and log it
+    console.log('[DEBUG] image_path data type:', typeof this.laporan.image_path);
+    
+    // Process image paths
+    if (this.laporan.image_path) {
+      // Try to fix common issues with data format before parsing
+      let imagePathData = this.laporan.image_path;
+      
+      // Fix double-encoded JSON (common issue)
+      if (typeof imagePathData === 'string' && imagePathData.startsWith('"[') && imagePathData.endsWith(']"')) {
+        try {
+          // First unescape the string
+          imagePathData = JSON.parse(imagePathData);
+          console.log('[DEBUG] Unescaped image_path:', imagePathData);
+        } catch (e) {
+          console.error('[DEBUG] Error unescaping image_path:', e);
+        }
+      }
+      
+      this.imagePaths = this.parseImagePaths(imagePathData);
+      console.log('[DEBUG] Processed imagePaths array:', this.imagePaths);
+      
+      if (this.imagePaths.length > 0) {
+        // Log the first image URL for debugging
+        const firstImageUrl = this.getImageUrlForPath(this.imagePaths[0]);
+        console.log('[DEBUG] First image URL:', firstImageUrl);
+        
+        // Log all image URLs
+        this.imagePaths.forEach((path, index) => {
+          console.log(`[DEBUG] Image ${index} URL:`, this.getImageUrlForPath(path));
+        });
+        
+        // Try to make a direct fetch request to verify the URL
+        this.checkImageUrlsViaFetch();
+      }
+      
+      // Store in laporan object for consistency
+      this.laporan.image_paths = this.imagePaths;
+    }
+    
+    // Rest of your existing code...
+    
+    this.tanggapanText = '';
+    this.loading = false;
+  } catch (error) {
+    console.error('[DEBUG] Error fetching laporan:', error);
+    
+    // Rest of your existing error handling...
+    
+    this.loading = false;
+  }
+},
+
+// New method to check image URLs via fetch
+async checkImageUrlsViaFetch() {
+  if (!this.imagePaths || this.imagePaths.length === 0) return;
+  
+  console.log('[DEBUG] Testing image URLs via fetch...');
+  
+  for (let i = 0; i < this.imagePaths.length; i++) {
+    const path = this.imagePaths[i];
+    const url = this.getImageUrlForPath(path);
+    
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      console.log(`[DEBUG] Image ${i} (${url}) - Status: ${response.status} ${response.statusText}`);
+    } catch (error) {
+      console.error(`[DEBUG] Error checking ${url}:`, error);
+    }
+  }
+},
+    
     async fetchCategories() {
       try {
-        try {
-          const response = await axios.get('http://localhost:8000/api/category');
-          if (Array.isArray(response.data)) {
-            this.categories = response.data.reduce((acc, category) => {
-              acc[category.category_id] = category.nama;
-              return acc;
-            }, {});
-          } else {
-            console.error('Unexpected category data format:', response.data);
-            this.categories = {};
-          }
-        } catch (apiError) {
-          console.error('Error fetching categories:', apiError);
+        const response = await axios.get(`${this.apiBaseUrl}/category`);
+        if (response.data && response.data.data && Array.isArray(response.data.data)) {
+          // Handle API that returns data inside a data property
+          this.categories = response.data.data.reduce((acc, category) => {
+            acc[category.category_id || category.id] = category.nama || category.name;
+            return acc;
+          }, {});
+        } else if (Array.isArray(response.data)) {
+          this.categories = response.data.reduce((acc, category) => {
+            acc[category.category_id || category.id] = category.nama || category.name;
+            return acc;
+          }, {});
+        } else {
+          console.error('Unexpected category data format:', response.data);
           this.categories = {};
         }
       } catch (error) {
-        console.error('Error in fetchCategories:', error);
+        console.error('Error fetching categories:', error);
+        this.categories = {};
       }
     },
     
     async fetchLaporan(id) {
       if (!id) {
-        console.error("Attempted to fetch report with undefined ID");
         this.error = "ID laporan tidak valid";
         this.loading = false;
         return;
@@ -303,55 +569,75 @@ export default {
       this.error = null;
       
       try {
-        try {
-          console.log(`Fetching report with ID: ${id}`);
-          const response = await axios.get(`http://localhost:8000/api/laporan/${id}`);
-          console.log("API Response:", response.data);
+        const response = await axios.get(`${this.apiBaseUrl}/laporan/${id}`);
+        
+        // Handle different response formats
+        if (response.data && response.data.data) {
+          this.laporan = response.data.data;
+        } else {
           this.laporan = response.data;
-          
-          // Process tanggapan data
-          console.log('Original tanggapan data:', this.laporan.tanggapan);
-          
-          if (this.laporan.tanggapan) {
-            // Try to parse if it's a JSON string
-            try {
-              const parsed = JSON.parse(this.laporan.tanggapan);
-              console.log('Successfully parsed tanggapan JSON:', parsed);
-              
-              if (Array.isArray(parsed)) {
-                this.laporan.tanggapan = parsed;
-                console.log('Set tanggapan as array:', this.laporan.tanggapan);
-              } else {
-                console.log('Parsed JSON is not an array:', parsed);
-              }
-            } catch (e) {
-              // If it's not valid JSON, keep it as a string
-              console.log('Tanggapan is not in JSON format, keeping as string:', e.message);
-            }
-          } else {
-            console.log('No tanggapan data received from API');
-          }
-          
-          console.log('Final tanggapan value:', this.laporan.tanggapan);
-          console.log('hasTanggapan computed property:', this.hasTanggapan);
-          
-          this.tanggapanText = '';
-          this.loading = false;
-        } catch (apiError) {
-          console.error('Error fetching laporan detail:', apiError);
-          
-          // Fallback data jika API gagal
-          console.log("Using fallback data for development");
-
-          this.error = null;
-          this.loading = false;
-          this.tanggapanText = '';
         }
+        
+        // Process image paths
+        if (this.laporan.image_path) {
+          this.imagePaths = this.parseImagePaths(this.laporan.image_path);
+          
+          // Store in laporan object for consistency
+          this.laporan.image_paths = this.imagePaths;
+        }
+        
+        // Process tanggapan data
+        if (this.laporan.tanggapan) {
+          try {
+            const parsed = JSON.parse(this.laporan.tanggapan);
+            if (Array.isArray(parsed)) {
+              this.laporan.tanggapan = parsed;
+            }
+          } catch (e) {
+            // If it's not valid JSON, keep it as a string
+            console.log('Tanggapan is not in JSON format or already parsed');
+          }
+        }
+        
+        this.tanggapanText = '';
+        this.loading = false;
       } catch (error) {
-        console.error('Error in fetchLaporan:', error);
-        this.error = 'Gagal memuat data laporan. Silakan coba lagi.';
+        console.error('Error fetching laporan:', error);
+        
+        if (error.response) {
+          this.error = `Error ${error.response.status}: ${error.response.data.message || 'Gagal memuat data laporan'}`;
+        } else if (error.request) {
+          this.error = 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
+        } else {
+          this.error = error.message || 'Gagal memuat data laporan';
+        }
+        
         this.loading = false;
       }
+    },
+    
+    openFullImage(index) {
+      if (this.imagePaths && this.imagePaths.length > index) {
+        this.currentImageIndex = index;
+        this.currentFullImageUrl = this.getImageUrlForPath(this.imagePaths[index]);
+        this.showFullImage = true;
+      }
+    },
+    
+    nextImage(e) {
+      if (e) e.stopPropagation();
+      if (!this.imagePaths || this.imagePaths.length <= 1) return;
+      
+      this.currentImageIndex = (this.currentImageIndex + 1) % this.imagePaths.length;
+      this.currentFullImageUrl = this.getImageUrlForPath(this.imagePaths[this.currentImageIndex]);
+    },
+    
+    prevImage(e) {
+      if (e) e.stopPropagation();
+      if (!this.imagePaths || this.imagePaths.length <= 1) return;
+      
+      this.currentImageIndex = (this.currentImageIndex - 1 + this.imagePaths.length) % this.imagePaths.length;
+      this.currentFullImageUrl = this.getImageUrlForPath(this.imagePaths[this.currentImageIndex]);
     },
     
     goBack() {
@@ -391,7 +677,7 @@ export default {
         return date.toLocaleDateString('id-ID', options);
       } catch (e) {
         console.error('Error formatting date:', e);
-        return dateString;
+        return dateString || '-';
       }
     },
     
@@ -403,146 +689,19 @@ export default {
         'finished': 'Laporan Selesai',
       };
       
-      return statusMap[status] || status;
+      return statusMap[status] || status || '-';
     },
     
     getCategoryName(categoryId) {
       return this.categories[categoryId] || `Kategori ${categoryId}`;
     },
     
-    getImageUrl(imagePath) {
-      if (!imagePath) return '';
-      
-      // Cek jika imagePath adalah URL lengkap
-      if (imagePath.startsWith('http')) {
-        return imagePath;
-      }
-      
-      return `http://localhost:8000/storage/laporan/${imagePath}`;
-    },
-    
     checkUserRole() {
       // Implement your logic to check if user is admin
-      // Example:
-      // const userRole = localStorage.getItem('userRole');
-      // this.isAdmin = userRole === 'admin';
-      
       // For demonstration, set to true
       this.isAdmin = true;
     },
     
-    verifyReport() {
-      this.showVerificationModal = true;
-    },
-    
-    async confirmVerification() {
-      this.isVerifying = true;
-      
-      try {
-        // Your verification API call
-        await axios.put(`http://localhost:8000/api/laporan/update_status/${this.laporanId}`, {
-          status: 'verified'
-        });
-        
-        // Update local data after successful verification
-        this.laporan.status = 'verified';
-        
-        // Show success message
-        Swal.fire({
-          icon: 'success',
-          title: 'Berhasil!',
-          text: 'Laporan berhasil diverifikasi',
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 3000
-        });
-      } catch (error) {
-        console.error('Verification failed:', error);
-        // Show error message
-        Swal.fire({
-          icon: 'error',
-          title: 'Gagal!',
-          text: 'Gagal memverifikasi laporan',
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 3000
-        });
-      } finally {
-        this.isVerifying = false;
-        this.showVerificationModal = false; // Close the modal after processing
-      }
-    },
-    
-    async rejectReport() {
-      try {
-        if (!this.laporanId) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Laporan ID tidak ditemukan',
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000
-          });
-          return;
-        }
-        
-        // Log what we're sending to help debug
-        console.log('Rejecting report:', {
-          laporanId: this.laporanId
-        });
-        
-        // Make the API call using POST with _method: PUT
-        const formData = new FormData();
-        formData.append('_method', 'PUT');
-        formData.append('status', 'rejected');
-
-        const response = await axios.post(
-          `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
-          formData
-        );
-                      
-        // Check if response has data
-        console.log('Response:', response);
-        
-        // Update local data after successful rejection
-        this.laporan.status = 'rejected';
-        
-        // Show success message with Swal
-        Swal.fire({
-          icon: 'success',
-          title: 'Berhasil!',
-          text: 'Laporan berhasil ditolak',
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 3000
-        });
-        
-        // Refresh data
-        await this.fetchLaporan(this.laporanId);
-        
-      } catch (error) {
-        console.error('Error rejecting report:', error);
-        // Safely access error message with optional chaining
-        const errorMessage = error.response?.data?.message || 'Gagal menolak laporan';
-        
-        // Show error message with Swal
-        Swal.fire({
-          icon: 'error',
-          title: 'Gagal!',
-          text: `Gagal menolak laporan: ${errorMessage}`,
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 3000
-        });
-      }
-    },
-
     async finishReport() {
       try {
         if (!this.laporanId) {
@@ -557,8 +716,6 @@ export default {
           });
           return;
         }
-        
-        console.log('Before finishing - Current tanggapan:', this.laporan.tanggapan);
         
         // Show confirmation dialog first
         const result = await Swal.fire({
@@ -585,35 +742,20 @@ export default {
         if (this.laporan.tanggapan) {
           let tanggapanData = this.laporan.tanggapan;
           
-          console.log('Type of tanggapan data:', typeof tanggapanData);
-          
           // If it's already a string (old format), keep it as is
           if (typeof tanggapanData !== 'string') {
             // If it's an array (new format), convert it to JSON string
             tanggapanData = JSON.stringify(tanggapanData);
-            console.log('Converted tanggapan data to string:', tanggapanData);
-          } else {
-            console.log('Tanggapan was already a string:', tanggapanData);
           }
           
           formData.append('tanggapan', tanggapanData);
-        } else {
-          console.log('No tanggapan data to preserve');
-        }
-
-        // Log form data being sent
-        for (let [key, value] of formData.entries()) {
-          console.log(`${key}: ${value}`);
         }
 
         const response = await axios.post(
-          `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+          `${this.apiBaseUrl}/laporan/update_status/${this.laporanId}`, 
           formData
         );
                       
-        // Check if response has data
-        console.log('Response from status update:', response.data);
-        
         // Update local data after successful completion
         this.laporan.status = 'finished';
         
@@ -630,8 +772,6 @@ export default {
         
         // Refresh data to ensure we have the latest tanggapan
         await this.fetchLaporan(this.laporanId);
-        console.log('After refresh - tanggapan:', this.laporan.tanggapan);
-        console.log('After refresh - hasTanggapan:', this.hasTanggapan);
         
       } catch (error) {
         console.error('Error finishing report:', error);
@@ -679,15 +819,13 @@ export default {
         }
         
         const response = await axios.post(
-          `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+          `${this.apiBaseUrl}/laporan/update_status/${this.laporanId}`, 
           formData
         );
         
-        console.log('Response:', response);
-        
         // Get the updated data to get the new updated_at timestamp
-        const updatedResponse = await axios.get(`http://localhost:8000/api/laporan/${this.laporanId}`);
-        const updatedData = updatedResponse.data;
+        const updatedResponse = await axios.get(`${this.apiBaseUrl}/laporan/${this.laporanId}`);
+        const updatedData = updatedResponse.data.data || updatedResponse.data;
         
         // Now create the tanggapan array with the new timestamp from updated_at
         // Create a new response object with text and timestamp from the API's updated_at
@@ -732,7 +870,7 @@ export default {
 
         // Make second API call to update with the array
         await axios.post(
-          `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+          `${this.apiBaseUrl}/laporan/update_status/${this.laporanId}`, 
           arrayFormData
         );
         
@@ -761,13 +899,6 @@ export default {
       } catch (error) {
         console.error('Error saving tanggapan:', error);
         
-        // More detailed error logging for debugging
-        if (error.response) {
-          console.error('Error response data:', error.response.data);
-          console.error('Error response status:', error.response.status);
-          console.error('Error response headers:', error.response.headers);
-        }
-        
         // Try to get a more specific error message
         const errorMessage = error.response?.data?.message || 
                       error.response?.data?.error || 
@@ -789,6 +920,7 @@ export default {
 </script>
 
 <style scoped>
+/* All styles remain the same, just adding the new ones for image grid */
 .detail-laporan-container {
   display: flex;
   flex-direction: column;
@@ -812,6 +944,12 @@ export default {
   align-items: center;
   justify-content: center;
   height: 300px;
+}
+
+.error-container {
+  text-align: center;
+  padding: 20px;
+  max-width: 500px;
 }
 
 .spinner {
@@ -959,10 +1097,33 @@ export default {
   margin-bottom: 10px;
 }
 
-.kejadian-image {
-  max-width: 100%;
-  border-radius: 4px;
+/* Image grid styles */
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.image-item {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.kejadian-image-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.kejadian-image-thumbnail:hover {
+  transform: scale(1.05);
 }
 
 .image-caption {
@@ -1002,6 +1163,15 @@ export default {
   color: white;
 }
 
+.btn-success {
+  background-color: #10b981;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #059669;
+}
+
 /* Fullscreen modal */
 .fullscreen-modal {
   position: fixed;
@@ -1030,6 +1200,45 @@ export default {
   font-size: 32px;
   font-weight: bold;
   cursor: pointer;
+}
+
+/* Image navigation */
+.image-navigation {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-button {
+  background-color: rgba(255, 255, 255, 0.3);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: 0 10px;
+  transition: background-color 0.2s;
+}
+
+.nav-button:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.image-counter {
+  color: white;
+  font-size: 16px;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 5px 10px;
+  border-radius: 15px;
 }
 
 /* Modal overlay */
@@ -1119,7 +1328,7 @@ export default {
   border: none;
 }
 
-/* Tanggapan styling from DetailPK.vue */
+/* Tanggapan styling */
 .tanggapan-list {
   display: flex;
   flex-direction: column;
@@ -1157,15 +1366,6 @@ export default {
   margin: 0;
 }
 
-.btn-success {
-  background-color: #10b981;
-  color: white;
-}
-
-.btn-success:hover {
-  background-color: #059669;
-}
-
 .status-finished {
   background-color: #d1fae5;
   color: #059669;
@@ -1196,6 +1396,10 @@ export default {
   .btn {
     width: 100%;
     margin-bottom: 10px;
+  }
+  
+  .image-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

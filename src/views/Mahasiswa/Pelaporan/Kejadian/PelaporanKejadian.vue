@@ -478,11 +478,23 @@ export default {
         },
         
         filteredCategories() {
-            const filtered = {};
+            // Convert to array of [id, name] pairs for easier sorting and filtering
+            const entries = Object.entries(this.categories);
             
-            for (const [id, name] of Object.entries(this.categories)) {
-                if (!name.startsWith('Kekerasan')) {
+            // Filter and sort entries
+            const uniqueEntries = entries
+                .filter(([_, name]) => !name.startsWith('Kekerasan'))
+                .sort(([_, nameA], [__, nameB]) => nameA.localeCompare(nameB));
+            
+            // Keep track of names we've seen
+            const seenNames = new Set();
+            
+            // Create result object with only unique names
+            const filtered = {};
+            for (const [id, name] of uniqueEntries) {
+                if (!seenNames.has(name)) {
                     filtered[id] = name;
+                    seenNames.add(name);
                 }
             }
             
@@ -596,7 +608,6 @@ export default {
                 const encryptedUserData = VueCookies.get("user_session");
                 if (encryptedUserData) {
                     this.userData = decryptData(encryptedUserData);
-                    console.log("User data loaded successfully");
                     return true;
                 }
                 return false;
@@ -608,14 +619,22 @@ export default {
         
         // Method to setup authentication for API requests
         setupAuth() {
-            // Get the auth token from the cookie
             const token = this.getAuthToken();
+            
             if (token) {
-                // Set the Authorization header for all subsequent requests
+                // Make sure Authorization header is set correctly for the new API
                 axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                
+                // You might need to add these headers for CORS if the API requires them
+                axios.defaults.headers.common['Accept'] = 'application/json';
+                axios.defaults.headers.common['Content-Type'] = 'application/json';
+                
                 return true;
+            } else {
+                console.error("No auth token found in cookies");
+                this.error = "Sesi login Anda sudah berakhir. Silakan login kembali.";
+                return false;
             }
-            return false;
         },
         
         // Fetch data with proper authentication
@@ -631,7 +650,7 @@ export default {
                 this.setupAuth();
                 
                 // Fetch categories
-                const categoriesResponse = await axios.get('http://localhost:8000/api/category');
+                const categoriesResponse = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
                 
                 // Store categories
                 this.categories = categoriesResponse.data.reduce((acc, category) => {
@@ -643,7 +662,7 @@ export default {
                 this.jenisKejadianList = categoriesResponse.data.map(category => category.nama);
                 
                 // Fetch reports
-                const laporanResponse = await axios.get('http://localhost:8000/api/laporan');
+                const laporanResponse = await axios.get('https://v3422040.mhs.d3tiuns.com/api/laporan');
                 
                 // Store all reports initially
                 this.laporan = laporanResponse.data;
@@ -656,7 +675,6 @@ export default {
                         (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || 
                                             item.ni_pelapor === this.userData.nik))
                     );
-                    console.log(`Filtered to ${this.laporan.length} reports for user: ${userName}`);
                 }
                 
                 // Calculate summary statistics
