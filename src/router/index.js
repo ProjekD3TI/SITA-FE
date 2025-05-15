@@ -263,20 +263,6 @@ const routes = [
             ],
           },
           {
-            path: "seminar-proposal",
-            component: SeminarProposalforDosen,
-            meta: {
-              breadcrumb: "Seminar Proposal",
-            },
-          },
-          {
-            path: "seminar-hasil",
-            component: SeminarHasilforDosen,
-            meta: {
-              breadcrumb: "Seminar Hasil",
-            },
-          },
-          {
             path: "ujian-ta",
             component: UjianTAforDosen,
             meta: {
