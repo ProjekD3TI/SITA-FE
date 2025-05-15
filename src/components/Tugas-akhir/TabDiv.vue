@@ -1,74 +1,3 @@
-<template>
-  <div class="mx-auto">
-    <!-- Tab Navigation -->
-    <div class="flex -space-x-1 2xl:-space-x-2">
-      <button
-        v-for="tab in tabItems"
-        :key="tab.id"
-        class="py-3 xl:py-4 body3-bold flex gap-2 items-center duration-200 transition-all ease-in-out"
-        :class="[
-          activeTab === tab.id 
-            ? 'text-primary trapezium-tab z-10 pe-8 lg:pe-12  ps-4 lg:ps-6 ' 
-            : 'hover:opacity-100 trapezium-tab opacity-50 pe-5 xl:pe-8 2xl:pe-12  ps-4 xl:ps-6 '
-        ]"
-        @click="selectTab(tab.id)"
-      >
-        <!-- Icon Tab (jika ada) -->
-          <svg 
-            v-if="tab.icon" 
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="w-6 h-6 relative z-20"
-          >
-            <path :d="tab.icon" />
-          </svg>
-
-
-        <!-- Teks Tab -->
-        <span class="2xl:inline relative z-20" 
-            :class="[
-            activeTab === tab.id 
-              ? 'hidden sm:inline' 
-              : 'hidden'
-          ]">
-          {{ tab.label }} 
-          <!-- Counter/Badge (jika ada) -->
-          <span 
-            v-if="tab.count !== undefined" 
-            class="text-sm px-2 py-0.5 ml-1 rounded-full text-white"
-            :class="[
-              activeTab === tab.id 
-                ? 'bg-primary' 
-                : 'bg-placeholder',
-              tab.countClass || ''
-            ]"
-          >
-            {{ tab.count }}
-          </span>
-        </span>
-        <div v-if="tab.count !== undefined && activeTab != tab.id" class="2xl:hidden absolute top-2 left-3 xl:top-4 xl:left-5 w-3 h-3 bg-primary rounded-full border-2 border-white z-20 duration-200"></div>
-      </button>
-    </div>
-    
-    <!-- Tab Content -->
-    <div class="rounded-r-[16px] rounded-bl-[16px] bg-white p-4 lg:p-8">
-      <slot v-if="!useNamedSlots" :active-tab="activeTab"></slot>
-      
-      <!-- Named slots for each tab -->
-      <template v-else>
-        <div v-for="tab in tabItems" :key="tab.id" v-show="activeTab === tab.id">
-          <slot :name="tab.id" :tab="tab"></slot>
-        </div>
-      </template>
-    </div>
-  </div>
-</template>
-
 <script setup>
 import { computed, ref, useSlots } from 'vue';
 
@@ -153,6 +82,76 @@ defineExpose({
   activeTab
 });
 </script>
+
+<template>
+  <div class="mx-auto">
+    <!-- Tab Navigation -->
+    <div class="flex -space-x-1 2xl:-space-x-2">
+      <button
+        v-for="tab in tabItems"
+        :key="tab.id"
+        class="py-3 xl:py-4 body3-bold flex gap-2 items-center duration-200 transition-all ease-in-out"
+        :class="[
+          activeTab === tab.id 
+            ? 'text-primary trapezium-tab z-10 pe-8 lg:pe-12 ps-4 lg:ps-6' 
+            : 'hover:opacity-100 trapezium-tab opacity-50 pe-5 xl:pe-8 2xl:pe-12 ps-4 xl:ps-6'
+        ]"
+        @click="selectTab(tab.id)"
+      >
+        <!-- Icon Tab (jika ada) -->
+        <svg 
+          v-if="tab.icon" 
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="w-6 h-6 relative z-20"
+        >
+          <path :d="tab.icon" />
+        </svg>
+
+        <!-- Teks Tab -->
+        <span class="2xl:inline relative z-20" 
+            :class="[
+            activeTab === tab.id 
+              ? 'hidden sm:inline' 
+              : 'hidden'
+          ]">
+          {{ tab.label }} 
+          <!-- Counter/Badge (jika ada) -->
+          <span 
+            v-if="tab.count !== undefined" 
+            class="text-sm px-2 py-0.5 ml-1 rounded-full text-white"
+            :class="[
+              activeTab === tab.id 
+                ? 'bg-primary' 
+                : 'bg-placeholder',
+              tab.countClass || ''
+            ]"
+          >
+            {{ tab.count }}
+          </span>
+        </span>
+        <div v-if="tab.count !== undefined && activeTab != tab.id" class="2xl:hidden absolute top-2 left-3 xl:top-4 xl:left-5 w-3 h-3 bg-primary rounded-full border-2 border-white z-20 duration-200"></div>
+      </button>
+    </div>
+    
+    <!-- Tab Content - Modified to apply correct overflow -->
+    <div class="rounded-r-[16px] rounded-bl-[16px] bg-white p-4 lg:p-8 overflow-x-auto">
+        <slot v-if="!useNamedSlots" :active-tab="activeTab"></slot>
+        
+        <!-- Named slots for each tab -->
+        <template v-else>
+          <div v-for="tab in tabItems" :key="tab.id" v-show="activeTab === tab.id">
+            <slot :name="tab.id" :tab="tab"></slot>
+          </div>
+        </template>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .trapezium-tab {

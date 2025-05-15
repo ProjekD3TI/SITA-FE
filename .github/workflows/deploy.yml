@@ -1,0 +1,42 @@
+on:
+  push:
+    branches: [tugas-akhir]
+name: 🚀 Deploy Vue frontend
+jobs:
+  web-deploy:
+    name: 🎉 Build and Deploy Vue
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🚚 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🧰 Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.15.0'
+
+      - name: 📦 Install dependencies
+        run: npm install
+
+      - name: 🔐 Generate and write .env
+        run: |
+          echo "VITE_ENCRYPTION_KEY=$(openssl rand --hex 32)" > .env
+          echo "VITE_API_BASE_URL=https://v3423085.mhs.d3tiuns.com/api/" >> .env
+          cat .env
+
+      - name: 🛠️ Build Vue project
+        run: npm run build
+
+      - name: 📂 Upload dist folder via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftp
+          port: ${{ secrets.FTP_PORT }}
+          local-dir: dist/
+          exclude: |
+            **/.git*
+            **/node_modules/*
