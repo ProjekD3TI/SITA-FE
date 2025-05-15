@@ -22,12 +22,16 @@ import TambahBimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan/Tamb
 import ProposalforMhs from "../views/Mahasiswa/Tugas-akhir/Proposal.vue";
 import TugasAkhirforMhs from "../views/Mahasiswa/Tugas-akhir/UjianTA/Daftar.vue";
 import detailUjianTAforMhs from "../views/Mahasiswa/Tugas-akhir/UjianTA/Detail.vue";
-// Route Dosen TA 
+// Route Dosen TA
 import DashboardTADosen from "../views/Dosen/Tugas-akhir/Dashboard.vue";
 import BimbinganforDosen from "../views/Dosen/Tugas-akhir/Bimbingan.vue";
+import DetailBimbinganforDosen from "../views/Dosen/Tugas-akhir/DetailBimbingan.vue";
+import InputNilaiBimbinganforDosen from "@/views/Dosen/Tugas-akhir/InputNilaiBimbingan.vue";
 import SeminarProposalforDosen from "../views/Dosen/Tugas-akhir/SeminarProposal.vue";
 import SeminarHasilforDosen from "../views/Dosen/Tugas-akhir/SeminarHasil.vue";
 import UjianTAforDosen from "../views/Dosen/Tugas-akhir/UjianTA.vue";
+import detailUjianTAforDosen from "@/views/Dosen/Tugas-akhir/DetailUjianTA.vue";
+import path from "path";
 
 //define a routes
 const routes = [
@@ -130,16 +134,14 @@ const routes = [
       import(/* webpackChunkName: "login" */ "../views/404/404.vue"),
   },
 
-
-
   // Mahasiswa
   {
     path: "/mahasiswa",
     meta: { requiresAuth: true, userType: "mahasiswa" },
     children: [
       {
-        path: '',
-        redirect: '/'
+        path: "",
+        redirect: "/",
       },
       {
         path: "dashboard",
@@ -152,58 +154,58 @@ const routes = [
         component: () => import("../views/Mahasiswa/Profile.vue"),
       },
       {
-        path: 'tugas-akhir',
+        path: "tugas-akhir",
         component: UserLayoutTA, // Gunakan AdminLayout sebagai layout
         meta: {
-          breadcrumb: 'Tugas Akhir'
+          breadcrumb: "Tugas Akhir",
         },
-        name: 'DashboardTugasAkhirMhs',
+        name: "DashboardTugasAkhirMhs",
         children: [
           {
-            path: '',
-            component: DashboardTAMhs,         
+            path: "",
+            component: DashboardTAMhs,
             meta: {
-              breadcrumb: 'Dashboard'
-            }
+              breadcrumb: "Dashboard",
+            },
           },
           {
-            path: 'bimbingan',
-            component: BimbinganforMhs,         
+            path: "bimbingan",
+            component: BimbinganforMhs,
             meta: {
-              breadcrumb: 'Bimbingan'
+              breadcrumb: "Bimbingan",
             },
             children: [
               {
-                path: 'tambah-bimbingan',
+                path: "tambah-bimbingan",
                 component: TambahBimbinganforMhs,
                 meta: {
-                  breadcrumb: 'Tambah Bimbingan'
-                }
-              }
-            ]
+                  breadcrumb: "Tambah Bimbingan",
+                },
+              },
+            ],
           },
           {
-            path: 'proposal',
-            component: ProposalforMhs,         
+            path: "proposal",
+            component: ProposalforMhs,
             meta: {
-              breadcrumb: 'Proposal'
+              breadcrumb: "Proposal",
             },
           },
           {
-            path: 'ujian-ta',
-            component: TugasAkhirforMhs,         
+            path: "ujian-ta",
+            component: TugasAkhirforMhs,
             meta: {
-              breadcrumb: 'Tugas Akhir'
+              breadcrumb: "Tugas Akhir",
             },
             children: [
               {
-                path: 'detail-ujian-ta',
+                path: "detail-ujian-ta",
                 component: detailUjianTAforMhs,
                 meta: {
-                  breadcrumb: 'Detail'
-                }
-              }
-            ]
+                  breadcrumb: "Detail",
+                },
+              },
+            ],
           },
         ],
       },
@@ -217,8 +219,8 @@ const routes = [
     meta: { requiresAuth: true, userType: "dosen" },
     children: [
       {
-        path: '',
-        redirect: '/'
+        path: "",
+        redirect: "/",
       },
       {
         path: "profile",
@@ -226,48 +228,72 @@ const routes = [
         component: () => import("../views/Dosen/Profile.vue"),
       },
       {
-        path: 'tugas-akhir',
+        path: "tugas-akhir",
         component: DosenLayout, // Gunakan AdminLayout sebagai layout
         meta: {
-          breadcrumb: 'Tugas Akhir'
+          breadcrumb: "Tugas Akhir",
         },
         children: [
           {
-            path: '',
+            path: "",
             component: DashboardTADosen,
             meta: {
-              breadcrumb: 'Dashboard'
-            } 
-          },
-          {
-            path: 'bimbingan',
-            component: BimbinganforDosen, 
-            meta: {
-              breadcrumb: 'Bimbingan'
+              breadcrumb: "Dashboard",
             },
           },
           {
-            path: 'seminar-proposal',
-            component: SeminarProposalforDosen ,
+            path: "bimbingan",
+            component: BimbinganforDosen,
             meta: {
-              breadcrumb: 'Seminar Proposal'
-            }
+              breadcrumb: "Bimbingan",
+            },
+            children: [
+              {
+                path: "detail-bimbingan",
+                component: DetailBimbinganforDosen,
+                meta: {
+                  breadcrumb: "Detail",
+                },
+                children: [
+                  {
+                    path: "input-nilai-bimbingan",
+                    component: InputNilaiBimbinganforDosen,
+                    meta: { breadcrumb: "Input Nilai" },
+                  },
+                ],
+              },
+            ],
           },
           {
-            path: 'seminar-hasil',
-            component: SeminarHasilforDosen, 
+            path: "seminar-proposal",
+            component: SeminarProposalforDosen,
             meta: {
-              breadcrumb: 'Seminar Hasil'
-            }
+              breadcrumb: "Seminar Proposal",
+            },
           },
           {
-            path: 'ujian-ta',
-            component: UjianTAforDosen, 
+            path: "seminar-hasil",
+            component: SeminarHasilforDosen,
             meta: {
-              breadcrumb: 'Ujian Tugas Akhir'
-            }
+              breadcrumb: "Seminar Hasil",
+            },
           },
-    
+          {
+            path: "ujian-ta",
+            component: UjianTAforDosen,
+            meta: {
+              breadcrumb: "Ujian Tugas Akhir",
+            },
+            children: [
+              {
+                path: "detail-ujian-ta",
+                component: detailUjianTAforDosen,
+                meta: {
+                  breadcrumb: "Detail",
+                },
+              },
+            ],
+          },
         ],
       },
     ],
@@ -367,46 +393,51 @@ const routes = [
     path: "/admin-ta/tugas-akhir",
     name: "DashboardAdminTa",
     component: AdminLayoutTA,
-    meta: { requiresAuth: true, userType: "admin", requiredRole: "admin_ta", breadcrumb: 'Tugas Akhir' },
+    meta: {
+      requiresAuth: true,
+      userType: "admin",
+      requiredRole: "admin_ta",
+      breadcrumb: "Tugas Akhir",
+    },
     children: [
       // {
       //   path: '',
       //   redirect: '/admin-ta/tugas-akhir/dashboard'
       // },
       {
-        path: '',
+        path: "",
         component: DashboardTAAdmin,
         meta: {
-          breadcrumb: 'Dashboard'
-        } 
+          breadcrumb: "Dashboard",
+        },
       },
       {
-        path: 'bimbingan',
+        path: "bimbingan",
         component: BimbinganforAdmin,
         meta: {
-          breadcrumb: 'Bimbingan'
-        } 
+          breadcrumb: "Bimbingan",
+        },
       },
       {
-        path: 'proposal',
+        path: "proposal",
         component: ProposalforAdmin,
         meta: {
-          breadcrumb: 'Proposal'
-        } 
+          breadcrumb: "Proposal",
+        },
       },
       {
-        path: 'ujian-ta',
+        path: "ujian-ta",
         component: TugasAkhirforAdmin,
         meta: {
-          breadcrumb: 'ujian-ta'
-        } 
+          breadcrumb: "ujian-ta",
+        },
       },
       {
-        path: 'ruang-sesi',
+        path: "ruang-sesi",
         component: RuangSesiforAdmin,
         meta: {
-          breadcrumb: 'ruang-sesi'
-        } 
+          breadcrumb: "ruang-sesi",
+        },
       },
     ],
   },
@@ -431,9 +462,8 @@ const routes = [
 
   {
     path: "/:pathMatch(.*)*",
-    redirect: "/404"
-  }
-
+    redirect: "/404",
+  },
 
   // {
   //   path: "/admin-pengelola/dashboard",
