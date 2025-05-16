@@ -4,8 +4,6 @@ import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import FlowBar from "@/components/Tugas-akhir/FlowBar.vue";
 import LineChart from "@/components/Tugas-akhir/Dashboard/LineChart.vue";
 import DoughnurtChart from "@/components/Tugas-akhir/Dashboard/DoughnutChart.vue";
-import InformationCardGrup from "@/components/Tugas-akhir/Dashboard/InformationCardGrup.vue";
-import SummaryCard from "@/components/Tugas-akhir/SummaryCard.vue";
 
 const students = ref([
   {
