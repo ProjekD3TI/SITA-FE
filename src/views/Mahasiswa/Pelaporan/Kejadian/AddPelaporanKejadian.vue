@@ -50,37 +50,135 @@
                   </div>
                   
                   <div class="mb-4">
-                    <label for="lampiran" class="block text-sm font-medium text-gray-700 mb-1">Lampiran Foto <span class="text-red-500">*</span></label>
-                    <input 
-                      type="file" 
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                      :class="{ 'border-red-500': errors.image_path || errors['image_path.0'] }"
-                      id="lampiran" 
-                      accept="image/*"
-                      @change="handleFileUpload"
-                      multiple
-                      required
-                    >
-                    <p class="text-xs text-gray-500 mt-1">Anda dapat memilih beberapa foto sekaligus</p>
-                    <div v-if="errors.image_path" class="text-red-500 text-sm mt-1">{{ errors.image_path[0] }}</div>
-                    <div v-if="errors['image_path.0']" class="text-red-500 text-sm mt-1">{{ errors['image_path.0'][0] }}</div>
-                    
-                    <!-- Image previews with remove buttons -->
-                    <div v-if="imagePreviews.length > 0" class="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
-                      <div v-for="(preview, index) in imagePreviews" :key="index" class="relative">
-                        <img :src="preview" alt="Preview" class="h-32 w-full object-cover rounded-md border border-gray-300">
-                        <button 
-                          type="button" 
-                          @click="removeImage(index)" 
-                          class="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-red-100"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+  <!-- Label and Input -->
+  <label for="lampiran" class="block text-sm font-medium text-gray-700 mb-1">
+    Lampiran Foto <span class="text-red-500" aria-hidden="true">*</span>
+    <span class="sr-only">wajib</span>
+  </label>
+  
+  <input 
+    type="file" 
+    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200" 
+    :class="{ 
+      'border-red-500 focus:ring-red-500 focus:border-red-500': errors.image_path || errors['image_path.0'],
+      'cursor-pointer': !loading
+    }"
+    id="lampiran" 
+    accept="image/jpeg,image/jpg,image/png"
+    @change="handleFileUpload"
+    multiple
+    required
+    :disabled="loading"
+    aria-describedby="lampiran-help lampiran-error"
+  >
+  
+  <!-- Help Text -->
+  <p 
+    id="lampiran-help" 
+    class="text-xs text-gray-500 mt-1 flex items-center gap-1"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span>
+      Anda dapat memilih beberapa foto sekaligus (Format: JPG, PNG, maks. 2MB per file)
+    </span>
+  </p>
+
+  <!-- Error Messages -->
+  <div 
+    v-if="errors.image_path || errors['image_path.0']" 
+    id="lampiran-error" 
+    class="text-red-500 text-sm mt-1"
+    role="alert"
+  >
+    <p v-if="errors.image_path">{{ Array.isArray(errors.image_path) ? errors.image_path[0] : errors.image_path }}</p>
+    <p v-if="errors['image_path.0']">{{ Array.isArray(errors['image_path.0']) ? errors['image_path.0'][0] : errors['image_path.0'] }}</p>
+  </div>
+  
+  <!-- Image Preview Grid -->
+  <div 
+    v-if="imagePreviews.length > 0" 
+    class="mt-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
+    role="list"
+    aria-label="Pratinjau foto yang diunggah"
+  >
+    <div 
+      v-for="(preview, index) in imagePreviews" 
+      :key="index" 
+      class="relative group"
+      role="listitem"
+    >
+      <!-- Image Preview -->
+      <div class="relative aspect-square">
+        <img 
+          :src="preview" 
+          :alt="`Preview foto ${index + 1}`"
+          class="h-full w-full object-cover rounded-md border border-gray-300 transition-opacity duration-200"
+          :class="{ 'group-hover:opacity-75': !loading }"
+        >
+        
+        <!-- Loading Overlay -->
+        <div 
+          v-if="loading" 
+          class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-md"
+        >
+          <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Remove Button -->
+      <button 
+        type="button" 
+        @click="removeImage(index)" 
+        class="absolute top-1 right-1 bg-white rounded-full p-1.5 shadow-lg hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200"
+        :disabled="loading"
+        :aria-label="`Hapus foto ${index + 1}`"
+      >
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          class="h-4 w-4 text-red-500" 
+          viewBox="0 0 20 20" 
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path 
+            fill-rule="evenodd" 
+            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" 
+            clip-rule="evenodd" 
+          />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div 
+    v-if="!imagePreviews.length && !errors.image_path" 
+    class="mt-3 text-center p-6 border-2 border-dashed border-gray-300 rounded-md"
+  >
+    <svg 
+      class="mx-auto h-12 w-12 text-gray-400" 
+      fill="none" 
+      viewBox="0 0 24 24" 
+      stroke="currentColor"
+      aria-hidden="true"
+    >
+      <path 
+        stroke-linecap="round" 
+        stroke-linejoin="round" 
+        stroke-width="2" 
+        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" 
+      />
+    </svg>
+    <p class="mt-1 text-sm text-gray-500">
+      Pilih atau seret foto ke sini
+    </p>
+  </div>
+</div>
                   
                   <!-- Bukti Pelanggaran Section (new) -->
                   <div class="mb-4">
@@ -857,71 +955,153 @@ export default {
         });
     },
     handleFileUpload(event) {
-      const fileInput = event.target;
-      const files = fileInput.files;
-      
-      // Validate files
-      if (!files || files.length === 0) {
-        this.errors.image_path = ['Tidak ada file yang dipilih'];
-        return;
-      }
-      
-      // Reset image arrays
-      this.form.image_path = [];
-      this.imagePreviews = [];
-      
-      // Define restrictions
-      const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB limit
-      const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
-      let hasError = false;
-      
-      // Process each file
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        
-        // Check file type
-        if (!ALLOWED_TYPES.includes(file.type.toLowerCase())) {
-          this.errors.image_path = [`File "${file.name}" memiliki format yang tidak didukung. Gunakan format JPG atau PNG.`];
-          hasError = true;
-          break;
-        }
-        
-        // Check file size
-        if (file.size > MAX_FILE_SIZE) {
-          this.errors.image_path = [`File "${file.name}" terlalu besar (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maksimal 2MB per file.`];
-          hasError = true;
-          break;
-        }
-        
-        // Add file to array
-        this.form.image_path.push(file);
-        
-        // Create image preview
-        const reader = new FileReader();
-        reader.onload = (e) => {
+  const fileInput = event.target;
+  const files = fileInput.files;
+  
+  // Clear previous errors
+  this.errors.image_path = null;
+  delete this.errors['image_path.0'];
+  delete this.errors['image_path.1'];
+  
+  // Validate files
+  if (!files || files.length === 0) {
+    this.errors.image_path = ['Tidak ada file yang dipilih'];
+    return;
+  }
+  
+  // Reset arrays
+  this.form.image_path = [];
+  this.imagePreviews = [];
+  
+  // Define restrictions
+  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB limit
+  const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+  let hasError = false;
+  
+  // Process each file
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    
+    // Validate file object
+    if (!file || !(file instanceof File)) {
+      this.errors.image_path = ['File tidak valid'];
+      hasError = true;
+      break;
+    }
+    
+    // Check file type
+    if (!ALLOWED_TYPES.includes(file.type.toLowerCase())) {
+      this.errors.image_path = [`File "${file.name}" memiliki format yang tidak didukung. Gunakan format JPG atau PNG.`];
+      hasError = true;
+      break;
+    }
+    
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      this.errors.image_path = [
+        `File "${file.name}" terlalu besar (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maksimal 2MB per file.`
+      ];
+      hasError = true;
+      break;
+    }
+    
+    // Add file to array
+    this.form.image_path.push(file);
+    
+    // Create image preview with error handling
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        if (e.target && e.target.result) {
           this.imagePreviews.push(e.target.result);
-        };
-        reader.readAsDataURL(file);
+        }
+      } catch (error) {
+        console.error('Error creating preview:', error);
+        // Don't break the upload process for preview errors
       }
+    };
+    reader.onerror = (error) => {
+      console.error('Error reading file:', error);
+      // Don't break the upload process for preview errors
+    };
+    
+    // Start reading the file
+    try {
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error initiating file read:', error);
+      // Continue with next file if preview fails
+    }
+  }
+  
+  // If error occurred, clear the file input and arrays
+  if (hasError) {
+    fileInput.value = '';
+    this.form.image_path = [];
+    this.imagePreviews = [];
+    return;
+  }
+  
+  // Validate final state
+  if (this.form.image_path.length === 0) {
+    this.errors.image_path = ['Tidak ada file yang berhasil diunggah'];
+    fileInput.value = '';
+    return;
+  }
+  
+  // Log success for debugging
+  console.log(`Successfully processed ${this.form.image_path.length} files:`, 
+    this.form.image_path.map(f => ({
+      name: f.name,
+      type: f.type,
+      size: `${(f.size / (1024 * 1024)).toFixed(2)}MB`
+    }))
+  );
+},
+removeImage(index) {
+  try {
+    // Validate index
+    if (index < 0 || index >= this.form.image_path.length) {
+      console.error('Invalid image index:', index);
+      return;
+    }
+
+    // Store file info for logging
+    const removedFile = this.form.image_path[index];
+    const fileName = removedFile ? removedFile.name : 'unknown';
+
+    // Remove from both arrays
+    this.imagePreviews.splice(index, 1);
+    this.form.image_path.splice(index, 1);
+
+    // Update error states
+    if (this.form.image_path.length === 0) {
+      this.errors.image_path = ['Lampiran foto harus diunggah'];
       
-      // If error occurred, clear the file input
-      if (hasError) {
+      // Clear any indexed error messages
+      delete this.errors['image_path.0'];
+      delete this.errors['image_path.1'];
+      
+      // Reset file input if it exists
+      const fileInput = document.querySelector('input[type="file"]');
+      if (fileInput) {
         fileInput.value = '';
-        return;
       }
-      
-      // Reset errors if we have valid files
-      if (this.form.image_path.length > 0) {
-        this.errors.image_path = null;
-        this.errors['image_path.0'] = null;
-        this.errors['image_path.1'] = null;
-      }
-    },
-    removeImage(index) {
-      // Remove both the preview and the file from arrays
-      this.imagePreviews.splice(index, 1);
-      this.form.image_path.splice(index, 1);
-    },
+    } else {
+      // Clear any existing error messages since we still have files
+      this.errors.image_path = null;
+      delete this.errors['image_path.0'];
+      delete this.errors['image_path.1'];
+    }
+
+    // Log for debugging
+    console.log(`File "${fileName}" removed successfully. Remaining files: ${this.form.image_path.length}`);
+
+  } catch (error) {
+    console.error('Error removing image:', error);
+    // Don't throw the error to prevent UI disruption
+  }
+},
     checkFileValidity(file) {
       const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
       const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -1084,223 +1264,221 @@ export default {
       return isValid;
     },
     submitForm() {
-      // Validate form first
-      if (!this.validateForm()) {
-        this.$nextTick(() => {
-          const firstError = document.querySelector('.border-red-500');
-          if (firstError) {
-            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        });
-        return;
-      }
-      
-      // Extra validation for images
-      if (!this.form.image_path || !Array.isArray(this.form.image_path) || this.form.image_path.length === 0) {
-        this.errors.image_path = ['Lampiran foto harus diunggah'];
-        return;
-      }
+  try {
+    // Validate form first
+    if (!this.validateForm()) {
+      this.$nextTick(() => {
+        const firstError = document.querySelector('.border-red-500');
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+      return;
+    }
+    
+    // Extra validation for images
+    if (!this.form.image_path || !Array.isArray(this.form.image_path) || this.form.image_path.length === 0) {
+      this.errors.image_path = ['Lampiran foto harus diunggah'];
+      return;
+    }
 
-      // CRITICAL FIX: Validate each image before attempting to upload
-      const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
-      const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+    // Initialize FormData here, before any usage
+    const formData = new FormData();
+    
+    // CRITICAL FIX: Validate each image before attempting to upload
+    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
+    const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+    
+    // Check each image for size and format issues
+    for (let i = 0; i < this.form.image_path.length; i++) {
+      const file = this.form.image_path[i];
       
-      // Check each image for size and format issues
-      for (let i = 0; i < this.form.image_path.length; i++) {
-        const file = this.form.image_path[i];
-        
-        // Check file size
-        if (file.size > MAX_FILE_SIZE) {
-          this.showNotification(
-            'File Terlalu Besar', 
-            `File "${file.name}" berukuran ${(file.size / (1024 * 1024)).toFixed(2)}MB. Maksimal 2MB per file.`,
-            false
-          );
-          return;
-        }
-        
-        // Check file type
-        if (!ALLOWED_TYPES.includes(file.type.toLowerCase())) {
-          this.showNotification(
-            'Format File Tidak Didukung', 
-            `File "${file.name}" memiliki format ${file.type}. Format yang didukung: JPG, PNG.`,
-            false
-          );
-          return;
-        }
-      }
-      
-      this.loading = true;
-      this.errors = {};
-      
-      // Re-check the token before submitting
-      if (!this.getAuthTokenFromCookie()) {
-        this.loading = false;
-        this.showNotification('Error Autentikasi', 'Sesi login Anda telah berakhir. Silakan login kembali untuk melanjutkan.', false);
-        setTimeout(() => {
-          this.$router.push('/mahasiswa/login');
-        }, 2000);
+      // Check file size
+      if (file.size > MAX_FILE_SIZE) {
+        this.showNotification(
+          'File Terlalu Besar', 
+          `File "${file.name}" berukuran ${(file.size / (1024 * 1024)).toFixed(2)}MB. Maksimal 2MB per file.`,
+          false
+        );
         return;
       }
       
-      const formData = new FormData();
-      
-      // Append basic fields
-      formData.append('judul', this.form.judul);
-      formData.append('category_id', this.form.category_id);
-      formData.append('deskripsi', this.form.deskripsi);
-      formData.append('tanggal_kejadian', this.form.tanggal_kejadian);
-      formData.append('profesi', this.form.profesi);
-      formData.append('jenis_kelamin', this.form.jenis_kelamin);
-      formData.append('umur_pelapor', this.form.umur_pelapor);
-      formData.append('agreement', this.form.agreement ? 1 : 0);
-      
-      // Append optional link if provided
-      if (this.form.lampiran_link) {
-        formData.append('lampiran_link', this.form.lampiran_link);
+      // Check file type
+      if (!ALLOWED_TYPES.includes(file.type.toLowerCase())) {
+        this.showNotification(
+          'Format File Tidak Didukung', 
+          `File "${file.name}" memiliki format ${file.type}. Format yang didukung: JPG, PNG.`,
+          false
+        );
+        return;
       }
-      
-      // Append bukti_pelanggaran
-      if (this.form.bukti_pelanggaran && this.form.bukti_pelanggaran.length > 0) {
-        this.form.bukti_pelanggaran.forEach((bukti) => {
-          formData.append('bukti_pelanggaran[]', bukti);
-        });
-      }
-      
-      // FIXED: Use the server's expected format for image uploads
-      console.log("Images to upload:", this.form.image_path.length);
-      
-      // Try both formats to see which one works
+    }
+    
+    this.loading = true;
+    this.errors = {};
+    
+    // Re-check the token before submitting
+    if (!this.getAuthTokenFromCookie()) {
+      this.loading = false;
+      this.showNotification('Error Autentikasi', 'Sesi login Anda telah berakhir. Silakan login kembali untuk melanjutkan.', false);
+      setTimeout(() => {
+        this.$router.push('/mahasiswa/login');
+      }, 2000);
+      return;
+    }
+    
+    // Append basic fields
+    formData.append('judul', this.form.judul);
+    formData.append('category_id', this.form.category_id);
+    formData.append('deskripsi', this.form.deskripsi);
+    formData.append('tanggal_kejadian', this.form.tanggal_kejadian);
+    formData.append('profesi', this.form.profesi);
+    formData.append('jenis_kelamin', this.form.jenis_kelamin);
+    formData.append('umur_pelapor', this.form.umur_pelapor);
+    formData.append('agreement', this.form.agreement ? 1 : 0);
+    
+    // Append optional link if provided
+    if (this.form.lampiran_link) {
+      formData.append('lampiran_link', this.form.lampiran_link);
+    }
+    
+    // Append images using the correct format
+    if (this.form.image_path.length > 0) {
       this.form.image_path.forEach((file, index) => {
-        // Format 1: image_path[] (PHP array style)
         formData.append('image_path[]', file);
-        
-        // Format 2: Explicitly numbered (as a fallback)
-        // formData.append(`image_path[${index}]`, file);
       });
-      
-      // Process terlapor data
-      const validTerlapor = this.form.terlapor.filter(item => 
-        item.nama_lengkap || item.email || item.nomor_telepon || item.status_warga || 
-        item.unit_kerja || item.jenis_kelamin || item.umur_terlapor
-      );
-      
-      if (validTerlapor.length > 0) {
-        validTerlapor.forEach((item, index) => {
-          if (item.nama_lengkap) formData.append(`terlapor[${index}][nama_lengkap]`, item.nama_lengkap);
-          if (item.email) formData.append(`terlapor[${index}][email]`, item.email);
-          if (item.nomor_telepon) formData.append(`terlapor[${index}][nomor_telepon]`, item.nomor_telepon);
-          if (item.status_warga) formData.append(`terlapor[${index}][status_warga]`, item.status_warga);
-          if (item.unit_kerja) formData.append(`terlapor[${index}][unit_kerja]`, item.unit_kerja);
-          if (item.jenis_kelamin) formData.append(`terlapor[${index}][jenis_kelamin]`, item.jenis_kelamin);
-          if (item.umur_terlapor) formData.append(`terlapor[${index}][umur_terlapor]`, item.umur_terlapor);
-        });
-      }
-      
-      // Process saksi data
-      const validSaksi = this.form.saksi.filter(item => 
-        item.nama_lengkap || item.email || item.nomor_telepon
-      );
-      
-      if (validSaksi.length > 0) {
-        validSaksi.forEach((item, index) => {
-          if (item.nama_lengkap) formData.append(`saksi[${index}][nama_lengkap]`, item.nama_lengkap);
-          if (item.email) formData.append(`saksi[${index}][email]`, item.email);
-          if (item.nomor_telepon) formData.append(`saksi[${index}][nomor_telepon]`, item.nomor_telepon);
-        });
-      }
+    }
+    
+    // Process terlapor data
+    const validTerlapor = this.form.terlapor.filter(item => 
+      item.nama_lengkap || item.email || item.nomor_telepon || item.status_warga || 
+      item.unit_kerja || item.jenis_kelamin || item.umur_terlapor
+    );
+    
+    if (validTerlapor.length > 0) {
+      validTerlapor.forEach((item, index) => {
+        if (item.nama_lengkap) formData.append(`terlapor[${index}][nama_lengkap]`, item.nama_lengkap);
+        if (item.email) formData.append(`terlapor[${index}][email]`, item.email);
+        if (item.nomor_telepon) formData.append(`terlapor[${index}][nomor_telepon]`, item.nomor_telepon);
+        if (item.status_warga) formData.append(`terlapor[${index}][status_warga]`, item.status_warga);
+        if (item.unit_kerja) formData.append(`terlapor[${index}][unit_kerja]`, item.unit_kerja);
+        if (item.jenis_kelamin) formData.append(`terlapor[${index}][jenis_kelamin]`, item.jenis_kelamin);
+        if (item.umur_terlapor) formData.append(`terlapor[${index}][umur_terlapor]`, item.umur_terlapor);
+      });
+    }
+    
+    // Process saksi data
+    const validSaksi = this.form.saksi.filter(item => 
+      item.nama_lengkap || item.email || item.nomor_telepon
+    );
+    
+    if (validSaksi.length > 0) {
+      validSaksi.forEach((item, index) => {
+        if (item.nama_lengkap) formData.append(`saksi[${index}][nama_lengkap]`, item.nama_lengkap);
+        if (item.email) formData.append(`saksi[${index}][email]`, item.email);
+        if (item.nomor_telepon) formData.append(`saksi[${index}][nomor_telepon]`, item.nomor_telepon);
+      });
+    }
 
-      // Get auth token
-      const authToken = this.token || VueCookies.get('auth_token');
-      if (!authToken) {
-        this.loading = false;
-        this.showNotification('Error Autentikasi', 'Token autentikasi tidak ditemukan. Silakan login kembali.', false);
-        
-        setTimeout(() => {
-          this.$router.push('/mahasiswa/login');
-        }, 2000);
-        return;
-      }
+    // Get auth token
+    const authToken = this.token || this.$cookies.get('auth_token');
+    if (!authToken) {
+      this.loading = false;
+      this.showNotification('Error Autentikasi', 'Token autentikasi tidak ditemukan. Silakan login kembali.', false);
+      
+      setTimeout(() => {
+        this.$router.push('/mahasiswa/login');
+      }, 2000);
+      return;
+    }
 
-      // Send the request using axios instead of XMLHttpRequest
-      axios.post('https://v3422040.mhs.d3tiuns.com/api/laporan/add_laporan', formData, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'multipart/form-data' // Let axios set the proper content type with boundary
-        },
-        // Display upload progress
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          console.log(`Upload progress: ${percentCompleted}%`);
-        }
-      })
-      .then(response => {
-        this.loading = false;
-        Swal.fire({
-          title: 'Berhasil!',
-          text: 'Laporan berhasil ditambahkan.',
-          icon: 'success',
-          timer: 2000,
-          timerProgressBar: true,
-          showConfirmButton: false
-        }).then(() => {
-          this.$router.push('/pelaporan/kejadian');
-        });
-        this.resetForm();
-      })
-      .catch(error => {
-        this.loading = false;
-        console.error('Error response:', error.response?.status, error.response?.data);
-        
-        if (error.response) {
-          if (error.response.status === 401) {
-            VueCookies.remove("auth_token");
-            VueCookies.remove("user_session");
-            this.token = null;
-            
-            this.showNotification('Error Autentikasi', 'Sesi login Anda telah berakhir. Silakan login kembali untuk melanjutkan.', false);
-            
-            setTimeout(() => {
-              this.$router.push('/mahasiswa/login');
-            }, 2000);
-          } else {
-            // Get error data
-            const errorData = error.response.data;
-            
-            // Check if there's a specific error message about images
-            if (errorData['image_path'] || errorData['image_path.0'] || errorData['image_path.1']) {
-              const errorMsg = errorData['image_path'] || errorData['image_path.0'] || errorData['image_path.1'];
-              
-              this.errors.image_path = Array.isArray(errorMsg) ? errorMsg : [errorMsg];
-              
-              // Show more user-friendly error
-              this.showNotification(
-                'Gagal Mengunggah Gambar', 
-                'Terdapat masalah dengan unggahan gambar. Pastikan ukuran file tidak terlalu besar (maksimal 2MB per file) dan format file didukung (JPG, PNG).',
-                false
-              );
-            } else {
-              // Handle other validation errors
-              this.errors = errorData;
-              
-              // Show general error
-              const errorMessage = typeof errorData === 'string' ? errorData : 'Terjadi kesalahan saat mengirim laporan.';
-              this.showNotification('Error', errorMessage, false);
-            }
-            
-            // Scroll to first error
-            this.$nextTick(() => {
-              const firstError = document.querySelector('.border-red-500');
-              if (firstError) {
-                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              }
-            });
-          }
+    // Debug FormData contents
+    console.log('Submitting form with files:', this.form.image_path.length);
+    for (let [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log(`${key}: File - ${value.name} (${value.size} bytes)`);
+      } else {
+        console.log(`${key}: ${value}`);
+      }
+    }
+
+    // Send the request using axios
+    axios.post('https://v3422040.mhs.d3tiuns.com/api/laporan/add_laporan', formData, {
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'multipart/form-data'
+      },
+      onUploadProgress: (progressEvent) => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        console.log(`Upload progress: ${percentCompleted}%`);
+      }
+    })
+    .then(response => {
+      this.loading = false;
+      Swal.fire({
+        title: 'Berhasil!',
+        text: 'Laporan berhasil ditambahkan.',
+        icon: 'success',
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false
+      }).then(() => {
+        this.$router.push('/pelaporan/kejadian');
+      });
+      this.resetForm();
+    })
+    .catch(error => {
+      this.loading = false;
+      console.error('Error response:', error.response?.status, error.response?.data);
+      
+      if (error.response) {
+        if (error.response.status === 401) {
+          this.$cookies.remove("auth_token");
+          this.$cookies.remove("user_session");
+          this.token = null;
+          
+          this.showNotification('Error Autentikasi', 'Sesi login Anda telah berakhir. Silakan login kembali untuk melanjutkan.', false);
+          
+          setTimeout(() => {
+            this.$router.push('/mahasiswa/login');
+          }, 2000);
         } else {
-          this.showNotification('Error Koneksi', 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.', false);
+          const errorData = error.response.data;
+          
+          if (errorData['image_path'] || errorData['image_path.0'] || errorData['image_path.1']) {
+            const errorMsg = errorData['image_path'] || errorData['image_path.0'] || errorData['image_path.1'];
+            
+            this.errors.image_path = Array.isArray(errorMsg) ? errorMsg : [errorMsg];
+            
+            this.showNotification(
+              'Gagal Mengunggah Gambar', 
+              'Terdapat masalah dengan unggahan gambar. Pastikan ukuran file tidak terlalu besar (maksimal 2MB per file) dan format file didukung (JPG, PNG).',
+              false
+            );
+          } else {
+            this.errors = errorData;
+            
+            const errorMessage = typeof errorData === 'string' ? errorData : 'Terjadi kesalahan saat mengirim laporan.';
+            this.showNotification('Error', errorMessage, false);
+          }
+          
+          this.$nextTick(() => {
+            const firstError = document.querySelector('.border-red-500');
+            if (firstError) {
+              firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          });
         }
-      });
-    },
+      } else {
+        this.showNotification('Error Koneksi', 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.', false);
+      }
+    });
+  } catch (error) {
+    console.error('Error in submitForm:', error);
+    this.loading = false;
+    this.showNotification('Error', 'Terjadi kesalahan tak terduga. Silakan coba lagi.', false);
+  }
+},
     resetForm() {
       this.form = {
         judul: '',
