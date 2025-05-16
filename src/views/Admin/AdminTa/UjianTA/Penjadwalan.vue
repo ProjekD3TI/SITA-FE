@@ -39,19 +39,22 @@ const mahasiswa = ref(
                     label="Ketua Penguji"
                     placeholder="Pilih Dosen"
                     :value="penguji.ketua"
+                    disabled="true"
                 />
                 <InputText
                     label="Sekretaris Penguji"
                     placeholder="Pilih Dosen"
                     :value="penguji.sekretaris"
+                    disabled="true"
                 />
                 <InputText
                     label="Penguji"
                     placeholder="Pilih Dosen"
                     :value="penguji.penguji"
+                    disabled="true"
                 />
             </div>
-            <div class="flex gap-4 justify-between">
+            <div class="flex flex-wrap sm:flex-nowrap gap-4 justify-between">
                 <InputDate
                     label="Tanggal"
                     :value="Today"

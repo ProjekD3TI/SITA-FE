@@ -46,7 +46,7 @@ const closeModal = () => {
                     </svg>
                 </button>
             </div>
-            <slot></slot>
+                <slot></slot>
         </div>
 
     </div>

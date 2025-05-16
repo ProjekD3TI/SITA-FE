@@ -11,13 +11,18 @@ import AdminLayout from "../layout/AdminLayout.vue";
 
 // Route Admin TA
 import DashboardTAAdmin from "../views/Admin/AdminTa/Dashboard.vue";
-import BimbinganforAdmin from "../views/Admin/AdminTa/Bimbingan.vue";
-import ProposalforAdmin from "../views/Admin/AdminTa/Proposal.vue";
-import TugasAkhirforAdmin from "../views/Admin/AdminTa/TugasAkhir.vue";
+import BimbinganforAdmin from "../views/Admin/AdminTa/Bimbingan/Bimbingan.vue";
+import ProposalforAdmin from "../views/Admin/AdminTa/Proposal/Proposal.vue";
+import TugasAkhirforAdmin from "../views/Admin/AdminTa/UjianTA/UjianTA.vue";
 import RuangSesiforAdmin from "../views/Admin/AdminTa/RuangSesi.vue";
 import PlottingPengujiForAdmin from "../views/Admin/AdminTa//UjianTA/PlottingPenguji.vue";
 import DetailPendaftarForAdmin from "../views/Admin/AdminTa/UjianTA/DetailPendaftar.vue";
 import PenjadwalanForAdmin from "../views/Admin/AdminTa/UjianTA/Penjadwalan.vue";
+import DetailPengajuanForAdmin from "../views/Admin/AdminTa/Proposal/DetailPengajuan.vue";
+import DetailProposalForAdmin from "../views/Admin/AdminTa/Proposal/DetailProposal.vue";
+import InputNilaiProposalForAdmin from "../views/Admin/AdminTa/Proposal/InputNilai.vue";
+import DetailBimbinganForAdmin from "../views/Admin/AdminTa/Bimbingan/DetailBimbingan.vue";
+import PlotPembimbingForAdmin from "../views/Admin/AdminTa/Bimbingan/PlotPembimbing.vue";
 // Route Mhs TA
 import DashboardTAMhs from "../views/Mahasiswa/Tugas-akhir/Dashboard.vue";
 import BimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan/Index.vue";
@@ -32,7 +37,6 @@ import DetailBimbinganforDosen from "../views/Dosen/Tugas-akhir/DetailBimbingan.
 import InputNilaiBimbinganforDosen from "@/views/Dosen/Tugas-akhir/InputNilaiBimbingan.vue";
 import UjianTAforDosen from "../views/Dosen/Tugas-akhir/UjianTA.vue";
 import detailUjianTAforDosen from "@/views/Dosen/Tugas-akhir/DetailUjianTA.vue";
-import path from "path";
 
 //define a routes
 const routes = [
@@ -380,7 +384,6 @@ const routes = [
     path: "/admin-ta/tugas-akhir",
     name: "DashboardAdminTa",
     component: AdminLayoutTA,
-    // meta: { requiresAuth: true, userType: "admin", requiredRole: "admin_ta", breadcrumb: 'Tugas Akhir' },
     meta: {
       requiresAuth: true,
       userType: "admin",
@@ -405,6 +408,24 @@ const routes = [
         meta: {
           breadcrumb: "Bimbingan",
         },
+        children: [
+          {
+            path: "plot-pembimbing/:nim",
+            name: "PlotPembimbingForAdmin",
+            component: PlotPembimbingForAdmin,
+            meta: {
+              breadcrumb: "Plotting Pembimbing",
+            },
+          },
+          {
+            path: "detail-bimbingan/:nim",
+            name: "DetailBimbinganForAdmin",
+            component: DetailBimbinganForAdmin,
+            meta: {
+              breadcrumb: "Detail Bimbingan",
+            },
+          },
+        ]
       },
       {
         path: "proposal",
@@ -412,13 +433,67 @@ const routes = [
         meta: {
           breadcrumb: "Proposal",
         },
+        children: [
+          {
+            path: "detail-pengajuan/:nim",
+            name: "DetailPengajuanForAdmin",
+            component: DetailPengajuanForAdmin,
+            meta: {
+              breadcrumb: "Detail Pengajuan",
+            },
+          },
+          {
+            path: "detail-proposal/:nim",
+            name: "DetailProposalForAdmin",
+            component: DetailProposalForAdmin,
+            meta: {
+              breadcrumb: "Detail Proposal",
+            },
+            children: [
+              {
+                path: "input-nilai",
+                name: "InputNilaiProposalForAdmin",
+                component: InputNilaiProposalForAdmin,
+                meta: {
+                  breadcrumb: "Input Nilai",
+                },
+              }
+            ]
+          },
+        ]
       },
       {
         path: "ujian-ta",
         component: TugasAkhirforAdmin,
         meta: {
-          breadcrumb: "ujian-ta",
+          breadcrumb: "Ujian Tugas Akhir",
         },
+        children:[
+          {
+            path: "plotting-penguji/:nim",
+            name: "PlottingPengujiForAdmin",
+            component: PlottingPengujiForAdmin,
+            meta: {
+              breadcrumb: "Plotting Penguji",
+            },
+          },
+          {
+            path: "detail-pendaftar/:nim",
+            name: "DetailPendaftarForAdmin",
+            component: DetailPendaftarForAdmin,
+            meta: {
+              breadcrumb: "Detail Pendaftar",
+            },
+          },
+          {
+            path: "penjadwalan",
+            name: "PenjadwalanForAdmin",
+            component: PenjadwalanForAdmin,
+            meta: {
+              breadcrumb: "Penjadwalan",
+            },
+          },
+        ]
       },
       {
         path: "ruang-sesi",

@@ -31,7 +31,7 @@
             <label class="flex items-center gap-2 cursor-pointer">
               <input
                 type="radio"
-                name="validation"
+                :name="`validation-${id}`"
                 value="2"
                 class="hidden peer"
                 v-model="validationValue"
@@ -57,7 +57,7 @@
             <label class="flex items-center gap-2 cursor-pointer">
               <input
                 type="radio"
-                name="validation"
+                :name="`validation-${id}`"
                 value="1"
                 class="hidden peer"
                 v-model="validationValue"

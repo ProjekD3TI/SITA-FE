@@ -103,7 +103,7 @@ const buttonClasses = computed(() => {
             
             <div>
               <h5 class="body1-bold">Tahun Ajaran</h5>
-              <p class="body1 text-primary">{{ tugasAkhirDetails.tahunAjaran }}</p>
+              <p class="body1 text-secondary">{{ tugasAkhirDetails.tahunAjaran }}</p>
             </div>
           </div>
           

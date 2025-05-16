@@ -48,7 +48,7 @@ defineProps({
                   />
                 </svg>
                 <h4
-                  class="font-semibold text-xs lg:text-sm text-left text-primary w-32 sm:w-40 lg:w-44 truncate"
+                  class="font-semibold text-xs lg:text-sm text-left text-secondary w-32 sm:w-40 lg:w-44 truncate"
                 >
                   {{ notification.title }}
                 </h4>
@@ -60,7 +60,7 @@ defineProps({
             <div class="flex items-center justify-between relative">
               <div
                 v-show="notification.isNew"
-                class="absolute right-0 w-4 h-4 bg-primary rounded-full border-2 border-white"
+                class="absolute right-0 w-4 h-4 bg-secondary rounded-full border-2 border-white"
               ></div>
               <p class="text-xs lg:text-sm ms-1 mt-1 me-4 text-left">
                 {{ notification.message }}

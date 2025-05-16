@@ -1,61 +1,26 @@
 <script setup>
 import { computed, ref, useSlots } from 'vue';
 
-/**
- * Definisi props dengan TypeScript-like object syntax
- */
 const props = defineProps({
-  /**
-   * Array of tab items with the following structure:
-   * {
-   *   id: String (unique identifier),
-   *   label: String (tab label),
-   *   icon: String (optional SVG path),
-   *   count: Number|undefined (optional count/notification),
-   *   countClass: String (optional CSS classes for count)
-   * }
-   */
   tabs: {
     type: Array,
     required: true,
     default: () => []
   },
-  
-  /**
-   * ID of the initially active tab
-   */
   defaultTab: {
     type: String,
     default: ''
   },
-
-  /**
-   * Whether to use named slots for each tab
-   */
   useNamedSlots: {
     type: Boolean,
     default: false
   }
 });
 
-/**
- * Definisi emits
- */
 const emit = defineEmits(['tab-changed']);
-
-/**
- * Access slots to determine if named slots are being used
- */
 const slots = useSlots();
-
-/**
- * State for active tab
- */
 const activeTab = ref(props.defaultTab || (props.tabs[0]?.id || ''));
 
-/**
- * Processed tab items with defaults applied
- */
 const tabItems = computed(() => {
   return props.tabs.map(tab => ({
     id: tab.id || String(Math.random()),
@@ -66,17 +31,11 @@ const tabItems = computed(() => {
   }));
 });
 
-/**
- * Select a tab and emit change event
- */
 function selectTab(tabId) {
   activeTab.value = tabId;
   emit('tab-changed', tabId);
 }
 
-/**
- * Expose component name for debugging
- */
 defineExpose({
   name: 'TabComponent',
   activeTab
@@ -127,7 +86,7 @@ defineExpose({
             class="text-sm px-2 py-0.5 ml-1 rounded-full text-white"
             :class="[
               activeTab === tab.id 
-                ? 'bg-primary' 
+                ? 'bg-secondary' 
                 : 'bg-placeholder',
               tab.countClass || ''
             ]"
@@ -135,20 +94,20 @@ defineExpose({
             {{ tab.count }}
           </span>
         </span>
-        <div v-if="tab.count !== undefined && activeTab != tab.id" class="2xl:hidden absolute top-2 left-3 xl:top-4 xl:left-5 w-3 h-3 bg-primary rounded-full border-2 border-white z-20 duration-200"></div>
+        <div v-if="tab.count !== undefined && activeTab != tab.id" class="2xl:hidden absolute top-2 right-4 xl:top-4 xl:right-4 w-3 h-3 bg-secondary rounded-full border-2 border-white z-20 duration-200"></div>
       </button>
     </div>
     
-    <!-- Tab Content - Modified to apply correct overflow -->
+    <!-- Tab Content - Animated -->
     <div class="rounded-r-[16px] rounded-bl-[16px] bg-white p-4 lg:p-8 overflow-x-auto">
-        <slot v-if="!useNamedSlots" :active-tab="activeTab"></slot>
-        
-        <!-- Named slots for each tab -->
-        <template v-else>
-          <div v-for="tab in tabItems" :key="tab.id" v-show="activeTab === tab.id">
-            <slot :name="tab.id" :tab="tab"></slot>
+      <slot v-if="!useNamedSlots" :active-tab="activeTab"></slot>
+      <template v-else>
+        <transition name="fade-slide" mode="out-in">
+          <div v-if="activeTab" :key="activeTab">
+            <slot :name="activeTab" :tab="tabItems.find(t => t.id === activeTab)"></slot>
           </div>
-        </template>
+        </transition>
+      </template>
     </div>
   </div>
 </template>
@@ -183,5 +142,26 @@ defineExpose({
   background-color: white;
   clip-path: polygon(0% 28.07%,0% 28.07%,0.078% 23.517%,0.303% 19.198%,0.664% 15.17%,1.148% 11.492%,1.742% 8.222%,2.435% 5.416%,3.215% 3.133%,4.068% 1.431%,4.983% 0.367%,5.948% 0%,83.447% 0%,83.447% 0%,84.057% 0.148%,84.654% 0.584%,85.234% 1.297%,85.794% 2.278%,86.329% 3.515%,86.835% 4.999%,87.308% 6.718%,87.744% 8.661%,88.139% 10.819%,88.489% 13.181%,100% 100%,0% 100%,0% 28.07%);
   z-index: 0;
+}
+
+/* Fade-slide transition for tab content */
+.fade-slide-enter-active, .fade-slide-leave-active {
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(16px);
+}
+.fade-slide-enter-to {
+  opacity: 1;
+  transform: translateY(0);
+}
+.fade-slide-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(16px);
 }
 </style>

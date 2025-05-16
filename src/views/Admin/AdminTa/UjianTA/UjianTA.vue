@@ -9,29 +9,35 @@ import Table from '@/components/Tugas-akhir/Table.vue';
 import DefaultAvatar from '@/assets/images/Profile Avatar.svg';
 import Loading from '@/components/Loading.vue';
 import Breadcrumb from '@/components/Tugas-akhir/Breadcrumb.vue';
+import DefaultModal from '@/components/Tugas-akhir/Modals/DefaultModal.vue';
+import JadwalUjian from '@/components/Tugas-akhir/JadwalUjian.vue';
+import Button from '@/components/Tugas-akhir/Button.vue';
 import ErrorMsg from '@/components/ErrorMsg.vue';
+import router from '@/router';
+
+const modalRef = ref(false);
 
 const isDataLoaded = ref(false);
 onMounted(async () => {
   try {
     // Ambil semua data awal secara parallel
     await Promise.all([
-      statusReqPembimbing().catch(err => {
-        console.error('Error mengambil status request:', err);
-        return null;
-      }),
-      checkActiveTA().catch(err => {
-        console.error('Error mengambil TA aktif:', err);
-        return null;
-      }),
-      getDefaultTahunAjaran().catch(err => {
-        console.error('Error mengambil tahun ajaran:', err);
-        return null;
-      }),
-      getAllDosen().catch(err => {
-        console.error('Error mengambil data dosen:', err);
-        return null;
-      })
+      // statusReqPembimbing().catch(err => {
+      //   console.error('Error mengambil status request:', err);
+      //   return null;
+      // }),
+      // checkActiveTA().catch(err => {
+      //   console.error('Error mengambil TA aktif:', err);
+      //   return null;
+      // }),
+      // getDefaultTahunAjaran().catch(err => {
+      //   console.error('Error mengambil tahun ajaran:', err);
+      //   return null;
+      // }),
+      // getAllDosen().catch(err => {
+      //   console.error('Error mengambil data dosen:', err);
+      //   return null;
+      // })
     ]);
 
     // Tandai bahwa data telah dimuat
@@ -46,6 +52,19 @@ const statuses = [
   { id: '0', label: 'Menunggu' },
   { id: '2', label: 'Ditolak' },
 ];
+
+// Data for schedule modal
+const examiners = [
+  { name: 'John Batubara, A. Xioo, M. Si, A. Cer', role: 'Ketua' },
+  { name: 'Dr. Sinta Wijaya, M.Kom', role: 'Anggota' },
+  { name: 'Prof. Ahmad Rizal, Ph.D', role: 'Anggota' }
+];
+
+const schedule = {
+  date: 'Rabu, 32 Maret 2025',
+  time: '09:00 - 10:00',
+  room: 'Lab. Jaringan'
+};
 
 const tabs = [
   {
@@ -69,7 +88,7 @@ const tabs = [
   {
     id: 'tab4',
     label: 'Berita Acara',
-    icon: 'M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z',
+    icon: 'M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z',
     count: 23,
   },
 ];
@@ -170,7 +189,29 @@ const getStatusLabel = (status) => {
   }
 };
 
-const handleRowClick = (item) => {
+const handleRowClickPlot = (item) => {
+  router.push({
+    name: 'PlottingPengujiForAdmin',
+    params: { nim: item.nim },
+  });
+  console.log('Baris yang diklik:', item);
+};
+const handleRowClickDaftar = (item) => {
+  router.push({
+    name: 'DetailPendaftarForAdmin',
+    params: { nim: item.nim },
+  });
+  console.log('Baris yang diklik:', item);
+};
+const handleRowClickJadwal = (item) => {
+  router.push({
+    name: 'PenjadwalanForAdmin',
+    params: { nim: item.nim },
+  });
+  console.log('Baris yang diklik:', item);
+};
+const handleRowClickBeritaAcara = (item) => {
+  modalRef.value = true; // Buka modal
   console.log('Baris yang diklik:', item);
 };
 
@@ -226,7 +267,7 @@ const handleFilter = (filters) => {
               <Table
                 :headers="['NIM', 'Nama','Judul Proposal Tugas Akhir', 'Dosen Pembimbing' , 'Status']"
                 :items="plottingPenguji"
-                @rowClick="handleRowClick"
+                @rowClick="handleRowClickPlot"
               >
                 <template #row="{ item }">
                   <!-- Kolom NIM -->
@@ -300,7 +341,7 @@ const handleFilter = (filters) => {
               <Table
                 :headers="['NIM', 'Nama','Judul Tugas Akhir', 'Tanggal' , 'Status']"
                 :items="pendaftarUjian"
-                @rowClick="handleRowClick"
+                @rowClick="handleRowClickDaftar"
               >
                 <template #row="{ item }">
                   <!-- Kolom NIM -->
@@ -373,7 +414,7 @@ const handleFilter = (filters) => {
               <Table
                 :headers="['NIM', 'Nama','Judul Tugas Akhir', 'Tanggal' , 'Status']"
                 :items="pendaftarUjianDisetujui"
-                @rowClick="handleRowClick"
+                @rowClick="handleRowClickJadwal"
               >
                 <template #row="{ item }">
                   <!-- Kolom NIM -->
@@ -445,7 +486,7 @@ const handleFilter = (filters) => {
               <Table
                 :headers="['NIM', 'Nama','Judul Tugas Akhir', 'Tanggal' , 'Status']"
                 :items="pendaftarUjianDisetujui"
-                @rowClick="handleRowClick"
+                @rowClick="handleRowClickBeritaAcara"
               >
                 <template #row="{ item }">
                   <!-- Kolom NIM -->
@@ -499,5 +540,42 @@ const handleFilter = (filters) => {
         </template>
       </TabDiv>
     </div>
+    <!-- Schedule Modal -->
+    <DefaultModal
+      v-if="modalRef"
+      @close="modalRef = false"
+      headText="Jadwal Ujian Tugas Akhir"
+      bodyText="Nama Mahasiswa | V3423999 | Judul Tugas Akhir"
+    >
+    <div class="flex flex-col gap-4">
+      <JadwalUjian
+        class="w-full"
+        :examiners="examiners"
+        :jadwal="schedule"
+      />
+      <div class="flex gap-4 justify-end">
+        <Button
+          variant="primary"
+          size="lg"
+          class="w-fit"
+          leftIconPath="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z"
+        >
+          Cetak Berita Acara
+        </Button>
+        <Button
+          variant="primary"
+          size="lg"
+          class="w-fit"
+          leftIconPath="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+        >
+          Cetak Lembar Revisi
+        </Button>
+      </div>
+    </div>
+
+    </DefaultModal>
   </div>
 </template>
+
+
+

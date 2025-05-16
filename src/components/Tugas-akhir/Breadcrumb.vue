@@ -62,11 +62,11 @@ const breadcrumbItems = computed(() => {
           <li v-for="(item, index) in breadcrumbItems" :key="index" class="inline-flex items-center">
             <template v-if="index !== 0">
               <svg 
-                class="w-3 h-3 me-2 sm:me-4 text-black" 
+                class="w-3.5 h-3.5 me-2 sm:me-4 text-black" 
                 xmlns="http://www.w3.org/2000/svg" 
                 fill="none" 
                 viewBox="0 0 24 24" 
-                stroke-width="2" 
+                stroke-width="2.5" 
                 stroke="currentColor"
               >
                 <path 
