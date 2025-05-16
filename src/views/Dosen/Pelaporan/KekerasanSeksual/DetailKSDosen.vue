@@ -166,7 +166,7 @@ export default {
     methods: {
         async fetchCategories() {
             try {
-                const response = await axios.get('http://localhost:8000/api/category');
+                const response = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
                 this.categories = response.data.reduce((acc, category) => {
                     acc[category.category_id] = category.nama;
                     return acc;
@@ -189,7 +189,7 @@ export default {
                 
                 console.log('Fetching with ID:', this.laporanId, typeof this.laporanId);
                 
-                const response = await axios.get(`http://localhost:8000/api/laporan_kekerasan/${this.laporanId}`, {
+                const response = await axios.get(`https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/${this.laporanId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -246,7 +246,7 @@ export default {
             try {
                 this.loading = true;
                 
-                const response = await axios.put(`http://localhost:8000/api/laporan_kekerasan/${this.laporanId}/status`, {
+                const response = await axios.put(`https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/${this.laporanId}/status`, {
                     status: newStatus
                 });
                 

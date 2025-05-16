@@ -580,7 +580,7 @@ export default {
 
   methods: {
     fetchCategories() {
-      axios.get('http://localhost:8000/api/category')
+      axios.get('https://v3422040.mhs.d3tiuns.com/api/category')
         .then(response => {
           // Check if response.data is an array directly
           if (Array.isArray(response.data)) {
@@ -835,7 +835,7 @@ export default {
         formData.append('agreement', this.report.agreement);
         
         // Submit the data to the API
-        const response = await axios.post('http://localhost:8000/api/laporan_kekerasan/add_laporan', formData, {
+        const response = await axios.post('https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
