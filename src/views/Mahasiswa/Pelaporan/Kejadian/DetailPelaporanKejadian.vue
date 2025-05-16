@@ -356,6 +356,8 @@ export default {
       return this.laporan && this.laporan.saksi && Array.isArray(this.laporan.saksi) && this.laporan.saksi.length > 0;
     }
   },
+  // Replace the methods section with this cleaned version
+
   methods: {
     capitalizeSentence(text) {
       if (!text) return '';
@@ -375,10 +377,8 @@ export default {
     },
 
     getCurrentUser() {
-      // Get current user information from localStorage or any other auth source
       this.currentUser = localStorage.getItem('userName') || 'Miftahul';
       
-      // If no user in localStorage, try to get from authenticated user object
       if (this.currentUser === 'Miftahul' && localStorage.getItem('user')) {
         try {
           const userObj = JSON.parse(localStorage.getItem('user'));
@@ -392,124 +392,84 @@ export default {
     },
     
     parseImagePaths(imagePath) {
-      console.log('[DEBUG] parseImagePaths input:', imagePath);
-      
       if (!imagePath) {
-        console.log('[DEBUG] parseImagePaths: empty input');
         return [];
       }
       
-      // If it's a string, handle different formats
       if (typeof imagePath === 'string') {
-        // Check if it looks like JSON format
         if ((imagePath.startsWith('[') && imagePath.endsWith(']')) || 
             (imagePath.startsWith('"[') && imagePath.endsWith(']"'))) {
           
-          console.log('[DEBUG] Attempting to parse as JSON array');
           try {
-            // Clean up the string for parsing
             let cleanedPath = imagePath.replace(/\\/g, '');
             
-            // If it's double-quoted JSON string, remove outer quotes
             if (cleanedPath.startsWith('"') && cleanedPath.endsWith('"')) {
               cleanedPath = cleanedPath.substring(1, cleanedPath.length - 1);
             }
             
-            console.log('[DEBUG] Cleaned JSON string:', cleanedPath);
-            
             const parsed = JSON.parse(cleanedPath);
             if (Array.isArray(parsed)) {
-              console.log('[DEBUG] Successfully parsed as array with length:', parsed.length);
               return parsed;
-            } else {
-              console.log('[DEBUG] JSON parsing result is not an array');
             }
           } catch (e) {
-            console.error('[DEBUG] Error parsing JSON:', e);
+            console.error('Error parsing JSON:', e);
           }
         }
         
-        // If string contains commas, it might be a comma-separated list
         if (imagePath.includes(',')) {
-          console.log('[DEBUG] Treating as comma-separated list');
           return imagePath.split(',').map(item => item.trim());
         }
         
-        // If none of the above worked, treat as single path
-        console.log('[DEBUG] Treating as single file path');
         return [imagePath];
       }
       
-      // Handle case where image_path is already an array
       if (Array.isArray(imagePath)) {
-        console.log('[DEBUG] Input is already an array with length:', imagePath.length);
         return imagePath;
       }
       
-      console.log('[DEBUG] Could not process input, returning empty array');
       return [];
     },
 
     getImageUrlForPath(path) {
       if (!path) return '';
       
-      // Periksa apakah path sudah berupa URL lengkap
       if (path.startsWith('http')) {
         return path;
       }
       
-      // Bersihkan path dari karakter yang tidak diinginkan
       const cleanPath = path.replace(/['"]/g, '');
       
-      // Coba mengakses file dengan URL pertama (Backend-Port)
       return `${this.baseUrl}/Backend-Port/backend/engine/public/storage/laporan/${cleanPath}`;
     },
 
-    // Tambahkan fungsi error handler untuk mencoba alternatif path jika gambar tidak ditemukan
     handleImageError(event, index) {
       const img = event.target;
       const originalSrc = img.src;
       const path = this.imagePaths[index];
       
-      // Jika sudah mencoba semua fallback, tampilkan placeholder
       if (originalSrc.includes('fallback=4')) {
         img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
         return;
       }
       
-      const baseDomain = this.baseUrl; // Menggunakan baseUrl dari data component
+      const baseDomain = this.baseUrl;
       let newUrl;
       
-      // Mencoba beberapa kemungkinan lokasi file pada server CWP
       if (!originalSrc.includes('fallback=')) {
-        // Opsi 2: Cek di direktori /public/storage/ (tanpa symlink)
         newUrl = `${baseDomain}/public/storage/laporan/${path}?fallback=2`;
       } else if (originalSrc.includes('fallback=2')) {
-        // Opsi 3: Cek di direktori /storage/ (symlink Laravel)
         newUrl = `${baseDomain}/storage/laporan/${path}?fallback=3`;
       } else if (originalSrc.includes('fallback=3')) {
-        // Opsi 4: Coba tanpa subfolder laporan
         newUrl = `${baseDomain}/storage/${path}?fallback=4`;
       } else {
-        // Default fallback
         newUrl = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
       }
       
-      console.log('Mencoba URL alternatif:', newUrl);
       img.src = newUrl;
     },
 
     async checkImageUrlsViaFetch() {
-      // Skip actual fetch requests since they cause CORS errors in development
-      console.log('[DEBUG] Image URL verification skipped to avoid CORS issues');
-      
-      // Instead, just log the URLs that would be checked
-      if (this.imagePaths && this.imagePaths.length > 0) {
-        this.imagePaths.forEach((path, index) => {
-          const url = this.getImageUrlForPath(path);
-          console.log(`[DEBUG] Image ${index} would be checked at: ${url}`);
-        });
-      }
+      // Image URL verification skipped to avoid CORS issues
     },
     
     async fetchCategories() {
@@ -548,7 +508,6 @@ export default {
       
       try {
         const response = await axios.get(`${this.apiBaseUrl}/laporan/${id}`);
-        console.log('[DEBUG] API response:', response.data);
         
         // Handle different response formats
         if (response.data && response.data.data) {
@@ -556,12 +515,6 @@ export default {
         } else {
           this.laporan = response.data;
         }
-        
-        // Log the raw image_path data from the API
-        console.log('[DEBUG] Raw image_path from API:', this.laporan.image_path);
-        
-        // Check data type and log it
-        console.log('[DEBUG] image_path data type:', typeof this.laporan.image_path);
         
         // Process image paths
         if (this.laporan.image_path) {
@@ -571,30 +524,13 @@ export default {
           // Fix double-encoded JSON (common issue)
           if (typeof imagePathData === 'string' && imagePathData.startsWith('"[') && imagePathData.endsWith(']"')) {
             try {
-              // First unescape the string
               imagePathData = JSON.parse(imagePathData);
-              console.log('[DEBUG] Unescaped image_path:', imagePathData);
             } catch (e) {
-              console.error('[DEBUG] Error unescaping image_path:', e);
+              console.error('Error unescaping image_path:', e);
             }
           }
           
           this.imagePaths = this.parseImagePaths(imagePathData);
-          console.log('[DEBUG] Processed imagePaths array:', this.imagePaths);
-          
-          if (this.imagePaths.length > 0) {
-            // Log the first image URL for debugging
-            const firstImageUrl = this.getImageUrlForPath(this.imagePaths[0]);
-            console.log('[DEBUG] First image URL:', firstImageUrl);
-            
-            // Log all image URLs
-            this.imagePaths.forEach((path, index) => {
-              console.log(`[DEBUG] Image ${index} URL:`, this.getImageUrlForPath(path));
-            });
-            
-            // Call modified check method that doesn't cause CORS errors
-            this.checkImageUrlsViaFetch();
-          }
           
           // Store in laporan object for consistency
           this.laporan.image_paths = this.imagePaths;
@@ -609,14 +545,13 @@ export default {
             }
           } catch (e) {
             // If it's not valid JSON, keep it as a string
-            console.log('Tanggapan is not in JSON format or already parsed');
           }
         }
         
         this.tanggapanText = '';
         this.loading = false;
       } catch (error) {
-        console.error('[DEBUG] Error fetching laporan:', error);
+        console.error('Error fetching laporan:', error);
         
         if (error.response) {
           this.error = `Error ${error.response.status}: ${error.response.data.message || 'Gagal memuat data laporan'}`;
@@ -685,33 +620,20 @@ export default {
       if (!dateString) return '-';
       
       try {
-        // If the date is already in the YYYY-MM-DD HH:MM:SS format with no 'T' and 'Z'
-        // we need to convert it to a proper ISO format for the Date constructor
-        let date;
-        if (typeof dateString === 'string' && dateString.includes(' ') && !dateString.includes('T')) {
-          // Replace space with 'T' and add 'Z' for UTC if not present
-          const hasZ = dateString.endsWith('Z');
-          date = new Date((dateString.replace(' ', 'T') + (hasZ ? '' : '')));
-          
-          // Adjust for Indonesia timezone (GMT+7)
-          // This is needed if the date is coming as UTC and we need to add 7 hours
-          date = new Date(date.getTime() + (7 * 60 * 60 * 1000));
-        } else {
-          // If it's already in a proper format that JS Date can parse
-          date = new Date(dateString);
-        }
+        // Create a new date object from the dateString
+        const date = new Date(dateString);
         
-        // Format the date in Indonesian style
-        const options = { 
-          day: 'numeric', 
-          month: 'long', 
+        // Using Intl.DateTimeFormat for proper localization in Indonesian
+        const formatter = new Intl.DateTimeFormat('id-ID', {
+          day: 'numeric',
+          month: 'long',
           year: 'numeric',
           hour: '2-digit',
           minute: '2-digit',
-          timeZone: 'Asia/Jakarta' // Set the timezone to Indonesia's timezone (GMT+7)
-        };
+          timeZone: 'Asia/Jakarta' // Setting to Indonesia timezone (GMT+7)
+        });
         
-        return date.toLocaleDateString('id-ID', options);
+        return formatter.format(date);
       } catch (e) {
         console.error('Error formatting date:', e);
         return dateString || '-';
