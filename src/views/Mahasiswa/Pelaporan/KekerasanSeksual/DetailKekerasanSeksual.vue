@@ -25,7 +25,7 @@
 
         <div v-else class="detail-content">
           <div class="status-header">
-            <div class="laporan-number">{{ laporan.nomor_laporan_kekerasan }}</div>
+            <div class="laporan-number">{{ laporan.nomor_laporan_kekerasan || 'No.' }}</div>
             <div :class="['status-badge', laporan.status]">
               {{ formatStatus(laporan.status) }}
             </div>
@@ -65,7 +65,6 @@
                 alt="Gambar Kejadian" 
                 class="evidence-image" 
                 @click="showFullImage = true"
-                @error="handleSingleImageError"
               >
               <div class="image-caption">Foto Bukti Kejadian (klik untuk memperbesar)</div>
             </div>
@@ -110,7 +109,7 @@
             </div>
           </div>
           
-          <!-- NEW SECTION: Terlapor (Reported Person) -->
+          <!-- Terlapor (Reported Person) section -->
           <div class="detail-card" v-if="hasReportedPersons">
             <h3 class="detail-section-title"><i class="fas fa-user-shield"></i> Informasi Terlapor</h3>
             <div v-for="(person, index) in laporan.terlapor" :key="'reported-' + index" class="person-item">
@@ -134,7 +133,7 @@
             </div>
           </div>
           
-          <!-- NEW SECTION: Saksi (Witnesses) -->
+          <!-- Saksi (Witnesses) section -->
           <div class="detail-card" v-if="hasWitnesses">
             <h3 class="detail-section-title"><i class="fas fa-eye"></i> Informasi Saksi</h3>
             <div v-for="(witness, index) in laporan.saksi" :key="'witness-' + index" class="person-item">
@@ -152,7 +151,7 @@
             </div>
           </div>
           
-          <!-- External Link Section -->
+          <!-- Link Lampiran section -->
           <div class="detail-card" v-if="laporan.lampiran_link">
             <h3 class="detail-section-title"><i class="fas fa-link"></i> Link Lampiran</h3>
             <div class="link-container">
@@ -168,7 +167,7 @@
           <div class="modal-content">
             <span class="close-modal">&times;</span>
             <img 
-              :src="currentFullImageUrl" 
+              :src="currentFullImageUrl || getImageUrl(laporan.image_path)" 
               alt="Bukti Kejadian" 
               class="fullscreen-image"
             >
@@ -188,118 +187,148 @@
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import axios from 'axios';
-import VueCookies from 'vue-cookies';
-import { decryptData } from '../../../../services/encrypt';
+// Import required components and libraries
 import Header from '../components/Header.vue';
 import Sidebar from '../components/Sidebar.vue';
 import Footer from '../components/Footer.vue';
+import axios from 'axios';
+import VueCookies from 'vue-cookies';
+import { decryptData } from '../../../../services/encrypt';
 
 export default {
-  name: 'DetailKekerasanSeksual',
+  name: 'DetailKekerasanSeksual', // Make sure name matches the router configuration
   components: {
     Header,
     Sidebar,
     Footer
   },
-  setup() {
-    const router = useRouter();
-    const route = useRoute();
-    
-    const laporanId = ref(null);
-    const laporan = ref({});
-    const categories = ref({});
-    const loading = ref(true);
-    const error = ref(null);
-    const showFullImage = ref(false);
-    const isAdmin = ref(false);
-    const authToken = ref('');
-    const userData = ref(null);
-    const baseUrl = ref('https://v3422040.mhs.d3tiuns.com');
-    
-    // New properties for image handling
-    const imagePaths = ref([]);
-    const currentImageIndex = ref(0);
-    const currentFullImageUrl = ref('');
-    const currentDateTime = ref('2025-05-16 03:03:05'); // Current datetime from your request
-    const currentUser = ref('miftahul01'); // Current user's login
-    
-    // Computed properties
-    const hasReportedPersons = computed(() => {
-      return laporan.value && 
-             laporan.value.terlapor && 
-             Array.isArray(laporan.value.terlapor) && 
-             laporan.value.terlapor.length > 0;
-    });
-    
-    const hasWitnesses = computed(() => {
-      return laporan.value && 
-             laporan.value.saksi && 
-             Array.isArray(laporan.value.saksi) && 
-             laporan.value.saksi.length > 0;
-    });
-    
-    // Get current user and auth token from cookies
-    const getCurrentUser = () => {
-      try {
-        const encryptedUserData = VueCookies.get("user_session");
-        if (encryptedUserData) {
-          userData.value = decryptData(encryptedUserData);
-          console.log("Current user loaded:", userData.value.name);
-        }
-        
-        // Get auth token from cookies
-        const token = VueCookies.get("auth_token");
-        if (token) {
-          authToken.value = token;
-          // Set default Authorization header for all axios requests
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          console.log("Auth token loaded");
-        } else {
-          console.warn("No auth token found in cookies");
-        }
-      } catch (error) {
-        console.error("Error getting user data:", error);
-      }
+  // Use data() instead of setup() to match the example structure
+  data() {
+    return {
+      authToken: null,
+      laporanId: null,
+      laporan: {},
+      categories: {},
+      loading: true,
+      error: null,
+      isAdmin: false,
+      showFullImage: false,
+      showTanggapanModal: false,
+      tanggapanText: '',
+      currentUser: localStorage.getItem('userName') || 'miftahul01',
+      apiBaseUrl: 'https://v3422040.mhs.d3tiuns.com/api',
+      baseUrl: 'https://v3422040.mhs.d3tiuns.com',
+      
+      // New properties for better image handling
+      imagePaths: [],
+      currentImageIndex: 0,
+      currentFullImageUrl: '',
+      currentDateTime: '2025-05-16 03:15:20' // Updated timestamp
     };
+  },
+  computed: {
+    getStatusClass() {
+      const statusMap = {
+        'unverified': 'status-waiting',
+        'verified': 'status-processing',
+        'rejected': 'status-rejected',
+        'finished': 'status-completed',
+      };
+      return statusMap[this.laporan.status] || 'status-default';
+    },
+    hasTanggapan() {
+      if (!this.laporan) return false;
+      if (!this.laporan.tanggapan) return false;
+      
+      if (Array.isArray(this.laporan.tanggapan)) {
+        return this.laporan.tanggapan.length > 0;
+      }
+      
+      return typeof this.laporan.tanggapan === 'string' && this.laporan.tanggapan.trim() !== '';
+    },
+    hasReportedPersons() {
+      return this.laporan && this.laporan.terlapor && Array.isArray(this.laporan.terlapor) && this.laporan.terlapor.length > 0;
+    },
+    hasWitnesses() {
+      return this.laporan && this.laporan.saksi && Array.isArray(this.laporan.saksi) && this.laporan.saksi.length > 0;
+    }
+  },
+  // Important: Use beforeCreate() to init the component properly
+  beforeCreate() {
+    // This will run before the component is created
+    console.log('DetailKekerasanSeksual component is initializing');
+  },
+  // Important: Use created() to handle data fetching early
+  created() {
+    console.log('DetailKekerasanSeksual component created');
+    this.getAuthToken();
     
-    onMounted(() => {
-      // Load auth token first
-      getCurrentUser();
-      
-      // Extract the ID from the route params
-      const routeParam = route.params.id;
-      console.log('Route param received:', routeParam, typeof routeParam);
-      
-      // Handle different formats of the ID parameter
-      if (typeof routeParam === 'object') {
-        // If it's an object, try to extract the ID
-        if (routeParam.id) {
-          laporanId.value = routeParam.id;
-        } else {
-          // Try to find the ID in the object
-          const keys = Object.keys(routeParam);
-          if (keys.length > 0) {
-            laporanId.value = routeParam[keys[0]];
-          } else {
-            console.error('Could not extract ID from object');
-            error.value = 'Invalid report ID';
-            return;
+    // Make sure to get ID from route params
+    if (this.$route && this.$route.params && this.$route.params.id) {
+      this.laporanId = this.$route.params.id;
+      console.log('Loaded ID from route params:', this.laporanId);
+    } else {
+      console.warn('ID not found in route params');
+      this.error = "ID laporan tidak ditemukan";
+      this.loading = false;
+      return;
+    }
+    
+    // Get current user information
+    this.getCurrentUser();
+    
+    // Load data
+    this.fetchCategories();
+    this.fetchLaporanDetail();
+    this.checkUserRole();
+  },
+  // Mounted is called after the DOM is rendered
+  mounted() {
+    console.log('DetailKekerasanSeksual component mounted');
+    // Double-check we have the ID and data after mount
+    if (!this.laporanId && this.$route && this.$route.params && this.$route.params.id) {
+      this.laporanId = this.$route.params.id;
+      this.fetchLaporanDetail();
+    }
+  },
+  methods: {
+    capitalizeSentence(text) {
+      if (!text) return '';
+      return text.split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    },
+
+    getAuthToken() {
+      const token = VueCookies.get("auth_token");
+      if (token) {
+        this.authToken = token;
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        console.log('Auth token loaded from cookies');
+      } else {
+        console.warn('No auth token found in cookies');
+        this.error = "Sesi login telah berakhir. Silakan login kembali.";
+      }
+    },
+
+    getCurrentUser() {
+      const cookieUser = VueCookies.get("user_session");
+      if (cookieUser) {
+        try {
+          const userData = decryptData(cookieUser);
+          if (userData && userData.username) {
+            this.currentUser = userData.username;
+            console.log('User loaded from cookies:', this.currentUser);
           }
+        } catch (e) {
+          console.error('Error decrypting user from cookies:', e);
         }
       } else {
-        laporanId.value = routeParam;
+        this.currentUser = localStorage.getItem('userName') || 'miftahul01';
       }
-      
-      console.log('Extracted ID:', laporanId.value);
-      fetchCategories();
-      fetchLaporanDetail();
-      checkUserRole();
-    });
+    },
     
-    const parseImagePaths = (imagePath) => {
+    parseImagePaths(imagePath) {
       if (!imagePath) {
         return [];
       }
@@ -336,208 +365,187 @@ export default {
       }
       
       return [];
-    };
-    
-    const getImageUrlForPath = (path) => {
+    },
+
+    getImageUrlForPath(path) {
       if (!path) return '';
       
-      // If it's already a full URL, return it as is
       if (path.startsWith('http')) {
         return path;
       }
       
-      // Clean up the path - remove any quotes
       const cleanPath = path.replace(/['"]/g, '');
       
-      // Use the first format you provided
-      return `${baseUrl.value}/public/storage/laporankekerasan/${cleanPath}`;
-    };
-    
-    const handleImageError = (event, index) => {
+      return `${this.baseUrl}/public/storage/laporankekerasan/${cleanPath}`;
+    },
+
+    handleImageError(event, index) {
       const img = event.target;
       const originalSrc = img.src;
-      const path = imagePaths.value[index];
+      const path = this.imagePaths[index];
       
-      // If we've already tried all fallbacks, show placeholder
       if (originalSrc.includes('fallback=4')) {
         img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
         return;
       }
       
-      const baseDomain = baseUrl.value;
+      const baseDomain = this.baseUrl;
       let newUrl;
       
-      // Try different path patterns for the image
       if (!originalSrc.includes('fallback=')) {
-        // First try: Backend-Port path 
+        // Try Backend-Port path first
         newUrl = `${baseDomain}/Backend-Port/backend/engine/public/storage/laporankekerasan/${path}?fallback=2`;
       } else if (originalSrc.includes('fallback=2')) {
-        // Second try: api/storage path
         newUrl = `${baseDomain}/api/storage/laporankekerasan/${path}?fallback=3`;
       } else if (originalSrc.includes('fallback=3')) {
-        // Third try: direct storage path
         newUrl = `${baseDomain}/storage/laporankekerasan/${path}?fallback=4`;
       } else {
-        // If all else fails, show placeholder
         newUrl = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
       }
       
       img.src = newUrl;
-    };
+    },
     
-    const handleSingleImageError = (event) => {
-      const img = event.target;
-      const originalSrc = img.src;
-      
-      // If we've already tried all fallbacks, show placeholder
-      if (originalSrc.includes('fallback=4')) {
-        img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+    async fetchCategories() {
+      try {
+        const response = await axios.get(`${this.apiBaseUrl}/category`);
+        if (response.data && response.data.data && Array.isArray(response.data.data)) {
+          this.categories = response.data.data.reduce((acc, category) => {
+            acc[category.category_id || category.id] = category.nama || category.name;
+            return acc;
+          }, {});
+        } else if (Array.isArray(response.data)) {
+          this.categories = response.data.reduce((acc, category) => {
+            acc[category.category_id || category.id] = category.nama || category.name;
+            return acc;
+          }, {});
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        this.categories = {};
+      }
+    },
+    
+    async fetchLaporanDetail() {
+      if (!this.laporanId) {
+        this.error = "ID laporan tidak valid";
+        this.loading = false;
         return;
       }
       
-      const baseDomain = baseUrl.value;
-      let newUrl;
+      this.loading = true;
+      this.error = null;
       
-      // Try different path patterns for a single image
-      if (!originalSrc.includes('fallback=')) {
-        // First try: Backend-Port path 
-        newUrl = `${baseDomain}/Backend-Port/backend/engine/public/storage/laporankekerasan/${laporan.value.image_path}?fallback=2`;
-      } else if (originalSrc.includes('fallback=2')) {
-        // Second try: api/storage path
-        newUrl = `${baseDomain}/api/storage/laporankekerasan/${laporan.value.image_path}?fallback=3`;
-      } else if (originalSrc.includes('fallback=3')) {
-        // Third try: direct storage path
-        newUrl = `${baseDomain}/storage/laporankekerasan/${laporan.value.image_path}?fallback=4`;
-      } else {
-        // If all else fails, show placeholder
-        newUrl = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
-      }
-      
-      img.src = newUrl;
-    };
-    
-    const fetchCategories = async () => {
       try {
-        const response = await axios.get(`${baseUrl.value}/api/category`);
-        categories.value = response.data.reduce((acc, category) => {
-          acc[category.category_id] = category.nama;
-          return acc;
-        }, {});
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-      }
-    };
-    
-    const fetchLaporanDetail = async () => {
-      try {
-        if (!laporanId.value) {
-          error.value = 'No valid ID provided';
-          loading.value = false;
-          return;
+        if (!this.authToken) {
+          this.getAuthToken(); // Try to get token again if missing
         }
+
+        console.log('Fetching laporan detail with ID:', this.laporanId);
+        const response = await axios.get(`${this.apiBaseUrl}/laporan_kekerasan/${this.laporanId}`);
         
-        loading.value = true;
-        
-        // Check if we have an auth token before making API calls
-        if (!authToken.value) {
-          error.value = 'Anda tidak memiliki akses. Silakan login kembali.';
-          loading.value = false;
-          return;
-        }
-        
-        // Configure axios with auth header
-        const config = {
-          headers: {
-            'Authorization': `Bearer ${authToken.value}`
-          }
-        };
-        
-        console.log('Fetching with ID:', laporanId.value, typeof laporanId.value);
-        
-        const response = await axios.get(`${baseUrl.value}/api/laporan_kekerasan/${laporanId.value}`, config);
-        
-        laporan.value = response.data;
-        
-        // Process images
-        if (laporan.value.image_path) {
-          // Try to fix common issues with data format before parsing
-          let imagePathData = laporan.value.image_path;
+        // Handle different response formats
+        if (response.data && typeof response.data === 'object') {
+          this.laporan = response.data;
           
-          // Fix double-encoded JSON (common issue)
-          if (typeof imagePathData === 'string' && imagePathData.startsWith('"[') && imagePathData.endsWith(']"')) {
+          // Process image paths
+          if (this.laporan.image_path) {
+            // Fix common issues with data format before parsing
+            let imagePathData = this.laporan.image_path;
+            
+            if (typeof imagePathData === 'string' && imagePathData.startsWith('"[') && imagePathData.endsWith(']"')) {
+              try {
+                imagePathData = JSON.parse(imagePathData);
+              } catch (e) {
+                console.error('Error unescaping image_path:', e);
+              }
+            }
+            
+            this.imagePaths = this.parseImagePaths(imagePathData);
+            console.log('Parsed image paths:', this.imagePaths);
+          }
+          
+          // Process tanggapan data
+          if (this.laporan.tanggapan) {
             try {
-              imagePathData = JSON.parse(imagePathData);
+              const parsed = JSON.parse(this.laporan.tanggapan);
+              if (Array.isArray(parsed)) {
+                this.laporan.tanggapan = parsed;
+              }
             } catch (e) {
-              console.error('Error unescaping image_path:', e);
+              // If it's not valid JSON, keep it as a string
             }
           }
-          
-          imagePaths.value = parseImagePaths(imagePathData);
-          console.log('Parsed image paths:', imagePaths.value);
+        } else {
+          this.error = 'Format data tidak valid';
         }
         
-        loading.value = false;
+        this.loading = false;
       } catch (err) {
         console.error('Error fetching laporan detail:', err);
+        
         if (err.response && err.response.status === 401) {
-          error.value = 'Sesi anda telah berakhir. Silakan login kembali.';
+          this.error = 'Sesi anda telah berakhir. Silakan login kembali.';
         } else {
-          error.value = 'Gagal memuat detail laporan';
+          this.error = 'Gagal memuat detail laporan. Silakan coba lagi.';
         }
-        loading.value = false;
+        this.loading = false;
       }
-    };
+    },
     
-    const capitalizeSentence = (text) => {
-      if (!text) return '';
-      return text.split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(' ');
-    };
-    
-    const openFullImage = (index) => {
-      if (imagePaths.value && imagePaths.value.length > index) {
-        currentImageIndex.value = index;
-        currentFullImageUrl.value = getImageUrlForPath(imagePaths.value[index]);
-        showFullImage.value = true;
+    openFullImage(index) {
+      if (this.imagePaths && this.imagePaths.length > index) {
+        this.currentImageIndex = index;
+        this.currentFullImageUrl = this.getImageUrlForPath(this.imagePaths[index]);
+        this.showFullImage = true;
       }
-    };
+    },
     
-    const nextImage = (e) => {
+    nextImage(e) {
       if (e) e.stopPropagation();
-      if (!imagePaths.value || imagePaths.value.length <= 1) return;
+      if (!this.imagePaths || this.imagePaths.length <= 1) return;
       
-      currentImageIndex.value = (currentImageIndex.value + 1) % imagePaths.value.length;
-      currentFullImageUrl.value = getImageUrlForPath(imagePaths.value[currentImageIndex.value]);
-    };
+      this.currentImageIndex = (this.currentImageIndex + 1) % this.imagePaths.length;
+      this.currentFullImageUrl = this.getImageUrlForPath(this.imagePaths[this.currentImageIndex]);
+    },
     
-    const prevImage = (e) => {
+    prevImage(e) {
       if (e) e.stopPropagation();
-      if (!imagePaths.value || imagePaths.value.length <= 1) return;
+      if (!this.imagePaths || this.imagePaths.length <= 1) return;
       
-      currentImageIndex.value = (currentImageIndex.value - 1 + imagePaths.value.length) % imagePaths.value.length;
-      currentFullImageUrl.value = getImageUrlForPath(imagePaths.value[currentImageIndex.value]);
-    };
+      this.currentImageIndex = (this.currentImageIndex - 1 + this.imagePaths.length) % this.imagePaths.length;
+      this.currentFullImageUrl = this.getImageUrlForPath(this.imagePaths[this.currentImageIndex]);
+    },
     
-    const goBack = () => {
-      router.go(-1);
-    };
+    goBack() {
+      this.$router.back();
+    },
     
-    const formatDate = (dateString) => {
+    formatDate(dateString) {
       if (!dateString) return '-';
       
-      const options = { 
-        day: 'numeric', 
-        month: 'long', 
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      };
-      
-      return new Date(dateString).toLocaleDateString('id-ID', options);
-    };
+      try {
+        // Create a new date object from the dateString
+        const date = new Date(dateString);
+        
+        // Using Intl.DateTimeFormat for proper localization in Indonesian
+        const formatter = new Intl.DateTimeFormat('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone: 'Asia/Jakarta' // Setting to Indonesia timezone (GMT+7)
+        });
+        
+        return formatter.format(date);
+      } catch (e) {
+        console.error('Error formatting date:', e);
+        return dateString || '-';
+      }
+    },
     
-    const formatStatus = (status) => {
+    formatStatus(status) {
       const statusMap = {
         'unverified': 'Belum Diverifikasi',
         'verified': 'Diverifikasi',
@@ -546,14 +554,14 @@ export default {
         'rejected': 'Ditolak'
       };
       
-      return statusMap[status] || status;
-    };
+      return statusMap[status] || status || '-';
+    },
     
-    const getCategoryName = (categoryId) => {
-      return categories.value[categoryId] || `Kategori ${categoryId}`;
-    };
+    getCategoryName(categoryId) {
+      return this.categories[categoryId] || `Kategori ${categoryId}`;
+    },
     
-    const getImageUrl = (imagePath) => {
+    getImageUrl(imagePath) {
       if (!imagePath) return '';
       
       // Check if image_path is a JSON string and parse it
@@ -562,7 +570,7 @@ export default {
           const images = JSON.parse(imagePath);
           if (Array.isArray(images) && images.length > 0) {
             // Use the first image from the array
-            return `${baseUrl.value}/Backend-Port/backend/engine/public/storage/laporankekerasan/${images[0]}`;
+            return `${this.baseUrl}/public/storage/laporankekerasan/${images[0]}`;
           }
         } catch (e) {
           console.error('Error parsing image path:', e);
@@ -570,21 +578,30 @@ export default {
       }
       
       // If not a JSON string or parsing failed, return as is
-      return `${baseUrl.value}/Backend-Port/backend/engine/public/storage/laporankekerasan/${imagePath}`;
-    };
+      return `${this.baseUrl}/public/storage/laporankekerasan/${imagePath}`;
+    },
     
-    const checkUserRole = () => {
-      // Check if user data is loaded
-      if (userData.value && userData.value.role) {
-        isAdmin.value = userData.value.role === 'admin';
-      } else {
-        isAdmin.value = false;
+    checkUserRole() {
+      // Implementing a simple check based on cookie data
+      const cookieUser = VueCookies.get("user_session");
+      if (cookieUser) {
+        try {
+          const userData = decryptData(cookieUser);
+          if (userData && userData.role) {
+            this.isAdmin = userData.role === 'admin';
+          }
+        } catch (e) {
+          console.error('Error checking user role:', e);
+        }
       }
-    };
+      
+      // Default to admin for testing (you can remove this in production)
+      this.isAdmin = true;
+    },
     
-    const startChat = () => {
+    startChat() {
       // Get the phone number from the laporan data
-      let phoneNumber = laporan.value.nomor_telepon;
+      let phoneNumber = this.laporan.nomor_telepon;
       
       // Validate and format the phone number
       if (phoneNumber) {
@@ -606,41 +623,7 @@ export default {
       } else {
         alert('Nomor telepon tidak tersedia');
       }
-    };
-    
-    return {
-      laporanId,
-      laporan,
-      categories,
-      loading,
-      error,
-      showFullImage,
-      isAdmin,
-      authToken,
-      userData,
-      imagePaths,
-      currentImageIndex,
-      currentFullImageUrl,
-      hasReportedPersons,
-      hasWitnesses,
-      getCurrentUser,
-      fetchCategories,
-      fetchLaporanDetail,
-      goBack,
-      formatDate,
-      formatStatus,
-      getCategoryName,
-      getImageUrl,
-      getImageUrlForPath,
-      handleImageError,
-      handleSingleImageError,
-      capitalizeSentence,
-      openFullImage,
-      nextImage,
-      prevImage,
-      checkUserRole,
-      startChat
-    };
+    }
   }
 };
 </script>

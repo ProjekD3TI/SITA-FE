@@ -392,7 +392,7 @@ const routes = [
         component: () => import("../views/Mahasiswa/Pelaporan/KekerasanSeksual/AddKekerasanSeksual.vue"),
       },
       {
-        path: "/laporan_kekerasan/:id",
+        path: "laporan_kekerasan/:id",
         name: "DetailKekekerasanSeksual",
         component: () => import("../views/Mahasiswa/Pelaporan/KekerasanSeksual/DetailKekerasanSeksual.vue"),
       },
