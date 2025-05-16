@@ -363,13 +363,13 @@ getImageUrlForPath(path) {
   const cleanPath = path.replace(/['"]/g, '');
   
   // Base URL domain untuk aplikasi
-  const baseUrl = 'https://v3422040.mhs.d3tiuns.com';
+  // const baseUrl = 'https://v3422040.mhs.d3tiuns.com';
   
   // Pada CWP, lokasi file biasanya di /home/username/public_html/
   // yang diakses melalui URL: https://domain.com/
   
   // Ini adalah lokasi paling umum untuk file upload pada Laravel + CWP
-  return `${baseUrl}/storage/app/public/storage/laporan/${cleanPath}`;
+  return `${baseUrl}/app/public/storage/laporan/${cleanPath}`;
 },
 
 // Tambahkan fungsi error handler untuk mencoba alternatif path jika gambar tidak ditemukan
