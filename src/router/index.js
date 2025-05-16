@@ -377,7 +377,7 @@ const routes = [
         component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/AddPelaporanKejadian.vue"),
       },
       {
-        path: "/laporan/:id",
+        path: "laporan/:id",
         name: "DetailPelaporanKejadian",
         component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/DetailPelaporanKejadian.vue"),
       },

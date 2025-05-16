@@ -67,6 +67,7 @@
                     :alt="`Foto Kejadian ${index + 1}`"
                     class="kejadian-image-thumbnail" 
                     @click="openFullImage(index)"
+                    @error="handleImageError($event, index)"
                   >
                 </div>
               </div>
@@ -207,6 +208,7 @@ import Sidebar from '../components/Sidebar.vue';
 import Footer from '../components/Footer.vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import VueCookies from 'vue-cookies';
 
 export default {
   components: {
@@ -216,6 +218,7 @@ export default {
   },
   data() {
     return {
+      authToken: null,
       laporanId: null,
       laporan: {},
       categories: {},
@@ -227,6 +230,7 @@ export default {
       tanggapanText: '',
       currentUser: localStorage.getItem('userName') || 'Miftahul',
       apiBaseUrl: 'https://v3422040.mhs.d3tiuns.com/api',
+      baseUrl: 'https://v3422040.mhs.d3tiuns.com', // Added baseUrl definition
       
       // New properties for better image handling
       imagePaths: [],
@@ -235,6 +239,7 @@ export default {
     };
   },
   created() {
+    this.getAuthToken();
     this.laporanId = this.$route.params.id;
     
     // Get current user information
@@ -272,6 +277,16 @@ export default {
     }
   },
   methods: {
+    getAuthToken() {
+      const token = VueCookies.get("auth_token");
+      if (token) {
+        this.authToken = token;
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      } else {
+        this.error = "Sesi login telah berakhir. Silakan login kembali.";
+      }
+    },
+    
     getCurrentUser() {
       // Get current user information from localStorage or any other auth source
       this.currentUser = localStorage.getItem('userName') || 'Miftahul';
@@ -289,221 +304,126 @@ export default {
       }
     },
     
-    // First, remove the duplicate parseImagePaths method - you have two versions defined
-// Keep only this version with improvements:
-
-parseImagePaths(imagePath) {
-  console.log('[DEBUG] parseImagePaths input:', imagePath);
-  
-  if (!imagePath) {
-    console.log('[DEBUG] parseImagePaths: empty input');
-    return [];
-  }
-  
-  // If it's a string, handle different formats
-  if (typeof imagePath === 'string') {
-    // Check if it looks like JSON format
-    if ((imagePath.startsWith('[') && imagePath.endsWith(']')) || 
-        (imagePath.startsWith('"[') && imagePath.endsWith(']"'))) {
+    parseImagePaths(imagePath) {
+      console.log('[DEBUG] parseImagePaths input:', imagePath);
       
-      console.log('[DEBUG] Attempting to parse as JSON array');
-      try {
-        // Clean up the string for parsing
-        let cleanedPath = imagePath.replace(/\\/g, '');
-        
-        // If it's double-quoted JSON string, remove outer quotes
-        if (cleanedPath.startsWith('"') && cleanedPath.endsWith('"')) {
-          cleanedPath = cleanedPath.substring(1, cleanedPath.length - 1);
-        }
-        
-        console.log('[DEBUG] Cleaned JSON string:', cleanedPath);
-        
-        const parsed = JSON.parse(cleanedPath);
-        if (Array.isArray(parsed)) {
-          console.log('[DEBUG] Successfully parsed as array with length:', parsed.length);
-          return parsed;
-        } else {
-          console.log('[DEBUG] JSON parsing result is not an array');
-        }
-      } catch (e) {
-        console.error('[DEBUG] Error parsing JSON:', e);
-      }
-    }
-    
-    // If string contains commas, it might be a comma-separated list
-    if (imagePath.includes(',')) {
-      console.log('[DEBUG] Treating as comma-separated list');
-      return imagePath.split(',').map(item => item.trim());
-    }
-    
-    // If none of the above worked, treat as single path
-    console.log('[DEBUG] Treating as single file path');
-    return [imagePath];
-  }
-  
-  // Handle case where image_path is already an array
-  if (Array.isArray(imagePath)) {
-    console.log('[DEBUG] Input is already an array with length:', imagePath.length);
-    return imagePath;
-  }
-  
-  console.log('[DEBUG] Could not process input, returning empty array');
-  return [];
-},
-
-getImageUrlForPath(path) {
-  if (!path) return '';
-  
-  // Periksa apakah path sudah berupa URL lengkap
-  if (path.startsWith('http')) {
-    return path;
-  }
-  
-  // Bersihkan path dari karakter yang tidak diinginkan
-  const cleanPath = path.replace(/['"]/g, '');
-  
-  // Base URL domain untuk aplikasi
-  // const baseUrl = 'https://v3422040.mhs.d3tiuns.com';
-  
-  // Pada CWP, lokasi file biasanya di /home/username/public_html/
-  // yang diakses melalui URL: https://domain.com/
-  
-  // Ini adalah lokasi paling umum untuk file upload pada Laravel + CWP
-  return `${baseUrl}/app/public/storage/laporan/${cleanPath}`;
-},
-
-// Tambahkan fungsi error handler untuk mencoba alternatif path jika gambar tidak ditemukan
-handleImageError(event, index) {
-  const img = event.target;
-  const originalSrc = img.src;
-  const path = this.imagePaths[index];
-  
-  // Jika sudah mencoba semua fallback, tampilkan placeholder
-  if (originalSrc.includes('fallback=4')) {
-    img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
-    return;
-  }
-  
-  const baseDomain = 'https://v3422040.mhs.d3tiuns.com'; // Ganti dengan domain Anda
-  let newUrl;
-  
-  // Mencoba beberapa kemungkinan lokasi file pada server CWP
-  if (!originalSrc.includes('fallback=')) {
-    // Opsi 1: Cek di direktori /storage/ (symlink Laravel)
-    newUrl = `${baseDomain}/storage/laporan/${path}?fallback=1`;
-  } else if (originalSrc.includes('fallback=1')) {
-    // Opsi 2: Cek di direktori /public/storage/ (tanpa symlink)
-    newUrl = `${baseDomain}/public/storage/laporan/${path}?fallback=2`;
-  } else if (originalSrc.includes('fallback=2')) {
-    // Opsi 3: Cek di direktori /uploads/ (lokasi alternatif)
-    newUrl = `${baseDomain}/uploads/laporan/${path}?fallback=3`;
-  } else if (originalSrc.includes('fallback=3')) {
-    // Opsi 4: Coba tanpa subfolder laporan
-    newUrl = `${baseDomain}/storage/${path}?fallback=4`;
-  } else {
-    // Default fallback
-    newUrl = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
-  }
-  
-  console.log('Mencoba URL alternatif:', newUrl);
-  img.src = newUrl;
-},
-
-async fetchLaporan(id) {
-  if (!id) {
-    this.error = "ID laporan tidak valid";
-    this.loading = false;
-    return;
-  }
-  
-  this.loading = true;
-  this.error = null;
-  
-  try {
-    const response = await axios.get(`${this.apiBaseUrl}/laporan/${id}`);
-    console.log('[DEBUG] API response:', response.data);
-    
-    // Handle different response formats
-    if (response.data && response.data.data) {
-      this.laporan = response.data.data;
-    } else {
-      this.laporan = response.data;
-    }
-    
-    // Log the raw image_path data from the API
-    console.log('[DEBUG] Raw image_path from API:', this.laporan.image_path);
-    
-    // Check data type and log it
-    console.log('[DEBUG] image_path data type:', typeof this.laporan.image_path);
-    
-    // Process image paths
-    if (this.laporan.image_path) {
-      // Try to fix common issues with data format before parsing
-      let imagePathData = this.laporan.image_path;
-      
-      // Fix double-encoded JSON (common issue)
-      if (typeof imagePathData === 'string' && imagePathData.startsWith('"[') && imagePathData.endsWith(']"')) {
-        try {
-          // First unescape the string
-          imagePathData = JSON.parse(imagePathData);
-          console.log('[DEBUG] Unescaped image_path:', imagePathData);
-        } catch (e) {
-          console.error('[DEBUG] Error unescaping image_path:', e);
-        }
+      if (!imagePath) {
+        console.log('[DEBUG] parseImagePaths: empty input');
+        return [];
       }
       
-      this.imagePaths = this.parseImagePaths(imagePathData);
-      console.log('[DEBUG] Processed imagePaths array:', this.imagePaths);
-      
-      if (this.imagePaths.length > 0) {
-        // Log the first image URL for debugging
-        const firstImageUrl = this.getImageUrlForPath(this.imagePaths[0]);
-        console.log('[DEBUG] First image URL:', firstImageUrl);
+      // If it's a string, handle different formats
+      if (typeof imagePath === 'string') {
+        // Check if it looks like JSON format
+        if ((imagePath.startsWith('[') && imagePath.endsWith(']')) || 
+            (imagePath.startsWith('"[') && imagePath.endsWith(']"'))) {
+          
+          console.log('[DEBUG] Attempting to parse as JSON array');
+          try {
+            // Clean up the string for parsing
+            let cleanedPath = imagePath.replace(/\\/g, '');
+            
+            // If it's double-quoted JSON string, remove outer quotes
+            if (cleanedPath.startsWith('"') && cleanedPath.endsWith('"')) {
+              cleanedPath = cleanedPath.substring(1, cleanedPath.length - 1);
+            }
+            
+            console.log('[DEBUG] Cleaned JSON string:', cleanedPath);
+            
+            const parsed = JSON.parse(cleanedPath);
+            if (Array.isArray(parsed)) {
+              console.log('[DEBUG] Successfully parsed as array with length:', parsed.length);
+              return parsed;
+            } else {
+              console.log('[DEBUG] JSON parsing result is not an array');
+            }
+          } catch (e) {
+            console.error('[DEBUG] Error parsing JSON:', e);
+          }
+        }
         
-        // Log all image URLs
+        // If string contains commas, it might be a comma-separated list
+        if (imagePath.includes(',')) {
+          console.log('[DEBUG] Treating as comma-separated list');
+          return imagePath.split(',').map(item => item.trim());
+        }
+        
+        // If none of the above worked, treat as single path
+        console.log('[DEBUG] Treating as single file path');
+        return [imagePath];
+      }
+      
+      // Handle case where image_path is already an array
+      if (Array.isArray(imagePath)) {
+        console.log('[DEBUG] Input is already an array with length:', imagePath.length);
+        return imagePath;
+      }
+      
+      console.log('[DEBUG] Could not process input, returning empty array');
+      return [];
+    },
+
+    getImageUrlForPath(path) {
+      if (!path) return '';
+      
+      // Periksa apakah path sudah berupa URL lengkap
+      if (path.startsWith('http')) {
+        return path;
+      }
+      
+      // Bersihkan path dari karakter yang tidak diinginkan
+      const cleanPath = path.replace(/['"]/g, '');
+      
+      // Coba mengakses file dengan URL pertama (Backend-Port)
+      return `${this.baseUrl}/Backend-Port/backend/engine/public/storage/laporan/${cleanPath}`;
+    },
+
+    // Tambahkan fungsi error handler untuk mencoba alternatif path jika gambar tidak ditemukan
+    handleImageError(event, index) {
+      const img = event.target;
+      const originalSrc = img.src;
+      const path = this.imagePaths[index];
+      
+      // Jika sudah mencoba semua fallback, tampilkan placeholder
+      if (originalSrc.includes('fallback=4')) {
+        img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+        return;
+      }
+      
+      const baseDomain = this.baseUrl; // Menggunakan baseUrl dari data component
+      let newUrl;
+      
+      // Mencoba beberapa kemungkinan lokasi file pada server CWP
+      if (!originalSrc.includes('fallback=')) {
+        // Opsi 2: Cek di direktori /public/storage/ (tanpa symlink)
+        newUrl = `${baseDomain}/public/storage/laporan/${path}?fallback=2`;
+      } else if (originalSrc.includes('fallback=2')) {
+        // Opsi 3: Cek di direktori /storage/ (symlink Laravel)
+        newUrl = `${baseDomain}/storage/laporan/${path}?fallback=3`;
+      } else if (originalSrc.includes('fallback=3')) {
+        // Opsi 4: Coba tanpa subfolder laporan
+        newUrl = `${baseDomain}/storage/${path}?fallback=4`;
+      } else {
+        // Default fallback
+        newUrl = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+      }
+      
+      console.log('Mencoba URL alternatif:', newUrl);
+      img.src = newUrl;
+    },
+
+    async checkImageUrlsViaFetch() {
+      // Skip actual fetch requests since they cause CORS errors in development
+      console.log('[DEBUG] Image URL verification skipped to avoid CORS issues');
+      
+      // Instead, just log the URLs that would be checked
+      if (this.imagePaths && this.imagePaths.length > 0) {
         this.imagePaths.forEach((path, index) => {
-          console.log(`[DEBUG] Image ${index} URL:`, this.getImageUrlForPath(path));
+          const url = this.getImageUrlForPath(path);
+          console.log(`[DEBUG] Image ${index} would be checked at: ${url}`);
         });
-        
-        // Try to make a direct fetch request to verify the URL
-        this.checkImageUrlsViaFetch();
       }
-      
-      // Store in laporan object for consistency
-      this.laporan.image_paths = this.imagePaths;
-    }
-    
-    // Rest of your existing code...
-    
-    this.tanggapanText = '';
-    this.loading = false;
-  } catch (error) {
-    console.error('[DEBUG] Error fetching laporan:', error);
-    
-    // Rest of your existing error handling...
-    
-    this.loading = false;
-  }
-},
-
-// New method to check image URLs via fetch
-async checkImageUrlsViaFetch() {
-  if (!this.imagePaths || this.imagePaths.length === 0) return;
-  
-  console.log('[DEBUG] Testing image URLs via fetch...');
-  
-  for (let i = 0; i < this.imagePaths.length; i++) {
-    const path = this.imagePaths[i];
-    const url = this.getImageUrlForPath(path);
-    
-    try {
-      const response = await fetch(url, { method: 'HEAD' });
-      console.log(`[DEBUG] Image ${i} (${url}) - Status: ${response.status} ${response.statusText}`);
-    } catch (error) {
-      console.error(`[DEBUG] Error checking ${url}:`, error);
-    }
-  }
-},
+    },
     
     async fetchCategories() {
       try {
@@ -541,6 +461,7 @@ async checkImageUrlsViaFetch() {
       
       try {
         const response = await axios.get(`${this.apiBaseUrl}/laporan/${id}`);
+        console.log('[DEBUG] API response:', response.data);
         
         // Handle different response formats
         if (response.data && response.data.data) {
@@ -549,9 +470,44 @@ async checkImageUrlsViaFetch() {
           this.laporan = response.data;
         }
         
+        // Log the raw image_path data from the API
+        console.log('[DEBUG] Raw image_path from API:', this.laporan.image_path);
+        
+        // Check data type and log it
+        console.log('[DEBUG] image_path data type:', typeof this.laporan.image_path);
+        
         // Process image paths
         if (this.laporan.image_path) {
-          this.imagePaths = this.parseImagePaths(this.laporan.image_path);
+          // Try to fix common issues with data format before parsing
+          let imagePathData = this.laporan.image_path;
+          
+          // Fix double-encoded JSON (common issue)
+          if (typeof imagePathData === 'string' && imagePathData.startsWith('"[') && imagePathData.endsWith(']"')) {
+            try {
+              // First unescape the string
+              imagePathData = JSON.parse(imagePathData);
+              console.log('[DEBUG] Unescaped image_path:', imagePathData);
+            } catch (e) {
+              console.error('[DEBUG] Error unescaping image_path:', e);
+            }
+          }
+          
+          this.imagePaths = this.parseImagePaths(imagePathData);
+          console.log('[DEBUG] Processed imagePaths array:', this.imagePaths);
+          
+          if (this.imagePaths.length > 0) {
+            // Log the first image URL for debugging
+            const firstImageUrl = this.getImageUrlForPath(this.imagePaths[0]);
+            console.log('[DEBUG] First image URL:', firstImageUrl);
+            
+            // Log all image URLs
+            this.imagePaths.forEach((path, index) => {
+              console.log(`[DEBUG] Image ${index} URL:`, this.getImageUrlForPath(path));
+            });
+            
+            // Call modified check method that doesn't cause CORS errors
+            this.checkImageUrlsViaFetch();
+          }
           
           // Store in laporan object for consistency
           this.laporan.image_paths = this.imagePaths;
@@ -573,7 +529,7 @@ async checkImageUrlsViaFetch() {
         this.tanggapanText = '';
         this.loading = false;
       } catch (error) {
-        console.error('Error fetching laporan:', error);
+        console.error('[DEBUG] Error fetching laporan:', error);
         
         if (error.response) {
           this.error = `Error ${error.response.status}: ${error.response.data.message || 'Gagal memuat data laporan'}`;
@@ -891,7 +847,7 @@ async checkImageUrlsViaFetch() {
 </script>
 
 <style scoped>
-/* All styles remain the same, just adding the new ones for image grid */
+/* All styles remain the same as in your original file */
 .detail-laporan-container {
   display: flex;
   flex-direction: column;
