@@ -646,9 +646,37 @@ export default {
   },
   computed: {
     filteredCategories() {
-      return this.categories.filter(category => 
-        !category.nama.startsWith('Kekerasan')
-      );
+      // Check if categories exists and has items
+      if (!this.categories || (Array.isArray(this.categories) && this.categories.length === 0) || 
+          (typeof this.categories === 'object' && Object.keys(this.categories).length === 0)) {
+        return [];
+      }
+      
+      // Convert to array if it's an object
+      const categoryArray = Array.isArray(this.categories) 
+        ? this.categories 
+        : Object.entries(this.categories).map(([id, name]) => ({ 
+            category_id: id, 
+            nama: typeof name === 'string' ? name : name.nama || name.name 
+          }));
+      
+      // Track unique category names
+      const uniqueNames = new Set();
+      
+      // Filter out duplicates and categories starting with 'Kekerasan'
+      return categoryArray.filter(category => {
+        // Get the name regardless of property name used (nama or name)
+        const name = category.nama || category.name || '';
+        
+        // If name already exists in our set or starts with 'Kekerasan', skip it
+        if (uniqueNames.has(name) || name.startsWith('Kekerasan')) {
+          return false;
+        }
+        
+        // Otherwise add to unique set and keep this category
+        uniqueNames.add(name);
+        return true;
+      });
     }
   },
   methods: {
@@ -662,7 +690,7 @@ export default {
       }
     },
     fetchCategories() {
-      axios.get('http://localhost:8000/api/category')
+      axios.get('https://v3422040.mhs.d3tiuns.com/api/category')
         .then(response => {
           this.categories = response.data;
         })
@@ -797,130 +825,246 @@ export default {
 
       return isValid;
     },
-    submitForm() {
-      // Validate form first
-      if (!this.validateForm()) {
-        // If errors with bukti_pelanggaran, scroll there
-        if (this.errors.bukti_pelanggaran) {
-          this.$nextTick(() => {
-            document.querySelector('.checkbox-group').scrollIntoView({ behavior: 'smooth' });
-          });
-          return;
-        }
+    async submitForm() {
+  // Debug logs to see where the issue is
+  console.log("Starting form submission...");
+  
+  // Use formData since that's what's defined in your component
+  let formReference = this.formData;
+  
+  if (!formReference) {
+    console.error("No form data found!");
+    this.showNotification('Error', 'Form data could not be found. Please refresh the page and try again.', false);
+    return;
+  }
 
-        // If validation fails, scroll to the appropriate section with error
-        if (this.errors.terlapor) {
-          this.$nextTick(() => {
-            document.querySelector('.terlapor-card').scrollIntoView({ behavior: 'smooth' });
-          });
-          return;
-        }
-        
-        if (this.errors.saksi) {
-          this.$nextTick(() => {
-            document.querySelector('.saksi-card').scrollIntoView({ behavior: 'smooth' });
-          });
-          return;
-        }
-        
-        return;
+  // Validate form first
+  if (!this.validateForm()) {
+    this.$nextTick(() => {
+      const firstError = document.querySelector('.is-invalid');
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-      
-      this.loading = true;
-      
-      const formData = new FormData();
-      
-      // Add basic fields
-      formData.append('judul', this.formData.judul);
-      formData.append('category_id', this.formData.category_id);
-      formData.append('deskripsi', this.formData.deskripsi);
-      formData.append('tanggal_kejadian', this.formData.tanggal_kejadian);
-      formData.append('agreement', this.formData.agreement ? 1 : 0);
-      formData.append('profesi', this.formData.profesi);
-      formData.append('jenis_kelamin', this.formData.jenis_kelamin);
-      formData.append('umur_pelapor', this.formData.umur_pelapor);
-      
-      // Add bukti_pelanggaran to the form data as individual items
-      this.formData.bukti_pelanggaran.forEach((bukti, index) => {
-        formData.append(`bukti_pelanggaran[${index}]`, bukti);
-      });
-      
-      // Optional link
-      if (this.formData.lampiran_link) {
-        formData.append('lampiran_link', this.formData.lampiran_link);
-      }
-      
-      // Handle terlapor ONLY if there are valid entries
-      const validTerlapor = this.formData.terlapor.filter(item => 
-        item.nama_lengkap || item.email || item.nomor_telepon || item.status_warga || 
-        item.unit_kerja || item.jenis_kelamin || item.umur_terlapor
-      );
-      
-      if (validTerlapor.length > 0) {
-        validTerlapor.forEach((item, index) => {
-          // Only add fields that have values
-          if (item.nama_lengkap) formData.append(`terlapor[${index}][nama_lengkap]`, item.nama_lengkap);
-          if (item.email) formData.append(`terlapor[${index}][email]`, item.email);
-          if (item.nomor_telepon) formData.append(`terlapor[${index}][nomor_telepon]`, item.nomor_telepon);
-          if (item.status_warga) formData.append(`terlapor[${index}][status_warga]`, item.status_warga);
-          if (item.unit_kerja) formData.append(`terlapor[${index}][unit_kerja]`, item.unit_kerja);
-          if (item.jenis_kelamin) formData.append(`terlapor[${index}][jenis_kelamin]`, item.jenis_kelamin);
-          if (item.umur_terlapor) formData.append(`terlapor[${index}][umur_terlapor]`, item.umur_terlapor);
-        });
-      }
-      
-      // Handle saksi ONLY if there are valid entries
-      const validSaksi = this.formData.saksi.filter(item => 
-        item.nama_lengkap || item.email || item.nomor_telepon
-      );
-      
-      if (validSaksi.length > 0) {
-        validSaksi.forEach((item, index) => {
-          // Only add fields that have values
-          if (item.nama_lengkap) formData.append(`saksi[${index}][nama_lengkap]`, item.nama_lengkap);
-          if (item.email) formData.append(`saksi[${index}][email]`, item.email);
-          if (item.nomor_telepon) formData.append(`saksi[${index}][nomor_telepon]`, item.nomor_telepon);
-        });
-      }
-      
-      // Add images - multiple files
-      if (this.formData.image_path && this.formData.image_path.length > 0) {
-        for (let i = 0; i < this.formData.image_path.length; i++) {
-          formData.append('image_path[]', this.formData.image_path[i]);
-        }
-      }
+    });
+    return;
+  }
+  
+  // Extra validation for images
+  if (!formReference.image_path || !Array.isArray(formReference.image_path) || formReference.image_path.length === 0) {
+    this.errors.image_path = ['Lampiran foto harus diunggah'];
+    return;
+  }
 
-      axios.post('http://localhost:8000/api/laporan/add_laporan', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-        .then(response => {
-          this.loading = false;
-          Swal.fire({
-            title: 'Berhasil!',
-            text: 'Laporan berhasil ditambahkan.',
-            icon: 'success',
-            timer: 2000,
-            timerProgressBar: true,
-            showConfirmButton: false
-          }).then(() => {
-            // Adjust the route based on your application structure
-            this.$router.push('/dosen/dashboardpkdosen');
-          });
-          this.resetForm();
-        })
-        .catch(error => {
-          this.loading = false;
-          console.error("Error response:", error.response);
+  // Validate each image before attempting to upload
+  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
+  const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+  
+  for (let i = 0; i < formReference.image_path.length; i++) {
+    const file = formReference.image_path[i];
+    
+    if (file.size > MAX_FILE_SIZE) {
+      this.showNotification(
+        'File Terlalu Besar', 
+        `File "${file.name}" berukuran ${(file.size / (1024 * 1024)).toFixed(2)}MB. Maksimal 2MB per file.`,
+        false
+      );
+      return;
+    }
+    
+    if (!ALLOWED_TYPES.includes(file.type.toLowerCase())) {
+      this.showNotification(
+        'Format File Tidak Didukung', 
+        `File "${file.name}" memiliki format ${file.type}. Format yang didukung: JPG, PNG.`,
+        false
+      );
+      return;
+    }
+  }
+  
+  this.loading = true;
+  this.errors = {};
+  
+  // Re-check the token before submitting
+  const authToken = VueCookies.get('auth_token');
+  if (!authToken) {
+    this.loading = false;
+    this.showNotification('Error Autentikasi', 'Sesi login Anda telah berakhir. Silakan login kembali untuk melanjutkan.', false);
+    setTimeout(() => {
+      this.$router.push('/mahasiswa/login');
+    }, 2000);
+    return;
+  }
+  
+  const formData = new FormData();
+  
+  // Append basic fields
+  formData.append('judul', formReference.judul);
+  formData.append('category_id', formReference.category_id);
+  formData.append('deskripsi', formReference.deskripsi);
+  formData.append('tanggal_kejadian', formReference.tanggal_kejadian);
+  formData.append('profesi', formReference.profesi);
+  formData.append('jenis_kelamin', formReference.jenis_kelamin);
+  formData.append('umur_pelapor', formReference.umur_pelapor);
+  formData.append('agreement', formReference.agreement ? 1 : 0);
+  
+  // Append optional link if provided
+  if (formReference.lampiran_link) {
+    formData.append('lampiran_link', formReference.lampiran_link);
+  }
+  
+  // Append bukti_pelanggaran
+  if (formReference.bukti_pelanggaran && formReference.bukti_pelanggaran.length > 0) {
+    formReference.bukti_pelanggaran.forEach((bukti) => {
+      formData.append('bukti_pelanggaran[]', bukti);
+    });
+  }
+  
+  // FIXED: Handle file uploads with the exact field name format expected by the server
+  if (formReference.image_path && formReference.image_path.length > 0) {
+    console.log("Images to upload:", formReference.image_path.length);
+    
+    // Use ONLY the indexed format that the server expects
+    for (let idx = 0; idx < formReference.image_path.length; idx++) {
+      const file = formReference.image_path[idx];
+      console.log(`Appending file ${idx+1}: ${file.name}, Type: ${file.type}, Size: ${file.size} bytes`);
+      
+      // IMPORTANT: Use EXACTLY this format - "image_path.0", "image_path.1", etc.
+      formData.append(`image_path.${idx}`, file);
+    }
+  }
+  
+  // Process terlapor data
+  const validTerlapor = formReference.terlapor.filter(item => 
+    item.nama_lengkap || item.email || item.nomor_telepon || item.status_warga || 
+    item.unit_kerja || item.jenis_kelamin || item.umur_terlapor
+  );
+  
+  if (validTerlapor.length > 0) {
+    validTerlapor.forEach((item, index) => {
+      if (item.nama_lengkap) formData.append(`terlapor[${index}][nama_lengkap]`, item.nama_lengkap);
+      if (item.email) formData.append(`terlapor[${index}][email]`, item.email);
+      if (item.nomor_telepon) formData.append(`terlapor[${index}][nomor_telepon]`, item.nomor_telepon);
+      if (item.status_warga) formData.append(`terlapor[${index}][status_warga]`, item.status_warga);
+      if (item.unit_kerja) formData.append(`terlapor[${index}][unit_kerja]`, item.unit_kerja);
+      if (item.jenis_kelamin) formData.append(`terlapor[${index}][jenis_kelamin]`, item.jenis_kelamin);
+      if (item.umur_terlapor) formData.append(`terlapor[${index}][umur_terlapor]`, item.umur_terlapor);
+    });
+  }
+  
+  // Process saksi data
+  const validSaksi = formReference.saksi.filter(item => 
+    item.nama_lengkap || item.email || item.nomor_telepon
+  );
+  
+  if (validSaksi.length > 0) {
+    validSaksi.forEach((item, index) => {
+      if (item.nama_lengkap) formData.append(`saksi[${index}][nama_lengkap]`, item.nama_lengkap);
+      if (item.email) formData.append(`saksi[${index}][email]`, item.email);
+      if (item.nomor_telepon) formData.append(`saksi[${index}][nomor_telepon]`, item.nomor_telepon);
+    });
+  }
+
+  // Log form data entries for debugging
+  console.log("Form data entries being sent:");
+  for (let pair of formData.entries()) {
+    if (pair[1] instanceof File) {
+      console.log(`${pair[0]}: File ${pair[1].name}, ${pair[1].type}, ${pair[1].size} bytes`);
+    } else {
+      console.log(`${pair[0]}: ${pair[1]}`);
+    }
+  }
+
+  // Send the request using axios
+  try {
+    const response = await axios.post('https://v3422040.mhs.d3tiuns.com/api/laporan/add_laporan', formData, {
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Accept': 'application/json'
+      },
+      onUploadProgress: (progressEvent) => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        console.log(`Upload progress: ${percentCompleted}%`);
+      }
+    });
+    
+    // Handle success
+    this.loading = false;
+    console.log('Success response:', response.data);
+    
+    Swal.fire({
+      title: 'Berhasil!',
+      text: 'Laporan berhasil ditambahkan.',
+      icon: 'success',
+      timer: 2000,
+      timerProgressBar: true,
+      showConfirmButton: false
+    }).then(() => {
+      this.$router.push('/pelaporan/kejadian');
+    });
+    
+    this.resetForm();
+  } catch (error) {
+    this.loading = false;
+    console.error('Error response:', error.response?.status, error.response?.data);
+    
+    if (error.response) {
+      if (error.response.status === 401) {
+        VueCookies.remove("auth_token");
+        VueCookies.remove("user_session");
+        
+        this.showNotification('Error Autentikasi', 'Sesi login Anda telah berakhir. Silakan login kembali untuk melanjutkan.', false);
+        
+        setTimeout(() => {
+          this.$router.push('/mahasiswa/login');
+        }, 2000);
+      } else {
+        // Get error data
+        const errorData = error.response.data;
+        console.error("API Error details:", errorData);
+        
+        // Handle image upload errors
+        if (errorData['image_path'] || errorData['image_path.0'] || errorData['image_path.1']) {
+          const errorMsg = errorData['image_path'] || errorData['image_path.0'] || errorData['image_path.1'];
           
-          if (error.response && error.response.status === 400) {
-            this.errors = error.response.data;
-          } else {
-            this.showNotification('Error', 'Terjadi kesalahan saat mengirim laporan.', false);
+          this.errors.image_path = Array.isArray(errorMsg) ? errorMsg : [errorMsg];
+          
+          this.showNotification(
+            'Gagal Mengunggah Gambar', 
+            'Terdapat masalah dengan unggahan gambar. Pastikan ukuran file tidak terlalu besar (maksimal 2MB per file) dan format file didukung (JPG, PNG).',
+            false
+          );
+        } else {
+          // Handle other validation errors
+          this.errors = errorData;
+          
+          // Show general error
+          const errorMessage = typeof errorData === 'string' ? errorData : 'Terjadi kesalahan saat mengirim laporan.';
+          this.showNotification('Error Validasi', errorMessage, false);
+        }
+        
+        // Scroll to first error
+        this.$nextTick(() => {
+          const firstError = document.querySelector('.is-invalid');
+          if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
         });
-    },
+      }
+    } else if (error.request) {
+      // Request made but no response received
+      console.error('No response received:', error.request);
+      this.showNotification(
+        'Error Server', 
+        'Permintaan terkirim tetapi server tidak memberikan respon. Silakan coba lagi nanti.',
+        false
+      );
+    } else {
+      // Something happened in setting up the request
+      console.error('Error in request setup:', error.message);
+      this.showNotification('Error', error.message, false);
+    }
+  }
+},
     resetForm() {
       this.formData = {
         judul: '',

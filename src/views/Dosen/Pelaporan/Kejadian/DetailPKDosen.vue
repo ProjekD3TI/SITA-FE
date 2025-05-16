@@ -38,7 +38,14 @@
                 <p class="description">{{ laporan.deskripsi }}</p>
                 
                 <div v-if="laporan.image_path" class="image-container">
-                    <img :src="getImageUrl(laporan.image_path)" alt="Gambar Kejadian" class="evidence-image" @click="showFullImage = true">
+                    <img 
+                        :src="getImageUrl(laporan.image_path)" 
+                        :data-path="laporan.image_path"
+                        alt="Gambar Kejadian" 
+                        class="evidence-image" 
+                        @click="showFullImage = true"
+                        @error="handleImageError"
+                    >
                     <div class="image-caption">Foto Bukti Kejadian (klik untuk memperbesar)</div>
                 </div>
             </div>
@@ -222,7 +229,7 @@ export default {
     methods: {
         async fetchCategories() {
             try {
-                const response = await axios.get('http://localhost:8000/api/category');
+                const response = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
                 this.categories = response.data.reduce((acc, category) => {
                     acc[category.category_id] = category.nama;
                     return acc;
@@ -237,7 +244,7 @@ export default {
             this.error = null;
             
             try {
-                const response = await axios.get(`http://localhost:8000/api/laporan/${this.laporanId}`);
+                const response = await axios.get(`https://v3422040.mhs.d3tiuns.com/api/laporan/${this.laporanId}`);
                 this.laporan = response.data;
                 
                 // Process tanggapan data: Parse it if it's a JSON string
@@ -298,7 +305,41 @@ export default {
         },
         
         getImageUrl(imagePath) {
-            return `http://localhost:8000/storage/laporan/${imagePath}`;
+            if (!imagePath) return '';
+            
+            // Clean the path by removing any quotes if present
+            const cleanPath = typeof imagePath === 'string' ? imagePath.replace(/['"]/g, '') : imagePath;
+            
+            // Check if it's already a full URL
+            if (typeof cleanPath === 'string' && cleanPath.startsWith('http')) {
+                return cleanPath;
+            }
+            
+            // Define the base URL
+            const baseUrl = 'https://v3422040.mhs.d3tiuns.com';
+            
+            // Primary URL - use this as default
+            return `${baseUrl}/Backend-Port/backend/engine/public/storage/laporan/${cleanPath}`;
+        },
+
+        // Add this method to handle image loading errors
+        handleImageError(event) {
+            const img = event.target;
+            const src = img.src;
+            const path = img.getAttribute('data-path') || this.laporan.image_path;
+            const baseUrl = 'https://v3422040.mhs.d3tiuns.com';
+            
+            // Try different URL patterns if the original fails
+            if (src.includes('/Backend-Port/backend/engine/public/')) {
+                // Try alternative URL pattern
+                img.src = `${baseUrl}/public/storage/laporan/${path}`;
+            } else if (src.includes('/public/storage/laporan/')) {
+                // Try another alternative
+                img.src = `${baseUrl}/storage/laporan/${path}`;
+            } else {
+                // Final fallback to placeholder
+                img.src = 'https://via.placeholder.com/400x300?text=Image+Not+Found';
+            }
         },
 
         // Add specific methods for verification and rejection
@@ -396,7 +437,7 @@ export default {
                 }
 
                 const response = await axios.post(
-                    `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+                    `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${this.laporanId}`, 
                     formData
                 );
                 
@@ -500,7 +541,7 @@ export default {
                 }
 
                 const response = await axios.post(
-                    `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+                    `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${this.laporanId}`, 
                     formData
                 );
                             
@@ -571,7 +612,7 @@ export default {
                 }
 
                 const response = await axios.post(
-                    `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+                    `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${this.laporanId}`, 
                     formData
                 );
                         
