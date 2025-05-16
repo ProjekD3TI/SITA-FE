@@ -503,6 +503,20 @@
                     Saya menyetujui pernyataan di atas <span class="text-red-500">*</span>
                   </label>
                 </div>
+                
+                <div v-if="showAgreementWarning" class="text-red-500 text-xs mt-1 ml-6">
+                  Anda harus menyetujui pernyataan ini untuk melanjutkan
+                </div>
+              </div>
+            </div>
+
+            <!-- reCAPTCHA v2 -->
+            <div class="mb-6">
+              <div class="flex flex-col items-center">
+                <div ref="recaptchaContainer"></div>
+                <div v-if="recaptchaError" class="text-red-500 text-xs mt-2">
+                  {{ recaptchaError }}
+                </div>
               </div>
             </div>
 
@@ -522,7 +536,11 @@
                 id="submitButton"
                 name="submitButton"
                 class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                :disabled="isSubmitting || !report.agreement"
+                :disabled="isSubmitting || !report.agreement || !recaptchaVerified"
+                :class="{
+                  'opacity-75 cursor-not-allowed': !report.agreement || !recaptchaVerified,
+                  'hover:bg-red-700': report.agreement && recaptchaVerified
+                }"
               >
                 <span v-if="isSubmitting">Mengirim...</span>
                 <span v-else>Simpan Laporan</span>
@@ -597,11 +615,18 @@ export default {
       showLainnyaInput: false,
       buktiLainnya: '',
       showBuktiWarning: false,
+      showAgreementWarning: false,
       isSubmitting: false,
       imagePreviews: [],
       selectedFiles: [],
       currentUser: 'miftahul01',
-      formattedDateTime: ''
+      formattedDateTime: '2025-05-16 02:31:01', // Current UTC time in YYYY-MM-DD HH:MM:SS format
+      
+      // reCAPTCHA v2 Configuration
+      recaptchaSiteKey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // Replace with your reCAPTCHA v2 site key (using test key)
+      recaptchaVerified: false,
+      recaptchaResponse: null,
+      recaptchaError: null
     };
   },
 
@@ -610,34 +635,91 @@ export default {
     // Initialize with one empty object for terduga and saksi
     this.addTerduga();
     this.addSaksi();
-    
-    // Set initial date/time with the required format
-    this.updateDateTime();
-    // Update time every minute
-    this.timerInterval = setInterval(this.updateDateTime, 60000);
   },
 
   beforeUnmount() {
-    // Clear interval when component is destroyed
-    clearInterval(this.timerInterval);
+    // Reset reCAPTCHA if component is destroyed
+    this.resetRecaptcha();
   },
 
   mounted() {
     this.fetchCategories();
+    this.loadRecaptchaScript();
   },
 
   methods: {
-    updateDateTime() {
-      const now = new Date();
-      const year = now.getUTCFullYear();
-      const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-      const day = String(now.getUTCDate()).padStart(2, '0');
-      const hours = String(now.getUTCHours()).padStart(2, '0');
-      const minutes = String(now.getUTCMinutes()).padStart(2, '0');
-      const seconds = String(now.getUTCSeconds()).padStart(2, '0');
+    loadRecaptchaScript() {
+      // Only load the script if it hasn't been loaded yet
+      if (window.grecaptcha) {
+        this.renderRecaptcha();
+        return;
+      }
       
-      // Format as "YYYY-MM-DD HH:MM:SS"
-      this.formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      // Load the reCAPTCHA v2 script
+      const script = document.createElement('script');
+      script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit';
+      script.async = true;
+      script.defer = true;
+      
+      // Define the callback function that will be called when reCAPTCHA is loaded
+      window.onRecaptchaLoaded = () => {
+        this.renderRecaptcha();
+      };
+      
+      script.onerror = () => {
+        console.error('Error loading reCAPTCHA script');
+        this.recaptchaError = 'Gagal memuat reCAPTCHA. Silakan muat ulang halaman.';
+      };
+      
+      document.head.appendChild(script);
+    },
+    
+    renderRecaptcha() {
+      // Wait until the DOM element is available
+      if (!this.$refs.recaptchaContainer) {
+        setTimeout(() => this.renderRecaptcha(), 100);
+        return;
+      }
+      
+      try {
+        // Render the reCAPTCHA v2 checkbox widget
+        window.grecaptcha.render(this.$refs.recaptchaContainer, {
+          'sitekey': this.recaptchaSiteKey,
+          'callback': (response) => {
+            this.recaptchaResponse = response;
+            this.recaptchaVerified = true;
+            this.recaptchaError = null;
+            console.log('reCAPTCHA verification successful');
+          },
+          'expired-callback': () => {
+            this.recaptchaResponse = null;
+            this.recaptchaVerified = false;
+            this.recaptchaError = 'Verifikasi reCAPTCHA telah kedaluwarsa. Silakan centang kembali.';
+            console.log('reCAPTCHA verification expired');
+          },
+          'error-callback': () => {
+            this.recaptchaResponse = null;
+            this.recaptchaVerified = false;
+            this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan muat ulang halaman.';
+            console.error('reCAPTCHA error');
+          }
+        });
+      } catch (error) {
+        console.error('Error rendering reCAPTCHA:', error);
+        this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan muat ulang halaman.';
+      }
+    },
+    
+    resetRecaptcha() {
+      if (window.grecaptcha) {
+        try {
+          window.grecaptcha.reset();
+          this.recaptchaVerified = false;
+          this.recaptchaResponse = null;
+        } catch (error) {
+          console.error('Error resetting reCAPTCHA:', error);
+        }
+      }
     },
     
     loadUserData() {
@@ -673,7 +755,7 @@ export default {
     },
     
     fetchCategories() {
-      axios.get('http://localhost:8000/api/category', {
+      axios.get('https://v3422040.mhs.d3tiuns.com/api/category', {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -809,13 +891,27 @@ export default {
     submitReport() {
       // Reset warnings
       this.showBuktiWarning = false;
+      this.showAgreementWarning = false;
+      this.recaptchaError = null;
       
       // Validate agreement
       if (!this.report.agreement) {
+        this.showAgreementWarning = true;
         Swal.fire({
           icon: 'error',
           title: 'Error',
           text: 'Anda harus menyetujui pernyataan untuk melanjutkan'
+        });
+        return;
+      }
+      
+      // Validate reCAPTCHA
+      if (!this.recaptchaVerified || !this.recaptchaResponse) {
+        this.recaptchaError = 'Harap centang kotak reCAPTCHA "Saya bukan robot"';
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Harap centang kotak reCAPTCHA untuk melanjutkan'
         });
         return;
       }
@@ -840,6 +936,7 @@ export default {
       formData.append('nomor_telepon', this.report.phone);
       formData.append('current_datetime', this.formattedDateTime);
       formData.append('username', this.currentUser);
+      formData.append('g-recaptcha-response', this.recaptchaResponse);
       
       // Add lampiran_link
       if (this.report.lampiran_link) {
@@ -890,7 +987,7 @@ export default {
       // Show loading state
       this.isSubmitting = true;
       
-      axios.post('http://localhost:8000/api/laporan_kekerasan/add_laporan', formData, {
+      axios.post('https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Accept': 'application/json'
@@ -906,7 +1003,7 @@ export default {
             timerProgressBar: true,
             showConfirmButton: false
           }).then(() => {
-            this.$router.push('/kekerasan-seksual');
+            this.$router.push('/pelaporan/kekerasan-seksual');
           });
           this.resetForm();
         })
@@ -915,12 +1012,32 @@ export default {
           if (error.response && error.response.status === 400) {
             console.error('Validation errors:', error.response.data);
             
+            // Check if it's a reCAPTCHA error
+            if (error.response.data.message && error.response.data.message.includes('reCAPTCHA')) {
+              this.recaptchaError = 'Verifikasi reCAPTCHA gagal. Silakan coba lagi.';
+              
+              // Reset reCAPTCHA
+              this.resetRecaptcha();
+              
+              Swal.fire({
+                icon: 'error',
+                title: 'Verifikasi Gagal',
+                text: 'Verifikasi reCAPTCHA gagal. Silakan coba lagi.'
+              });
+              
+              return;
+            }
+            
             let errorMessage = 'Terjadi kesalahan pada form:';
-            const errors = error.response.data;
+            const errors = error.response.data.errors || error.response.data;
             
             // Create a readable error message
             Object.keys(errors).forEach(key => {
-              errorMessage += `\n- ${errors[key][0]}`;
+              if (Array.isArray(errors[key])) {
+                errorMessage += `\n- ${errors[key][0]}`;
+              } else {
+                errorMessage += `\n- ${errors[key]}`;
+              }
             });
             
             Swal.fire({
@@ -972,7 +1089,14 @@ export default {
       this.showLainnyaInput = false;
       this.buktiLainnya = '';
       this.showBuktiWarning = false;
+      this.showAgreementWarning = false;
       this.imagePreviews = [];
+      this.recaptchaVerified = false;
+      this.recaptchaResponse = null;
+      this.recaptchaError = null;
+      
+      // Reset reCAPTCHA
+      this.resetRecaptcha();
       
       // Reset file input
       const fileInput = document.getElementById('evidence');

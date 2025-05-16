@@ -356,8 +356,8 @@ export default {
                 };
                 
                 const [categoriesResponse, laporanResponse] = await Promise.all([
-                    axios.get('http://localhost:8000/api/category', config),
-                    axios.get('http://localhost:8000/api/laporan_kekerasan', config)
+                    axios.get('https://v3422040.mhs.d3tiuns.com/api/category', config),
+                    axios.get('https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan', config)
                 ]);
                 
                 categories.value = categoriesResponse.data.reduce((acc, category) => {

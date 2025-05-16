@@ -41,8 +41,32 @@
             </div>
             <p class="description">{{ laporan.deskripsi }}</p>
             
-            <div v-if="laporan.image_path" class="image-container">
-              <img :src="getImageUrl(laporan.image_path)" alt="Gambar Kejadian" class="evidence-image" @click="showFullImage = true">
+            <!-- Updated image handling for multiple images -->
+            <div v-if="imagePaths && imagePaths.length > 0" class="image-container">
+              <h4 class="font-medium mb-2 mt-4">Foto Bukti Kejadian</h4>
+              <div class="image-grid">
+                <div v-for="(path, index) in imagePaths" :key="index" class="image-item">
+                  <img 
+                    :src="getImageUrlForPath(path)" 
+                    :alt="`Bukti Kejadian ${index + 1}`" 
+                    class="kejadian-image-thumbnail" 
+                    @click="openFullImage(index)"
+                    @error="handleImageError($event, index)"
+                  />
+                </div>
+              </div>
+              <div class="image-caption">Klik untuk memperbesar</div>
+            </div>
+
+            <!-- Fallback for single image (old format) -->
+            <div v-else-if="laporan.image_path && !imagePaths.length" class="image-container">
+              <img 
+                :src="getImageUrl(laporan.image_path)" 
+                alt="Gambar Kejadian" 
+                class="evidence-image" 
+                @click="showFullImage = true"
+                @error="handleSingleImageError"
+              >
               <div class="image-caption">Foto Bukti Kejadian (klik untuk memperbesar)</div>
             </div>
           </div>
@@ -85,13 +109,76 @@
               </div>
             </div>
           </div>
+          
+          <!-- NEW SECTION: Terlapor (Reported Person) -->
+          <div class="detail-card" v-if="hasReportedPersons">
+            <h3 class="detail-section-title"><i class="fas fa-user-shield"></i> Informasi Terlapor</h3>
+            <div v-for="(person, index) in laporan.terlapor" :key="'reported-' + index" class="person-item">
+              <h4 class="person-title">Terlapor {{ index + 1 }}</h4>
+              <div class="info-grid" style="grid-template-columns: 130px 1fr;">
+                <div class="info-label">Nama Lengkap:</div>
+                <div class="info-value">{{ person.nama_lengkap || '-' }}</div>
+                
+                <div class="info-label">Email:</div>
+                <div class="info-value">{{ person.email || '-' }}</div>
+                
+                <div class="info-label">Telepon:</div>
+                <div class="info-value">{{ person.nomor_telepon || '-' }}</div>
+                
+                <div class="info-label">Status:</div>
+                <div class="info-value">{{ capitalizeSentence(person.status_warga) || '-' }}</div>
+                
+                <div class="info-label" v-if="person.unit_kerja">Unit Kerja:</div>
+                <div class="info-value" v-if="person.unit_kerja">{{ person.unit_kerja }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- NEW SECTION: Saksi (Witnesses) -->
+          <div class="detail-card" v-if="hasWitnesses">
+            <h3 class="detail-section-title"><i class="fas fa-eye"></i> Informasi Saksi</h3>
+            <div v-for="(witness, index) in laporan.saksi" :key="'witness-' + index" class="person-item">
+              <h4 class="person-title">Saksi {{ index + 1 }}</h4>
+              <div class="info-grid" style="grid-template-columns: 130px 1fr;">
+                <div class="info-label">Nama Lengkap:</div>
+                <div class="info-value">{{ witness.nama_lengkap || '-' }}</div>
+                
+                <div class="info-label">Email:</div>
+                <div class="info-value">{{ witness.email || '-' }}</div>
+                
+                <div class="info-label">Telepon:</div>
+                <div class="info-value">{{ witness.nomor_telepon || '-' }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- External Link Section -->
+          <div class="detail-card" v-if="laporan.lampiran_link">
+            <h3 class="detail-section-title"><i class="fas fa-link"></i> Link Lampiran</h3>
+            <div class="link-container">
+              <a :href="laporan.lampiran_link" target="_blank" class="external-link">
+                <i class="fas fa-external-link-alt"></i> {{ laporan.lampiran_link }}
+              </a>
+            </div>
+          </div>
         </div>
 
         <!-- Modal for full image view -->
         <div class="fullscreen-modal" v-if="showFullImage" @click="showFullImage = false">
           <div class="modal-content">
             <span class="close-modal">&times;</span>
-            <img :src="getImageUrl(laporan.image_path)" alt="Bukti Kejadian" class="fullscreen-image">
+            <img 
+              :src="currentFullImageUrl" 
+              alt="Bukti Kejadian" 
+              class="fullscreen-image"
+            >
+            
+            <!-- Navigation buttons for multiple images -->
+            <div v-if="imagePaths && imagePaths.length > 1" class="image-navigation">
+              <button class="nav-button prev" @click.stop="prevImage">&lt;</button>
+              <div class="image-counter">{{ currentImageIndex + 1 }} / {{ imagePaths.length }}</div>
+              <button class="nav-button next" @click.stop="nextImage">&gt;</button>
+            </div>
           </div>
         </div>
       </div>
@@ -101,9 +188,11 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
+import VueCookies from 'vue-cookies';
+import { decryptData } from '../../../../services/encrypt';
 import Header from '../components/Header.vue';
 import Sidebar from '../components/Sidebar.vue';
 import Footer from '../components/Footer.vue';
@@ -125,11 +214,61 @@ export default {
     const loading = ref(true);
     const error = ref(null);
     const showFullImage = ref(false);
-    const showTanggapanModal = ref(false);
-    const tanggapanText = ref('');
     const isAdmin = ref(false);
+    const authToken = ref('');
+    const userData = ref(null);
+    const baseUrl = ref('https://v3422040.mhs.d3tiuns.com');
+    
+    // New properties for image handling
+    const imagePaths = ref([]);
+    const currentImageIndex = ref(0);
+    const currentFullImageUrl = ref('');
+    const currentDateTime = ref('2025-05-16 03:03:05'); // Current datetime from your request
+    const currentUser = ref('miftahul01'); // Current user's login
+    
+    // Computed properties
+    const hasReportedPersons = computed(() => {
+      return laporan.value && 
+             laporan.value.terlapor && 
+             Array.isArray(laporan.value.terlapor) && 
+             laporan.value.terlapor.length > 0;
+    });
+    
+    const hasWitnesses = computed(() => {
+      return laporan.value && 
+             laporan.value.saksi && 
+             Array.isArray(laporan.value.saksi) && 
+             laporan.value.saksi.length > 0;
+    });
+    
+    // Get current user and auth token from cookies
+    const getCurrentUser = () => {
+      try {
+        const encryptedUserData = VueCookies.get("user_session");
+        if (encryptedUserData) {
+          userData.value = decryptData(encryptedUserData);
+          console.log("Current user loaded:", userData.value.name);
+        }
+        
+        // Get auth token from cookies
+        const token = VueCookies.get("auth_token");
+        if (token) {
+          authToken.value = token;
+          // Set default Authorization header for all axios requests
+          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          console.log("Auth token loaded");
+        } else {
+          console.warn("No auth token found in cookies");
+        }
+      } catch (error) {
+        console.error("Error getting user data:", error);
+      }
+    };
     
     onMounted(() => {
+      // Load auth token first
+      getCurrentUser();
+      
       // Extract the ID from the route params
       const routeParam = route.params.id;
       console.log('Route param received:', routeParam, typeof routeParam);
@@ -160,9 +299,126 @@ export default {
       checkUserRole();
     });
     
+    const parseImagePaths = (imagePath) => {
+      if (!imagePath) {
+        return [];
+      }
+      
+      if (typeof imagePath === 'string') {
+        if ((imagePath.startsWith('[') && imagePath.endsWith(']')) || 
+            (imagePath.startsWith('"[') && imagePath.endsWith(']"'))) {
+          
+          try {
+            let cleanedPath = imagePath.replace(/\\/g, '');
+            
+            if (cleanedPath.startsWith('"') && cleanedPath.endsWith('"')) {
+              cleanedPath = cleanedPath.substring(1, cleanedPath.length - 1);
+            }
+            
+            const parsed = JSON.parse(cleanedPath);
+            if (Array.isArray(parsed)) {
+              return parsed;
+            }
+          } catch (e) {
+            console.error('Error parsing JSON:', e);
+          }
+        }
+        
+        if (imagePath.includes(',')) {
+          return imagePath.split(',').map(item => item.trim());
+        }
+        
+        return [imagePath];
+      }
+      
+      if (Array.isArray(imagePath)) {
+        return imagePath;
+      }
+      
+      return [];
+    };
+    
+    const getImageUrlForPath = (path) => {
+      if (!path) return '';
+      
+      // If it's already a full URL, return it as is
+      if (path.startsWith('http')) {
+        return path;
+      }
+      
+      // Clean up the path - remove any quotes
+      const cleanPath = path.replace(/['"]/g, '');
+      
+      // Use the first format you provided
+      return `${baseUrl.value}/public/storage/laporankekerasan/${cleanPath}`;
+    };
+    
+    const handleImageError = (event, index) => {
+      const img = event.target;
+      const originalSrc = img.src;
+      const path = imagePaths.value[index];
+      
+      // If we've already tried all fallbacks, show placeholder
+      if (originalSrc.includes('fallback=4')) {
+        img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+        return;
+      }
+      
+      const baseDomain = baseUrl.value;
+      let newUrl;
+      
+      // Try different path patterns for the image
+      if (!originalSrc.includes('fallback=')) {
+        // First try: Backend-Port path 
+        newUrl = `${baseDomain}/Backend-Port/backend/engine/public/storage/laporankekerasan/${path}?fallback=2`;
+      } else if (originalSrc.includes('fallback=2')) {
+        // Second try: api/storage path
+        newUrl = `${baseDomain}/api/storage/laporankekerasan/${path}?fallback=3`;
+      } else if (originalSrc.includes('fallback=3')) {
+        // Third try: direct storage path
+        newUrl = `${baseDomain}/storage/laporankekerasan/${path}?fallback=4`;
+      } else {
+        // If all else fails, show placeholder
+        newUrl = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+      }
+      
+      img.src = newUrl;
+    };
+    
+    const handleSingleImageError = (event) => {
+      const img = event.target;
+      const originalSrc = img.src;
+      
+      // If we've already tried all fallbacks, show placeholder
+      if (originalSrc.includes('fallback=4')) {
+        img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+        return;
+      }
+      
+      const baseDomain = baseUrl.value;
+      let newUrl;
+      
+      // Try different path patterns for a single image
+      if (!originalSrc.includes('fallback=')) {
+        // First try: Backend-Port path 
+        newUrl = `${baseDomain}/Backend-Port/backend/engine/public/storage/laporankekerasan/${laporan.value.image_path}?fallback=2`;
+      } else if (originalSrc.includes('fallback=2')) {
+        // Second try: api/storage path
+        newUrl = `${baseDomain}/api/storage/laporankekerasan/${laporan.value.image_path}?fallback=3`;
+      } else if (originalSrc.includes('fallback=3')) {
+        // Third try: direct storage path
+        newUrl = `${baseDomain}/storage/laporankekerasan/${laporan.value.image_path}?fallback=4`;
+      } else {
+        // If all else fails, show placeholder
+        newUrl = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+      }
+      
+      img.src = newUrl;
+    };
+    
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/category');
+        const response = await axios.get(`${baseUrl.value}/api/category`);
         categories.value = response.data.reduce((acc, category) => {
           acc[category.category_id] = category.nama;
           return acc;
@@ -181,23 +437,86 @@ export default {
         }
         
         loading.value = true;
-        const token = localStorage.getItem('token'); // Make sure this matches your storage key
+        
+        // Check if we have an auth token before making API calls
+        if (!authToken.value) {
+          error.value = 'Anda tidak memiliki akses. Silakan login kembali.';
+          loading.value = false;
+          return;
+        }
+        
+        // Configure axios with auth header
+        const config = {
+          headers: {
+            'Authorization': `Bearer ${authToken.value}`
+          }
+        };
         
         console.log('Fetching with ID:', laporanId.value, typeof laporanId.value);
         
-        const response = await axios.get(`http://localhost:8000/api/laporan_kekerasan/${laporanId.value}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await axios.get(`${baseUrl.value}/api/laporan_kekerasan/${laporanId.value}`, config);
         
         laporan.value = response.data;
+        
+        // Process images
+        if (laporan.value.image_path) {
+          // Try to fix common issues with data format before parsing
+          let imagePathData = laporan.value.image_path;
+          
+          // Fix double-encoded JSON (common issue)
+          if (typeof imagePathData === 'string' && imagePathData.startsWith('"[') && imagePathData.endsWith(']"')) {
+            try {
+              imagePathData = JSON.parse(imagePathData);
+            } catch (e) {
+              console.error('Error unescaping image_path:', e);
+            }
+          }
+          
+          imagePaths.value = parseImagePaths(imagePathData);
+          console.log('Parsed image paths:', imagePaths.value);
+        }
+        
         loading.value = false;
       } catch (err) {
         console.error('Error fetching laporan detail:', err);
-        error.value = 'Failed to load laporan detail';
+        if (err.response && err.response.status === 401) {
+          error.value = 'Sesi anda telah berakhir. Silakan login kembali.';
+        } else {
+          error.value = 'Gagal memuat detail laporan';
+        }
         loading.value = false;
       }
+    };
+    
+    const capitalizeSentence = (text) => {
+      if (!text) return '';
+      return text.split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    };
+    
+    const openFullImage = (index) => {
+      if (imagePaths.value && imagePaths.value.length > index) {
+        currentImageIndex.value = index;
+        currentFullImageUrl.value = getImageUrlForPath(imagePaths.value[index]);
+        showFullImage.value = true;
+      }
+    };
+    
+    const nextImage = (e) => {
+      if (e) e.stopPropagation();
+      if (!imagePaths.value || imagePaths.value.length <= 1) return;
+      
+      currentImageIndex.value = (currentImageIndex.value + 1) % imagePaths.value.length;
+      currentFullImageUrl.value = getImageUrlForPath(imagePaths.value[currentImageIndex.value]);
+    };
+    
+    const prevImage = (e) => {
+      if (e) e.stopPropagation();
+      if (!imagePaths.value || imagePaths.value.length <= 1) return;
+      
+      currentImageIndex.value = (currentImageIndex.value - 1 + imagePaths.value.length) % imagePaths.value.length;
+      currentFullImageUrl.value = getImageUrlForPath(imagePaths.value[currentImageIndex.value]);
     };
     
     const goBack = () => {
@@ -235,55 +554,34 @@ export default {
     };
     
     const getImageUrl = (imagePath) => {
-      return `http://localhost:8000/storage/laporankekerasan/${imagePath}`;
+      if (!imagePath) return '';
+      
+      // Check if image_path is a JSON string and parse it
+      if (typeof imagePath === 'string' && (imagePath.startsWith('[') || imagePath.startsWith('["'))) {
+        try {
+          const images = JSON.parse(imagePath);
+          if (Array.isArray(images) && images.length > 0) {
+            // Use the first image from the array
+            return `${baseUrl.value}/Backend-Port/backend/engine/public/storage/laporankekerasan/${images[0]}`;
+          }
+        } catch (e) {
+          console.error('Error parsing image path:', e);
+        }
+      }
+      
+      // If not a JSON string or parsing failed, return as is
+      return `${baseUrl.value}/Backend-Port/backend/engine/public/storage/laporankekerasan/${imagePath}`;
     };
     
     const checkUserRole = () => {
-      // Implement your logic to check if user is admin
-      // Example:
-      // const userRole = localStorage.getItem('userRole');
-      // isAdmin.value = userRole === 'admin';
-      
-      // For now, set this based on your requirements
-      isAdmin.value = true;
-    };
-    
-    const updateStatus = async (newStatus) => {
-      try {
-        loading.value = true;
-        
-        const token = localStorage.getItem('token');
-        const response = await axios.put(`http://localhost:8000/api/laporan_kekerasan/${laporanId.value}/status`, {
-          status: newStatus
-        }, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        laporan.value.status = newStatus;
-        // Using notification if you have a notification system
-        // Uncomment if you have a notification system set up
-        /*
-        $notify({
-          type: 'success',
-          text: `Status laporan berhasil diperbarui menjadi ${formatStatus(newStatus)}`
-        });
-        */
-      } catch (err) {
-        console.error('Error updating status:', err);
-        // Uncomment if you have a notification system set up
-        /*
-        $notify({
-          type: 'error',
-          text: 'Gagal memperbarui status laporan'
-        });
-        */
-      } finally {
-        loading.value = false;
+      // Check if user data is loaded
+      if (userData.value && userData.value.role) {
+        isAdmin.value = userData.value.role === 'admin';
+      } else {
+        isAdmin.value = false;
       }
     };
-
+    
     const startChat = () => {
       // Get the phone number from the laporan data
       let phoneNumber = laporan.value.nomor_telepon;
@@ -306,66 +604,7 @@ export default {
         // Open WhatsApp in a new tab
         window.open(whatsappUrl, '_blank');
       } else {
-        // Uncomment if you have a notification system set up
-        /*
-        $notify({
-          type: 'error',
-          text: 'Nomor telepon tidak tersedia'
-        });
-        */
         alert('Nomor telepon tidak tersedia');
-      }
-    };
-    
-    const saveTanggapan = async () => {
-      if (!tanggapanText.value.trim()) {
-        // Uncomment if you have a notification system set up
-        /*
-        $notify({
-          type: 'error',
-          text: 'Tanggapan tidak boleh kosong'
-        });
-        */
-        alert('Tanggapan tidak boleh kosong');
-        return;
-      }
-      
-      try {
-        loading.value = true;
-        
-        const token = localStorage.getItem('token');
-        const response = await axios.post(`http://localhost:8000/api/laporan_kekerasan/${laporanId.value}/tanggapan`, {
-          tanggapan: tanggapanText.value
-        }, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        laporan.value.tanggapan = tanggapanText.value;
-        tanggapanText.value = '';
-        showTanggapanModal.value = false;
-        
-        // Uncomment if you have a notification system set up
-        /*
-        $notify({
-          type: 'success',
-          text: 'Tanggapan berhasil ditambahkan'
-        });
-        */
-        alert('Tanggapan berhasil ditambahkan');
-      } catch (err) {
-        console.error('Error saving tanggapan:', err);
-        // Uncomment if you have a notification system set up
-        /*
-        $notify({
-          type: 'error',
-          text: 'Gagal menyimpan tanggapan'
-        });
-        */
-        alert('Gagal menyimpan tanggapan');
-      } finally {
-        loading.value = false;
       }
     };
     
@@ -376,9 +615,15 @@ export default {
       loading,
       error,
       showFullImage,
-      showTanggapanModal,
-      tanggapanText,
       isAdmin,
+      authToken,
+      userData,
+      imagePaths,
+      currentImageIndex,
+      currentFullImageUrl,
+      hasReportedPersons,
+      hasWitnesses,
+      getCurrentUser,
       fetchCategories,
       fetchLaporanDetail,
       goBack,
@@ -386,10 +631,15 @@ export default {
       formatStatus,
       getCategoryName,
       getImageUrl,
+      getImageUrlForPath,
+      handleImageError,
+      handleSingleImageError,
+      capitalizeSentence,
+      openFullImage,
+      nextImage,
+      prevImage,
       checkUserRole,
-      updateStatus,
-      startChat,
-      saveTanggapan
+      startChat
     };
   }
 };
@@ -584,6 +834,35 @@ export default {
   text-align: center;
 }
 
+/* Image grid styling */
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.image-item {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.kejadian-image-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.kejadian-image-thumbnail:hover {
+  transform: scale(1.05);
+}
+
 .detail-cards-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -622,69 +901,47 @@ export default {
   align-items: center;
 }
 
-.tanggapan-text {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: #374151;
-  white-space: pre-line;
+/* Person item styling */
+.person-item {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.action-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 24px;
+.person-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
-.btn-primary, .btn-success, .btn-danger, .btn-secondary {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
+.person-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 16px;
+  padding-left: 8px;
+  border-left: 3px solid #3b82f6;
+}
+
+/* Link container styling */
+.link-container {
+  margin-top: 10px;
+}
+
+.external-link {
+  display: inline-block;
+  color: #2563eb;
+  text-decoration: none;
   font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: background-color 0.2s;
+  word-break: break-all;
 }
 
-.btn-primary i, .btn-success i, .btn-danger i, .btn-secondary i {
-  margin-right: 8px;
+.external-link:hover {
+  text-decoration: underline;
 }
 
-.btn-primary {
-  background-color: #2563eb;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #1d4ed8;
-}
-
-.btn-success {
-  background-color: #059669;
-  color: white;
-}
-
-.btn-success:hover {
-  background-color: #047857;
-}
-
-.btn-danger {
-  background-color: #dc2626;
-  color: white;
-}
-
-.btn-danger:hover {
-  background-color: #b91c1c;
-}
-
-.btn-secondary {
-  background-color: #6b7280;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background-color: #4b5563;
+.external-link i {
+  margin-right: 6px;
 }
 
 /* Full image modal */
@@ -717,122 +974,43 @@ export default {
   cursor: pointer;
 }
 
-/* Tanggapan modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
+/* Image navigation */
+.image-navigation {
+  position: absolute;
+  bottom: 20px;
   left: 0;
   width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: center;
-  z-index: 1000;
 }
 
-.modal-container {
-  background-color: white;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 600px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.modal-header {
-  padding: 16px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-header h3 {
-  font-weight: 600;
-  color: #111827;
-  margin: 0;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #6b7280;
-}
-
-.modal-body {
-  padding: 24px;
-}
-
-.tanggapan-textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 1rem;
-  resize: vertical;
-}
-
-.modal-footer {
-  padding: 16px 24px;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.btn-cancel, .btn-save {
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.btn-cancel {
-  background-color: #f3f4f6;
-  color: #4b5563;
-  border: 1px solid #d1d5db;
-}
-
-.btn-cancel:hover {
-  background-color: #e5e7eb;
-}
-
-.btn-save {
-  background-color: #2563eb;
+.nav-button {
+  background-color: rgba(255, 255, 255, 0.3);
   color: white;
   border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: 0 10px;
+  transition: background-color 0.2s;
 }
 
-.btn-save:hover {
-  background-color: #1d4ed8;
+.nav-button:hover {
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
-/* Status badge colors */
-.unverified {
-  background-color: #f3f4f6;
-  color: #4b5563;
-}
-
-.verified {
-  background-color: #dbeafe;
-  color: #2563eb;
-}
-
-.processed {
-  background-color: #fef3c7;
-  color: #d97706;
-}
-
-.completed {
-  background-color: #d1fae5;
-  color: #059669;
-}
-
-.rejected {
-  background-color: #fee2e2;
-  color: #dc2626;
+.image-counter {
+  color: white;
+  font-size: 16px;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 5px 10px;
+  border-radius: 15px;
 }
 
 .chat-icon-button {
@@ -859,6 +1037,32 @@ export default {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+/* Status badge colors */
+.unverified {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.verified {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.processed {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.completed {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.rejected {
+  background-color: #fee2e2;
+  color: #dc2626;
 }
 
 /* Responsive design */
