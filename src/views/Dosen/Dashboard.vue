@@ -9,7 +9,8 @@
         <p class="font-medium">{{ userData?.email }}</p>
         <p>Selamat datang, {{ userData?.name || "Dosen" }}</p>
         <p class="font-medium">
-          Nomor Telepon: {{ userData?.no_telp || "Nomor telepon tidak tersedia" }}
+          Nomor Telepon:
+          {{ userData?.no_telp || "Nomor telepon tidak tersedia" }}
         </p>
         <p class="mt-2">
           Jabatan saat ini: {{ userData?.jabatan || "Tidak ada jabatan" }}
