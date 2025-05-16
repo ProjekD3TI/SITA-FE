@@ -365,8 +365,11 @@ const resetPagination = () => {
 const router = useRouter();
 
 const handleRowClick = (item) => {
+  if (activeTab.value === "dibimbing") {
+
   console.log("Row clicked:", item);
   router.push("/dosen/tugas-akhir/bimbingan/detail-bimbingan");
+}
 };
 
 watch(activeTab, () => resetPagination());
