@@ -41,7 +41,7 @@
             <div class="info-grid">
               <div class="info-item">
                 <div class="label">Tanggal dan Waktu Kejadian</div>
-                <div class="value">{{ formatDate(laporan.tanggal_kejadian) }}</div>
+                <div class="value">{{ formatedDate(laporan.tanggal_kejadian) }}</div>
               </div>
               <div class="info-item">
                 <div class="label">Kategori Kejadian</div>
@@ -658,6 +658,29 @@ export default {
       this.$router.go(-1);
     },
     
+    formatedDate(dateString) {
+      if (!dateString) return '-';
+      
+      try {
+        let date = new Date(dateString.replace(' ', 'T') + 'Z'); // Menambahkan 'Z' untuk menunjukkan UTC
+        
+        // Format tanggal dalam gaya Indonesia dengan timezone UTC
+        const options = { 
+          day: 'numeric', 
+          month: 'long', 
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone: 'UTC'
+        };
+        
+        return date.toLocaleDateString('id-ID', options);
+      } catch (e) {
+        console.error('Error formatting date:', e);
+        return dateString || '-';
+      }
+    },
+
     formatDate(dateString) {
       if (!dateString) return '-';
       
