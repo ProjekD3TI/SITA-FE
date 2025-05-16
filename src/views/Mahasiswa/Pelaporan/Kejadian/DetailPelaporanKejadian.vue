@@ -95,6 +95,80 @@
                 <div class="label">Telepon</div>
                 <div class="value">{{ laporan.nomor_telepon || laporan.telepon_pelapor || "-" }}</div>
               </div>
+              <div class="info-item" v-if="laporan.profesi">
+                <div class="label">Profesi</div>
+                <div class="value">{{ laporan.profesi }}</div>
+              </div>
+              <div class="info-item" v-if="laporan.jenis_kelamin">
+                <div class="label">Jenis Kelamin</div>
+                <div class="value">{{ capitalizeSentence(laporan.jenis_kelamin) }}</div>
+              </div>
+              <div class="info-item" v-if="laporan.umur_pelapor">
+                <div class="label">Umur</div>
+                <div class="value">{{ laporan.umur_pelapor }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- NEW SECTION: Terlapor (Reported Person) -->
+          <div class="card" v-if="hasReportedPersons">
+            <h3>Informasi Terlapor</h3>
+            <div v-for="(person, index) in laporan.terlapor" :key="'reported-' + index" class="person-item">
+              <h4 class="person-title">Terlapor {{ index + 1 }}</h4>
+              <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 40px; row-gap: 20px;">
+                <div class="info-item">
+                  <div class="label">Nama Lengkap</div>
+                  <div class="value">{{ person.nama_lengkap || '-' }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="label">Email</div>
+                  <div class="value">{{ person.email || '-' }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="label">Telepon</div>
+                  <div class="value">{{ person.nomor_telepon || '-' }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="label">Status</div>
+                  <div class="value">{{ capitalizeSentence(person.status_warga) || '-' }}</div>
+                </div>
+                <div class="info-item" v-if="person.unit_kerja">
+                  <div class="label">Unit Kerja / Fakultas</div>
+                  <div class="value">{{ person.unit_kerja }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- NEW SECTION: Saksi (Witnesses) -->
+          <div class="card" v-if="hasWitnesses">
+            <h3>Informasi Saksi</h3>
+            <div v-for="(witness, index) in laporan.saksi" :key="'witness-' + index" class="person-item">
+              <h4 class="person-title">Saksi {{ index + 1 }}</h4>
+              <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 40px; row-gap: 20px;">
+                <div class="info-item">
+                  <div class="label">Nama Lengkap</div>
+                  <div class="value">{{ witness.nama_lengkap || '-' }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="label">Email</div>
+                  <div class="value">{{ witness.email || '-' }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="label">Telepon</div>
+                  <div class="value">{{ witness.nomor_telepon || '-' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- External Link Section -->
+          <div class="card" v-if="laporan.lampiran_link">
+            <h3>Link Lampiran Pendukung</h3>
+            <div class="link-container">
+              <a :href="laporan.lampiran_link" target="_blank" class="external-link">
+                <i class="fas fa-external-link-alt"></i> {{ laporan.lampiran_link }}
+              </a>
             </div>
           </div>
           
@@ -274,9 +348,22 @@ export default {
       }
       
       return typeof this.laporan.tanggapan === 'string' && this.laporan.tanggapan.trim() !== '';
+    },
+    hasReportedPersons() {
+      return this.laporan && this.laporan.terlapor && Array.isArray(this.laporan.terlapor) && this.laporan.terlapor.length > 0;
+    },
+    hasWitnesses() {
+      return this.laporan && this.laporan.saksi && Array.isArray(this.laporan.saksi) && this.laporan.saksi.length > 0;
     }
   },
   methods: {
+    capitalizeSentence(text) {
+      if (!text) return '';
+      return text.split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    },
+
     getAuthToken() {
       const token = VueCookies.get("auth_token");
       if (token) {
@@ -286,7 +373,7 @@ export default {
         this.error = "Sesi login telah berakhir. Silakan login kembali.";
       }
     },
-    
+
     getCurrentUser() {
       // Get current user information from localStorage or any other auth source
       this.currentUser = localStorage.getItem('userName') || 'Miftahul';
@@ -1296,6 +1383,48 @@ export default {
 .status-finished {
   background-color: #d1fae5;
   color: #059669;
+}
+
+person-item {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.person-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.person-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 16px;
+  padding-left: 8px;
+  border-left: 3px solid #3b82f6;
+}
+
+/* External link styles */
+.link-container {
+  margin-top: 10px;
+}
+
+.external-link {
+  display: inline-block;
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.external-link:hover {
+  text-decoration: underline;
+}
+
+.external-link i {
+  margin-right: 6px;
 }
 
 @media (max-width: 768px) {
