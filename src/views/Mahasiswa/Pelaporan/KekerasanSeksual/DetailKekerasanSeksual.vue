@@ -87,6 +87,18 @@
                     <i class="fas fa-comment"></i>
                   </button>
                 </div>
+                
+                <!-- Tambahan kolom profesi -->
+                <div class="info-label">Profesi:</div>
+                <div class="info-value">{{ laporan.profesi || 'Tidak diisi' }}</div>
+                
+                <!-- Tambahan kolom jenis kelamin -->
+                <div class="info-label">Jenis Kelamin:</div>
+                <div class="info-value">{{ formatGender(laporan.jenis_kelamin) }}</div>
+                
+                <!-- Tambahan kolom umur -->
+                <div class="info-label">Rentang Umur:</div>
+                <div class="info-value">{{ formatUmur(laporan.umur_pelapor) }}</div>
               </div>
             </div>
 
@@ -129,6 +141,14 @@
                 
                 <div class="info-label" v-if="person.unit_kerja">Unit Kerja:</div>
                 <div class="info-value" v-if="person.unit_kerja">{{ person.unit_kerja }}</div>
+                
+                <!-- Tambahan kolom jenis kelamin terlapor -->
+                <div class="info-label">Jenis Kelamin:</div>
+                <div class="info-value">{{ formatGender(person.jenis_kelamin) }}</div>
+                
+                <!-- Tambahan kolom umur terlapor -->
+                <div class="info-label">Rentang Umur:</div>
+                <div class="info-value">{{ formatUmur(person.umur_terlapor) }}</div>
               </div>
             </div>
           </div>
@@ -223,7 +243,7 @@ export default {
       imagePaths: [],
       currentImageIndex: 0,
       currentFullImageUrl: '',
-      currentDateTime: '2025-05-16 03:15:20' // Updated timestamp
+      currentDateTime: '2025-05-16 03:55:54' // Updated timestamp
     };
   },
   computed: {
@@ -297,6 +317,32 @@ export default {
       return text.split(' ')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ');
+    },
+    
+    // Method untuk memformat jenis kelamin
+    formatGender(gender) {
+      if (!gender) return 'Tidak diisi';
+      
+      if (gender === 'laki-laki') {
+        return 'Laki-laki';
+      } else if (gender === 'perempuan') {
+        return 'Perempuan';
+      }
+      
+      return gender;
+    },
+    
+    // Method untuk memformat umur pelapor/terlapor
+    formatUmur(umur) {
+      if (!umur) return 'Tidak diisi';
+      
+      const umurMap = {
+        '<20': 'Kurang dari 20 tahun',
+        '20-40': '20 - 40 tahun',
+        '40<': 'Lebih dari 40 tahun'
+      };
+      
+      return umurMap[umur] || umur;
     },
 
     getAuthToken() {

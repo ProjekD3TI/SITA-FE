@@ -194,44 +194,140 @@
             <!-- Section 2: Informasi Pelapor -->
             <div class="border-b pb-6 mb-6">
               <h3 class="text-xl font-semibold mb-4 text-gray-700">Informasi Pelapor</h3>
-              <div class="max-w-md">
-                <div class="mb-4">
-                  <label for="reporterName" class="block text-sm font-medium text-gray-700 mb-1">Nama Pelapor</label>
-                  <input
-                    type="text"
-                    id="reporterName"
-                    name="reporterName"
-                    v-model="report.reporterName"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 bg-gray-100"
-                    autocomplete="name"
-                    disabled
-                  />
-                </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Left Column -->
+                <div>
+                  <div class="mb-4">
+                    <label for="reporterName" class="block text-sm font-medium text-gray-700 mb-1">Nama Pelapor</label>
+                    <input
+                      type="text"
+                      id="reporterName"
+                      name="reporterName"
+                      v-model="report.reporterName"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 bg-gray-100"
+                      autocomplete="name"
+                      disabled
+                    />
+                  </div>
 
-                <div class="mb-4">
-                  <label for="nim" class="block text-sm font-medium text-gray-700 mb-1">NIM Pelapor</label>
-                  <input
-                    type="text"
-                    id="nim"
-                    name="nim"
-                    v-model="report.nim"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 bg-gray-100"
-                    autocomplete="off"
-                    disabled
-                  />
-                </div>
+                  <div class="mb-4">
+                    <label for="nim" class="block text-sm font-medium text-gray-700 mb-1">NIM Pelapor</label>
+                    <input
+                      type="text"
+                      id="nim"
+                      name="nim"
+                      v-model="report.nim"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 bg-gray-100"
+                      autocomplete="off"
+                      disabled
+                    />
+                  </div>
 
-                <div class="mb-4">
-                  <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Nomor HP Pelapor</label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    v-model="report.phone"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 bg-gray-100"
-                    autocomplete="tel"
-                    disabled
-                  />
+                  <div class="mb-4">
+                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Nomor HP Pelapor</label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      v-model="report.phone"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 bg-gray-100"
+                      autocomplete="tel"
+                      disabled
+                    />
+                  </div>
+                  
+                  <!-- Profesi Field (TAMBAHAN) -->
+                  <div class="mb-4">
+                    <label for="profesi" class="block text-sm font-medium text-gray-700 mb-1">Profesi <span class="text-red-500">*</span></label>
+                    <select
+                      id="profesi"
+                      name="profesi"
+                      v-model="report.profesi"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                      required
+                    >
+                      <option value="" disabled selected>Pilih Profesi</option>
+                      <option value="Mahasiswa">Mahasiswa</option>
+                      <option value="Dosen">Dosen</option>
+                      <option value="Staff">Staff</option>
+                      <option value="Lainnya">Lainnya</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <!-- Right Column -->
+                <div>
+                  <!-- Jenis Kelamin Field (TAMBAHAN) -->
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Kelamin <span class="text-red-500">*</span></label>
+                    <div class="space-y-2">
+                      <div class="flex items-center">
+                        <input
+                          type="radio"
+                          id="gender_male"
+                          name="jenis_kelamin"
+                          v-model="report.jenis_kelamin"
+                          value="laki-laki"
+                          class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
+                          required
+                        />
+                        <label for="gender_male" class="ml-2 text-sm text-gray-700">Laki-laki</label>
+                      </div>
+                      
+                      <div class="flex items-center">
+                        <input
+                          type="radio"
+                          id="gender_female"
+                          name="jenis_kelamin"
+                          v-model="report.jenis_kelamin"
+                          value="perempuan"
+                          class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
+                        />
+                        <label for="gender_female" class="ml-2 text-sm text-gray-700">Perempuan</label>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Rentang Umur Field (TAMBAHAN) -->
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Rentang Umur <span class="text-red-500">*</span></label>
+                    <div class="space-y-2 bg-gray-50 p-3 rounded-md border border-gray-300">
+                      <div class="flex items-center">
+                        <input
+                          type="radio"
+                          id="below20"
+                          name="umur_pelapor"
+                          v-model="report.umur_pelapor"
+                          value="<20"
+                          class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
+                          required
+                        />
+                        <label for="below20" class="ml-2 text-sm text-gray-700">Kurang dari 20 tahun</label>
+                      </div>
+                      <div class="flex items-center">
+                        <input
+                          type="radio"
+                          id="20to40"
+                          name="umur_pelapor"
+                          v-model="report.umur_pelapor"
+                          value="20-40"
+                          class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
+                        />
+                        <label for="20to40" class="ml-2 text-sm text-gray-700">20 - 40 tahun</label>
+                      </div>
+                      <div class="flex items-center">
+                        <input
+                          type="radio"
+                          id="above40"
+                          name="umur_pelapor"
+                          v-model="report.umur_pelapor"
+                          value="40<"
+                          class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
+                        />
+                        <label for="above40" class="ml-2 text-sm text-gray-700">Lebih dari 40 tahun</label>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -582,7 +678,11 @@ export default {
         bukti_pelanggaran: [],
         agreement: false,
         terlapor: [],
-        saksi: []
+        saksi: [],
+        // Tambahkan field baru
+        profesi: '',
+        jenis_kelamin: '',
+        umur_pelapor: ''
       },
       categories: [],
       selectedBukti: [],
@@ -938,6 +1038,11 @@ export default {
       formData.append('username', this.currentUser);
       formData.append('g-recaptcha-response', this.recaptchaResponse);
       
+      // Tambahkan field baru
+      formData.append('profesi', this.report.profesi);
+      formData.append('jenis_kelamin', this.report.jenis_kelamin);
+      formData.append('umur_pelapor', this.report.umur_pelapor);
+      
       // Add lampiran_link
       if (this.report.lampiran_link) {
         formData.append('lampiran_link', this.report.lampiran_link);
@@ -1082,7 +1187,11 @@ export default {
           nama_lengkap: '',
           email: '',
           nomor_telepon: ''
-        }]
+        }],
+        // Reset field baru
+        profesi: '',
+        jenis_kelamin: '',
+        umur_pelapor: ''
       };
       this.selectedFiles = [];
       this.selectedBukti = [];
