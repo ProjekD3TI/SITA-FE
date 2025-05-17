@@ -1,5 +1,5 @@
 <template>
-  <div class="relative w-full">
+  <div class="relative">
     <label :for="id" class="absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold">{{ label }}</label>
     <input
       :id="id"

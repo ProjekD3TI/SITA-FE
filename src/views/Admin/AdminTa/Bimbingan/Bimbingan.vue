@@ -4,78 +4,157 @@ import Breadcrumb from '@/components/Tugas-akhir/Breadcrumb.vue';
 import Button from '@/components/Tugas-akhir/Button.vue';
 import Table from '@/components/Tugas-akhir/Table.vue';
 import TabDiv from '@/components/Tugas-akhir/TabDiv.vue';
-import Slider from '@/components/Tugas-akhir/Slider.vue';
 import ModalFilter from '@/components/Tugas-akhir/Modals/ModalFilter.vue';
 import SearchBar from '@/components/Tugas-akhir/Forms/SearchBar.vue';
-import StatusLabel from '@/components/Tugas-akhir/Label.vue';
 import DefaultAvatar from '@/assets/images/Profile Avatar.svg';
 import router from '@/router';
-const proposalMhs = ref([
+import Loading from '@/components/Loading.vue';
+import ErrorMsg from '@/components/ErrorMsg.vue';
+
+const searchQuery = ref('');
+const searchQueryBimbingan = ref('');
+const selectedCategoriesPlot = ref([]);      // Untuk tab 1
+const selectedCategoriesBimbingan = ref([]); // Untuk tab 2
+const loading = ref(false);
+const error = ref(null);
+const listBimbingan = ref ([
   {
-    nim: '12345678',
+    nim: 'V3420001',
     nama: 'John Doe',
     img: DefaultAvatar,
     kategori: 'Internet Of Things',
+    dosen_pembimbing : 'Dr. Budi Santoso',
     pertemuan: 1,
-    judul_proposal_ta: 'Sistem Informasi Akademik',
-    dosen_pembimbing: 'Dr. Budi Santoso',
-    nilai: 90,
-    catatan: 'Sangat Baik',
-    status: '1',
   },
   {
-    nim: '87654321',
+    nim: 'V3420002',
     nama: 'Jane Smith',
     img: DefaultAvatar,
-    pertemuan: 2,
     kategori: 'Mobile Development',
-    judul_proposal_ta: 'Pengembangan Aplikasi Mobile',
-    dosen_pembimbing: 'Prof. Andi Wijaya',
-    nilai: 85,
-    catatan: 'Baik',
-    status: '0',
+    dosen_pembimbing : 'Dr. Clara Susanti',
+    pertemuan: 2,
   },
   {
-    nim: '11223344',
+    nim: 'V3420003',
     nama: 'Alice Johnson',
-    kategori: 'Data Science',
     img: DefaultAvatar,
-    judul_proposal_ta: 'Analisis Data Big Data',
-    dosen_pembimbing: 'Dr. Clara Susanti',
-    nilai: null,
-    catatan: null,
-    status: '2',
+    kategori: 'Data Science',
+    dosen_pembimbing : 'Dr. Clara Susanti',
+    pertemuan: null,
   },
-]);
+])
+const reqPembibingMhs = ref([
+  {
+    nim: 'V3420001',
+    nama: 'John Doe',
+    img: DefaultAvatar,
+    kategori: 'Internet Of Things',
+    dosen_pembimbing: 'Dr. Budi Santoso',
+  },
+  {
+    nim: 'V3420002',
+    nama: 'Jane Smith',
+    img: DefaultAvatar,
+    kategori: 'Mobile Development',
+    dosen_pembimbing: null,
+  },
+  {
+    nim: 'V3420003',
+    nama: 'Alice Johnson',
+    img: DefaultAvatar,
+    kategori: 'Data Science',
+    dosen_pembimbing: 'Dr. Clara Susanti',
+  },
+  {
+    nim: 'V3420004',
+    nama: 'Bob Brown',
+    img: DefaultAvatar,
+    kategori: 'Web Development',
+    dosen_pembimbing: null,
+  },
+  {
+    nim: 'V3420005',
+    nama: 'Charlie Green',
+    img: DefaultAvatar,
+    kategori: 'Machine Learning',
+    dosen_pembimbing: 'Dr. Clara Susanti',
+  },
+  {
+    nim: 'V3420006',
+    nama: 'David White',
+    img: DefaultAvatar,
+    kategori: 'Artificial Intelligence',
+    dosen_pembimbing: null,
+  },
+  {
+    nim: 'V3420007',
+    nama: 'Eve Black',
+    img: DefaultAvatar,
+    kategori: 'Cloud Computing',
+    dosen_pembimbing: 'Dr. Budi Santoso',
+  },
+  {
+    nim: 'V3420008',
+    nama: 'Frank Blue',
+    img: DefaultAvatar,
+    kategori: 'Cyber Security',
+    dosen_pembimbing: null,
+  },
+  {
+    nim: 'V3420009',
+    nama: 'Grace Yellow',
+    img: DefaultAvatar,
+    kategori: 'Blockchain Technology',
+    dosen_pembimbing: 'Dr. Clara Susanti',
+  },
+  {
+    nim: 'V3420010',
+    nama: 'Hank Red',
+    img: DefaultAvatar,
+    kategori: 'Internet Of Things',
+    dosen_pembimbing: null,
+  },
+  {
+    nim: 'V3420011',
+    nama: 'Ivy Purple',
+    img: DefaultAvatar,
+    kategori: 'Mobile Development',
+    dosen_pembimbing: 'Dr. Budi Santoso',
+  },
+  {
+    nim: 'V3420012',
+    nama: 'Jack Orange',
+    img: DefaultAvatar,
+    kategori: 'Data Science',
+    dosen_pembimbing: null,
+  },
+  {
+    nim: 'V3420013',
+    nama: 'Kathy Pink',
+    img: DefaultAvatar,
+    kategori: 'Web Development',
+    dosen_pembimbing: 'Dr. Clara Susanti',
+  },
+  {
+    nim: 'V3420014',
+    nama: 'Leo Gray',
+    img: DefaultAvatar,
+    kategori: 'Machine Learning',
+    dosen_pembimbing: null,
+  },
+])
 const categories =[
-
+    { value: 1, label: 'Internet Of Things' },
+    { value: 2, label: 'Mobile Development' },
+    { value: 3, label: 'Data Science' },
+    { value: 4, label: 'Web Development' },
+    { value: 5, label: 'Machine Learning' },
+    { value: 6, label: 'Artificial Intelligence' },
+    { value: 7, label: 'Cloud Computing' },
+    { value: 8, label: 'Cyber Security' },
+    { value: 9, label: 'Blockchain Technology' },
 ]
 
-const getStatusClass = (status) => {
-  switch (status) {
-    case '1':
-      return 'success';
-    case '0':
-      return 'warning';
-    case '2':
-      return 'danger';
-    default:
-      return 'default';
-  }
-};
-
-const getStatusLabel = (status) => {
-  switch (status) {
-    case '1':
-      return 'Disetujui';
-    case '0':
-      return 'Menunggu';
-    case '2':
-      return 'Ditolak';
-    default:
-      return 'Tidak Diketahui';
-  }
-};
 const tabs =[
     {
         id:1,
@@ -104,127 +183,178 @@ const handleRowClickBimbingan = (item) => {
   });
   console.log('Row clicked in Pengajuan:', item);
 };
+
+// Filter pencarian untuk tab Plotting Pembimbing + kategori
+const filteredReqPembibingMhs = computed(() => {
+  let data = reqPembibingMhs.value;
+  if (selectedCategoriesPlot.value.length > 0) {
+    data = data.filter(item =>
+      selectedCategoriesPlot.value.some(cat =>
+        item.kategori === categories.find(c => c.value === cat)?.label
+      )
+    );
+  }
+  if (!searchQuery.value) return data;
+  return data.filter(item =>
+    item.nim.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    item.nama.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    (item.kategori && item.kategori.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
+    (item.dosen_pembimbing && item.dosen_pembimbing.toLowerCase().includes(searchQuery.value.toLowerCase()))
+  );
+});
+
+// Filter pencarian untuk tab Bimbingan + kategori
+const filteredListBimbingan = computed(() => {
+  let data = listBimbingan.value;
+  if (selectedCategoriesBimbingan.value.length > 0) {
+    data = data.filter(item =>
+      selectedCategoriesBimbingan.value.some(cat =>
+        item.kategori === categories.find(c => c.value === cat)?.label
+      )
+    );
+  }
+  if (!searchQueryBimbingan.value) return data;
+  return data.filter(item =>
+    item.nim.toLowerCase().includes(searchQueryBimbingan.value.toLowerCase()) ||
+    item.nama.toLowerCase().includes(searchQueryBimbingan.value.toLowerCase()) ||
+    (item.kategori && item.kategori.toLowerCase().includes(searchQueryBimbingan.value.toLowerCase())) ||
+    (item.dosen_pembimbing && item.dosen_pembimbing.toLowerCase().includes(searchQueryBimbingan.value.toLowerCase()))
+  );
+});
+
+// Handler filter kategori masing-masing tab
+function handleFilterPlot({ values }) {
+  selectedCategoriesPlot.value = values;
+}
+function handleFilterBimbingan({ values }) {
+  selectedCategoriesBimbingan.value = values;
+}
+// Opsional: handleSearch bisa dikosongkan jika hanya pakai v-model
+const handleSearch = () => {};
+// Tambahkan fungsi handleFilter
 </script>
 <template>
     <router-view v-if="$route.path.includes('plot-pembimbing')"></router-view>
     <router-view v-else-if="$route.path.includes('detail-bimbingan')"></router-view>
 
     <div v-else>
-        <Breadcrumb :items="breadcrumbItems" />
-              <TabDiv
+      <Breadcrumb :items="breadcrumbItems" />
+      <TabDiv
           :tabs="tabs"
           use-named-slots="true"
       >
       <template #1>
-          <div class="flex gap-4 justify-between items-center mb-4">
-                <ModalFilter
-                  title="Category"
-                  :items="categories"
-                  filterType="Category"
-                  @apply="handleFilter"
-                  triggerText="Category"
-                  :preselectedValues="selectedCategories"
+        <div class="flex gap-2 lg:gap-4 justify-between items-center mb-4">
+          <ModalFilter
+            title="Kategori"
+            :items="categories"
+            filterType="Kategori"
+            @apply="handleFilterPlot"
+            triggerText="Kategori"
+            :preselectedValues="selectedCategoriesPlot"
+          />
+          <SearchBar
+            v-model="searchQuery"
+            filterKey="bimbingan"
+          />
+        </div>
+        <Loading v-if="loading" />
+        <ErrorMsg v-else-if="error" :message="error" />
+        <Table v-else
+          :headers="['NIM', 'Nama','Kategori', 'Dosen Pembimbing']"
+          :items="filteredReqPembibingMhs"
+          @rowClick="handleRowClickPlot"
+        >
+          <template #row="{ item }">
+            <!-- Kolom NIM -->
+            <td class="sm:py-3 py-3 sm:px-6 px-1 rounded-l-lg border-r border-white">
+              {{ item.nim }}
+            </td>
+            
+            <!-- Kolom Nama -->
+            <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white">
+              <div class="flex items-center gap-2 ">
+                <img
+                  v-if="item.img"
+                  :src="item.img"
+                  alt="Profile Image"
+                  class="w-8 h-8 rounded-full"
                 />
-                <SearchBar
-                  v-model="searchQuery"
-                  @search="handleSearch"
-                  filterKey="bimbingan"
-                />
-                <Slider/>
+                {{ item.nama }}
               </div>
-              
-                <Table
-                  :headers="['NIM', 'Nama','Kategori', 'Dosen Pembimbing']"
-                  :items="proposalMhs"
-                  @rowClick="handleRowClickPlot"
-                >
-                  <template #row="{ item }">
-                    <!-- Kolom NIM -->
-                    <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-l-lg">
-                      {{ item.nim }}
-                    </td>
-                    
-                    <!-- Kolom Nama -->
-                    <td class="sm:py-3 py-3 sm:px-4 px-1">
-                      <div class="flex items-center gap-2 justify-center">
-                        <img
-                          v-if="item.img"
-                          :src="item.img"
-                          alt="Profile Image"
-                          class="w-8 h-8 rounded-full"
-                        />
-                        {{ item.nama }}
-                      </div>
-                    </td>
-                    
-                    <!-- Kolom Judul Proposal -->
-                    <td class="sm:py-3 py-3 sm:px-4 px-1">
-                      {{ item.kategori }}
-                    </td>
-                    
-                    <!-- Kolom Nilai -->
-                    <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-r-lg">
-                        {{ item.dosen_pembimbing || 'Plot Dosen Pembimbing' }}
-                    </td>
-                  </template>
-                </Table>
+            </td>
+            
+            <!-- Kolom Judul Proposal -->
+            <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white">
+              {{ item.kategori }}
+            </td>
+            
+            <!-- Kolom Nilai -->
+            <td class="sm:py-3 py-3 sm:px-6 px-1 rounded-r-lg border-r border-white" :class="item.dosen_pembimbing ==null ? 'text-secondary' : ''">
+                {{ item.dosen_pembimbing || 'Plot Pembimbing' }}
+            </td>
+          </template>
+        </Table>
       </template>
       <template #2>
-          <div class="flex gap-4 justify-between items-center mb-4">
-                <ModalFilter
-                  title="Category"
-                  :items="categories"
-                  filterType="Category"
-                  @apply="handleFilter"
-                  triggerText="Category"
-                  :preselectedValues="selectedCategories"
-                />
-                <SearchBar
-                  v-model="searchQuery"
-                  @search="handleSearch"
-                  filterKey="bimbingan"
-                />
-              </div>
+        <div class="flex gap-2 lg:gap-4 justify-between items-center mb-4">
+          <ModalFilter
+            title="Kategori"
+            :items="categories"
+            filterType="Kategori"
+            @apply="handleFilterBimbingan"
+            triggerText="Kategori"
+            :preselectedValues="selectedCategoriesBimbingan"
+          />
+          <SearchBar
+            v-model="searchQueryBimbingan"
+            @search="handleSearch"
+            filterKey="bimbingan"
+          />
+          </div>
               
-                <Table
-                  :headers="['NIM', 'Nama','Kategori', 'Dosen Pembimbing' , 'Pertemuan']"
-                  :items="proposalMhs"
-                  @rowClick="handleRowClickBimbingan"
-                >
-                  <template #row="{ item }">
-                    <!-- Kolom NIM -->
-                    <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-l-lg">
-                      {{ item.nim }}
-                    </td>
-                    
-                    <!-- Kolom Nama -->
-                    <td class="sm:py-3 py-3 sm:px-4 px-1">
-                      <div class="flex items-center gap-2 justify-center">
-                        <img
-                          v-if="item.img"
-                          :src="item.img"
-                          alt="Profile Image"
-                          class="w-8 h-8 rounded-full"
-                        />
-                        {{ item.nama }}
-                      </div>
-                    </td>
-                    
-                    <!-- Kolom Judul Proposal -->
-                    <td class="sm:py-3 py-3 sm:px-4 px-1">
-                      {{ item.kategori }}
-                    </td>
-                    
-                    <!-- Kolom Nilai -->
-                    <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-r-lg">
-                      {{ item.dosen_pembimbing }}
-                    </td>
+        <Loading v-if="loading" />
+        <ErrorMsg v-else-if="error" :message="error" />
+        
+        <Table v-else
+          :headers="['NIM', 'Nama','Kategori', 'Dosen Pembimbing' , 'Pertemuan']"
+          :items="filteredListBimbingan"
+          @rowClick="handleRowClickBimbingan"
+        >
+          <template #row="{ item }">
+            <!-- Kolom NIM -->
+            <td class="sm:py-3 py-3 sm:px-6 px-1 rounded-l-lg border-r border-white">
+              {{ item.nim }}
+            </td>
+            
+            <!-- Kolom Nama -->
+            <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white">
+              <div class="flex items-center gap-2">
+                <img
+                  v-if="item.img"
+                  :src="item.img"
+                  alt="Profile Image"
+                  class="w-8 h-8 rounded-full"
+                />
+                {{ item.nama }}
+              </div>
+            </td>
+            
+            <!-- Kolom Judul Proposal -->
+            <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white">
+              {{ item.kategori }}
+            </td>
+            
+            <!-- Kolom Nilai -->
+            <td class="sm:py-3 py-3 sm:px-6 px-1 rounded-r-lg border-r border-white">
+              {{ item.dosen_pembimbing }}
+            </td>
 
-                    <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-r-lg">
-                    {{ item.pertemuan != null ? item.pertemuan + '/9' : 'Belum ada pertemuan' }}
-                    </td>
-                  </template>
-                </Table>
+            <td class="sm:py-3 py-3 sm:px-6 px-1 rounded-r-lg border-r border-white" :class="item.pertemuan ==null ? 'text-secondary' : ''">
+            {{ item.pertemuan != null ? item.pertemuan + '/9' : 'Belum ada pertemuan' }}
+            </td>
+          </template>
+        </Table>
       </template>
       </TabDiv>
 

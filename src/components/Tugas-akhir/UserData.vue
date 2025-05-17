@@ -1,7 +1,7 @@
 <template>
     <div class="flex gap-2 sm:gap-4 mx-auto w-full">
       <img :src="DefaultAvatar" alt="" class="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16">
-      <div class="self-center flex flex-wrap justify-between w-full items-center">
+      <div class="self-center gap-2 flex flex-wrap justify-between w-full items-center">
         <div class="">
           <span class="body5 sm:body4-bold">{{ headText }}</span>
           <h5 class="body5-bold sm:body3-bold lg:body2-bold text-primary">{{ bodyText }}</h5>
@@ -9,6 +9,10 @@
         <div class="lg:border-l-2 border-black lg:pl-4">
           <span class="body5 sm:body4-bold">{{ headText2 }}</span>
           <h5 class="body5-bold sm:body3-bold lg:body2-bold text-primary">{{ bodyText2 }}</h5>
+        </div>
+        <div class="lg:border-l-2 border-black lg:pl-4">
+          <span class="body5 sm:body4-bold">{{ headText3 }}</span>
+          <h5 class="body5-bold sm:body3-bold lg:body2-bold text-primary">{{ bodyText3 }}</h5>
         </div>
         <div>
           <span class="body5 sm:body4-bold">{{ tahunLabel }}</span>
@@ -66,6 +70,14 @@
     headText2: {
       type: String,
       default: 'Kategori TA'
+    },
+    bodyText3: {
+      type: String,
+      default: ''
+    },
+    headText3: {
+      type: String,
+      default: ''
     },
     tahunAjaran: {
       type: String,

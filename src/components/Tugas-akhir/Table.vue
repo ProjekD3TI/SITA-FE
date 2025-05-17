@@ -1,13 +1,13 @@
 <template>
     <div class="overflow-x-auto">
-        <div class="min-w-[700px]">
+        <div class="min-w-[800px]">
             <table class="w-full">
                 <thead>
                 <tr class="bg-primary text-white rounded-full body5-bold sm:body4-bold">
                     <th
                     v-for="(header, index) in headers"
                     :key="index"
-                    class="sm:py-4 py-3 sm:px-4 px-1"
+                    class="sm:py-4 py-3 sm:px-6 px-1 text-left border-r "
                     :class="{ 'rounded-l-lg': index === 0, 'rounded-r-lg': index === headers.length - 1 }"
                     >
                     {{ header }}
@@ -18,7 +18,7 @@
                 <tr
                     v-for="(item, index) in paginatedItems"
                     :key="index"
-                    class="even:bg-even odd:bg-odd hover:bg-gray-200 text-center body5 sm:body4 rounded-lg active:scale-[0.99] duration-200 cursor-pointer"
+                    class="even:bg-even odd:bg-odd hover:bg-gray-200 text-left body5 sm:body4 rounded-lg active:scale-[0.99] duration-200 cursor-pointer"
                     @click="handleRowClick(item)"
                 >
                     <slot name="row" :item="item" />

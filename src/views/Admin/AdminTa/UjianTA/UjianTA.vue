@@ -248,8 +248,9 @@ const handleFilter = (filters) => {
         :use-named-slots="true"
       >
         <template #tab1>
-            <div class="flex gap-4 justify-between items-center mb-4">
+            <div class="flex gap-2 lg:gap-4 justify-between items-center mb-4">
               <ModalFilter
+                class=""
                 title="Status"
                 :items="statuses"
                 filterType="status"
@@ -321,8 +322,9 @@ const handleFilter = (filters) => {
         </template>
 
         <template #tab2>
-            <div class="flex gap-4 justify-between items-center mb-4">
+            <div class="flex flex-wrap gap-2 lg:gap-4 justify-between items-center mb-4">
               <ModalFilter
+                class="flex-grow md:flex-none"
                 title="Status"
                 :items="statuses"
                 filterType="status"
@@ -331,6 +333,7 @@ const handleFilter = (filters) => {
                 :preselectedValues="selectedStatuses"
               />
               <SearchBar
+                class="order-last md:order-none"
                 v-model="searchQuery"
                 @search="handleSearch"
                 filterKey="bimbingan"
@@ -395,7 +398,7 @@ const handleFilter = (filters) => {
         </template>
 
         <template #tab3>
-            <div class="flex gap-4 justify-between items-center mb-4">
+            <div class="flex gap-2 lg:gap-4 justify-between items-center mb-4">
               <ModalFilter
                 title="Status"
                 :items="statuses"
@@ -467,7 +470,7 @@ const handleFilter = (filters) => {
               </Table>
         </template>
         <template #tab4>
-            <div class="flex gap-4 justify-between items-center mb-4">
+            <div class="flex gap-2 lg:gap-4 justify-between items-center mb-4">
               <ModalFilter
                 title="Status"
                 :items="statuses"

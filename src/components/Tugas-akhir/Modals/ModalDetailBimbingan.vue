@@ -32,9 +32,9 @@
           </button>
         </div>
         <div class="text-black/60 body4-bold mt-2">
-          <p>{{ bimbinganKe }}, {{ tanggalBimbingan }}</p>
-          <p></p>
-          <p>{{ bab }}</p>
+          <p>Bimbingan ke : {{ bimbinganKe }}</p>
+          <p>Tanggal : {{ tanggalBimbingan }}</p>
+          <p>Progress : BAB {{ bab }}</p>
           <p class="mt-2">          
             Catatan : <br>
             {{ catatan }}
@@ -56,16 +56,16 @@
       default: 'Bimbingan'
     },
     bimbinganKe: {
-      type: String,
-      default: 'Bimbingan Keberapa'
+      type: Number,
+      default: 0
     },
     tanggalBimbingan: {
       type: String,
       default: '01 Januari 2000'
     },
     bab: {
-      type: String,
-      default: 'BAB I'
+      type: Number,
+      default: 0
     },
     catatan: {
       type: String,

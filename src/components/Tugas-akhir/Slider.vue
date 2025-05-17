@@ -1,9 +1,9 @@
 <template>
-  <div class="flex items-center">
+  <div class="flex items-center sm:min-w-[170px]">
     <!-- Toggle Switch -->
     <div 
       class="relative inline-flex h-6 w-12 cursor-pointer rounded-full transition-colors ease-in-out duration-200 items-center"
-      :class="isOn ? 'bg-blue-500' : 'bg-gray-200'"
+      :class="isOn ? 'bg-secondary' : 'bg-gray-200'"
       @click="toggleSwitch"
     >
       <span 
@@ -12,7 +12,7 @@
       />
       <span class="sr-only">Toggle Switch</span>
     </div>
-    <span class="ml-4 body3-bold">
+    <span class="ml-4 body3-bold ">
       {{ isOn ? 'Form Dibuka' : 'Form Ditutup' }}
     </span>
   </div>

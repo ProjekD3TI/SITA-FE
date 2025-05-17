@@ -7,9 +7,11 @@ import DefaultAvatar from '@/assets/images/Profile Avatar.svg';
 import StatusLabel from '@/components/Tugas-akhir/Label.vue';
 import Breadcrumb from '@/components/Tugas-akhir/Breadcrumb.vue';
 import Slider from '@/components/Tugas-akhir/Slider.vue';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import router from '@/router';
 
+const searchQuery = ref('');
+const selectedTab = ref(1); // Untuk mengetahui tab aktif
 const proposalMhs = ref([
   {
     nim: '12345678',
@@ -88,6 +90,40 @@ const tabs =[
     }
 ]
 
+const filteredProposalPengajuan = computed(() => {
+  const q = typeof searchQuery.value === 'string' ? searchQuery.value.toLowerCase() : '';
+  return proposalMhs.value.filter((item) => {
+    if (selectedTab.value !== 1) return false;
+    return (
+      item.nim.toLowerCase().includes(q) ||
+      item.nama.toLowerCase().includes(q) ||
+      (item.judul_proposal_ta && item.judul_proposal_ta.toLowerCase().includes(q))
+    );
+  });
+});
+
+const filteredProposalSeminar = computed(() => {
+  const q = typeof searchQuery.value === 'string' ? searchQuery.value.toLowerCase() : '';
+  return proposalMhs.value.filter((item) => {
+    if (selectedTab.value !== 2) return false;
+    return (
+      item.nim.toLowerCase().includes(q) ||
+      item.nama.toLowerCase().includes(q) ||
+      (item.judul_proposal_ta && item.judul_proposal_ta.toLowerCase().includes(q))
+    );
+  });
+});
+// Fungsi search
+function handleSearch(query) {
+  searchQuery.value = query;
+}
+
+// Tangkap perubahan tab
+function handleTabChange(tabId) {
+  selectedTab.value = tabId;
+  searchQuery.value = ''; // Reset pencarian saat ganti tab
+}
+
 const handleRowClickSeminar = (item) => {
   router.push({
     name: 'DetailProposalForAdmin',
@@ -112,10 +148,12 @@ const handleRowClickPengajuan = (item) => {
       <TabDiv
           :tabs="tabs"
           use-named-slots="true"
+          @tab-changed="handleTabChange"
       >
       <template #1>
-          <div class="flex gap-4 justify-between items-center mb-4">
+          <div class="flex flex-wrap gap-2 lg:gap-4 justify-between items-center mb-4">
                 <ModalFilter
+                  class="flex-grow md:flex-none"
                   title="Status"
                   :items="statuses"
                   filterType="status"
@@ -124,27 +162,27 @@ const handleRowClickPengajuan = (item) => {
                   :preselectedValues="selectedStatuses"
                 />
                 <SearchBar
+                  class="order-last md:order-none"
                   v-model="searchQuery"
                   @search="handleSearch"
-                  filterKey="bimbingan"
                 />
                 <Slider/>
               </div>
               
                 <Table
                   :headers="['NIM', 'Nama','Judul Proposal Tugas Akhir', 'Status']"
-                  :items="proposalMhs"
+                  :items="filteredProposalPengajuan"
                   @rowClick="handleRowClickPengajuan"
                 >
                   <template #row="{ item }">
                     <!-- Kolom NIM -->
-                    <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-l-lg">
+                    <td class="sm:py-3 py-3 sm:px-6 px-1 rounded-l-lg border-r border-white">
                       {{ item.nim }}
                     </td>
                     
                     <!-- Kolom Nama -->
-                    <td class="sm:py-3 py-3 sm:px-4 px-1">
-                      <div class="flex items-center gap-2 justify-center">
+                    <td class="sm:py-3 py-3 sm:px-6 px-1">
+                      <div class="flex items-center gap-2  border-r border-white">
                         <img
                           v-if="item.img"
                           :src="item.img"
@@ -156,15 +194,15 @@ const handleRowClickPengajuan = (item) => {
                     </td>
                     
                     <!-- Kolom Judul Proposal -->
-                    <td class="sm:py-3 py-3 sm:px-4 px-1">
+                    <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white">
                       {{ item.judul_proposal_ta }}
                     </td>
                     
                     <!-- Kolom Nilai -->
-                    <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-r-lg">
+                    <td class="sm:py-3 py-3 sm:px-6 px-1 rounded-r-lg border-r border-white">
                       <!-- Desktop Status -->
                       <StatusLabel
-                        class="w-fit hidden lg:block mx-auto"
+                        class="w-fit hidden lg:block "
                         :status="getStatusClass(item.status)"
                         size="md"
                         :label="getStatusLabel(item.status)"
@@ -172,7 +210,7 @@ const handleRowClickPengajuan = (item) => {
                       
                       <!-- Mobile Status -->
                       <StatusLabel
-                        class="w-fit lg:hidden block mx-auto"
+                        class="w-fit lg:hidden block "
                         :status="getStatusClass(item.status)"
                         size="sm"
                         :label="getStatusLabel(item.status)"
@@ -182,7 +220,7 @@ const handleRowClickPengajuan = (item) => {
                 </Table>
       </template>
       <template #2>
-          <div class="flex gap-4 justify-between items-center mb-4">
+          <div class="flex gap-2 lg:gap-4 justify-between items-center mb-4">
                 <ModalFilter
                   title="Status"
                   :items="statuses"
@@ -194,24 +232,23 @@ const handleRowClickPengajuan = (item) => {
                 <SearchBar
                   v-model="searchQuery"
                   @search="handleSearch"
-                  filterKey="bimbingan"
                 />
               </div>
               
                 <Table
                   :headers="['NIM', 'Nama','Judul Proposal Tugas Akhir', 'Nilai']"
-                  :items="proposalMhs"
+                  :items="filteredProposalSeminar"
                   @rowClick="handleRowClickSeminar"
                 >
                   <template #row="{ item }">
                     <!-- Kolom NIM -->
-                    <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-l-lg">
+                    <td class="sm:py-3 py-3 sm:px-6 px-1 rounded-l-lg border-r border-white">
                       {{ item.nim }}
                     </td>
                     
                     <!-- Kolom Nama -->
-                    <td class="sm:py-3 py-3 sm:px-4 px-1">
-                      <div class="flex items-center gap-2 justify-center">
+                    <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white">
+                      <div class="flex items-center gap-2 ">
                         <img
                           v-if="item.img"
                           :src="item.img"
@@ -223,12 +260,12 @@ const handleRowClickPengajuan = (item) => {
                     </td>
                     
                     <!-- Kolom Judul Proposal -->
-                    <td class="sm:py-3 py-3 sm:px-4 px-1">
+                    <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white">
                       {{ item.judul_proposal_ta }}
                     </td>
                     
                     <!-- Kolom Nilai -->
-                    <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-r-lg">
+                    <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white rounded-r-lg" :class="item.nilai ==null ? 'text-secondary' : ''">
                       {{ item.nilai || 'Belum Dinilai' }}
                     </td>
                   </template>
