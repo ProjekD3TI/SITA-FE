@@ -1,13 +1,12 @@
 <script setup>
 import { ref, computed } from "vue";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
-import FlowBar from "@/components/Tugas-akhir/FlowBar.vue";
 import LineChart from "@/components/Tugas-akhir/Dashboard/LineChart.vue";
 import DoughnutChart from "@/components/Tugas-akhir/Dashboard/DoughnutChart.vue";
 import SummaryCard from "@/components/Tugas-akhir/SummaryCard.vue";
 
-import { getDoughnutNumbers } from "@/services/TugasAkhir/Dosen/dashboard/DoughnutChartAPI.js";
-const doughnutChartValue = getDoughnutNumbers();
+import { getDoughnutData } from "@/services/TugasAkhir/Dosen/dashboard/DoughnutChartAPI.js";
+const doughnutChartValue = getDoughnutData();
 import { useJadwalUjian } from "@/services/TugasAkhir/Dosen/dashboard/useJadwalHariIni.js";
 
 import { getLineChartData } from "@/services/TugasAkhir/Dosen/dashboard/LineChartAPI.js";
