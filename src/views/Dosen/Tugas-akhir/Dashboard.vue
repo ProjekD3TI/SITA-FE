@@ -208,3 +208,4 @@ const summaryCards = [
     </div>
   </div>
 </template>
+@/services/TugasAkhir/Dosen/dashboard/DoughnutChartAPI.js
