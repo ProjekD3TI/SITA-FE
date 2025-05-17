@@ -1,8 +1,8 @@
 <template>
   <h1 class="body1">Bimbingan</h1>
-  <div>
+  <div class="min-h-[30dvh]">
     <Line
-      class="h-[50dvh]"
+      class="w-full"
       id="my-chart-id"
       :options="chartOptions"
       :data="chartData"
@@ -10,6 +10,13 @@
   </div>
 </template>
 <script setup>
+const props = defineProps({
+  chartValue: {
+    type: Array,
+    default: () => [],
+    required: true,
+  },
+});
 const chartData = {
   labels: [
     "January",
@@ -27,8 +34,8 @@ const chartData = {
   ],
   datasets: [
     {
-      label: "Progress Data",
-      data: Array.from({ length: 12 }, () => Math.floor(Math.random() * 101)), // 12 angka random antara 0-100
+      label: "Intesitas Bimbingan",
+      data: props.chartValue,
       borderColor: "rgba(247, 128, 82 ,1)",
       backgroundColor: "rgba(247, 128, 82 ,1)",
       pointRadius: 6, // Ukuran titik default
@@ -55,14 +62,14 @@ const chartOptions = {
     x: {
       title: {
         display: true,
-        text: "Months",
+        text: "Bulsan",
       },
       grid: { display: false }, // Grid pada sumbu X tetap tidak ditampilkan
     },
     y: {
       title: {
         display: true,
-        text: "Values",
+        text: "Mahasiswa",
       },
       beginAtZero: true,
       grid: {
