@@ -3,8 +3,8 @@ import { ref, computed, watch } from "vue";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import { onMounted, onUnmounted } from "vue";
 import { RouterLink, useRouter } from "vue-router";
-import Sidebar from "@/components/Admin/Sidebar.vue";
-import SidebarLink from "@/components/Tugas-akhir/SidebarLink.vue";
+import TabDiv from "@/components/Tugas-akhir/TabDiv.vue";
+import Table from "@/components/Tugas-akhir/Table.vue";
 
 const activeTab = ref("permintaan");
 const searchQuery = ref("");
@@ -366,10 +366,32 @@ const router = useRouter();
 
 const handleRowClick = (item) => {
   if (activeTab.value === "dibimbing") {
+    if (item.nim) {
+      console.log("Navigating to detail for:", item);
 
-  console.log("Row clicked:", item);
-  router.push("/dosen/tugas-akhir/bimbingan/detail-bimbingan");
-}
+      // Cek apakah rute tersedia
+      console.log(
+        "Available routes:",
+        router.getRoutes().map((route) => route.name)
+      );
+
+      // Gunakan path untuk navigasi lebih aman
+      router
+        .push({
+          path: "/dosen/tugas-akhir/bimbingan/detail-bimbingan",
+          query: {
+            nim: item.nim || "",
+            name: item.name || "",
+            category: item.category || "",
+            title: item.title || "Judul Tidak Tersedia",
+            _t: Date.now(),
+          },
+        })
+        .catch((err) => {
+          console.error("Navigation error:", err);
+        });
+    }
+  }
 };
 
 watch(activeTab, () => resetPagination());
@@ -378,80 +400,51 @@ watch(searchQuery, () => resetPagination());
 
 <template>
   <Breadcrumb :items="breadcrumbItems" />
-  <div class="bg-white rounded-lg shadow-md p-2 sm:p-4">
+  <div v-if="!$route.path.includes('detail-bimbingan')">
     <!-- Tab Navigation -->
-    <div class="flex flex-wrap border-b mb-4">
-      <button
-        @click="activeTab = 'permintaan'"
-        :class="[
-          'flex items-center px-2 sm:px-4 py-2 border-b-2 text-xs sm:text-sm font-medium w-1/2 sm:w-auto justify-center sm:justify-start',
-          activeTab === 'permintaan'
-            ? 'border-primary text-primary'
-            : 'border-transparent text-gray-500',
-        ]"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-          />
-        </svg>
-        <span>Permintaan</span>
-        <span
-          :class="[
-            'ml-1 sm:ml-2 text-xs px-1.5 sm:px-2 py-0.5 rounded-full',
-            activeTab === 'permintaan'
-              ? 'bg-primary text-white'
-              : 'bg-gray-500 text-white',
-          ]"
-          >{{ requests.length }}</span
-        >
-      </button>
-      <button
-        @click="activeTab = 'dibimbing'"
-        :class="[
-          'flex items-center px-2 sm:px-4 py-2 border-b-2 text-xs sm:text-sm font-medium w-1/2 sm:w-auto justify-center sm:justify-start',
-          activeTab === 'dibimbing'
-            ? 'border-primary text-primary'
-            : 'border-transparent text-gray-500',
-        ]"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-          />
-        </svg>
-        <span>Dibimbing</span>
-      </button>
-    </div>
-
-    <!-- Search and Filter - Stack on mobile -->
-    <div class="flex flex-row mb-2 gap-2">
-      <div class="w-auto sm:w-auto sm:mr-2">
-        <button
-          class="flex items-center sm:w-auto px-3 py-2 border border-gray-300 rounded-md bg-white text-xs text-gray-700 justify-between"
-        >
-          <div class="flex items-center">
+    <TabDiv
+      :tabs="[
+        {
+          id: 'permintaan',
+          label: 'Permintaan',
+          icon: 'M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z',
+          count: requests.length,
+        },
+        {
+          id: 'dibimbing',
+          label: 'Dibimbing',
+          icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
+        },
+      ]"
+      :default-tab="activeTab"
+      @tab-changed="activeTab = $event"
+    >
+      <!-- Search and Filter - Stack on mobile -->
+      <div class="flex flex-row mb-2 gap-2">
+        <div class="w-auto sm:w-auto sm:mr-2">
+          <button
+            class="flex items-center sm:w-auto px-3 py-2 border border-gray-300 rounded-md bg-white text-xs text-gray-700 justify-between"
+          >
+            <div class="flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                />
+              </svg>
+              <span class="hidden sm:inline">Kategori</span>
+            </div>
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4 mr-2"
+              class="sm:ms-2 h-4 w-4"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -460,212 +453,203 @@ watch(searchQuery, () => resetPagination());
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                d="M19 9l-7 7-7-7"
               />
             </svg>
-            <span class="hidden sm:inline">Kategori</span>
+          </button>
+        </div>
+        <div class="flex-grow w-full">
+          <div class="relative w-full">
+            <input
+              type="text"
+              placeholder="Search..."
+              class="w-full px-4 py-2 border border-gray-300 rounded-md pl-10 text-xs"
+              v-model="searchQuery"
+            />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 text-gray-400 absolute left-3 top-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
           </div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="sm:ms-2 h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </button>
-      </div>
-      <div class="flex-grow w-full">
-        <div class="relative w-full">
-          <input
-            type="text"
-            placeholder="Search..."
-            class="w-full px-4 py-2 border border-gray-300 rounded-md pl-10 text-xs"
-            v-model="searchQuery"
-          />
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 text-gray-400 absolute left-3 top-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
         </div>
       </div>
-    </div>
 
-    <!-- Responsive Table for desktop view -->
-    <div class="hidden md:block relative overflow-x-auto">
-      <table class="w-full text-sm text-left rtl:text-right">
-        <thead class="text-xs uppercase bg-primary-bg">
-          <tr>
-            <th scope="col" class="px-6 py-5 rounded-l-lg">NIM</th>
-            <th scope="col" class="px-6 py-5">Nama</th>
-            <th scope="col" class="px-6 py-5">Kategori</th>
-            <th
-              v-if="activeTab === 'permintaan'"
-              scope="col"
-              class="px-6 py-5 rounded-r-lg"
+      <!-- Responsive Table for desktop view -->
+      <div class="hidden md:block relative overflow-x-auto">
+        <table class="w-full text-sm text-left rtl:text-right">
+          <thead class="text-xs uppercase bg-primary-bg">
+            <tr>
+              <th scope="col" class="px-6 py-5 rounded-l-lg">NIM</th>
+              <th scope="col" class="px-6 py-5">Nama</th>
+              <th scope="col" class="px-6 py-5">Kategori</th>
+              <th
+                v-if="activeTab === 'permintaan'"
+                scope="col"
+                class="px-6 py-5 rounded-r-lg"
+              >
+                Tanggal
+              </th>
+              <th
+                v-if="activeTab === 'dibimbing'"
+                scope="col"
+                class="px-6 py-5 rounded-r-lg"
+              >
+                Judul
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="(item, index) in paginatedItems"
+              :key="index"
+              class="bg-white border-b rounded-l-lg hover:bg-gray-50 cursor-pointer transition-colors"
+              @click="handleRowClick(item)"
+              role="button"
+              tabindex="0"
             >
-              Tanggal
-            </th>
-            <th
-              v-if="activeTab === 'dibimbing'"
-              scope="col"
-              class="px-6 py-5 rounded-r-lg"
-            >
-              Judul
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="(item, index) in paginatedItems"
-            :key="index"
-            class="bg-white border-b rounded-l-lg hover:bg-gray-50 cursor-pointer transition-colors"
-            @click="handleRowClick(item)"
-            role="button"
-            tabindex="0"
-          >
-            <th
-              scope="row"
-              class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap rounded-l-lg"
-            >
-              {{ item.nim }}
-            </th>
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-2">
-                <img
-                  class="h-6 w-6 sm:h-8 sm:w-8 rounded-full"
-                  :src="item.avatar"
-                  alt=""
-                />
-                <span>{{ item.name }}</span>
-              </div>
-            </td>
-            <td class="px-6 py-4">
-              {{ item.category }}
-            </td>
-            <td
-              v-if="activeTab === 'permintaan'"
-              class="px-6 py-4 rounded-r-lg"
-            >
-              {{ item.date }}
-            </td>
-            <td v-if="activeTab === 'dibimbing'" class="px-6 py-4 rounded-r-lg">
-              {{ item.title }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+              <th
+                scope="row"
+                class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap rounded-l-lg"
+              >
+                {{ item.nim }}
+              </th>
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-2">
+                  <img
+                    class="h-6 w-6 sm:h-8 sm:w-8 rounded-full"
+                    :src="item.avatar"
+                    alt=""
+                  />
+                  <span>{{ item.name }}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                {{ item.category }}
+              </td>
+              <td
+                v-if="activeTab === 'permintaan'"
+                class="px-6 py-4 rounded-r-lg"
+              >
+                {{ item.date }}
+              </td>
+              <td
+                v-if="activeTab === 'dibimbing'"
+                class="px-6 py-4 rounded-r-lg"
+              >
+                {{ item.title }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-    <!-- Card view for mobile devices -->
-    <div class="md:hidden">
+      <!-- Card view for mobile devices -->
+      <div class="md:hidden">
+        <div
+          v-for="(item, index) in paginatedItems"
+          :key="index"
+          class="border rounded-lg mb-3 p-3 shadow-sm hover:bg-gray-50"
+        >
+          <div class="flex items-center mb-2">
+            <div class="h-10 w-10 mr-3">
+              <img class="h-10 w-10 rounded-full" :src="item.avatar" alt="" />
+            </div>
+            <div>
+              <div class="text-sm font-medium">{{ item.name }}</div>
+              <div class="text-xs text-gray-500">{{ item.nim }}</div>
+            </div>
+          </div>
+
+          <div class="text-xs grid grid-cols-2 gap-2">
+            <div v-if="activeTab === 'dibimbing'" class="col-span-2">
+              <span class="font-medium">Judul:</span> {{ item.title }}
+            </div>
+            <div>
+              <span class="font-medium">Kategori:</span> {{ item.category }}
+            </div>
+            <div v-if="activeTab === 'permintaan'">
+              <span class="font-medium">Tanggal:</span> {{ item.date }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination with responsive design -->
       <div
-        v-for="(item, index) in paginatedItems"
-        :key="index"
-        class="border rounded-lg mb-3 p-3 shadow-sm hover:bg-gray-50"
+        class="flex flex-wrap justify-between items-center px-2 mt-4 text-xs text-gray-500"
       >
-        <div class="flex items-center mb-2">
-          <div class="h-10 w-10 mr-3">
-            <img class="h-10 w-10 rounded-full" :src="item.avatar" alt="" />
-          </div>
-          <div>
-            <div class="text-sm font-medium">{{ item.name }}</div>
-            <div class="text-xs text-gray-500">{{ item.nim }}</div>
-          </div>
+        <div class="w-full sm:w-auto mb-2 sm:mb-0 text-center sm:text-left">
+          Menampilkan
+          {{
+            filteredItems.length === 0
+              ? 0
+              : (currentPage - 1) * itemsPerPage + 1
+          }}-{{ Math.min(currentPage * itemsPerPage, filteredItems.length) }}
+          dari
+          {{ filteredItems.length }}
         </div>
-
-        <div class="text-xs grid grid-cols-2 gap-2">
-          <div v-if="activeTab === 'dibimbing'" class="col-span-2">
-            <span class="font-medium">Judul:</span> {{ item.title }}
-          </div>
-          <div>
-            <span class="font-medium">Kategori:</span> {{ item.category }}
-          </div>
-          <div v-if="activeTab === 'permintaan'">
-            <span class="font-medium">Tanggal:</span> {{ item.date }}
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Pagination with responsive design -->
-    <div
-      class="flex flex-wrap justify-between items-center px-2 mt-4 text-xs text-gray-500"
-    >
-      <div class="w-full sm:w-auto mb-2 sm:mb-0 text-center sm:text-left">
-        Menampilkan
-        {{
-          filteredItems.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1
-        }}-{{ Math.min(currentPage * itemsPerPage, filteredItems.length) }} dari
-        {{ filteredItems.length }}
-      </div>
-      <div class="flex justify-center w-full sm:w-auto">
-        <button
-          class="p-1 border border-gray-300 rounded-md mr-1"
-          @click="prevPage"
-          :disabled="currentPage === 1"
-          :class="{ 'opacity-50 cursor-not-allowed': currentPage === 1 }"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+        <div class="flex justify-center w-full sm:w-auto">
+          <button
+            class="p-1 border border-gray-300 rounded-md mr-1"
+            @click="prevPage"
+            :disabled="currentPage === 1"
+            :class="{ 'opacity-50 cursor-not-allowed': currentPage === 1 }"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </button>
-        <span class="px-3 py-1 my-auto"
-          >{{ currentPage }} / {{ totalPages }}</span
-        >
-        <button
-          class="p-1 border border-gray-300 rounded-md"
-          @click="nextPage"
-          :disabled="currentPage === totalPages"
-          :class="{
-            'opacity-50 cursor-not-allowed': currentPage === totalPages,
-          }"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+          <span class="px-3 py-1 my-auto"
+            >{{ currentPage }} / {{ totalPages }}</span
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </button>
-      </div>
-    </div>
+          <button
+            class="p-1 border border-gray-300 rounded-md"
+            @click="nextPage"
+            :disabled="currentPage === totalPages"
+            :class="{
+              'opacity-50 cursor-not-allowed': currentPage === totalPages,
+            }"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
+        </div></div
+    ></TabDiv>
   </div>
+  <router-view v-else></router-view>
 </template>
 
 <style scoped>

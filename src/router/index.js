@@ -32,11 +32,12 @@ import TugasAkhirforMhs from "../views/Mahasiswa/Tugas-akhir/UjianTA/Daftar.vue"
 import detailUjianTAforMhs from "../views/Mahasiswa/Tugas-akhir/UjianTA/Detail.vue";
 // Route Dosen TA
 import DashboardTADosen from "../views/Dosen/Tugas-akhir/Dashboard.vue";
-import BimbinganforDosen from "../views/Dosen/Tugas-akhir/Bimbingan.vue";
-import DetailBimbinganforDosen from "../views/Dosen/Tugas-akhir/DetailBimbingan.vue";
-import InputNilaiBimbinganforDosen from "@/views/Dosen/Tugas-akhir/InputNilaiBimbingan.vue";
-import UjianTAforDosen from "../views/Dosen/Tugas-akhir/UjianTA.vue";
-import detailUjianTAforDosen from "@/views/Dosen/Tugas-akhir/DetailUjianTA.vue";
+import BimbinganforDosen from "../views/Dosen/Tugas-akhir/Bimbingan/Bimbingan.vue";
+import DetailBimbinganforDosen from "../views/Dosen/Tugas-akhir/Bimbingan/DetailBimbingan.vue";
+import InputNilaiBimbinganforDosen from "@/views/Dosen/Tugas-akhir/Bimbingan/InputNilaiBimbingan.vue";
+import UjianTAforDosen from "../views/Dosen/Tugas-akhir/UjianTA/UjianTA.vue";
+import detailUjianTAforDosen from "../views/Dosen/Tugas-akhir/UjianTA/DetailUjianTA.vue";
+import InputNilaiUjianTAforDosen from "@/views/Dosen/Tugas-akhir/UjianTA/InputNilaiUjianTA.vue";
 
 //define a routes
 const routes = [
@@ -263,7 +264,9 @@ const routes = [
                   {
                     path: "input-nilai-bimbingan",
                     component: InputNilaiBimbinganforDosen,
-                    meta: { breadcrumb: "Input Nilai" },
+                    meta: {
+                      breadcrumb: "Input Nilai",
+                    },
                   },
                 ],
               },
@@ -282,6 +285,15 @@ const routes = [
                 meta: {
                   breadcrumb: "Detail",
                 },
+                children: [
+                  {
+                    path: "input-nilai-ujian-ta",
+                    component: InputNilaiUjianTAforDosen,
+                    meta: {
+                      breadcrumb: "Input Nilai",
+                    },
+                  },
+                ],
               },
             ],
           },
@@ -408,24 +420,6 @@ const routes = [
         meta: {
           breadcrumb: "Bimbingan",
         },
-        children: [
-          {
-            path: "plot-pembimbing/:nim",
-            name: "PlotPembimbingForAdmin",
-            component: PlotPembimbingForAdmin,
-            meta: {
-              breadcrumb: "Plotting Pembimbing",
-            },
-          },
-          {
-            path: "detail-bimbingan/:nim",
-            name: "DetailBimbinganForAdmin",
-            component: DetailBimbinganForAdmin,
-            meta: {
-              breadcrumb: "Detail Bimbingan",
-            },
-          },
-        ]
       },
       {
         path: "proposal",
@@ -433,67 +427,13 @@ const routes = [
         meta: {
           breadcrumb: "Proposal",
         },
-        children: [
-          {
-            path: "detail-pengajuan/:nim",
-            name: "DetailPengajuanForAdmin",
-            component: DetailPengajuanForAdmin,
-            meta: {
-              breadcrumb: "Detail Pengajuan",
-            },
-          },
-          {
-            path: "detail-proposal/:nim",
-            name: "DetailProposalForAdmin",
-            component: DetailProposalForAdmin,
-            meta: {
-              breadcrumb: "Detail Proposal",
-            },
-            children: [
-              {
-                path: "input-nilai",
-                name: "InputNilaiProposalForAdmin",
-                component: InputNilaiProposalForAdmin,
-                meta: {
-                  breadcrumb: "Input Nilai",
-                },
-              }
-            ]
-          },
-        ]
       },
       {
         path: "ujian-ta",
         component: TugasAkhirforAdmin,
         meta: {
-          breadcrumb: "Ujian Tugas Akhir",
+          breadcrumb: "ujian-ta",
         },
-        children:[
-          {
-            path: "plotting-penguji/:nim",
-            name: "PlottingPengujiForAdmin",
-            component: PlottingPengujiForAdmin,
-            meta: {
-              breadcrumb: "Plotting Penguji",
-            },
-          },
-          {
-            path: "detail-pendaftar/:nim",
-            name: "DetailPendaftarForAdmin",
-            component: DetailPendaftarForAdmin,
-            meta: {
-              breadcrumb: "Detail Pendaftar",
-            },
-          },
-          {
-            path: "penjadwalan",
-            name: "PenjadwalanForAdmin",
-            component: PenjadwalanForAdmin,
-            meta: {
-              breadcrumb: "Penjadwalan",
-            },
-          },
-        ]
       },
       {
         path: "ruang-sesi",

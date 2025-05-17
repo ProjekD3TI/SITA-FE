@@ -79,7 +79,7 @@
               withPrefix([
                 '/bimbingan',
                 '/bimbingan/detail-bimbingan',
-                '/bimbingan/tambah-bimbingan-input-nilai-bimbingan',
+                '/bimbingan/detail-bimbingan/input-nilai-bimbingan',
               ])
             )
           "
@@ -88,25 +88,17 @@
           icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' />"
         />
 
-        <!-- <SidebarLink
-          :to="withPrefix('/seminar-proposal')"
-          :active="isActive(withPrefix(['/seminar-proposal']))"
-          :showLabel="showNavbar"
-          label="Seminar Proposal"
-          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12-3-3m0 0-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z' />"
-        />
-
-        <SidebarLink
-          :to="withPrefix('/seminar-hasil')"
-          :active="isActive(withPrefix(['/seminar-hasil']))"
-          :showLabel="showNavbar"
-          label="Seminar Hasil"
-          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z' />"
-        /> -->
-
         <SidebarLink
           :to="withPrefix('/ujian-ta')"
-          :active="isActive(withPrefix(['/ujian-ta']))"
+          :active="
+            isActive(
+              withPrefix([
+                '/ujian-ta',
+                '/ujian-ta/detail-ujian-ta',
+                '/ujian-ta/detail-ujian-ta/input-nilai-ujian-ta',
+              ])
+            )
+          "
           :showLabel="showNavbar"
           label="Ujian TA"
           icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />"

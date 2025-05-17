@@ -4,13 +4,16 @@ import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import LineChart from "@/components/Tugas-akhir/Dashboard/LineChart.vue";
 import DoughnutChart from "@/components/Tugas-akhir/Dashboard/DoughnutChart.vue";
 import SummaryCard from "@/components/Tugas-akhir/SummaryCard.vue";
+
 import { getDoughnutData } from "@/services/TugasAkhir/Dosen/Dashboard/DoughnutChartAPI.js";
-import { getLineChartData } from "@/services/TugasAkhir/Dosen/Dashboard/LineChartAPI.js";
+const doughnutChartValue = getDoughnutData();
 import { useJadwalUjian } from "@/services/TugasAkhir/Dosen/Dashboard/JadwalUjianAPI.js";
-import { usePermintaanBimbingan } from "@/services/TugasAkhir/Dosen/Dashboard/PermintaanBimbinganAPI.js";
-const { doughnutChartValue } = getDoughnutData();
-const { lineChartValue } = getLineChartData();
+
+import { getLineChartData } from "@/services/TugasAkhir/Dosen/Dashboard/LineChartAPI.js";
+const lineChartValue = getLineChartData();
 const { JadwalHariIni } = useJadwalUjian();
+
+import { usePermintaanBimbingan } from "@/services/TugasAkhir/Dosen/Dashboard/PermintaanBimbinganAPI.js";
 const { permintaanBimbingan } = usePermintaanBimbingan();
 
 function handleRowClick(item) {
@@ -91,20 +94,26 @@ const summaryCards = [
       <div class="card-style">
         <div class="flex justify-between items-center mb-2">
           <h1 class="body1">Jadwal Ujian Hari ini</h1>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="w-6 h-6 text-[var(--secondary)]"
+          <router-link
+            to="/dosen/tugas-akhir/ujian-ta"
+            title="Lihat Jadwal Ujian"
+            aria-label="Navigasi ke halaman Ujian TA"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-            />
-          </svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6 text-[var(--secondary)] cursor-pointer"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+              />
+            </svg>
+          </router-link>
         </div>
         <table class="w-full text-left rtl:text-right">
           <thead class="body5-bold uppercase text-white bg-[var(--primary)]">
@@ -146,20 +155,26 @@ const summaryCards = [
       <div class="card-style">
         <div class="flex justify-between items-center mb-2">
           <h1 class="body1">Permintaan Bimbingan</h1>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="w-6 h-6 text-[var(--secondary)]"
+          <router-link
+            to="/dosen/tugas-akhir/bimbingan"
+            title="Lihat Permintaan Bimbingan"
+            aria-label="Navigasi ke halaman Ujian TA"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-            />
-          </svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6 text-[var(--secondary)]"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+              />
+            </svg>
+          </router-link>
         </div>
         <table class="w-full text-left rtl:text-right w-min-[350px]">
           <thead class="body5-bold uppercase text-white bg-[var(--primary)]">

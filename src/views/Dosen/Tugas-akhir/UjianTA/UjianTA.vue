@@ -3,6 +3,7 @@ import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import { ref, computed, watch } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { onMounted, onUnmounted } from "vue";
+import Table from "@/components/Tugas-akhir/Table.vue";
 
 const activeTab = ref("permintaan");
 const searchQuery = ref("");
@@ -25,162 +26,202 @@ const handleResize = () => {
 
 const mentorships = ref([
   {
+    nim: "V3420001",
     name: "Andrew Parker",
     avatar: "/api/placeholder/40/40",
     title: "Implementasi IoT untuk Smart Home",
-    date: "2023-10-01",
+    category: "Internet of Things",
+    date: "15 Mei 2024",
     session: "09:00 - 10:00",
     room: "Lab. Jaringan",
   },
   {
+    nim: "V3420002",
     name: "Sarah Johnson",
     avatar: "/api/placeholder/40/40",
     title: "Pengembangan Aplikasi Mobile",
-    date: "2023-10-02",
+    category: "Mobile Development",
+    date: "16 Mei 2024",
     session: "10:00 - 11:00",
     room: "Lab. Mobile",
   },
   {
+    nim: "V3420003",
     name: "Michael Brown",
     avatar: "/api/placeholder/40/40",
     title: "Sistem Keamanan Berbasis IoT",
-    date: "2023-10-03",
+    category: "Cyber Security",
+    date: "17 Mei 2024",
     session: "11:00 - 12:00",
     room: "Lab. Keamanan",
   },
   {
+    nim: "V3420004",
     name: "Jessica Smith",
     avatar: "/api/placeholder/40/40",
     title: "Analisis Data Besar untuk Kesehatan",
-    date: "2023-10-04",
+    category: "Big Data",
+    date: "18 Mei 2024",
     session: "13:00 - 14:00",
     room: "Lab. Data Besar",
   },
   {
+    nim: "V3420005",
     name: "David Lee",
     avatar: "/api/placeholder/40/40",
     title: "Optimasi Algoritma Machine Learning",
-    date: "2023-10-05",
+    category: "Artificial Intelligence",
+    date: "19 Mei 2024",
     session: "09:00 - 10:00",
     room: "Lab. AI",
   },
   {
+    nim: "V3420006",
     name: "Emily Clark",
     avatar: "/api/placeholder/40/40",
     title: "Aplikasi Web untuk E-Commerce",
-    date: "2023-10-06",
+    category: "Web Development",
+    date: "20 Mei 2024",
     session: "10:00 - 11:00",
     room: "Lab. Web",
   },
   {
+    nim: "V3420007",
     name: "Daniel Kim",
     avatar: "/api/placeholder/40/40",
     title: "Pengolahan Citra Digital",
-    date: "2023-10-07",
+    category: "Multimedia",
+    date: "21 Mei 2024",
     session: "11:00 - 12:00",
     room: "Lab. Multimedia",
   },
   {
+    nim: "V3420008",
     name: "Sophia Turner",
     avatar: "/api/placeholder/40/40",
     title: "Blockchain untuk Keamanan Data",
-    date: "2023-10-08",
+    category: "Blockchain",
+    date: "22 Mei 2024",
     session: "13:00 - 14:00",
     room: "Lab. Blockchain",
   },
   {
+    nim: "V3420009",
     name: "William Harris",
     avatar: "/api/placeholder/40/40",
     title: "Sistem Pakar Diagnosa Penyakit",
-    date: "2023-10-09",
+    category: "Artificial Intelligence",
+    date: "23 Mei 2024",
     session: "09:00 - 10:00",
     room: "Lab. AI",
   },
   {
+    nim: "V3420010",
     name: "Olivia Martinez",
     avatar: "/api/placeholder/40/40",
     title: "Aplikasi Chatbot untuk Layanan Publik",
-    date: "2023-10-10",
+    category: "Web Development",
+    date: "24 Mei 2024",
     session: "10:00 - 11:00",
     room: "Lab. Web",
   },
   {
+    nim: "V3420011",
     name: "James Wilson",
     avatar: "/api/placeholder/40/40",
     title: "Pengembangan Game Edukasi",
-    date: "2023-10-11",
+    category: "Multimedia",
+    date: "25 Mei 2024",
     session: "11:00 - 12:00",
     room: "Lab. Multimedia",
   },
   {
+    nim: "V3420012",
     name: "Mia Anderson",
     avatar: "/api/placeholder/40/40",
     title: "Sistem Informasi Geografis",
-    date: "2023-10-12",
+    category: "Geographic Information System",
+    date: "26 Mei 2024",
     session: "13:00 - 14:00",
     room: "Lab. GIS",
   },
   {
+    nim: "V3420013",
     name: "Benjamin Thomas",
     avatar: "/api/placeholder/40/40",
     title: "Analisis Sentimen Media Sosial",
-    date: "2023-10-13",
+    category: "Big Data",
+    date: "27 Mei 2024",
     session: "09:00 - 10:00",
     room: "Lab. Data Besar",
   },
   {
+    nim: "V3420014",
     name: "Charlotte White",
     avatar: "/api/placeholder/40/40",
     title: "Aplikasi Monitoring Kesehatan",
-    date: "2023-10-14",
+    category: "Mobile Development",
+    date: "28 Mei 2024",
     session: "10:00 - 11:00",
     room: "Lab. Mobile",
   },
   {
+    nim: "V3420015",
     name: "Lucas Martin",
     avatar: "/api/placeholder/40/40",
     title: "Sistem Rekomendasi Film",
-    date: "2023-10-15",
+    category: "Artificial Intelligence",
+    date: "29 Mei 2024",
     session: "11:00 - 12:00",
     room: "Lab. AI",
   },
   {
+    nim: "V3420016",
     name: "Amelia Walker",
     avatar: "/api/placeholder/40/40",
     title: "Pengembangan Sistem E-Voting",
-    date: "2023-10-16",
+    category: "Cyber Security",
+    date: "30 Mei 2024",
     session: "13:00 - 14:00",
     room: "Lab. Keamanan",
   },
   {
+    nim: "V3420017",
     name: "Henry Young",
     avatar: "/api/placeholder/40/40",
     title: "Aplikasi Manajemen Inventaris",
-    date: "2023-10-17",
+    category: "Web Development",
+    date: "31 Mei 2024",
     session: "09:00 - 10:00",
     room: "Lab. Web",
   },
   {
+    nim: "V3420018",
     name: "Ella King",
     avatar: "/api/placeholder/40/40",
     title: "Sistem Deteksi Intrusi Jaringan",
-    date: "2023-10-18",
+    category: "Network Security",
+    date: "1 Juni 2024",
     session: "10:00 - 11:00",
     room: "Lab. Jaringan",
   },
   {
+    nim: "V3420019",
     name: "Alexander Scott",
     avatar: "/api/placeholder/40/40",
     title: "Pengembangan Aplikasi AR",
-    date: "2023-10-19",
+    category: "Multimedia",
+    date: "2 Juni 2024",
     session: "11:00 - 12:00",
     room: "Lab. Multimedia",
   },
   {
+    nim: "V3420020",
     name: "Grace Green",
     avatar: "/api/placeholder/40/40",
     title: "Sistem Penjadwalan Otomatis",
-    date: "2023-10-20",
+    category: "Big Data",
+    date: "3 Juni 2024",
     session: "13:00 - 14:00",
     room: "Lab. Data Besar",
   },
@@ -240,15 +281,34 @@ const resetPagination = () => {
 const router = useRouter();
 
 const handleRowClick = (item) => {
-  if (activeTab.value === "dibimbing") {
-    router.push("/dosen/tugas-akhir/ujian-ta/detail-ujian-ta");
-  }
-  console.log("Row clicked:", item);
+  console.log("Navigating to detail for:", item);
+
+  // Gunakan path untuk navigasi lebih aman
+  router
+    .push({
+      path: "/dosen/tugas-akhir/ujian-ta/detail-ujian-ta",
+      query: {
+        nim: item.nim || "",
+        name: item.name || "",
+        category: item.category || "",
+        title: item.title || "Judul Tidak Tersedia",
+        date: item.date || "",
+        session: item.session || "",
+        room: item.room || "",
+        _t: Date.now(),
+      },
+    })
+    .catch((err) => {
+      console.error("Navigation error:", err);
+    });
 };
 </script>
 <template>
   <Breadcrumb :items="breadcrumbItems" />
-  <div class="bg-white rounded-lg shadow-md p-2 sm:p-4">
+  <div
+    v-if="!$route.path.includes('detail-ujian-ta')"
+    class="bg-white rounded-lg shadow-md p-2 sm:p-4"
+  >
     <!-- Search and Filter - Stack on mobile -->
     <div class="flex flex-row mb-2 gap-2">
       <div class="w-auto sm:w-auto sm:mr-2">
@@ -458,6 +518,7 @@ const handleRowClick = (item) => {
       </div>
     </div>
   </div>
+  <router-view v-else></router-view>
 </template>
 
 <style scoped>
