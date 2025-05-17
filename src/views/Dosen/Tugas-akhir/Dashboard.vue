@@ -10,7 +10,7 @@ import { getDoughnutNumbers } from "@/services/TugasAkhir/Dosen/dashboard/Doughn
 const doughnutChartValue = getDoughnutNumbers();
 import { useJadwalUjian } from "@/services/TugasAkhir/Dosen/dashboard/useJadwalHariIni.js";
 
-import { getLineChartData } from "@/services/TugasAkhir/Dosen/dashboard/LineChartAPI";
+import { getLineChartData } from "@/services/TugasAkhir/Dosen/dashboard/LineChartAPI.js";
 const lineChartValue = getLineChartData();
 const { JadwalHariIni } = useJadwalUjian();
 
