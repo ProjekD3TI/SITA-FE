@@ -4,16 +4,13 @@ import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import LineChart from "@/components/Tugas-akhir/Dashboard/LineChart.vue";
 import DoughnutChart from "@/components/Tugas-akhir/Dashboard/DoughnutChart.vue";
 import SummaryCard from "@/components/Tugas-akhir/SummaryCard.vue";
-
-import { getDoughnutData } from "@/services/TugasAkhir/Dosen/dashboard/DoughnutChartAPI.js";
-const doughnutChartValue = getDoughnutData();
-import { useJadwalUjian } from "@/services/TugasAkhir/Dosen/dashboard/useJadwalHariIni.js";
-
-import { getLineChartData } from "@/services/TugasAkhir/Dosen/dashboard/LineChartAPI.js";
-const lineChartValue = getLineChartData();
+import { getDoughnutData } from "@/services/TugasAkhir/Dosen/Dashboard/DoughnutChartAPI.js";
+import { getLineChartData } from "@/services/TugasAkhir/Dosen/Dashboard/LineChartAPI.js";
+import { useJadwalUjian } from "@/services/TugasAkhir/Dosen/Dashboard/JadwalUjianAPI.js";
+import { usePermintaanBimbingan } from "@/services/TugasAkhir/Dosen/Dashboard/PermintaanBimbinganAPI.js";
+const { doughnutChartValue } = getDoughnutData();
+const { lineChartValue } = getLineChartData();
 const { JadwalHariIni } = useJadwalUjian();
-
-import { usePermintaanBimbingan } from "@/services/TugasAkhir/Dosen/dashboard/usePermintaanBImbingan.js";
 const { permintaanBimbingan } = usePermintaanBimbingan();
 
 function handleRowClick(item) {
@@ -109,15 +106,15 @@ const summaryCards = [
             />
           </svg>
         </div>
-        <table class="w-full text-sm text-left rtl:text-right">
-          <thead class="text-xs uppercase text-white bg-[var(--primary)]">
+        <table class="w-full text-left rtl:text-right">
+          <thead class="body5-bold uppercase text-white bg-[var(--primary)]">
             <tr>
-              <th scope="col" class="px-6 py-5 rounded-l-lg">NIM</th>
-              <th scope="col" class="px-6 py-5">Sesi</th>
-              <th scope="col" class="px-6 py-5 rounded-r-lg">Ruang</th>
+              <th scope="col" class="px-3 py-2 rounded-l-lg">NIM</th>
+              <th scope="col" class="px-3 py-2">Sesi</th>
+              <th scope="col" class="px-3 py-2 rounded-r-lg">Ruang</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="body5">
             <tr
               v-for="(item, index) in JadwalHariIni"
               :key="index"
@@ -126,7 +123,7 @@ const summaryCards = [
               role="button"
               tabindex="0"
             >
-              <td class="px-6 py-4">
+              <td class="px-3 py-2">
                 <div class="flex items-center gap-2">
                   <img
                     class="h-6 w-6 sm:h-8 sm:w-8 rounded-full"
@@ -136,10 +133,10 @@ const summaryCards = [
                   <span>{{ item.name }}</span>
                 </div>
               </td>
-              <td class="px-6 py-4">
+              <td class="px-3 py-2">
                 {{ item.sesi }}
               </td>
-              <td class="px-6 py-4">
+              <td class="px-3 py-2">
                 {{ item.ruang }}
               </td>
             </tr>
@@ -164,15 +161,15 @@ const summaryCards = [
             />
           </svg>
         </div>
-        <table class="w-full text-sm text-left rtl:text-right">
-          <thead class="text-xs uppercase text-white bg-[var(--primary)]">
+        <table class="w-full text-left rtl:text-right w-min-[350px]">
+          <thead class="body5-bold uppercase text-white bg-[var(--primary)]">
             <tr>
-              <th scope="col" class="px-6 py-5 rounded-l-lg">NIM</th>
-              <th scope="col" class="px-6 py-5">Nama</th>
-              <th scope="col" class="px-6 py-5 rounded-r-lg">Kategori</th>
+              <th scope="col" class="px-3 py-2 rounded-l-lg">NIM</th>
+              <th scope="col" class="px-3 py-2">Nama</th>
+              <th scope="col" class="px-3 py-2 rounded-r-lg">Kategori</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="body5">
             <tr
               v-for="(item, index) in permintaanBimbingan"
               :key="index"
@@ -181,10 +178,10 @@ const summaryCards = [
               role="button"
               tabindex="0"
             >
-              <td class="px-6 py-4">
+              <td class="px-3 py-2">
                 {{ item.nim }}
               </td>
-              <td class="px-6 py-4">
+              <td class="px-3 py-2 w-fit">
                 <div class="flex items-center gap-2">
                   <img
                     class="h-6 w-6 sm:h-8 sm:w-8 rounded-full"
@@ -194,7 +191,7 @@ const summaryCards = [
                   <span>{{ item.nama }}</span>
                 </div>
               </td>
-              <td class="px-6 py-4">
+              <td class="px-3 py-2">
                 {{ item.kategori }}
               </td>
             </tr>
@@ -208,4 +205,4 @@ const summaryCards = [
     </div>
   </div>
 </template>
-@/services/TugasAkhir/Dosen/dashboard/DoughnutChartAPI.js
+@/services/TugasAkhir/Dosen/board/DoughnatChartAPI.js@/services/TugasAkhir/Dosen/board/LineChartAPI.js@/services/TugasAkhir/Dosen/board/useJadwalHariIni.js@/services/TugasAkhir/Dosen/board/usePermintaanBImbingan.js
