@@ -35,12 +35,12 @@ const ruangs = ref([
   { id: 5, name: 'Teaching Factory' },
 ]);
 
-// Data sesi
+// Data sesi - menambahkan properti waktu_mulai dan waktu_selesai
 const sesis = ref([
-  { id: 1, name: '08.00-10.00' },
-  { id: 2, name: '10.30-12.30' },
-  { id: 3, name: '13.00-15.00' },
-  { id: 4, name: '15.30-17.30' },
+  { id: 1, name: 'Sesi Pagi', waktu_mulai: '08:00', waktu_selesai: '10:00' },
+  { id: 2, name: 'Sesi Siang', waktu_mulai: '10:30', waktu_selesai: '12:30' },
+  { id: 3, name: 'Sesi Sore', waktu_mulai: '13:00', waktu_selesai: '15:00' },
+  { id: 4, name: 'Sesi Malam', waktu_mulai: '15:30', waktu_selesai: '17:30' },
 ]);
 
 // Filter pencarian ruang
@@ -110,9 +110,9 @@ const confirmDeleteRuang = (ruang) => {
   isDeleteModalOpen.value = true; // Tampilkan modal dengan mengubah state
 };
 
-// Fungsi untuk sesi
+// Fungsi untuk sesi - dimodifikasi untuk menangani 3 input
 const openAddModalSesi = () => {
-  selectedSesi.value = { name: '' };
+  selectedSesi.value = { name: '', waktu_mulai: '', waktu_selesai: '' };
   isEditingSesi.value = false;
   isModalOpenSesi.value = true;
 };
@@ -225,10 +225,10 @@ const confirmDeleteSesi = (sesi) => {
                 <SearchBar
                 v-model="searchQuery"
                 @search="handleSearch"
-                filterKey="ruang"
+                filterKey="sesi"
                 />
             </div>
-  <!-- Tombol tambah ruang -->
+  <!-- Tombol tambah sesi -->
   <Button variant="primary" @click="openAddModalSesi" leftIconPath="M12 4v16m8-8H4">
     Tambah Sesi
   </Button>
@@ -241,6 +241,13 @@ const confirmDeleteSesi = (sesi) => {
           class="p-4 border rounded shadow bg-white"
         >
           <p class="font-semibold">{{ sesi.name }}</p>
+          <!-- Menampilkan waktu mulai dan waktu selesai -->
+          <p class="text-sm text-gray-600 mt-1">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="inline-block w-4 h-4 mr-1">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+            {{ sesi.waktu_mulai }} - {{ sesi.waktu_selesai }}
+          </p>
           <div class="mt-2 flex gap-2">
             <Button 
               variant="danger" 
@@ -262,14 +269,51 @@ const confirmDeleteSesi = (sesi) => {
         </div>
       </div>
 
-      <!-- Modal Tambah/Edit Sesi -->
+      <!-- Modal Tambah/Edit Sesi dengan 3 input field -->
       <Modal :show="isModalOpenSesi" :title="isEditingSesi ? 'Edit Sesi' : 'Tambah Sesi'" @close="isModalOpenSesi = false" @submit="saveSesi">
-        <input
-          v-model="selectedSesi.name"
-          type="text"
-          class="w-full p-2 border rounded"
-          placeholder="Masukkan Jam"
-        />
+        <div class="space-y-4">
+          <!-- Input Nama Sesi -->
+          <div>
+            <label for="nama_sesi" class="block text-sm font-medium text-gray-700 mb-1">
+              Nama Sesi
+            </label>
+            <input
+              id="nama_sesi"
+              v-model="selectedSesi.name"
+              type="text"
+              class="w-full p-2 border rounded"
+              placeholder="Masukkan nama sesi"
+            />
+          </div>
+          
+          <!-- Input Waktu Mulai -->
+          <div>
+            <label for="waktu_mulai" class="block text-sm font-medium text-gray-700 mb-1">
+              Waktu Mulai
+            </label>
+            <input
+              id="waktu_mulai"
+              v-model="selectedSesi.waktu_mulai"
+              type="time"
+              class="w-full p-2 border rounded"
+              placeholder="08:00"
+            />
+          </div>
+          
+          <!-- Input Waktu Selesai -->
+          <div>
+            <label for="waktu_selesai" class="block text-sm font-medium text-gray-700 mb-1">
+              Waktu Selesai
+            </label>
+            <input
+              id="waktu_selesai"
+              v-model="selectedSesi.waktu_selesai"
+              type="time"
+              class="w-full p-2 border rounded"
+              placeholder="10:00"
+            />
+          </div>
+        </div>
       </Modal>
 
       <!-- Modal Konfirmasi Hapus Sesi -->
