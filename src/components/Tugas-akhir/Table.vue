@@ -1,13 +1,13 @@
 <template>
     <div class="overflow-x-auto">
-        <div class="min-w-[800px]">
+        <div :class="minWidthClass">
             <table class="w-full">
                 <thead>
                 <tr class="bg-primary text-white rounded-full body5-bold sm:body4-bold">
                     <th
                     v-for="(header, index) in headers"
                     :key="index"
-                    class="sm:py-4 py-3 sm:px-6 px-1 text-left border-r "
+                    class="sm:py-4 py-2 sm:px-6 px-3 text-left border-r"
                     :class="{ 'rounded-l-lg': index === 0, 'rounded-r-lg': index === headers.length - 1 }"
                     >
                     {{ header }}
@@ -27,7 +27,10 @@
             </table>
         
             <!-- Pagination Controls -->
-            <div class="flex justify-between items-center mt-4">
+            <div
+              v-if="showPagination"
+              class="flex justify-between items-center mt-4"
+            >
                 <div>
                 <span class="text-secondary body5">
                     Showing {{ startIndex + 1 }}-{{ endIndex }} of {{ items.length }}
@@ -55,14 +58,12 @@
                 </div>
             </div>
         </div>
-
     </div>
-  </template>
-  
-  <script setup>
+</template>
+
+<script setup>
 import { defineProps, defineEmits, computed, ref } from 'vue';
 
-// Store the props in a variable
 const props = defineProps({
   headers: {
     type: Array,
@@ -72,16 +73,23 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  showPagination: {
+    type: Boolean,
+    default: true,
+  },
+  minWidth: {
+    type: String,
+    default: 'min-w-[800px]',
+  },
 });
 
-// Emit for row click events
+const minWidthClass = computed(() => props.minWidth);
+
 const emit = defineEmits(['rowClick']);
 
-// Pagination state
 const currentPage = ref(1);
 const itemsPerPage = 10;
 
-// Use props.items instead of items
 const totalPages = computed(() => Math.ceil(props.items.length / itemsPerPage));
 
 const paginatedItems = computed(() => {
@@ -93,12 +101,10 @@ const paginatedItems = computed(() => {
 const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage);
 const endIndex = computed(() => Math.min(startIndex.value + itemsPerPage, props.items.length));
 
-// Handle row click
 const handleRowClick = (item) => {
   emit('rowClick', item);
 };
 
-// Navigation functions
 const prevPage = () => {
   if (currentPage.value > 1) {
     currentPage.value--;

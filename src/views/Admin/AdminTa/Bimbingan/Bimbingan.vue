@@ -155,12 +155,16 @@ const categories =[
     { value: 9, label: 'Blockchain Technology' },
 ]
 
+// Hitung jumlah mahasiswa yang belum ada dosen pembimbing
+const countBelumAdaPembimbing = computed(() =>
+  reqPembibingMhs.value.filter(item => !item.dosen_pembimbing).length
+);
 const tabs =[
     {
         id:1,
         label:"Plotting pembimbing",
         icon:"m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10",
-        count:"3"
+        count: countBelumAdaPembimbing
     },
     {
         id:2,
@@ -174,14 +178,12 @@ const handleRowClickPlot = (item) => {
     name: 'PlotPembimbingForAdmin',
     params: { nim: item.nim },
   });
-  console.log('Row clicked in Pengajuan:', item);
 };
 const handleRowClickBimbingan = (item) => {
   router.push({
     name: 'DetailBimbinganForAdmin',
     params: { nim: item.nim },
   });
-  console.log('Row clicked in Pengajuan:', item);
 };
 
 // Filter pencarian untuk tab Plotting Pembimbing + kategori
@@ -222,6 +224,14 @@ const filteredListBimbingan = computed(() => {
   );
 });
 
+const selectedTab = ref(1);
+function handleTabChange(tabId) {
+  selectedTab.value = tabId;
+  searchQueryBimbingan.value = '';
+  searchQuery.value = '';
+  selectedCategoriesBimbingan.value = [];
+  selectedCategoriesPlot.value = [];
+}
 // Handler filter kategori masing-masing tab
 function handleFilterPlot({ values }) {
   selectedCategoriesPlot.value = values;
@@ -229,9 +239,7 @@ function handleFilterPlot({ values }) {
 function handleFilterBimbingan({ values }) {
   selectedCategoriesBimbingan.value = values;
 }
-// Opsional: handleSearch bisa dikosongkan jika hanya pakai v-model
-const handleSearch = () => {};
-// Tambahkan fungsi handleFilter
+
 </script>
 <template>
     <router-view v-if="$route.path.includes('plot-pembimbing')"></router-view>
@@ -242,6 +250,8 @@ const handleSearch = () => {};
       <TabDiv
           :tabs="tabs"
           use-named-slots="true"
+          @tab-changed="handleTabChange"
+
       >
       <template #1>
         <div class="flex gap-2 lg:gap-4 justify-between items-center mb-4">
@@ -267,12 +277,12 @@ const handleSearch = () => {};
         >
           <template #row="{ item }">
             <!-- Kolom NIM -->
-            <td class="sm:py-3 py-3 sm:px-6 px-1 rounded-l-lg border-r border-white">
+            <td class="sm:py-3 py-3 sm:px-6 px-3 rounded-l-lg border-r border-white">
               {{ item.nim }}
             </td>
             
             <!-- Kolom Nama -->
-            <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white">
+            <td class="sm:py-3 py-3 sm:px-6 px-3 border-r border-white">
               <div class="flex items-center gap-2 ">
                 <img
                   v-if="item.img"
@@ -285,12 +295,12 @@ const handleSearch = () => {};
             </td>
             
             <!-- Kolom Judul Proposal -->
-            <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white">
+            <td class="sm:py-3 py-3 sm:px-6 px-3 border-r border-white">
               {{ item.kategori }}
             </td>
             
             <!-- Kolom Nilai -->
-            <td class="sm:py-3 py-3 sm:px-6 px-1 rounded-r-lg border-r border-white" :class="item.dosen_pembimbing ==null ? 'text-secondary' : ''">
+            <td class="sm:py-3 py-3 sm:px-6 px-3 rounded-r-lg border-r border-white" :class="item.dosen_pembimbing ==null ? 'text-secondary' : ''">
                 {{ item.dosen_pembimbing || 'Plot Pembimbing' }}
             </td>
           </template>
@@ -308,7 +318,6 @@ const handleSearch = () => {};
           />
           <SearchBar
             v-model="searchQueryBimbingan"
-            @search="handleSearch"
             filterKey="bimbingan"
           />
           </div>
@@ -323,12 +332,12 @@ const handleSearch = () => {};
         >
           <template #row="{ item }">
             <!-- Kolom NIM -->
-            <td class="sm:py-3 py-3 sm:px-6 px-1 rounded-l-lg border-r border-white">
+            <td class="sm:py-3 py-3 sm:px-6 px-3 rounded-l-lg border-r border-white">
               {{ item.nim }}
             </td>
             
             <!-- Kolom Nama -->
-            <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white">
+            <td class="sm:py-3 py-3 sm:px-6 px-3 border-r border-white">
               <div class="flex items-center gap-2">
                 <img
                   v-if="item.img"
@@ -341,16 +350,16 @@ const handleSearch = () => {};
             </td>
             
             <!-- Kolom Judul Proposal -->
-            <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white">
+            <td class="sm:py-3 py-3 sm:px-6 px-3 border-r border-white">
               {{ item.kategori }}
             </td>
             
             <!-- Kolom Nilai -->
-            <td class="sm:py-3 py-3 sm:px-6 px-1 rounded-r-lg border-r border-white">
+            <td class="sm:py-3 py-3 sm:px-6 px-3 rounded-r-lg border-r border-white">
               {{ item.dosen_pembimbing }}
             </td>
 
-            <td class="sm:py-3 py-3 sm:px-6 px-1 rounded-r-lg border-r border-white" :class="item.pertemuan ==null ? 'text-secondary' : ''">
+            <td class="sm:py-3 py-3 sm:px-6 px-3 rounded-r-lg border-r border-white" :class="item.pertemuan ==null ? 'text-secondary' : ''">
             {{ item.pertemuan != null ? item.pertemuan + '/9' : 'Belum ada pertemuan' }}
             </td>
           </template>

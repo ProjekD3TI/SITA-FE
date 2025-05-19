@@ -430,6 +430,7 @@ const routes = [
       },
       {
         path: "ujian-ta",
+        name: "UjianTAforAdmin",
         component: TugasAkhirforAdmin,
         meta: {
           breadcrumb: "ujian-ta",

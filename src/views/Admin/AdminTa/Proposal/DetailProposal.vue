@@ -6,6 +6,7 @@ import DefaultAvatar from '@/assets/images/Profile Avatar.svg';
 import DefaultModal from '@/components/Tugas-akhir/Modals/DefaultModal.vue';
 import InputText from '@/components/Tugas-akhir/Forms/InputText.vue';
 import InputTextarea from '@/components/Tugas-akhir/Forms/InputTextarea.vue';
+import FilePDFDummy from '@/assets/SV-Undangan Sosialisasi Teknis dan Informasi Lomba OLIVIA Tahun 2025.pdf';
 import router from '@/router';
 
 const showNilaiModal = ref(false);
@@ -14,7 +15,8 @@ const openNilaiModal = () => {
   showNilaiModal.value = true;
 };
 
-const pdfUrl = "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf";
+// const pdfUrl = "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf";
+const pdfUrl = FilePDFDummy;
 const mahasiswa = {
   nim: '12345678',
   nama: 'John Doe',

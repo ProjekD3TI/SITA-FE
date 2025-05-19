@@ -5,6 +5,7 @@ import ValidationFile from '@/components/Tugas-akhir/Forms/ValidationFile.vue';
 import Button from '@/components/Tugas-akhir/Button.vue';
 import UserData from '@/components/Tugas-akhir/UserData.vue';
 import ModalTimer from '@/components/Tugas-akhir/Modals/ModalTimer.vue';
+import FilePDFDummy from '@/assets/SV-Undangan Sosialisasi Teknis dan Informasi Lomba OLIVIA Tahun 2025.pdf';
 import { ref, computed } from 'vue';
 
 const modalRef=ref(false);
@@ -13,7 +14,8 @@ const openModal = () => {
   modalRef.value = true;
 };
 
-const PDF_SAMPLE = "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf";
+// const PDF_SAMPLE = "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf";
+const PDF_SAMPLE = FilePDFDummy;
 
 // Data for Ujian TA
 const daftarTugasAkhir = {

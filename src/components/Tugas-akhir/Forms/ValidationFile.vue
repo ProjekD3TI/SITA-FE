@@ -6,9 +6,11 @@
           :id="id"
           class="border border-placeholder input-rounded px-6 py-3 body4 w-full flex items-center text-black justify-between"
         >
-          <div
+          <a
+            :href="fileUrl"
+            target="_blank"
+            rel="noopener"
             class="flex items-center gap-2 cursor-pointer active:scale-95 duration-200"
-            @click="downloadFile"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -25,7 +27,7 @@
               />
             </svg>
             <span>{{ fileName || 'File gagal ditampilkan' }}</span>
-          </div>
+          </a>
           <div class="flex items-center gap-2">
             <!-- Radio Button 1 -->
             <label class="flex items-center gap-2 cursor-pointer">
@@ -114,16 +116,4 @@ watch(
   { immediate: true }
 );
 
-// Methods
-const downloadFile = () => {
-  if (fileUrl.value) {
-    const link = document.createElement('a');
-    link.href = fileUrl.value;
-    link.download = fileName.value || 'downloaded-file'; // Tambahkan nama default jika tidak ada
-    link.target = "_blank";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-};
 </script>

@@ -19,11 +19,28 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch, defineProps, defineEmits } from 'vue';
 
-const isOn = ref(true);
+// Props: value (0/1)
+const props = defineProps({
+  modelValue: {
+    type: [Number, String],
+    default: 1,
+  }
+});
+const emit = defineEmits(['update:modelValue']);
 
+// Local state
+const isOn = ref(props.modelValue == 1);
+
+// Watch for external changes
+watch(() => props.modelValue, (val) => {
+  isOn.value = val == 1;
+});
+
+// Emit value when toggled
 const toggleSwitch = () => {
   isOn.value = !isOn.value;
+  emit('update:modelValue', isOn.value ? 1 : 0);
 };
 </script>

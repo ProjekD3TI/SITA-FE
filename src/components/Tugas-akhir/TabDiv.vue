@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, useSlots } from 'vue';
+import { computed, ref, useSlots, watch } from 'vue';
 
 const props = defineProps({
   tabs: {
@@ -14,12 +14,16 @@ const props = defineProps({
   useNamedSlots: {
     type: Boolean,
     default: false
-  }
+  },
+  activeTab: { 
+    type: String, 
+    default: '' 
+  },
 });
 
-const emit = defineEmits(['tab-changed']);
+const emit = defineEmits(['tab-changed','update:activeTab']);
 const slots = useSlots();
-const activeTab = ref(props.defaultTab || (props.tabs[0]?.id || ''));
+const internalActiveTab = ref(props.activeTab || props.defaultTab || (props.tabs[0]?.id || ''));
 
 const tabItems = computed(() => {
   return props.tabs.map(tab => ({
@@ -31,14 +35,20 @@ const tabItems = computed(() => {
   }));
 });
 
+watch(() => props.activeTab, (val) => {
+  if (val && val !== internalActiveTab.value) {
+    internalActiveTab.value = val;
+  }
+});
 function selectTab(tabId) {
-  activeTab.value = tabId;
+  internalActiveTab.value = tabId;
   emit('tab-changed', tabId);
+  emit('update:activeTab', tabId);
 }
 
 defineExpose({
   name: 'TabComponent',
-  activeTab
+  activeTab: internalActiveTab
 });
 </script>
 
@@ -51,7 +61,7 @@ defineExpose({
         :key="tab.id"
         class="py-3 xl:py-4 body3-bold flex gap-2 items-center duration-200 transition-all ease-in-out"
         :class="[
-          activeTab === tab.id 
+          internalActiveTab === tab.id 
             ? 'text-primary trapezium-tab z-10 pe-8 lg:pe-12 ps-4 lg:ps-6' 
             : 'hover:opacity-100 trapezium-tab opacity-50 pe-5 xl:pe-8 2xl:pe-12 ps-4 xl:ps-6'
         ]"
@@ -75,7 +85,7 @@ defineExpose({
         <!-- Teks Tab -->
         <span class="2xl:inline relative z-20" 
             :class="[
-            activeTab === tab.id 
+            internalActiveTab === tab.id 
               ? 'hidden sm:inline' 
               : 'hidden'
           ]">
@@ -85,7 +95,7 @@ defineExpose({
             v-if="tab.count !== undefined" 
             class="text-sm px-2 py-0.5 ml-1 rounded-full text-white"
             :class="[
-              activeTab === tab.id 
+              internalActiveTab === tab.id 
                 ? 'bg-secondary' 
                 : 'bg-placeholder',
               tab.countClass || ''
@@ -94,17 +104,17 @@ defineExpose({
             {{ tab.count }}
           </span>
         </span>
-        <div v-if="tab.count !== undefined && activeTab != tab.id" class="2xl:hidden absolute top-2 right-4 xl:top-4 xl:right-4 w-3 h-3 bg-secondary rounded-full border-2 border-white z-20 duration-200"></div>
+        <div v-if="tab.count !== undefined && internalActiveTab != tab.id" class="2xl:hidden absolute top-2 right-4 xl:top-4 xl:right-4 w-3 h-3 bg-secondary rounded-full border-2 border-white z-20 duration-200"></div>
       </button>
     </div>
     
     <!-- Tab Content - Animated -->
     <div class="rounded-r-[16px] rounded-bl-[16px] bg-white p-4 lg:p-8 overflow-x-auto">
-      <slot v-if="!useNamedSlots" :active-tab="activeTab"></slot>
+      <slot v-if="!useNamedSlots" :active-tab="internalActiveTab"></slot>
       <template v-else>
         <transition name="fade-slide" mode="out-in">
-          <div v-if="activeTab" :key="activeTab">
-            <slot :name="activeTab" :tab="tabItems.find(t => t.id === activeTab)"></slot>
+          <div v-if="internalActiveTab" :key="internalActiveTab">
+            <slot :name="internalActiveTab" :tab="tabItems.find(t => t.id === internalActiveTab)"></slot>
           </div>
         </transition>
       </template>

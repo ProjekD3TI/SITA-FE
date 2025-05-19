@@ -204,27 +204,27 @@ function toRoman(num) {
         >
             <template #row="{ item }">
             <!-- Kolom No -->
-            <td class="sm:py-3 py-3 sm:px-6 px-1 rounded-l-lg border-r border-white">
+            <td class="sm:py-3 py-3 sm:px-6 px-3 rounded-l-lg border-r border-white">
                 {{ item.no }}
             </td>
             
             <!-- Kolom Tanggal -->
-            <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white">
+            <td class="sm:py-3 py-3 sm:px-6 px-3 border-r border-white">
                 {{ formatDate(item.tanggal) }}
             </td>
             
             <!-- Kolom BAB -->
-            <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white">
+            <td class="sm:py-3 py-3 sm:px-6 px-3 border-r border-white">
               BAB {{ toRoman(item.bab) }}
             </td>
             
             <!-- Kolom Catatan -->
-            <td class="py-3 px-1 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-3 sm:px-6 border-r border-white">
+            <td class="py-3 px-3 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-3 sm:px-6 border-r border-white">
                 {{ item.catatan }}
             </td>
             
             <!-- Kolom Status -->
-            <td class="sm:py-3 py-3 sm:px-6 px-1 rounded-r-lg border-r border-white">
+            <td class="sm:py-3 py-3 sm:px-6 px-3 rounded-r-lg border-r border-white">
                 <!-- Desktop Status -->
                 <StatusLabel
                 class="w-fit hidden lg:block "
