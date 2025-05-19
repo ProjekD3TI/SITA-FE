@@ -10,7 +10,7 @@
         :placeholder="placeholder" 
         :value="modelValue"
         @input="handleInput"
-        class="border border-placeholder input-rounded pl-10 pr-4 py-2 w-full h-full "
+        class="border border-placeholder input-rounded pl-10 pr-4 py-2.5 w-full"
       />
       <div v-if="showClearButton && modelValue" class="absolute top-2.5 right-3 cursor-pointer" @click="clearSearch">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-placeholder hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">

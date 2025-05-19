@@ -19,9 +19,8 @@
 </template>
 
 <script setup>
-import { ref, watch, defineProps, defineEmits } from 'vue';
+import { computed, defineProps, defineEmits } from 'vue';
 
-// Props: value (0/1)
 const props = defineProps({
   modelValue: {
     type: [Number, String],
@@ -30,17 +29,11 @@ const props = defineProps({
 });
 const emit = defineEmits(['update:modelValue']);
 
-// Local state
-const isOn = ref(props.modelValue == 1);
+// isOn hanya computed dari modelValue, tidak pernah diubah lokal!
+const isOn = computed(() => props.modelValue == 1);
 
-// Watch for external changes
-watch(() => props.modelValue, (val) => {
-  isOn.value = val == 1;
-});
-
-// Emit value when toggled
 const toggleSwitch = () => {
-  isOn.value = !isOn.value;
-  emit('update:modelValue', isOn.value ? 1 : 0);
+  // Emit saja, biar parent yang mengatur perubahan
+  emit('update:modelValue', isOn.value ? 0 : 1);
 };
 </script>

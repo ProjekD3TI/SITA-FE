@@ -1,83 +1,86 @@
 <template>
-  <div class="grid gap-8">
-    <h1 class="body1">Progres Bimbingan Mahasiswa</h1>
-    <div class="overflow-x-auto">
-      <div>
-        <Doughnut
-          v-if="isDataReady"
-          class="w-[30dvh]"
-          :data="chartData"
-          :options="options"
-        />
-      </div>
-      <div class="flex justify-center flex-wrap mt-4 gap-4">
-        <div
-          v-for="(label, index) in chartData.labels"
-          :key="index"
-          class="text-center flex items-center"
-        >
-          <div
-            :style="{
-              backgroundColor: chartData.datasets[0].backgroundColor[index],
-            }"
-            class="w-4 h-4 inline-block rounded-full"
-          ></div>
-          <span class="ml-2 body5 text-[#8C97A7]">{{ label }}</span>
-        </div>
+  <div class="relative mx-auto">
+    <Doughnut :data="chartData" :options="chartOptions" />
+    <div
+      v-if="showCenterText"
+      class="absolute top-1/2 left-1/2 w-24 h-24 flex items-center justify-center -translate-x-1/2 -translate-y-1/2"
+    >
+      <div class="text-center w-full truncate body2-bold sm:body1-bold">
+        <span v-if="showCenterTextValue">
+          <span class="text-primary">{{ centerText[0] }}</span>/<span class="text-secondary">{{ centerText[1] }}</span>
+        </span>
+        <br v-if="showInsideText && showCenterTextValue" />
+        <span v-if="showInsideText" class="body5">{{ insideText }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
-import { Doughnut } from "vue-chartjs";
-import { computed, ref } from "vue";
+import { computed, defineProps } from 'vue'
+import { Doughnut } from 'vue-chartjs'
+import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement } from 'chart.js'
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(Title, Tooltip, Legend, ArcElement)
 
 const props = defineProps({
-  chartValue: {
+  labels: {
     type: Array,
-    default: () => [10, 10, 10, 10, 10], // Default values to prevent empty chart
-    required: true,
+    default: () => ['Proposal', 'Ujian TA']
   },
-});
+  datasetsLabel: {
+    type: String,
+    default: 'Berkas'
+  },
+  insideText: {
+    type: String,
+    default: 'Proposal'
+  },
+  dataValues: {
+    type: Array,
+    default: () => [4, 16]
+  },
+  backgroundColor: {
+    type: Array,
+    default: () => ['#F78052', '#00A2EA']
+  },
+  showCenterText: {
+    type: Boolean,
+    default: true
+  },
+  showInsideText: {
+    type: Boolean,
+    default: true
+  },
+  showCenterTextValue: {
+    type: Boolean,
+    default: true
+  }
+})
 
-// Computed property to check if data is ready
-const isDataReady = computed(() => {
-  return props.chartValue && props.chartValue.length > 0;
-});
+const chartData = computed(() => ({
+  labels: props.labels,
+  datasets: [
+    {
+      label: props.datasetsLabel,
+      backgroundColor: props.backgroundColor,
+      data: props.dataValues
+    }
+  ]
+}))
 
-// Create chart data structure with computed to respond to prop changes
-const chartData = computed(() => {
-  return {
-    labels: ["BAB 1", "BAB II", "BAB III", "BAB IV", "BAB V"],
-    datasets: [
-      {
-        backgroundColor: [
-          "#62B2FD",
-          "#9BDFC4",
-          "#9F97F7",
-          "#F99BAB",
-          "#FFB44F",
-        ],
-        data: isDataReady.value ? props.chartValue : [10, 10, 10, 10, 10],
-      },
-    ],
-  };
-});
-
-const options = {
+const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
-    legend: {
-      display: false,
-    },
-    tooltip: {
-      enabled: true,
-    },
+    legend: { display: false, position: 'top' },
+    tooltip: { enabled: true },
   },
-};
+  cutout: '60%',
+}
+
+const centerText = computed(() => [
+  props.dataValues[1] ?? 0,
+  props.dataValues[0] ?? 0
+])
 </script>

@@ -6,6 +6,7 @@ import Table from '@/components/Tugas-akhir/Table.vue';
 import DefaultAvatar from '@/assets/images/Profile Avatar.svg';
 import StatusLabel from '@/components/Tugas-akhir/Label.vue';
 import Breadcrumb from '@/components/Tugas-akhir/Breadcrumb.vue';
+import ModalTimer from '@/components/Tugas-akhir/Modals/ModalTimer.vue';
 import Slider from '@/components/Tugas-akhir/Slider.vue';
 import { ref, computed, watch } from 'vue';
 import router from '@/router';
@@ -174,6 +175,40 @@ const handleRowClickPengajuan = (item) => {
     params: { nim: item.nim },
   });
 };
+
+const pendingStatusForm = ref(0);
+// State untuk modal timer
+const modalTimerVisible = ref(false);
+
+// Saat slider dicoba diubah
+function handleSliderChange(val) {
+  if (val !== statusForm.value) {
+    pendingStatusForm.value = val;
+    modalTimerVisible.value = true;
+  }
+}
+
+// Jika konfirmasi
+function handleModalSubmit() {
+  statusForm.value = pendingStatusForm.value;
+  modalTimerVisible.value = false;
+}
+
+// Jika batal
+function handleModalCancel() {
+  pendingStatusForm.value = statusForm.value; // reset pending ke value lama
+  modalTimerVisible.value = false;
+}
+const modalTimerHeadText = computed(() => {
+  return statusForm.value === 0
+    ? 'Buka Form Pengajuan Proposal'
+    : 'Tutup Form Pengajuan Proposal';
+});
+const modalTimerBodyText = computed(() => {
+  return statusForm.value === 0
+    ? 'Apakah anda yakin ingin membuka form pengajuan proposal tugas akhir?'
+    : 'Apakah anda yakin ingin menutup form pengajuan proposal tugas akhir?';
+});
 </script>
 <template>
   <router-view v-if="$route.path.includes('detail-pengajuan')"></router-view>
@@ -198,7 +233,7 @@ const handleRowClickPengajuan = (item) => {
           <SearchBar
             v-model="searchQueryPengajuan"
           />
-          <Slider v-model="statusForm"/>
+          <Slider :modelValue="statusForm" @update:modelValue="handleSliderChange"/>
         </div>
         <Table
           :headers="['NIM', 'Nama','Judul Proposal Tugas Akhir', 'Status']"
@@ -285,4 +320,16 @@ const handleRowClickPengajuan = (item) => {
       </template>
     </TabDiv>
   </div>
+  <ModalTimer
+    v-if="modalTimerVisible"
+    @close="handleModalCancel"
+    :headText="modalTimerHeadText"
+    :bodyText="modalTimerBodyText"
+    submitText="Yakin"
+    :showCancel="false"
+    :showSubmit="true"
+    :enableTimer="true"
+    :timerDuration="5"
+    @submit="handleModalSubmit"
+  />
 </template>

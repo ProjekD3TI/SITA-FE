@@ -89,7 +89,7 @@ const tugas_akhir = ref({
 <template>
       <Breadcrumb :items="breadcrumbItems" />
       <div class="card-rounded card-rounded bg-white p-4 lg:p-8">
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-4 max-w-screen-2xl mx-auto">
                   <UserData
                         :headText="mahasiswa.nim"
                         :bodyText="mahasiswa.name"

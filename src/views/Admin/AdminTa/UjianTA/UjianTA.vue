@@ -11,6 +11,7 @@ import Loading from '@/components/Loading.vue';
 import Breadcrumb from '@/components/Tugas-akhir/Breadcrumb.vue';
 import DefaultModal from '@/components/Tugas-akhir/Modals/DefaultModal.vue';
 import JadwalUjian from '@/components/Tugas-akhir/JadwalUjian.vue';
+import ModalTimer from '@/components/Tugas-akhir/Modals/ModalTimer.vue';
 import Button from '@/components/Tugas-akhir/Button.vue';
 import ErrorMsg from '@/components/ErrorMsg.vue';
 import router from '@/router';
@@ -367,6 +368,41 @@ const handleEditJadwal = () => {
   modalRef1.value = false;
   router.push({ name: 'PenjadwalanForAdmin', params: { nim: selectedJadwalNim.value } });
 }
+
+
+const pendingStatusForm = ref(0);
+// State untuk modal timer
+const modalTimerVisible = ref(false);
+
+// Saat slider dicoba diubah
+function handleSliderChange(val) {
+  if (val !== statusForm.value) {
+    pendingStatusForm.value = val;
+    modalTimerVisible.value = true;
+  }
+}
+
+// Jika konfirmasi
+function handleModalSubmit() {
+  statusForm.value = pendingStatusForm.value;
+  modalTimerVisible.value = false;
+}
+
+// Jika batal
+function handleModalCancel() {
+  pendingStatusForm.value = statusForm.value; // reset pending ke value lama
+  modalTimerVisible.value = false;
+}
+const modalTimerHeadText = computed(() => {
+  return statusForm.value === 0
+    ? 'Buka Form Pengajuan Proposal'
+    : 'Tutup Form Pengajuan Proposal';
+});
+const modalTimerBodyText = computed(() => {
+  return statusForm.value === 0
+    ? 'Apakah anda yakin ingin membuka form pengajuan proposal tugas akhir?'
+    : 'Apakah anda yakin ingin menutup form pengajuan proposal tugas akhir?';
+});
 </script>
 
 <template>
@@ -463,7 +499,7 @@ const handleEditJadwal = () => {
                 class="order-last md:order-none"
                 v-model="searchQueryTab2"
               />
-              <Slider v-model="statusForm"/>
+              <Slider :modelValue="statusForm" @update:modelValue="handleSliderChange"/>
             </div>
             
               <Table
@@ -629,6 +665,20 @@ const handleEditJadwal = () => {
         </template>
       </TabDiv>
     </div>
+
+    <!-- Modal Validasi Form  -->
+    <ModalTimer
+      v-if="modalTimerVisible"
+      @close="handleModalCancel"
+      :headText="modalTimerHeadText"
+      :bodyText="modalTimerBodyText"
+      submitText="Yakin"
+      :showCancel="false"
+      :showSubmit="true"
+      :enableTimer="true"
+      :timerDuration="5"
+      @submit="handleModalSubmit"
+    />
 
     <!-- Jadwal Ujian Modal -->
     <DefaultModal

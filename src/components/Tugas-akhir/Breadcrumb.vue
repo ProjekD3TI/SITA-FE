@@ -79,7 +79,7 @@ const breadcrumbItems = computed(() => {
             <router-link 
               v-if="item.path && !item.active" 
               :to="item.path" 
-              class="body5-bold sm:body4-bold text-placeholder hover:text-primary"
+              class="body5 sm:body4 text-placeholder hover:text-primary"
             >
               {{ item.label }}
             </router-link>
@@ -87,7 +87,7 @@ const breadcrumbItems = computed(() => {
             <span 
               v-else
               :class="[
-                'body5-bold sm:body4-bold', 
+                'body5 sm:body4', 
                 item.active ? 'text-primary' : 'text-placholder'
               ]"
             >

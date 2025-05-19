@@ -1,9 +1,9 @@
 <script setup>
 import { ref, computed } from "vue";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
-import FlowBar from "@/components/Tugas-akhir/FlowBar.vue";
-import SummaryCard from "@/components/Tugas-akhir/SummaryCard.vue";
-import StatusCard from "@/components/Tugas-akhir/StatusCard.vue";
+import FlowBar from "@/components/Tugas-akhir/Dashboard/FlowBar.vue";
+import SummaryCard from "@/components/Tugas-akhir/Dashboard/SummaryCard.vue";
+import StatusCard from "@/components/Tugas-akhir/Dashboard/StatusCard.vue";
 import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
 import LineChart from "@/components/Tugas-akhir/Dashboard/LineChart.vue";
@@ -221,7 +221,6 @@ const handleAccept = () => {
       </div>
     </div>
     <div class="card-rounded bg-white p-4 lg:p-8 mt-4 min-h-fit">
-      <LineChart />
     </div>
   </template>
 </template>
