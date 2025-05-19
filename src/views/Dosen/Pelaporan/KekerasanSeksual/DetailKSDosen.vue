@@ -37,10 +37,33 @@
                 </div>
                 <p class="description">{{ laporan.deskripsi }}</p>
                 
-                <div v-if="laporan.image_path" class="image-container">
-                    <img :src="getImageUrl(laporan.image_path)" alt="Gambar Kejadian" class="evidence-image" @click="showFullImage = true">
-                    <div class="image-caption">Foto Bukti Kejadian (klik untuk memperbesar)</div>
-                </div>
+                <!-- Updated image handling for multiple images -->
+<div v-if="imagePaths && imagePaths.length > 0" class="image-container">
+    <h4 class="font-medium mb-2 mt-4">Foto Bukti Kejadian</h4>
+    <div class="image-grid">
+        <div v-for="(path, index) in imagePaths" :key="index" class="image-item">
+            <img 
+                :src="getImageUrlForPath(path)" 
+                :alt="`Bukti Kejadian ${index + 1}`" 
+                class="kejadian-image-thumbnail" 
+                @click="openFullImage(index)"
+                @error="handleImageError($event, index)"
+            />
+        </div>
+    </div>
+    <div class="image-caption">Klik untuk memperbesar</div>
+</div>
+
+<!-- Fallback for single image (old format) -->
+<div v-else-if="laporan.image_path && !imagePaths.length" class="image-container">
+    <img 
+        :src="getImageUrl(laporan.image_path)" 
+        alt="Gambar Kejadian" 
+        class="evidence-image" 
+        @click="showFullImage = true"
+    >
+    <div class="image-caption">Foto Bukti Kejadian (klik untuk memperbesar)</div>
+</div>
             </div>
 
             <div class="detail-cards-row">
@@ -117,6 +140,8 @@
 
 <script>
 import axios from 'axios';
+import VueCookies from 'vue-cookies';
+import { decryptData } from '../../../../services/encrypt';
 
 export default {
     name: 'DetailKS',
@@ -130,6 +155,14 @@ export default {
             showFullImage: false,
             showTanggapanModal: false,
             tanggapanText: '',
+            apiBaseUrl: 'https://v3422040.mhs.d3tiuns.com/api',
+            baseUrl: 'https://v3422040.mhs.d3tiuns.com',  // Add this line
+            authToken: null,
+            
+            // Add these properties for better image handling
+            imagePaths: [],
+            currentImageIndex: 0,
+            currentFullImageUrl: ''
         };
     },
     
@@ -176,33 +209,71 @@ export default {
             }
         },
         
-        async fetchLaporanDetail() {
-            try {
-                if (!this.laporanId) {
-                  this.error = 'No valid ID provided';
-                  this.loading = false;
-                  return;
-                }
-                
-                this.loading = true;
-                const token = localStorage.getItem('token'); // Make sure this matches your storage key
-                
-                console.log('Fetching with ID:', this.laporanId, typeof this.laporanId);
-                
-                const response = await axios.get(`https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/${this.laporanId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                
-                this.laporan = response.data;
-                this.loading = false;
-            } catch (error) {
-                console.error('Error fetching laporan detail:', error);
-                this.error = 'Failed to load laporan detail';
-                this.loading = false;
+        getAuthToken() {
+    const token = VueCookies.get("auth_token");
+    if (token) {
+        this.authToken = token;
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        console.log('Auth token loaded from cookies');
+    } else {
+        console.warn('No auth token found in cookies');
+        this.error = "Sesi login telah berakhir. Silakan login kembali.";
+    }
+},
+
+async fetchLaporanDetail() {
+    if (!this.laporanId) {
+        this.error = "ID laporan tidak valid";
+        this.loading = false;
+        return;
+    }
+    
+    this.loading = true;
+    this.error = null;
+    
+    try {
+        if (!this.authToken) {
+            this.getAuthToken(); // Try to get token again if missing
+        }
+
+        const response = await axios.get(`${this.apiBaseUrl}/laporan_kekerasan/${this.laporanId}`, {
+            headers: {
+                'Authorization': `Bearer ${this.authToken}`
             }
-        },
+        });
+        
+        // Handle the response...
+        this.laporan = response.data;
+        
+        // Process image paths
+        if (this.laporan.image_path) {
+            // Fix common issues with data format before parsing
+            let imagePathData = this.laporan.image_path;
+            
+            if (typeof imagePathData === 'string' && imagePathData.startsWith('"[') && imagePathData.endsWith(']"')) {
+                try {
+                    imagePathData = JSON.parse(imagePathData);
+                } catch (e) {
+                    console.error('Error unescaping image_path:', e);
+                }
+            }
+            
+            this.imagePaths = this.parseImagePaths(imagePathData);
+            console.log('Parsed image paths:', this.imagePaths);
+        }
+        
+    } catch (err) {
+        console.error('Error fetching laporan detail:', err);
+        
+        if (err.response && err.response.status === 401) {
+            this.error = 'Sesi anda telah berakhir. Silakan login kembali.';
+        } else {
+            this.error = 'Gagal memuat detail laporan. Silakan coba lagi.';
+        }
+    } finally {
+        this.loading = false;
+    }
+},
         
         goBack() {
             this.$router.go(-1);
@@ -239,32 +310,148 @@ export default {
         },
         
         getImageUrl(imagePath) {
-            return `http://localhost:8000/storage/laporankekerasan/${imagePath}`;
-        },
+    if (!imagePath) return '';
+    
+    // Check if image_path is a JSON string and parse it
+    if (typeof imagePath === 'string' && (imagePath.startsWith('[') || imagePath.startsWith('["'))) {
+        try {
+            const images = JSON.parse(imagePath);
+            if (Array.isArray(images) && images.length > 0) {
+                // Use the first image from the array
+                return `${this.baseUrl}/public/storage/laporankekerasan/${images[0]}`;
+            }
+        } catch (e) {
+            console.error('Error parsing image path:', e);
+        }
+    }
+    
+    // If not a JSON string or parsing failed, return as is
+    return `${this.baseUrl}/public/storage/laporankekerasan/${imagePath}`;
+},
+
+// Add these additional methods for better image handling
+parseImagePaths(imagePath) {
+    if (!imagePath) {
+        return [];
+    }
+    
+    if (typeof imagePath === 'string') {
+        if ((imagePath.startsWith('[') && imagePath.endsWith(']')) || 
+            (imagePath.startsWith('"[') && imagePath.endsWith(']"'))) {
+            
+            try {
+                let cleanedPath = imagePath.replace(/\\/g, '');
+                
+                if (cleanedPath.startsWith('"') && cleanedPath.endsWith('"')) {
+                    cleanedPath = cleanedPath.substring(1, cleanedPath.length - 1);
+                }
+                
+                const parsed = JSON.parse(cleanedPath);
+                if (Array.isArray(parsed)) {
+                    return parsed;
+                }
+            } catch (e) {
+                console.error('Error parsing JSON:', e);
+            }
+        }
+        
+        if (imagePath.includes(',')) {
+            return imagePath.split(',').map(item => item.trim());
+        }
+        
+        return [imagePath];
+    }
+    
+    if (Array.isArray(imagePath)) {
+        return imagePath;
+    }
+    
+    return [];
+},
+
+getImageUrlForPath(path) {
+    if (!path) return '';
+    
+    if (path.startsWith('http')) {
+        return path;
+    }
+    
+    const cleanPath = path.replace(/['"]/g, '');
+    
+    return `${this.baseUrl}/public/storage/laporankekerasan/${cleanPath}`;
+},
+
+handleImageError(event, index) {
+    const img = event.target;
+    const originalSrc = img.src;
+    const path = this.imagePaths[index];
+    
+    if (originalSrc.includes('fallback=4')) {
+        img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+        return;
+    }
+    
+    const baseDomain = this.baseUrl;
+    let newUrl;
+    
+    if (!originalSrc.includes('fallback=')) {
+        // Try Backend-Port path first
+        newUrl = `${baseDomain}/Backend-Port/backend/engine/public/storage/laporankekerasan/${path}?fallback=2`;
+    } else if (originalSrc.includes('fallback=2')) {
+        newUrl = `${baseDomain}/api/storage/laporankekerasan/${path}?fallback=3`;
+    } else if (originalSrc.includes('fallback=3')) {
+        newUrl = `${baseDomain}/storage/laporankekerasan/${path}?fallback=4`;
+    } else {
+        newUrl = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+    }
+    
+    img.src = newUrl;
+},
         
         async updateStatus(newStatus) {
-            try {
-                this.loading = true;
-                
-                const response = await axios.put(`https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/${this.laporanId}/status`, {
-                    status: newStatus
-                });
-                
-                this.laporan.status = newStatus;
-                this.$notify({
-                    type: 'success',
-                    text: `Status laporan berhasil diperbarui menjadi ${this.formatStatus(newStatus)}`
-                });
-            } catch (error) {
-                console.error('Error updating status:', error);
-                this.$notify({
-                    type: 'error',
-                    text: 'Gagal memperbarui status laporan'
-                });
-            } finally {
-                this.loading = false;
+    try {
+        this.loading = true;
+        
+        // Ensure we have a valid auth token
+        if (!this.authToken) {
+            this.getAuthToken();
+        }
+        
+        const response = await axios.put(`${this.apiBaseUrl}/laporan_kekerasan/${this.laporanId}/status`, {
+            status: newStatus
+        }, {
+            headers: {
+                'Authorization': `Bearer ${this.authToken}`
             }
-        },
+        });
+        
+        this.laporan.status = newStatus;
+        this.$notify({
+            type: 'success',
+            text: `Status laporan berhasil diperbarui menjadi ${this.formatStatus(newStatus)}`
+        });
+        
+        // Refresh data after status update
+        await this.fetchLaporanDetail();
+    } catch (error) {
+        console.error('Error updating status:', error);
+        
+        // Check if it's an authentication error
+        if (error.response && error.response.status === 401) {
+            this.$notify({
+                type: 'error',
+                text: 'Sesi anda telah berakhir. Silakan login kembali.'
+            });
+        } else {
+            this.$notify({
+                type: 'error',
+                text: 'Gagal mengubah status laporan'
+            });
+        }
+    } finally {
+        this.loading = false;
+    }
+},
 
         startChat() {
             // Get the phone number from the laporan data
