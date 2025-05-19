@@ -21,6 +21,7 @@
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
                     required
                   />
+                  <p v-if="errors.title" class="text-red-500 text-xs mt-1">{{ errors.title[0] }}</p>
                 </div>
 
                 <!-- Kategori -->
@@ -39,6 +40,7 @@
                       </option>
                     </select>
                   </div>
+                  <p v-if="errors.category" class="text-red-500 text-xs mt-1">{{ errors.category[0] }}</p>
                 </div>
 
                 <!-- Bukti Pelanggaran Checkboxes -->
@@ -80,7 +82,7 @@
                       </div>
                     </div>
                   </div>
-                  <p v-if="selectedBukti.length === 0 && !showLainnyaInput && showBuktiWarning" class="text-sm text-red-500 mt-1">
+                  <p v-if="selectedBukti.length === 0 && !showLainnyaInput && showBuktiWarning" class="text-red-500 text-xs mt-1">
                     Pilih setidaknya satu bukti pelanggaran
                   </p>
                 </div>
@@ -88,7 +90,7 @@
                 <!-- Bukti Laporan (File Input) -->
                 <div class="mb-4">
                   <label for="evidence" class="block text-sm font-medium text-gray-700 mb-1">Bukti Laporan (Foto) <span class="text-red-500">*</span></label>
-                  <div class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <div class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
                     <input
                       type="file"
                       id="evidence"
@@ -98,7 +100,7 @@
                       class="hidden"
                       ref="fileInput"
                     />
-                    <div class="cursor-pointer" @click="triggerFileInput">
+                    <div @click="triggerFileInput">
                       <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                         <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
@@ -106,18 +108,19 @@
                       <p class="mt-1 text-xs text-gray-500">Format: JPG, PNG, GIF (Maks 5MB)</p>
                     </div>
                   </div>
+                  <p v-if="errors.image_path" class="text-red-500 text-xs mt-1">{{ errors.image_path[0] }}</p>
                 </div>
 
                 <!-- Image Previews -->
                 <div v-if="imagePreviews.length > 0" class="mb-4">
                   <h4 class="text-sm font-medium text-gray-700 mb-2">Preview Foto ({{ imagePreviews.length }} file)</h4>
                   <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    <div v-for="(preview, index) in imagePreviews" :key="index" class="relative">
+                    <div v-for="(preview, index) in imagePreviews" :key="index" class="relative group">
                       <img :src="preview" alt="Preview" class="h-24 w-full object-cover rounded-md" />
                       <button 
                         type="button" 
                         @click="removeImage(index)" 
-                        class="absolute top-1 right-1 bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center hover:bg-red-600"
+                        class="absolute top-1 right-1 bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                         title="Hapus Foto"
                       >
                         <span>&times;</span>
@@ -132,7 +135,7 @@
                   <input
                     type="url"
                     id="linkLampiran"
-                    v-model="report.linkLampiran"
+                    v-model="report.lampiran_link"
                     placeholder="https://drive.google.com/file/..."
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
                   />
@@ -153,6 +156,7 @@
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
                     required
                   ></textarea>
+                  <p v-if="errors.description" class="text-red-500 text-xs mt-1">{{ errors.description[0] }}</p>
                 </div>
 
                 <!-- Tanggal Kejadian -->
@@ -165,6 +169,7 @@
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
                     required
                   />
+                  <p v-if="errors.incidentDate" class="text-red-500 text-xs mt-1">{{ errors.incidentDate[0] }}</p>
                 </div>
               </div>
             </div>
@@ -173,7 +178,7 @@
           <!-- Section 2: Informasi Pelapor -->
           <div class="form-section border-t pt-6">
             <h3 class="text-xl font-semibold mb-4">Informasi Pelapor</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div>
                 <label for="reporterName" class="block text-sm font-medium text-gray-700 mb-1">Nama Pelapor</label>
                 <input
@@ -186,7 +191,7 @@
               </div>
 
               <div>
-                <label for="nim" class="block text-sm font-medium text-gray-700 mb-1">NIM Pelapor</label>
+                <label for="nim" class="block text-sm font-medium text-gray-700 mb-1">NIM/NIK Pelapor</label>
                 <input
                   type="text"
                   id="nim"
@@ -207,11 +212,109 @@
                 />
               </div>
             </div>
+            
+            <!-- Moved these three fields here as requested -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <!-- Profesi Field -->
+              <div class="mb-4">
+                <label for="profesi" class="block text-sm font-medium text-gray-700 mb-1">Profesi <span class="text-red-500">*</span></label>
+                <select
+                  id="profesi"
+                  v-model="report.profesi"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                  required
+                >
+                  <option value="" disabled selected>Pilih Profesi</option>
+                  <option value="Mahasiswa">Mahasiswa</option>
+                  <option value="Dosen">Dosen</option>
+                  <option value="Staff">Staff</option>
+                  <option value="Lainnya">Lainnya</option>
+                </select>
+                <p v-if="errors.profesi" class="text-red-500 text-xs mt-1">{{ errors.profesi[0] }}</p>
+              </div>
+              
+              <!-- Jenis Kelamin Field -->
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Kelamin Pelapor <span class="text-red-500">*</span></label>
+                <div class="flex space-x-4">
+                  <label class="inline-flex items-center">
+                    <input 
+                      type="radio" 
+                      name="jenis_kelamin" 
+                      v-model="report.jenis_kelamin" 
+                      value="laki-laki"
+                      class="form-radio h-4 w-4 text-red-600" 
+                      required
+                    />
+                    <span class="ml-2 text-sm text-gray-700">Laki-laki</span>
+                  </label>
+                  <label class="inline-flex items-center">
+                    <input 
+                      type="radio" 
+                      name="jenis_kelamin" 
+                      v-model="report.jenis_kelamin" 
+                      value="perempuan"
+                      class="form-radio h-4 w-4 text-red-600" 
+                      required
+                    />
+                    <span class="ml-2 text-sm text-gray-700">Perempuan</span>
+                  </label>
+                </div>
+                <p v-if="errors.jenis_kelamin" class="text-red-500 text-xs mt-1">{{ errors.jenis_kelamin[0] }}</p>
+              </div>
+              
+              <!-- Rentang Umur Field - Made vertical as requested -->
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Rentang Umur Pelapor <span class="text-red-500">*</span></label>
+                <div class="space-y-2 bg-gray-50 p-3 rounded-md border border-gray-300">
+                  <div class="block">
+                    <label class="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name="umur_pelapor"
+                        v-model="report.umur_pelapor"
+                        value="<20"
+                        class="form-radio h-4 w-4 text-red-600"
+                        required
+                      />
+                      <span class="ml-2 text-sm">Kurang dari 20 tahun</span>
+                    </label>
+                  </div>
+                  <div class="block">
+                    <label class="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name="umur_pelapor"
+                        v-model="report.umur_pelapor"
+                        value="20-40"
+                        class="form-radio h-4 w-4 text-red-600"
+                      />
+                      <span class="ml-2 text-sm">20 - 40 tahun</span>
+                    </label>
+                  </div>
+                  <div class="block">
+                    <label class="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name="umur_pelapor"
+                        v-model="report.umur_pelapor"
+                        value="40<"
+                        class="form-radio h-4 w-4 text-red-600"
+                      />
+                      <span class="ml-2 text-sm">Lebih dari 40 tahun</span>
+                    </label>
+                  </div>
+                </div>
+                <p v-if="errors.umur_pelapor" class="text-red-500 text-xs mt-1">{{ errors.umur_pelapor[0] }}</p>
+              </div>
+            </div>
           </div>
 
           <!-- Section 3: Informasi Terduga/Terlapor -->
           <div class="form-section border-t pt-6">
             <h3 class="text-xl font-semibold mb-4">Informasi Terduga/Terlapor</h3>
+            <p v-if="errors.terlapor" class="text-red-500 text-sm mb-2">{{ errors.terlapor[0] }}</p>
+            
             <div v-for="(terduga, index) in report.terlapor" :key="index" class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
               <h4 class="font-medium text-lg mb-3">Terduga {{ index + 1 }}</h4>
               
@@ -386,6 +489,8 @@
           <!-- Section 4: Informasi Saksi -->
           <div class="form-section border-t pt-6">
             <h3 class="text-xl font-semibold mb-4">Informasi Saksi</h3>
+            <p v-if="errors.saksi" class="text-red-500 text-sm mb-2">{{ errors.saksi[0] }}</p>
+            
             <div v-for="(saksi, index) in report.saksi" :key="index" class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
               <h4 class="font-medium text-lg mb-3">Saksi {{ index + 1 }}</h4>
               
@@ -473,8 +578,18 @@
                   />
                   <span class="ml-2 text-gray-700">Saya menyetujui pernyataan di atas <span class="text-red-500">*</span></span>
                 </label>
+                <p v-if="errors.agreement" class="text-red-500 text-xs mt-1">{{ errors.agreement[0] }}</p>
               </div>
             </div>
+          </div>
+          
+          <!-- reCAPTCHA Section - Moved after statement section as requested -->
+          <div class="form-section border-t pt-6">
+            <h3 class="text-xl font-semibold mb-4">Verifikasi</h3>
+            <div class="flex justify-center mb-4">
+              <div ref="recaptchaContainer"></div>
+            </div>
+            <div v-if="recaptchaError" class="text-red-500 text-xs text-center mb-4">{{ recaptchaError }}</div>
           </div>
 
           <!-- Form Actions -->
@@ -489,9 +604,16 @@
             <button
               type="submit"
               class="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-              :disabled="isSubmitting || !report.agreement"
+              :disabled="isSubmitting || !formIsValid"
+              :class="{'opacity-70 cursor-not-allowed': isSubmitting || !formIsValid}"
             >
-              <span v-if="isSubmitting">Mengirim...</span>
+              <span v-if="isSubmitting">
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Mengirim...
+              </span>
               <span v-else>Kirim Laporan</span>
             </button>
           </div>
@@ -508,7 +630,7 @@ import VueCookies from 'vue-cookies';
 import { decryptData } from '../../../../services/encrypt';
 
 export default {
-  name: 'AddKSDosen',
+  name: 'AddKekerasanSeksual',
   data() {
     return {
       report: {
@@ -519,12 +641,16 @@ export default {
         nim: '',
         phone: '',
         incidentDate: '',
-        evidenceFiles: [], // Changed to array for multiple files
-        linkLampiran: '',
+        evidenceFiles: [], // Array for multiple files
+        lampiran_link: '', // Changed from linkLampiran to match second template
         agreement: false,
         terlapor: [], // Array for terduga/terlapor
         saksi: [], // Array for saksi
-        bukti_pelanggaran: [] // Array for bukti_pelanggaran
+        bukti_pelanggaran: [], // Array for bukti_pelanggaran
+        // Added fields from the second template
+        profesi: '',
+        jenis_kelamin: '',
+        umur_pelapor: ''
       },
       selectedBukti: [], // Array for selected bukti checkboxes
       buktiOptions: [
@@ -559,7 +685,15 @@ export default {
       categories: [],
       errors: {},
       isSubmitting: false,
-      imagePreviews: []
+      imagePreviews: [],
+      currentUser: 'miftahul01', // Using the provided user login
+      formattedDateTime: '2025-05-19 05:29:22', // Using the updated provided current date/time
+      
+      // Recaptcha properties
+      recaptchaSiteKey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // Test key
+      recaptchaVerified: false,
+      recaptchaResponse: null,
+      recaptchaError: null,
     };
   },
 
@@ -568,34 +702,71 @@ export default {
     this.loadUserData();
     this.addTerduga(); // Initialize with one empty terduga
     this.addSaksi(); // Initialize with one empty saksi
+    this.loadRecaptchaScript();
   },
 
   computed: {
     filteredCategories() {
       return this.categories.filter(category => 
-        category.nama.startsWith('Kekerasan')
+        category && category.nama && category.nama.startsWith('Kekerasan')
       );
+    },
+    
+    formIsValid() {
+      // Required fields validation
+      if (!this.report.title || 
+          !this.report.category || 
+          !this.report.description || 
+          !this.report.incidentDate || 
+          !this.report.profesi ||
+          !this.report.jenis_kelamin ||
+          !this.report.umur_pelapor ||
+          !this.report.agreement ||
+          this.report.bukti_pelanggaran.length === 0) {
+        return false;
+      }
+      
+      // Check if at least one terduga has required fields filled
+      if (this.report.terlapor.length === 0) return false;
+      const hasTerdugaValid = this.report.terlapor.some(t => 
+        t.nama_lengkap && t.jenis_kelamin && t.umur_terlapor && t.status_warga && t.unit_kerja
+      );
+      if (!hasTerdugaValid) return false;
+      
+      // Check if at least one saksi has required fields filled
+      if (this.report.saksi.length === 0) return false;
+      const hasSaksiValid = this.report.saksi.some(s => 
+        s.nama_lengkap && s.email && s.nomor_telepon
+      );
+      if (!hasSaksiValid) return false;
+      
+      // If recaptcha is available and not verified, form is not valid
+      if (typeof window.grecaptcha !== 'undefined' && !this.recaptchaVerified) {
+        return false;
+      }
+      
+      return true;
     }
   },
 
   methods: {
     fetchCategories() {
-      axios.get('https://v3422040.mhs.d3tiuns.com/api/category')
+      axios.get('https://v3422040.mhs.d3tiuns.com/api/category', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      })
         .then(response => {
-          // Check if response.data is an array directly
+          // Handle different response structures
           if (Array.isArray(response.data)) {
             this.categories = response.data;
-          } 
-          // Otherwise check if it has a data property containing the array
-          else if (response.data && response.data.data) {
+          } else if (response.data && Array.isArray(response.data.data)) {
             this.categories = response.data.data;
-          } 
-          // Handle unexpected formats
-          else {
+          } else {
             console.error('Unexpected API response structure:', response.data);
             this.categories = [];
           }
-          console.log('Categories loaded:', this.categories);
         })
         .catch(error => {
           console.error('Error fetching categories:', error);
@@ -608,12 +779,27 @@ export default {
     },
     
     loadUserData() {
-      const encryptedUserData = VueCookies.get("user_session");
-      if (encryptedUserData) {
-        const userData = decryptData(encryptedUserData);
-        this.report.reporterName = userData.name || '';
-        this.report.nim = userData.nim || userData.nik || '';
-        this.report.phone = userData.no_telp || '';
+      try {
+        const encryptedUserData = VueCookies.get("user_session");
+        if (encryptedUserData) {
+          const userData = decryptData(encryptedUserData);
+          this.report.reporterName = userData.name || 'Miftahul'; // Default if empty
+          this.report.nim = userData.nim || userData.nik || 'miftahul01'; // Default if empty
+          this.report.phone = userData.no_telp || ''; // Default if empty
+          this.currentUser = userData.username || 'miftahul01'; // Using the provided user login if cookie fails
+        } else {
+          // Set defaults if no cookie found
+          this.report.reporterName = 'Miftahul';
+          this.report.nim = 'miftahul01';
+          this.report.phone = '';
+          console.log("No user session found, using default values");
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        // Set defaults if error occurs
+        this.report.reporterName = 'Miftahul';
+        this.report.nim = 'miftahul01';
+        this.report.phone = '';
       }
     },
 
@@ -622,17 +808,48 @@ export default {
     },
     
     handleFileUpload(event) {
-      this.report.evidenceFiles = Array.from(event.target.files);
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
       
-      // Generate image previews
+      // Clear old files
+      this.report.evidenceFiles = [];
       this.imagePreviews = [];
-      for (let i = 0; i < event.target.files.length; i++) {
-        const file = event.target.files[i];
+      
+      let hasInvalidFile = false;
+      
+      // Validate and add new files
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Validate file type
+        if (!file.type.match('image.*')) {
+          hasInvalidFile = true;
+          continue;
+        }
+        
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+          hasInvalidFile = true;
+          continue;
+        }
+        
+        // Add to files array
+        this.report.evidenceFiles.push(file);
+        
+        // Generate preview
         const reader = new FileReader();
         reader.onload = e => {
           this.imagePreviews.push(e.target.result);
         };
         reader.readAsDataURL(file);
+      }
+      
+      if (hasInvalidFile) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'File Tidak Valid',
+          text: 'Beberapa file tidak dapat diupload karena tipe file tidak valid atau ukuran melebihi 5MB'
+        });
       }
     },
     
@@ -640,18 +857,11 @@ export default {
       // Remove from previews
       this.imagePreviews.splice(index, 1);
       
-      // Remove from selectedFiles array
+      // Remove from files array
       this.report.evidenceFiles.splice(index, 1);
       
-      // Create a new FileList-like object from the remaining files
-      if (this.report.evidenceFiles.length > 0) {
-        const dataTransfer = new DataTransfer();
-        this.report.evidenceFiles.forEach(file => {
-          dataTransfer.items.add(file);
-        });
-        this.$refs.fileInput.files = dataTransfer.files;
-      } else {
-        // Reset file input if no more files
+      // Reset the file input if needed
+      if (this.report.evidenceFiles.length === 0 && this.$refs.fileInput) {
         this.$refs.fileInput.value = '';
       }
     },
@@ -668,6 +878,11 @@ export default {
       
       // Update the report data
       this.report.bukti_pelanggaran = buktiArray;
+      
+      // Clear warning if we have selections now
+      if (buktiArray.length > 0) {
+        this.showBuktiWarning = false;
+      }
     },
     
     // Methods for handling terduga/terlapor
@@ -707,7 +922,7 @@ export default {
     },
     
     goBack() {
-      this.$router.go(-1);
+      this.$router.push('/pelaporan/kekerasan-seksual');
     },
     
     resetForm() {
@@ -720,7 +935,7 @@ export default {
         phone: this.report.phone,
         incidentDate: '',
         evidenceFiles: [],
-        linkLampiran: '',
+        lampiran_link: '',
         agreement: false,
         terlapor: [{
           nama_lengkap: '',
@@ -736,7 +951,10 @@ export default {
           email: '',
           nomor_telepon: ''
         }],
-        bukti_pelanggaran: []
+        bukti_pelanggaran: [],
+        profesi: '',
+        jenis_kelamin: '',
+        umur_pelapor: ''
       };
       
       this.selectedBukti = [];
@@ -749,34 +967,119 @@ export default {
       if (this.$refs.fileInput) {
         this.$refs.fileInput.value = '';
       }
+      
+      // Reset reCAPTCHA
+      this.resetRecaptcha();
+    },
+    
+    validateForm() {
+      let isValid = true;
+      this.errors = {};
+      this.showBuktiWarning = false;
+      
+      // Check required fields in main form
+      if (!this.report.title) {
+        this.errors.title = ['Judul laporan harus diisi'];
+        isValid = false;
+      }
+      
+      if (!this.report.category) {
+        this.errors.category = ['Kategori harus dipilih'];
+        isValid = false;
+      }
+      
+      if (!this.report.description) {
+        this.errors.description = ['Deskripsi harus diisi'];
+        isValid = false;
+      }
+      
+      if (!this.report.incidentDate) {
+        this.errors.incidentDate = ['Tanggal kejadian harus diisi'];
+        isValid = false;
+      }
+      
+      // Validate additional reporter fields
+      if (!this.report.profesi) {
+        this.errors.profesi = ['Profesi harus dipilih'];
+        isValid = false;
+      }
+      
+      if (!this.report.jenis_kelamin) {
+        this.errors.jenis_kelamin = ['Jenis kelamin harus dipilih'];
+        isValid = false;
+      }
+      
+      if (!this.report.umur_pelapor) {
+        this.errors.umur_pelapor = ['Rentang umur harus dipilih'];
+        isValid = false;
+      }
+      
+      // Check bukti_pelanggaran
+      if (this.report.bukti_pelanggaran.length === 0) {
+        this.showBuktiWarning = true;
+        isValid = false;
+      }
+      
+      // Check required fields in terlapor
+      if (this.report.terlapor.length === 0) {
+        this.errors.terlapor = ['Minimal satu terlapor harus diisi'];
+        isValid = false;
+      } else {
+        const hasTerdugaValid = this.report.terlapor.some(t => 
+          t.nama_lengkap && t.jenis_kelamin && t.umur_terlapor && t.status_warga && t.unit_kerja
+        );
+        if (!hasTerdugaValid) {
+          this.errors.terlapor = ['Data terlapor tidak lengkap'];
+          isValid = false;
+        }
+      }
+      
+      // Check required fields in saksi
+      if (this.report.saksi.length === 0) {
+        this.errors.saksi = ['Minimal satu saksi harus diisi'];
+        isValid = false;
+      } else {
+        const hasSaksiValid = this.report.saksi.some(s => 
+          s.nama_lengkap && s.email && s.nomor_telepon
+        );
+        if (!hasSaksiValid) {
+          this.errors.saksi = ['Data saksi tidak lengkap'];
+          isValid = false;
+        }
+      }
+      
+      // Check agreement
+      if (!this.report.agreement) {
+        this.errors.agreement = ['Anda harus menyetujui pernyataan'];
+        isValid = false;
+      }
+      
+      // Check reCAPTCHA
+      if (typeof window.grecaptcha !== 'undefined' && !this.recaptchaVerified) {
+        this.recaptchaError = 'Silakan verifikasi reCAPTCHA';
+        isValid = false;
+      }
+      
+      return isValid;
     },
     
     async submitReport() {
-      // Reset warnings
-      this.showBuktiWarning = false;
-      
-      // Validate agreement
-      if (!this.report.agreement) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Anda harus menyetujui pernyataan untuk melanjutkan'
-        });
-        return;
-      }
-      
-      // Update bukti_pelanggaran array before submission
-      this.updateBuktiPelanggaran();
-      
-      // Validate bukti_pelanggaran
-      if (this.report.bukti_pelanggaran.length === 0) {
-        this.showBuktiWarning = true;
+      // Validate form first
+      if (!this.validateForm()) {
+        // Show first error message
+        const firstErrorKey = Object.keys(this.errors)[0];
+        if (firstErrorKey) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Validasi Gagal',
+            text: this.errors[firstErrorKey][0] || 'Mohon periksa kembali form Anda'
+          });
+        }
         return;
       }
       
       try {
         this.isSubmitting = true;
-        this.errors = {};
         
         // Create FormData object to handle file uploads
         const formData = new FormData();
@@ -788,13 +1091,18 @@ export default {
         formData.append('nim_pelapor', this.report.nim);
         formData.append('nomor_telepon', this.report.phone);
         
-        // Add lampiran_link
-        if (this.report.linkLampiran) {
-          formData.append('lampiran_link', this.report.linkLampiran);
+        // Add additional fields
+        formData.append('profesi', this.report.profesi);
+        formData.append('jenis_kelamin', this.report.jenis_kelamin);
+        formData.append('umur_pelapor', this.report.umur_pelapor);
+        
+        // Add lampiran_link if present
+        if (this.report.lampiran_link) {
+          formData.append('lampiran_link', this.report.lampiran_link);
         }
         
         // Add bukti_pelanggaran as array
-        if (this.report.bukti_pelanggaran && this.report.bukti_pelanggaran.length > 0) {
+        if (this.report.bukti_pelanggaran.length > 0) {
           this.report.bukti_pelanggaran.forEach(bukti => {
             formData.append('bukti_pelanggaran[]', bukti);
           });
@@ -825,19 +1133,29 @@ export default {
         }
         
         // Append multiple files if they exist
-        if (this.report.evidenceFiles && this.report.evidenceFiles.length > 0) {
+        if (this.report.evidenceFiles.length > 0) {
           for (let i = 0; i < this.report.evidenceFiles.length; i++) {
             formData.append('image_path[]', this.report.evidenceFiles[i]);
           }
         }
         
         // Agreement field
-        formData.append('agreement', this.report.agreement);
+        formData.append('agreement', this.report.agreement ? 1 : 0);
+        
+        // Additional fields
+        formData.append('current_datetime', this.formattedDateTime);
+        formData.append('username', this.currentUser);
+        
+        // Add reCAPTCHA response if available
+        if (this.recaptchaResponse) {
+          formData.append('g-recaptcha-response', this.recaptchaResponse);
+        }
         
         // Submit the data to the API
         const response = await axios.post('https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan', formData, {
           headers: {
-            'Content-Type': 'multipart/form-data'
+            'Content-Type': 'multipart/form-data',
+            'Accept': 'application/json'
           }
         });
         
@@ -850,7 +1168,7 @@ export default {
           timerProgressBar: true,
           showConfirmButton: false
         }).then(() => {
-          this.$router.push('/kalab/pelaporankekerasanseksual');
+          this.$router.push('/pelaporan/kekerasan-seksual');
         });
         
         this.resetForm();
@@ -858,31 +1176,136 @@ export default {
       } catch (error) {
         console.error('Error submitting form:', error);
         
-        if (error.response && error.response.status === 400) {
-          this.errors = error.response.data;
-          
-          // Display first error message
-          const firstError = Object.values(this.errors)[0][0];
-          Swal.fire({
-            icon: 'error',
-            title: 'Validasi Gagal',
-            text: firstError || 'Mohon periksa kembali form Anda'
-          });
+        if (error.response) {
+          if (error.response.status === 400 || error.response.status === 422) {
+            // Handle validation errors
+            const errorData = error.response.data;
+            
+            // Set errors object
+            if (typeof errorData === 'object') {
+              this.errors = errorData.errors || errorData;
+              
+              // Display first error message
+              let firstErrorMessage = '';
+              if (this.errors) {
+                const firstErrorKey = Object.keys(this.errors)[0];
+                if (firstErrorKey && this.errors[firstErrorKey][0]) {
+                  firstErrorMessage = this.errors[firstErrorKey][0];
+                }
+              }
+              
+              Swal.fire({
+                icon: 'error',
+                title: 'Validasi Gagal',
+                text: firstErrorMessage || 'Mohon periksa kembali form Anda'
+              });
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Terjadi kesalahan validasi.'
+              });
+            }
+          } else {
+            // Handle other API errors
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Terjadi kesalahan pada server. Silakan coba lagi nanti.'
+            });
+          }
         } else {
+          // Handle network errors
           Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Terjadi kesalahan saat mengirim laporan.'
+            text: 'Terjadi kesalahan jaringan. Silakan periksa koneksi internet Anda.'
           });
         }
       } finally {
         this.isSubmitting = false;
       }
-    }
+    },
+
+    loadRecaptchaScript() {
+      // If reCAPTCHA script is already loaded
+      if (window.grecaptcha) {
+        this.renderRecaptcha();
+        return;
+      }
+      
+      // Set a flag to avoid loading script multiple times
+      window.recaptchaLoaded = true;
+      
+      // Define callback function for when reCAPTCHA is loaded
+      window.onRecaptchaLoaded = () => {
+        this.renderRecaptcha();
+      };
+      
+      // Create and append script
+      const script = document.createElement('script');
+      script.id = 'recaptcha-script';
+      script.src = `https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit`;
+      script.async = true;
+      script.defer = true;
+      script.onerror = () => {
+        console.error('Error loading reCAPTCHA script');
+        this.recaptchaError = 'Gagal memuat reCAPTCHA. Silakan muat ulang halaman.';
+      };
+      
+      document.head.appendChild(script);
+    },
+    
+    renderRecaptcha() {
+      // Check if container exists and grecaptcha is available
+      if (!this.$refs.recaptchaContainer || !window.grecaptcha) {
+        // Try again after a short delay if elements are not yet available
+        setTimeout(() => {
+          if (this.$refs.recaptchaContainer) this.renderRecaptcha();
+        }, 500);
+        return;
+      }
+      
+      try {
+        window.grecaptcha.render(this.$refs.recaptchaContainer, {
+          'sitekey': this.recaptchaSiteKey,
+          'callback': (response) => {
+            this.recaptchaResponse = response;
+            this.recaptchaVerified = true;
+            this.recaptchaError = null;
+          },
+          'expired-callback': () => {
+            this.recaptchaResponse = null;
+            this.recaptchaVerified = false;
+            this.recaptchaError = 'Verifikasi reCAPTCHA telah kedaluwarsa. Silakan centang kembali.';
+          },
+          'error-callback': () => {
+            this.recaptchaResponse = null;
+            this.recaptchaVerified = false;
+            this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan muat ulang halaman.';
+          }
+        });
+      } catch (error) {
+        console.error('Error rendering reCAPTCHA:', error);
+        this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan muat ulang halaman.';
+      }
+    },
+    
+    resetRecaptcha() {
+      if (window.grecaptcha) {
+        try {
+          window.grecaptcha.reset();
+          this.recaptchaVerified = false;
+          this.recaptchaResponse = null;
+        } catch (error) {
+          console.error('Error resetting reCAPTCHA:', error);
+        }
+      }
+    },
   }
 };
 </script>
 
 <style scoped>
-/* No need for additional CSS since we're using Tailwind classes */
+/* Using Tailwind classes, no additional CSS needed */
 </style>
