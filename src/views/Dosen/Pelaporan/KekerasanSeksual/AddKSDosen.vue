@@ -19,8 +19,10 @@
                     id="title"
                     v-model="report.title"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                    maxlength="50"
                     required
                   />
+                  <p class="text-xs text-gray-500 mt-1">Maksimal 50 karakter</p>
                   <p v-if="errors.title" class="text-red-500 text-xs mt-1">{{ errors.title[0] }}</p>
                 </div>
 
@@ -29,7 +31,7 @@
                   <label for="category" class="block text-sm font-medium text-gray-700 mb-2">Kategori <span class="text-red-500">*</span></label>
                   <div class="relative">
                     <select 
-                      v-model="report.category" 
+                      v-model="report.category"
                       id="category"
                       class="block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 text-sm"
                       required
@@ -40,7 +42,7 @@
                       </option>
                     </select>
                   </div>
-                  <p v-if="errors.category" class="text-red-500 text-xs mt-1">{{ errors.category[0] }}</p>
+                  <p v-if="errors.category_id" class="text-red-500 text-xs mt-1">{{ errors.category_id[0] }}</p>
                 </div>
 
                 <!-- Bukti Pelanggaran Checkboxes -->
@@ -99,6 +101,7 @@
                       multiple
                       class="hidden"
                       ref="fileInput"
+                      required
                     />
                     <div @click="triggerFileInput">
                       <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
@@ -156,7 +159,7 @@
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
                     required
                   ></textarea>
-                  <p v-if="errors.description" class="text-red-500 text-xs mt-1">{{ errors.description[0] }}</p>
+                  <p v-if="errors.deskripsi" class="text-red-500 text-xs mt-1">{{ errors.deskripsi[0] }}</p>
                 </div>
 
                 <!-- Tanggal Kejadian -->
@@ -169,7 +172,7 @@
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
                     required
                   />
-                  <p v-if="errors.incidentDate" class="text-red-500 text-xs mt-1">{{ errors.incidentDate[0] }}</p>
+                  <p v-if="errors.tanggal_kejadian" class="text-red-500 text-xs mt-1">{{ errors.tanggal_kejadian[0] }}</p>
                 </div>
               </div>
             </div>
@@ -188,6 +191,7 @@
                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 bg-gray-100"
                   disabled
                 />
+                <p v-if="errors.nama_pelapor" class="text-red-500 text-xs mt-1">{{ errors.nama_pelapor[0] }}</p>
               </div>
 
               <div>
@@ -199,6 +203,7 @@
                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 bg-gray-100"
                   disabled
                 />
+                <p v-if="errors.nim_pelapor" class="text-red-500 text-xs mt-1">{{ errors.nim_pelapor[0] }}</p>
               </div>
 
               <div>
@@ -210,6 +215,7 @@
                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 bg-gray-100"
                   disabled
                 />
+                <p v-if="errors.nomor_telepon" class="text-red-500 text-xs mt-1">{{ errors.nomor_telepon[0] }}</p>
               </div>
             </div>
             
@@ -330,8 +336,10 @@
                       type="text"
                       v-model="terduga.nama_lengkap"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                      maxlength="255"
                       required
                     />
+                    <p class="text-xs text-gray-500 mt-1">Maksimal 255 karakter</p>
                   </div>
 
                   <div class="mb-4">
@@ -343,7 +351,9 @@
                       type="email"
                       v-model="terduga.email"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                      maxlength="255"
                     />
+                    <p class="text-xs text-gray-500 mt-1">Maksimal 255 karakter</p>
                   </div>
 
                   <div class="mb-4">
@@ -355,7 +365,9 @@
                       type="tel"
                       v-model="terduga.nomor_telepon"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                      maxlength="20"
                     />
+                    <p class="text-xs text-gray-500 mt-1">Maksimal 20 karakter</p>
                   </div>
 
                   <!-- Radio buttons for gender -->
@@ -504,8 +516,10 @@
                     type="text"
                     v-model="saksi.nama_lengkap"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                    maxlength="255"
                     required
                   />
+                  <p class="text-xs text-gray-500 mt-1">Maksimal 255 karakter</p>
                 </div>
 
                 <div>
@@ -517,8 +531,10 @@
                     type="email"
                     v-model="saksi.email"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                    maxlength="255"
                     required
                   />
+                  <p class="text-xs text-gray-500 mt-1">Maksimal 255 karakter</p>
                 </div>
 
                 <div>
@@ -530,8 +546,10 @@
                     type="tel"
                     v-model="saksi.nomor_telepon"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                    maxlength="20"
                     required
                   />
+                  <p class="text-xs text-gray-500 mt-1">Maksimal 20 karakter</p>
                 </div>
               </div>
               
@@ -583,14 +601,15 @@
             </div>
           </div>
           
-          <!-- reCAPTCHA Section - Moved after statement section as requested -->
+          <!-- reCAPTCHA Section -->
           <div class="form-section border-t pt-6">
             <h3 class="text-xl font-semibold mb-4">Verifikasi</h3>
             <div class="flex flex-col items-center mb-4">
-              <!-- Empty container for reCAPTCHA to be rendered -->
-              <div id="recaptcha-container" ref="recaptchaContainer"></div>
+              <!-- Standard reCAPTCHA implementation -->
+              <div id="recaptcha-element" class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div>
             </div>
-            <div v-if="recaptchaError" class="text-red-500 text-xs text-center mb-4">{{ recaptchaError }}</div>
+            <p v-if="errors['g-recaptcha-response']" class="text-red-500 text-xs text-center mt-1">{{ errors['g-recaptcha-response'][0] }}</p>
+            <p v-if="recaptchaError" class="text-red-500 text-xs text-center mb-4">{{ recaptchaError }}</p>
           </div>
 
           <!-- Form Actions -->
@@ -605,8 +624,8 @@
             <button
               type="submit"
               class="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-              :disabled="isSubmitting || !formIsValid"
-              :class="{'opacity-70 cursor-not-allowed': isSubmitting || !formIsValid}"
+              :disabled="isSubmitting"
+              :class="{'opacity-70 cursor-not-allowed': isSubmitting}"
             >
               <span v-if="isSubmitting">
                 <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -642,18 +661,17 @@ export default {
         nim: '',
         phone: '',
         incidentDate: '',
-        evidenceFiles: [], // Array for multiple files
-        lampiran_link: '', // Changed from linkLampiran to match second template
+        evidenceFiles: [],
+        lampiran_link: '',
         agreement: false,
-        terlapor: [], // Array for terduga/terlapor
-        saksi: [], // Array for saksi
-        bukti_pelanggaran: [], // Array for bukti_pelanggaran
-        // Added fields from the second template
+        terlapor: [],
+        saksi: [],
+        bukti_pelanggaran: [],
         profesi: '',
         jenis_kelamin: '',
         umur_pelapor: ''
       },
-      selectedBukti: [], // Array for selected bukti checkboxes
+      selectedBukti: [],
       buktiOptions: [
         'Bukti transfer, cek, bukti penyetoran, dan rekening koran bank',
         'Dokumen dan/atau rekaman',
@@ -687,88 +705,37 @@ export default {
       errors: {},
       isSubmitting: false,
       imagePreviews: [],
-      currentUser: 'miftahul01', // Using the provided user login
-      formattedDateTime: '2025-05-19 05:29:22', // Using the updated provided current date/time
-      
-      // Recaptcha properties
-      recaptchaSiteKey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // Test key
-      recaptchaVerified: false,
-      recaptchaResponse: null,
+      currentUser: 'miftahul01judul', // Updated with the exact username provided
+      formattedDateTime: '2025-05-19 06:23:52', // Updated with the exact date/time provided
       recaptchaError: null,
-      recaptchaRendered: false, // Track if reCAPTCHA has been rendered
     };
   },
-
-  mounted() {
-    this.fetchCategories();
-    this.loadUserData();
-    this.addTerduga(); // Initialize with one empty terduga
-    this.addSaksi(); // Initialize with one empty saksi
-    this.loadRecaptchaScript();
-
-    setTimeout(() => {
-      this.loadRecaptchaScript();
-    }, 500);
-  },
-
-  beforeDestroy() {
-      // Clean up reCAPTCHA if component is destroyed
-      if (this.recaptchaWidget !== null && window.grecaptcha) {
-        try {
-          // No need to call reset, just mark as not rendered
-          this.recaptchaRendered = false;
-          console.log('Component being destroyed, reCAPTCHA marked for cleanup');
-        } catch (error) {
-          console.error('Error during reCAPTCHA cleanup:', error);
-        }
-      }
-    },
 
   computed: {
     filteredCategories() {
       return this.categories.filter(category => 
         category && category.nama && category.nama.startsWith('Kekerasan')
       );
-    },
-    
-    formIsValid() {
-      // Required fields validation
-      if (!this.report.title || 
-          !this.report.category || 
-          !this.report.description || 
-          !this.report.incidentDate || 
-          !this.report.profesi ||
-          !this.report.jenis_kelamin ||
-          !this.report.umur_pelapor ||
-          !this.report.agreement ||
-          this.report.bukti_pelanggaran.length === 0) {
-        return false;
-      }
-      
-      // Check if at least one terduga has required fields filled
-      if (this.report.terlapor.length === 0) return false;
-      const hasTerdugaValid = this.report.terlapor.some(t => 
-        t.nama_lengkap && t.jenis_kelamin && t.umur_terlapor && t.status_warga && t.unit_kerja
-      );
-      if (!hasTerdugaValid) return false;
-      
-      // Check if at least one saksi has required fields filled
-      if (this.report.saksi.length === 0) return false;
-      const hasSaksiValid = this.report.saksi.some(s => 
-        s.nama_lengkap && s.email && s.nomor_telepon
-      );
-      if (!hasSaksiValid) return false;
-      
-      // If recaptcha is available and not verified, form is not valid
-      if (typeof window.grecaptcha !== 'undefined' && !this.recaptchaVerified) {
-        return false;
-      }
-      
-      return true;
     }
   },
 
+  mounted() {
+    this.fetchCategories();
+    this.loadUserData();
+    this.addTerduga();
+    this.addSaksi();
+    this.loadRecaptchaScript();
+  },
+
   methods: {
+    loadRecaptchaScript() {
+      const script = document.createElement('script');
+      script.src = 'https://www.google.com/recaptcha/api.js';
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    },
+    
     fetchCategories() {
       axios.get('https://v3422040.mhs.d3tiuns.com/api/category', {
         headers: {
@@ -777,13 +744,11 @@ export default {
         }
       })
         .then(response => {
-          // Handle different response structures
           if (Array.isArray(response.data)) {
             this.categories = response.data;
           } else if (response.data && Array.isArray(response.data.data)) {
             this.categories = response.data.data;
           } else {
-            console.error('Unexpected API response structure:', response.data);
             this.categories = [];
           }
         })
@@ -802,22 +767,19 @@ export default {
         const encryptedUserData = VueCookies.get("user_session");
         if (encryptedUserData) {
           const userData = decryptData(encryptedUserData);
-          this.report.reporterName = userData.name || 'Miftahul'; // Default if empty
-          this.report.nim = userData.nim || userData.nik || 'miftahul01'; // Default if empty
-          this.report.phone = userData.no_telp || ''; // Default if empty
-          this.currentUser = userData.username || 'miftahul01'; // Using the provided user login if cookie fails
+          this.report.reporterName = userData.name || 'Miftahul';
+          this.report.nim = userData.nim || userData.nik || 'miftahul01judul';
+          this.report.phone = userData.no_telp || '';
+          this.currentUser = userData.username || 'miftahul01judul'; // Using exact username provided
         } else {
-          // Set defaults if no cookie found
           this.report.reporterName = 'Miftahul';
-          this.report.nim = 'miftahul01';
+          this.report.nim = 'miftahul01judul';
           this.report.phone = '';
-          console.log("No user session found, using default values");
         }
       } catch (error) {
         console.error('Error loading user data:', error);
-        // Set defaults if error occurs
         this.report.reporterName = 'Miftahul';
-        this.report.nim = 'miftahul01';
+        this.report.nim = 'miftahul01judul';
         this.report.phone = '';
       }
     },
@@ -836,7 +798,7 @@ export default {
       
       let hasInvalidFile = false;
       
-      // Validate and add new files
+      // Validate and add new files - file size limit increased to 5MB as per spec
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
@@ -873,38 +835,28 @@ export default {
     },
     
     removeImage(index) {
-      // Remove from previews
       this.imagePreviews.splice(index, 1);
-      
-      // Remove from files array
       this.report.evidenceFiles.splice(index, 1);
       
-      // Reset the file input if needed
       if (this.report.evidenceFiles.length === 0 && this.$refs.fileInput) {
         this.$refs.fileInput.value = '';
       }
     },
     
-    // Method to update the bukti_pelanggaran array
     updateBuktiPelanggaran() {
-      // Start with selected standard options
       let buktiArray = [...this.selectedBukti];
       
-      // Add "Lainnya" if it's checked and has a value
       if (this.showLainnyaInput && this.buktiLainnya.trim()) {
         buktiArray.push('Lainnya: ' + this.buktiLainnya.trim());
       }
       
-      // Update the report data
       this.report.bukti_pelanggaran = buktiArray;
       
-      // Clear warning if we have selections now
       if (buktiArray.length > 0) {
         this.showBuktiWarning = false;
       }
     },
     
-    // Methods for handling terduga/terlapor
     addTerduga() {
       this.report.terlapor.push({
         nama_lengkap: '',
@@ -920,11 +872,10 @@ export default {
     removeTerduga(index) {
       this.report.terlapor.splice(index, 1);
       if (this.report.terlapor.length === 0) {
-        this.addTerduga(); // Always keep at least one terduga field
+        this.addTerduga();
       }
     },
     
-    // Methods for handling saksi
     addSaksi() {
       this.report.saksi.push({
         nama_lengkap: '',
@@ -936,7 +887,7 @@ export default {
     removeSaksi(index) {
       this.report.saksi.splice(index, 1);
       if (this.report.saksi.length === 0) {
-        this.addSaksi(); // Always keep at least one saksi field
+        this.addSaksi();
       }
     },
     
@@ -988,7 +939,13 @@ export default {
       }
       
       // Reset reCAPTCHA
-      this.resetRecaptcha();
+      if (window.grecaptcha) {
+        try {
+          window.grecaptcha.reset();
+        } catch (e) {
+          console.error("Error resetting reCAPTCHA:", e);
+        }
+      }
     },
     
     validateForm() {
@@ -996,109 +953,150 @@ export default {
       this.errors = {};
       this.showBuktiWarning = false;
       
-      // Check required fields in main form
+      // Title validation (max 50 chars)
       if (!this.report.title) {
         this.errors.title = ['Judul laporan harus diisi'];
         isValid = false;
+      } else if (this.report.title.length > 50) {
+        this.errors.title = ['Judul laporan maksimal 50 karakter'];
+        isValid = false;
       }
       
+      // Category validation
       if (!this.report.category) {
-        this.errors.category = ['Kategori harus dipilih'];
+        this.errors.category_id = ['Kategori harus dipilih'];
         isValid = false;
       }
       
+      // Description validation
       if (!this.report.description) {
-        this.errors.description = ['Deskripsi harus diisi'];
+        this.errors.deskripsi = ['Deskripsi harus diisi'];
         isValid = false;
       }
       
+      // Incident date validation
       if (!this.report.incidentDate) {
-        this.errors.incidentDate = ['Tanggal kejadian harus diisi'];
+        this.errors.tanggal_kejadian = ['Tanggal kejadian harus diisi'];
         isValid = false;
       }
       
-      // Validate additional reporter fields
+      // Profesi validation
       if (!this.report.profesi) {
         this.errors.profesi = ['Profesi harus dipilih'];
         isValid = false;
       }
       
+      // Jenis kelamin validation (must be laki-laki or perempuan)
       if (!this.report.jenis_kelamin) {
         this.errors.jenis_kelamin = ['Jenis kelamin harus dipilih'];
         isValid = false;
-      }
-      
-      if (!this.report.umur_pelapor) {
-        this.errors.umur_pelapor = ['Rentang umur harus dipilih'];
+      } else if (!['laki-laki', 'perempuan'].includes(this.report.jenis_kelamin)) {
+        this.errors.jenis_kelamin = ['Jenis kelamin harus laki-laki atau perempuan'];
         isValid = false;
       }
       
-      // Check bukti_pelanggaran
+      // Umur pelapor validation (must be <20, 20-40, or 40<)
+      if (!this.report.umur_pelapor) {
+        this.errors.umur_pelapor = ['Rentang umur harus dipilih'];
+        isValid = false;
+      } else if (!['<20', '20-40', '40<'].includes(this.report.umur_pelapor)) {
+        this.errors.umur_pelapor = ['Rentang umur tidak valid'];
+        isValid = false;
+      }
+      
+      // Bukti pelanggaran validation
       if (this.report.bukti_pelanggaran.length === 0) {
         this.showBuktiWarning = true;
         isValid = false;
       }
       
-      // Check required fields in terlapor
+      // Evidence files validation
+      if (this.report.evidenceFiles.length === 0) {
+        this.errors.image_path = ['File bukti foto harus diunggah'];
+        isValid = false;
+      }
+      
+      // Terlapor validation
       if (this.report.terlapor.length === 0) {
         this.errors.terlapor = ['Minimal satu terlapor harus diisi'];
         isValid = false;
       } else {
-        const hasTerdugaValid = this.report.terlapor.some(t => 
-          t.nama_lengkap && t.jenis_kelamin && t.umur_terlapor && t.status_warga && t.unit_kerja
-        );
-        if (!hasTerdugaValid) {
-          this.errors.terlapor = ['Data terlapor tidak lengkap'];
+        // Check each terlapor for required fields
+        const invalidTerlapor = this.report.terlapor.some(t => {
+          // Check required fields
+          if (!t.nama_lengkap || !t.jenis_kelamin || !t.umur_terlapor || !t.status_warga || !t.unit_kerja) {
+            return true;
+          }
+          
+          // Validate field lengths
+          if (t.nama_lengkap && t.nama_lengkap.length > 255) return true;
+          if (t.email && t.email.length > 255) return true;
+          if (t.nomor_telepon && t.nomor_telepon.length > 20) return true;
+          
+          // Validate jenis_kelamin values
+          if (t.jenis_kelamin && !['laki-laki', 'perempuan'].includes(t.jenis_kelamin)) return true;
+          
+          // Validate status_warga values
+          if (t.status_warga && !['dosen', 'mahasiswa', 'staff', 'lainnya'].includes(t.status_warga)) return true;
+          
+          // Validate umur_terlapor values
+          if (t.umur_terlapor && !['<20', '20-40', '40<'].includes(t.umur_terlapor)) return true;
+          
+          return false;
+        });
+        
+        if (invalidTerlapor) {
+          this.errors.terlapor = ['Data terlapor tidak lengkap atau tidak valid'];
           isValid = false;
         }
       }
       
-      // Check required fields in saksi
+      // Saksi validation
       if (this.report.saksi.length === 0) {
         this.errors.saksi = ['Minimal satu saksi harus diisi'];
         isValid = false;
       } else {
-        const hasSaksiValid = this.report.saksi.some(s => 
-          s.nama_lengkap && s.email && s.nomor_telepon
-        );
-        if (!hasSaksiValid) {
-          this.errors.saksi = ['Data saksi tidak lengkap'];
+        // Check each saksi for required fields
+        const invalidSaksi = this.report.saksi.some(s => {
+          // Check required fields
+          if (!s.nama_lengkap || !s.email || !s.nomor_telepon) {
+            return true;
+          }
+          
+          // Validate field lengths
+          if (s.nama_lengkap && s.nama_lengkap.length > 255) return true;
+          if (s.email && s.email.length > 255) return true;
+          if (s.nomor_telepon && s.nomor_telepon.length > 20) return true;
+          
+          return false;
+        });
+        
+        if (invalidSaksi) {
+          this.errors.saksi = ['Data saksi tidak lengkap atau tidak valid'];
           isValid = false;
         }
       }
       
-      // Check agreement
+      // Agreement validation
       if (!this.report.agreement) {
         this.errors.agreement = ['Anda harus menyetujui pernyataan'];
         isValid = false;
       }
       
-      // Check reCAPTCHA
-      if (!this.recaptchaVerified || !this.recaptchaResponse) {
-        this.recaptchaError = 'Silakan verifikasi reCAPTCHA';
-        console.warn('Form validation failed: reCAPTCHA not verified');
+      // reCAPTCHA validation
+      const recaptchaResponse = window.grecaptcha?.getResponse();
+      if (!recaptchaResponse) {
+        this.errors['g-recaptcha-response'] = ['Silakan verifikasi bahwa Anda bukan robot'];
+        this.recaptchaError = 'Silakan verifikasi bahwa Anda bukan robot';
         isValid = false;
-      } else {
-        console.log('reCAPTCHA validation passed');
       }
       
       return isValid;
     },
-
-    
     
     async submitReport() {
-      // Log the current state of reCAPTCHA before validation
-      console.log('Submitting report with reCAPTCHA state:', {
-        verified: this.recaptchaVerified,
-        responseLength: this.recaptchaResponse ? this.recaptchaResponse.length : 0,
-        grecaptchaAvailable: typeof window.grecaptcha !== 'undefined',
-        recaptchaRendered: this.recaptchaRendered
-      });
-      
       // Validate form first
       if (!this.validateForm()) {
-        // Show first error message
         const firstErrorKey = Object.keys(this.errors)[0];
         if (firstErrorKey) {
           Swal.fire({
@@ -1178,37 +1176,19 @@ export default {
         formData.append('current_datetime', this.formattedDateTime);
         formData.append('username', this.currentUser);
         
-        // Add reCAPTCHA response if available - use the right parameter name
-        if (this.recaptchaResponse) {
-          console.log('Adding reCAPTCHA response to form data');
-          formData.append('g-recaptcha-response', this.recaptchaResponse);
-          // Try both formats to handle potential backend differences
-          formData.append('recaptcha', this.recaptchaResponse);
-        } else {
-          console.warn('No reCAPTCHA response available');
+        // Add reCAPTCHA response
+        const recaptchaResponse = window.grecaptcha?.getResponse();
+        if (recaptchaResponse) {
+          formData.append('g-recaptcha-response', recaptchaResponse);
         }
         
-        // Log the FormData contents for debugging (excluding files)
-        const formDataEntries = [];
-        formData.forEach((value, key) => {
-          if (typeof value !== 'object') {
-            formDataEntries.push(`${key}: ${value}`);
-          } else {
-            formDataEntries.push(`${key}: [File or Object]`);
-          }
-        });
-        console.log('FormData contents:', formDataEntries);
-        
         // Submit the data to the API
-        console.log('Submitting form data to API...');
         const response = await axios.post('https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
             'Accept': 'application/json'
           }
         });
-        
-        console.log('API response:', response.data);
         
         // Handle success
         Swal.fire({
@@ -1228,45 +1208,34 @@ export default {
         console.error('Error submitting form:', error);
         
         if (error.response) {
-          console.log('API error response:', error.response);
-          
           if (error.response.status === 400 || error.response.status === 422) {
             // Handle validation errors
             const errorData = error.response.data;
-            console.log('Validation error data:', errorData);
             
-            // Check for reCAPTCHA specific errors
-            const errorMessage = errorData.message || '';
-            if (errorMessage.toLowerCase().includes('recaptcha') || 
-                (errorData.errors && errorData.errors['g-recaptcha-response'])) {
-              console.warn('reCAPTCHA validation failed on server side');
-              this.recaptchaError = 'Verifikasi reCAPTCHA gagal. Silakan coba lagi.';
-              
-              // Reset reCAPTCHA and show specific message
-              this.recaptchaRendered = false; // Force re-render
-              this.resetRecaptcha();
-              setTimeout(() => this.loadRecaptchaScript(), 500);
-              
-              Swal.fire({
-                icon: 'error',
-                title: 'Verifikasi Gagal',
-                text: 'Verifikasi reCAPTCHA gagal. Silakan coba lagi.'
-              });
-              
-              return;
-            }
-            
-            // Set errors object
             if (typeof errorData === 'object') {
               this.errors = errorData.errors || errorData;
               
-              // Display first error message
               let firstErrorMessage = '';
               if (this.errors) {
                 const firstErrorKey = Object.keys(this.errors)[0];
                 if (firstErrorKey && this.errors[firstErrorKey][0]) {
                   firstErrorMessage = this.errors[firstErrorKey][0];
                 }
+              }
+              
+              // Check for reCAPTCHA specific errors
+              if (errorData.message && errorData.message.toLowerCase().includes('recaptcha')) {
+                // Reset reCAPTCHA
+                if (window.grecaptcha) {
+                  window.grecaptcha.reset();
+                }
+                
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Verifikasi Gagal',
+                  text: 'Verifikasi reCAPTCHA gagal. Silakan coba lagi.'
+                });
+                return;
               }
               
               Swal.fire({
@@ -1300,159 +1269,19 @@ export default {
       } finally {
         this.isSubmitting = false;
       }
-    },
-
-    loadRecaptchaScript() {
-      console.log('Loading reCAPTCHA script...');
-      
-      // Don't attempt to render if already rendered
-      if (this.recaptchaRendered) {
-        console.log('reCAPTCHA already rendered, skipping...');
-        return;
-      }
-      
-      // Define the global callback function before loading the script
-      window.onRecaptchaLoaded = () => {
-        console.log('reCAPTCHA script loaded successfully');
-        setTimeout(() => {
-          this.renderRecaptcha();
-        }, 200); // Short delay to ensure DOM is ready
-      };
-      
-      // Check if the script is already loaded
-      if (window.grecaptcha) {
-        console.log('reCAPTCHA already loaded, rendering widget');
-        // Short delay to ensure DOM is ready
-        setTimeout(() => {
-          this.renderRecaptcha();
-        }, 200);
-        return;
-      }
-      
-      // Set a flag to avoid loading script multiple times
-      if (window.recaptchaLoading) {
-        console.log('reCAPTCHA loading in progress...');
-        return;
-      }
-      
-      window.recaptchaLoading = true;
-      
-      // Create and append script
-      const script = document.createElement('script');
-      script.id = 'recaptcha-script';
-      script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit';
-      script.async = true;
-      script.defer = true;
-      
-      script.onerror = () => {
-        console.error('Error loading reCAPTCHA script');
-        window.recaptchaLoading = false;
-        this.recaptchaError = 'Gagal memuat reCAPTCHA. Silakan muat ulang halaman.';
-      };
-      
-      document.head.appendChild(script);
-    },
-    
-    renderRecaptcha() {
-      // Check if already rendered
-      if (this.recaptchaRendered) {
-        console.log('reCAPTCHA already rendered, skipping duplicate render');
-        return;
-      }
-      
-      // Check if container exists and grecaptcha is available
-      if (!this.$refs.recaptchaContainer || !window.grecaptcha) {
-        console.warn('reCAPTCHA container not found or grecaptcha not loaded yet, retrying...');
-        // Try again after a short delay if elements are not yet available
-        setTimeout(() => {
-          if (this.$refs.recaptchaContainer) this.renderRecaptcha();
-        }, 500);
-        return;
-      }
-      
-      try {
-        console.log('Rendering reCAPTCHA widget...');
-        
-        // Make sure the container is empty
-        if (this.$refs.recaptchaContainer.childNodes.length > 0) {
-          console.log('Clearing existing content in reCAPTCHA container');
-          this.$refs.recaptchaContainer.innerHTML = '';
-        }
-        
-        // Render new widget
-        this.recaptchaWidget = window.grecaptcha.render(this.$refs.recaptchaContainer, {
-          'sitekey': this.recaptchaSiteKey,
-          'callback': (response) => {
-            console.log('reCAPTCHA verification successful!');
-            console.log('Response token (first 20 chars):', response.substring(0, 20) + '...');
-            this.recaptchaResponse = response;
-            this.recaptchaVerified = true;
-            this.recaptchaError = null;
-          },
-          'expired-callback': () => {
-            console.log('reCAPTCHA verification expired');
-            this.recaptchaResponse = null;
-            this.recaptchaVerified = false;
-            this.recaptchaError = 'Verifikasi reCAPTCHA telah kedaluwarsa. Silakan centang kembali.';
-          },
-          'error-callback': () => {
-            console.error('reCAPTCHA error occurred');
-            this.recaptchaResponse = null;
-            this.recaptchaVerified = false;
-            this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan muat ulang halaman.';
-          }
-        });
-        
-        // Mark as rendered
-        this.recaptchaRendered = true;
-        console.log('reCAPTCHA widget rendered with ID:', this.recaptchaWidget);
-      } catch (error) {
-        console.error('Error rendering reCAPTCHA:', error);
-        // If error is about already being rendered, mark as rendered
-        if (error.message && error.message.includes('already been rendered')) {
-          this.recaptchaRendered = true;
-          console.log('reCAPTCHA already rendered in this element, marking as rendered');
-        } else {
-          this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan muat ulang halaman.';
-        }
-      }
-    },
-    
-    resetRecaptcha() {
-      if (window.grecaptcha && this.recaptchaWidget !== null && this.recaptchaRendered) {
-        try {
-          console.log('Resetting reCAPTCHA widget...');
-          window.grecaptcha.reset(this.recaptchaWidget);
-          this.recaptchaVerified = false;
-          this.recaptchaResponse = null;
-          console.log('reCAPTCHA widget reset successful');
-        } catch (error) {
-          console.error('Error resetting reCAPTCHA:', error);
-          // If there's an error resetting, attempt to re-render
-          this.recaptchaRendered = false;
-          this.loadRecaptchaScript();
-        }
-      }
-    },
-
-    checkRecaptchaStatus() {
-      console.log('Current reCAPTCHA status:');
-      console.log('- Verified:', this.recaptchaVerified);
-      console.log('- Response token exists:', !!this.recaptchaResponse);
-      if (this.recaptchaResponse) {
-        console.log('- Token length:', this.recaptchaResponse.length);
-      }
-      console.log('- Widget ID:', this.recaptchaWidget);
-    },
+    }
+  },
+  
+  beforeDestroy() {
+    // Clean up any event listeners or global state
   }
 };
 </script>
 
 <style scoped>
-/* Using Tailwind classes, no additional CSS needed */
-#recaptcha-container {
-  min-height: 78px;
-  display: flex;
-  justify-content: center;
+/* Add styling for reCAPTCHA container */
+.g-recaptcha {
+  display: inline-block;
+  margin: 0 auto;
 }
 </style>
