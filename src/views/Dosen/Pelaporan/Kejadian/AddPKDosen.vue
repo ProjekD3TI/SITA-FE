@@ -793,47 +793,123 @@ export default {
 
     // Update your handleFileUpload method
     handleFileUpload(event) {
-  const fileInput = event.target;
-  const files = fileInput.files;
-  
-  // Clear previous errors
-  this.errors.image_path = null;
-  delete this.errors['image_path.0'];
-  delete this.errors['image_path.1'];
-  
-  // Reset arrays
-  this.form.image_path = [];
-  this.imagePreviews = [];
-  
-  // Add files to the array
-  for (let i = 0; i < files.length; i++) {
-    this.form.image_path.push(files[i]);
-    
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      this.imagePreviews.push(e.target.result);
-    };
-    reader.readAsDataURL(files[i]);
-  }
-},
+      const fileInput = event.target;
+      const files = fileInput.files;
+      
+      // Clear previous errors
+      this.errors.image_path = null;
+      delete this.errors['image_path.0'];
+      delete this.errors['image_path.1'];
+      
+      // Validate files
+      if (!files || files.length === 0) {
+        this.errors.image_path = ['Tidak ada file yang dipilih'];
+        return;
+      }
+      
+      // Reset arrays
+      this.form.image_path = [];
+      this.imagePreviews = [];
+      
+      // Define restrictions
+      const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB limit
+      const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+      let hasError = false;
+      
+      // Process each file
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Validate file object
+        if (!file || !(file instanceof File)) {
+          this.errors.image_path = ['File tidak valid'];
+          hasError = true;
+          break;
+        }
+        
+        // Check file type
+        if (!ALLOWED_TYPES.includes(file.type.toLowerCase())) {
+          this.errors.image_path = [`File "${file.name}" memiliki format yang tidak didukung. Gunakan format JPG atau PNG.`];
+          hasError = true;
+          break;
+        }
+        
+        // Check file size
+        if (file.size > MAX_FILE_SIZE) {
+          this.errors.image_path = [
+            `File "${file.name}" terlalu besar (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maksimal 2MB per file.`
+          ];
+          hasError = true;
+          break;
+        }
+        
+        // Add file to array
+        this.form.image_path.push(file);
+        
+        // Create image preview with error handling
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            if (e.target && e.target.result) {
+              this.imagePreviews.push(e.target.result);
+            }
+          } catch (error) {
+            console.error('Error creating preview:', error);
+          }
+        };
+        reader.onerror = (error) => {
+          console.error('Error reading file:', error);
+        };
+        
+        // Start reading the file
+        try {
+          reader.readAsDataURL(file);
+        } catch (error) {
+          console.error('Error initiating file read:', error);
+        }
+      }
+      
+      // If error occurred, clear the file input and arrays
+      if (hasError) {
+        fileInput.value = '';
+        this.form.image_path = [];
+        this.imagePreviews = [];
+        return;
+      }
+      
+      // Validate final state
+      if (this.form.image_path.length === 0) {
+        this.errors.image_path = ['Tidak ada file yang berhasil diunggah'];
+        fileInput.value = '';
+        return;
+      }
+      
+      // Log success for debugging
+      console.log(`Successfully processed ${this.form.image_path.length} files:`, 
+        this.form.image_path.map(f => ({
+          name: f.name,
+          type: f.type,
+          size: `${(f.size / (1024 * 1024)).toFixed(2)}MB`
+        }))
+      );
+    },
 
-removeImage(index) {
-  if (index >= 0 && index < this.form.image_path.length) {
-    this.form.image_path.splice(index, 1);
-    this.imagePreviews.splice(index, 1);
-    
-    // Reset errors related to images
-    this.errors.image_path = null;
-    delete this.errors['image_path.0'];
-    delete this.errors['image_path.1'];
-    
-    // If no images left, show validation error
-    if (this.form.image_path.length === 0) {
-      this.errors.image_path = ['Lampiran foto harus diunggah'];
-    }
-  }
-},
+    removeImage(index) {
+      if (index >= 0 && index < this.form.image_path.length) {
+        this.form.image_path.splice(index, 1);
+        this.imagePreviews.splice(index, 1);
+        
+        // Reset errors related to images
+        this.errors.image_path = null;
+        delete this.errors['image_path.0'];
+        delete this.errors['image_path.1'];
+        
+        // If no images left, show validation error
+        if (this.form.image_path.length === 0) {
+          this.errors.image_path = ['Lampiran foto harus diunggah'];
+        }
+      }
+    },
 
     addTerlapor() {
       this.form.terlapor.push({
@@ -966,10 +1042,7 @@ removeImage(index) {
       return invalidEntries.length === 0;
     },
 
-    // Replace your submitForm method with this updated version:
-    // Update the image handling part in your submitForm method
-// Update the image file handling in submitForm method:
-submitForm() {
+    submitForm() {
   // Validate form first
   if (!this.validateForm()) {
     this.$nextTick(() => {
@@ -989,152 +1062,141 @@ submitForm() {
   formData.append('category_id', this.form.category_id);
   formData.append('deskripsi', this.form.deskripsi);
   formData.append('tanggal_kejadian', this.form.tanggal_kejadian);
+  formData.append('profesi', this.form.profesi);
+  formData.append('jenis_kelamin', this.form.jenis_kelamin);
+  formData.append('umur_pelapor', this.form.umur_pelapor);
+  formData.append('agreement', this.form.agreement ? 1 : 0);
   
   // Add bukti_pelanggaran as array
   if (this.form.bukti_pelanggaran && this.form.bukti_pelanggaran.length > 0) {
-    this.form.bukti_pelanggaran.forEach(item => {
-      formData.append('bukti_pelanggaran[]', item);
+    this.form.bukti_pelanggaran.forEach((item, index) => {
+      formData.append(`bukti_pelanggaran[${index}]`, item);
     });
   }
   
-  // Handle lampiran_link
+  // Add optional fields if provided
   if (this.form.lampiran_link) {
     formData.append('lampiran_link', this.form.lampiran_link);
   }
   
-  // Add profesi, jenis_kelamin and umur_pelapor
-  formData.append('profesi', this.form.profesi);
-  formData.append('jenis_kelamin', this.form.jenis_kelamin);
-  formData.append('umur_pelapor', this.form.umur_pelapor);
-  
-  // Add agreement
-  formData.append('agreement', this.form.agreement ? '1' : '0');
-  
   // Process terlapor data
-  if (this.form.terlapor && this.form.terlapor.length > 0) {
-    const validTerlapor = this.form.terlapor.filter(item => 
-      item.nama_lengkap || item.email || item.nomor_telepon || 
-      item.status_warga || item.unit_kerja || item.jenis_kelamin || 
-      item.umur_terlapor
-    );
-    
-    if (validTerlapor.length > 0) {
-      validTerlapor.forEach((item, index) => {
-        if (item.nama_lengkap) formData.append(`terlapor[${index}][nama_lengkap]`, item.nama_lengkap);
-        if (item.email) formData.append(`terlapor[${index}][email]`, item.email);
-        if (item.nomor_telepon) formData.append(`terlapor[${index}][nomor_telepon]`, item.nomor_telepon);
-        if (item.status_warga) formData.append(`terlapor[${index}][status_warga]`, item.status_warga);
-        if (item.unit_kerja) formData.append(`terlapor[${index}][unit_kerja]`, item.unit_kerja);
-        if (item.jenis_kelamin) formData.append(`terlapor[${index}][jenis_kelamin]`, item.jenis_kelamin);
-        if (item.umur_terlapor) formData.append(`terlapor[${index}][umur_terlapor]`, item.umur_terlapor);
-      });
-    }
+  const validTerlapor = this.form.terlapor.filter(item => 
+    item.nama_lengkap || item.email || item.nomor_telepon || item.status_warga || 
+    item.unit_kerja || item.jenis_kelamin || item.umur_terlapor
+  );
+  
+  if (validTerlapor.length > 0) {
+    validTerlapor.forEach((item, index) => {
+      if (item.nama_lengkap) formData.append(`terlapor[${index}][nama_lengkap]`, item.nama_lengkap);
+      if (item.email) formData.append(`terlapor[${index}][email]`, item.email);
+      if (item.nomor_telepon) formData.append(`terlapor[${index}][nomor_telepon]`, item.nomor_telepon);
+      if (item.status_warga) formData.append(`terlapor[${index}][status_warga]`, item.status_warga);
+      if (item.unit_kerja) formData.append(`terlapor[${index}][unit_kerja]`, item.unit_kerja);
+      if (item.jenis_kelamin) formData.append(`terlapor[${index}][jenis_kelamin]`, item.jenis_kelamin);
+      if (item.umur_terlapor) formData.append(`terlapor[${index}][umur_terlapor]`, item.umur_terlapor);
+    });
   }
   
   // Process saksi data
-  if (this.form.saksi && this.form.saksi.length > 0) {
-    const validSaksi = this.form.saksi.filter(item => 
-      item.nama_lengkap || item.email || item.nomor_telepon
-    );
-    
-    if (validSaksi.length > 0) {
-      validSaksi.forEach((item, index) => {
-        if (item.nama_lengkap) formData.append(`saksi[${index}][nama_lengkap]`, item.nama_lengkap);
-        if (item.email) formData.append(`saksi[${index}][email]`, item.email);
-        if (item.nomor_telepon) formData.append(`saksi[${index}][nomor_telepon]`, item.nomor_telepon);
-      });
-    }
+  const validSaksi = this.form.saksi.filter(item => 
+    item.nama_lengkap || item.email || item.nomor_telepon
+  );
+  
+  if (validSaksi.length > 0) {
+    validSaksi.forEach((item, index) => {
+      if (item.nama_lengkap) formData.append(`saksi[${index}][nama_lengkap]`, item.nama_lengkap);
+      if (item.email) formData.append(`saksi[${index}][email]`, item.email);
+      if (item.nomor_telepon) formData.append(`saksi[${index}][nomor_telepon]`, item.nomor_telepon);
+    });
   }
-  
-  // CRITICAL FIX: Handle image uploads using the exact format the server expects
-  if (this.form.image_path && this.form.image_path.length > 0) {
-    for (let i = 0; i < this.form.image_path.length; i++) {
-      // Use "image_path.0" format instead of "image_path[0]"
-      formData.append(`image_path.${i}`, this.form.image_path[i]);
-    }
-  }
-  
-  // Debug what's being sent
-  console.log('Form data being submitted:');
-  for (let [key, value] of formData.entries()) {
-    if (value instanceof File) {
-      console.log(key, ':', value.name, `(${(value.size/1024).toFixed(2)} KB)`);
-    } else {
-      console.log(key, ':', value);
-    }
-  }
-  
-  // Set loading state
-  this.loading = true;
-  this.errors = {};
-  
-  // Get auth token
-  this.token = this.getAuthTokenFromCookie();
-  if (!this.token) {
-    this.loading = false;
-    this.showNotification('Error Autentikasi', 'Sesi login Anda telah berakhir. Silakan login kembali untuk melanjutkan.', false);
-    setTimeout(() => {
-      this.$router.push('/dosen/login');
-    }, 2000);
+
+  // Process image uploads - ensure at least one image exists
+  if (!this.form.image_path || this.form.image_path.length === 0) {
+    this.errors.image_path = ['Lampiran foto harus diunggah'];
     return;
   }
   
-  // Add appropriate headers
-  const config = {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      'Authorization': `Bearer ${this.token}`
+  // Add images with the format the server expects
+  this.form.image_path.forEach((file, index) => {
+    formData.append(`image_path[${index}]`, file);
+  });
+  
+  // Set loading state
+  this.loading = true;
+  
+  // Get the auth token
+  const authToken = this.token || VueCookies.get('auth_token');
+  if (!authToken) {
+    this.loading = false;
+    this.showNotification('Error Autentikasi', 'Token autentikasi tidak ditemukan. Silakan login kembali.', false);
+    setTimeout(() => this.$router.push('/login'), 2000);
+    return;
+  }
+  
+  // Use XMLHttpRequest directly like in AddPelaporanKejadian.vue
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan/add_laporan');
+  xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+  
+  xhr.onload = () => {
+    this.loading = false;
+    
+    // Handle response based on status code
+    // Note: Added 201 as a success code (Created)
+    if (xhr.status === 200 || xhr.status === 201) {
+      try {
+        const response = JSON.parse(xhr.response);
+        // Some APIs may return success differently in the response body
+        const isSuccess = response.success || response.status === 'success';
+        
+        if (isSuccess) {
+          this.showNotification('Sukses', 'Laporan berhasil dikirim!', true);
+          this.resetForm();
+        } else {
+          this.showNotification('Perhatian', response.message || 'Data diterima, tetapi terdapat catatan dari server.', true);
+        }
+      } catch (error) {
+        // If JSON parse fails but status is success, still consider it a success
+        this.showNotification('Sukses', 'Laporan berhasil dikirim!', true);
+        this.resetForm();
+      }
+    } else if (xhr.status === 400) {
+      try {
+        const response = JSON.parse(xhr.response);
+        this.errors = response.errors || response;
+        console.log('Server validation errors:', this.errors);
+        this.$nextTick(() => {
+          const firstError = document.querySelector('.is-invalid');
+          if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        });
+      } catch (error) {
+        this.showNotification('Validasi Gagal', 'Silakan periksa kembali isian form Anda.', false);
+      }
+    } else if (xhr.status === 401) {
+      this.showNotification('Sesi Berakhir', 'Sesi login Anda telah berakhir. Silakan login kembali.', false);
+      setTimeout(() => this.$router.push('/login'), 2000);
+    } else {
+      console.error(`Server error (${xhr.status}):`, xhr.response);
+      this.showNotification('Error', `Terjadi kesalahan pada server. Silakan coba lagi nanti.`, false);
     }
   };
   
-  // Send the request
-  axios.post('/api/laporan/add_laporan', formData, config)
-    .then(response => {
-      this.loading = false;
-      if (response.data && response.data.success) {
-        // Success notification
-        alert('Laporan berhasil dikirim');
-        // Reset form and redirect after success
-        this.resetForm();
-        setTimeout(() => {
-          this.$router.push('/dosen/pelaporan/kejadian');
-        }, 2000);
-      } else {
-        // Handle unexpected response format
-        console.error('Unexpected response format:', response.data);
-        alert('Terjadi kesalahan saat mengirim laporan');
-      }
-    })
-    .catch(error => {
-      this.loading = false;
-      console.error('Error submitting form:', error);
-      
-      // Log detailed error information
-      if (error.response) {
-        console.log('Error response status:', error.response.status);
-        console.log('Error response data:', error.response.data);
-        
-        // Handle validation errors from server
-        if (error.response.data) {
-          this.errors = error.response.data;
-          console.log('Server validation errors:', this.errors);
-          
-          this.$nextTick(() => {
-            const firstError = document.querySelector('.is-invalid');
-            if (firstError) {
-              firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          });
-          
-          // Use regular alert since $swal might be causing issues
-          alert('Validasi Gagal: Harap periksa kembali data yang Anda masukkan');
-        } else {
-          alert('Error: ' + (error.response.data?.message || 'Terjadi kesalahan saat mengirim laporan'));
-        }
-      } else {
-        alert('Network Error: Tidak dapat terhubung ke server');
-      }
-    });
+  xhr.onerror = () => {
+    this.loading = false;
+    console.error('Network error during request');
+    this.showNotification('Error Koneksi', 'Gagal menghubungi server. Periksa koneksi internet Anda.', false);
+  };
+  
+  // Send the form data
+  try {
+    xhr.send(formData);
+  } catch (error) {
+    this.loading = false;
+    console.error('Error sending request:', error);
+    this.showNotification('Error', 'Gagal mengirim data: ' + error.message, false);
+  }
 }
   },
   created() {
