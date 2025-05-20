@@ -1342,12 +1342,17 @@ removeImage(index) {
           formData.append('lampiran_link', this.form.lampiran_link);
         }
         
-        // Append images using the correct format
-        if (this.form.image_path.length > 0) {
-          this.form.image_path.forEach((file, index) => {
-            formData.append('image_path[]', file);
-          });
-        }
+        // // Append images using the correct format
+        // if (this.form.image_path.length > 0) {
+        //   this.form.image_path.forEach((file, index) => {
+        //     formData.append('image_path[]', file);
+        //   });
+        // }
+
+        // NEW CODE:
+        this.form.image_path.forEach((file, index) => {
+          formData.append(`image_path[${index}]`, file);
+        });
         
         // Process terlapor data
         const validTerlapor = this.form.terlapor.filter(item => 
@@ -1380,6 +1385,41 @@ removeImage(index) {
           });
         }
 
+        // Process image uploads - Complete rewrite with simplicity in mind
+        if (this.form.image_path && this.form.image_path.length > 0) {
+          // Try the simplest approach possible
+          this.form.image_path.forEach((file, index) => {
+            // Use a simple string key without brackets
+            formData.append('image_path_' + index, file);
+            console.log(`Appending image with simplified key: image_path_${index}`, file.name, file.type, file.size);
+          });
+          
+          // Add a field to tell the server how many files we sent
+          formData.append('image_path_count', this.form.image_path.length);
+        } else {
+          this.errors.image_path = ['Lampiran foto harus diunggah'];
+          this.loading = false;
+          return;
+        }
+
+        // Make a test to confirm FormData content
+        const formDataContent = {};
+        for (let [key, value] of formData.entries()) {
+          if (value instanceof File) {
+            formDataContent[key] = `File: ${value.name}, type: ${value.type}, size: ${value.size} bytes`;
+          } else {
+            formDataContent[key] = value;
+          }
+        }
+        console.log('FormData content:', formDataContent);
+
+        // Process bukti_pelanggaran array
+        if (this.form.bukti_pelanggaran && this.form.bukti_pelanggaran.length > 0) {
+          this.form.bukti_pelanggaran.forEach((item, index) => {
+            formData.append(`bukti_pelanggaran[${index}]`, item);
+          });
+        }
+
         // Get auth token
         const authToken = this.token || this.$cookies.get('auth_token');
         if (!authToken) {
@@ -1403,36 +1443,29 @@ removeImage(index) {
         }
 
         // Send the request using axios
-        axios.post('https://v3422040.mhs.d3tiuns.com/api/laporan/add_laporan', formData, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'multipart/form-data'
-          },
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            console.log(`Upload progress: ${percentCompleted}%`);
-          }
-        })
-        .then(response => {
-          this.loading = false;
-          Swal.fire({
-            title: 'Berhasil!',
-            text: 'Laporan berhasil ditambahkan.',
-            icon: 'success',
-            timer: 2000,
-            timerProgressBar: true,
-            showConfirmButton: false
-          }).then(() => {
-            this.$router.push('/pelaporan/kejadian');
-          });
-          this.resetForm();
-        })
-        .catch(error => {
-          this.loading = false;
-          console.error('Error response:', error.response?.status, error.response?.data);
-          
-          if (error.response) {
-            if (error.response.status === 401) {
+        this.debugFormDataRequest(formData);
+
+        // Try using XHR instead of axios
+        this.uploadWithXHR(formData, authToken)
+          .then(response => {
+            this.loading = false;
+            Swal.fire({
+              title: 'Berhasil!',
+              text: 'Laporan berhasil ditambahkan.',
+              icon: 'success',
+              timer: 2000,
+              timerProgressBar: true,
+              showConfirmButton: false
+            }).then(() => {
+              this.$router.push('/pelaporan/kejadian');
+            });
+            this.resetForm();
+          })
+          .catch(error => {
+            console.error('XHR error:', error);
+            this.loading = false;
+            
+            if (error.status === 401) {
               this.$cookies.remove("auth_token");
               this.$cookies.remove("user_session");
               this.token = null;
@@ -1443,42 +1476,103 @@ removeImage(index) {
                 this.$router.push('/mahasiswa/login');
               }, 2000);
             } else {
-              const errorData = error.response.data;
-              
-              if (errorData['image_path'] || errorData['image_path.0'] || errorData['image_path.1']) {
-                const errorMsg = errorData['image_path'] || errorData['image_path.0'] || errorData['image_path.1'];
-                
-                this.errors.image_path = Array.isArray(errorMsg) ? errorMsg : [errorMsg];
-                
-                this.showNotification(
-                  'Gagal Mengunggah Gambar', 
-                  'Terdapat masalah dengan unggahan gambar. Pastikan ukuran file tidak terlalu besar (maksimal 2MB per file) dan format file didukung (JPG, PNG).',
-                  false
-                );
-              } else {
+              try {
+                const errorData = JSON.parse(error.response);
                 this.errors = errorData;
                 
-                const errorMessage = typeof errorData === 'string' ? errorData : 'Terjadi kesalahan saat mengirim laporan.';
-                this.showNotification('Error', errorMessage, false);
-              }
-              
-              this.$nextTick(() => {
-                const firstError = document.querySelector('.border-red-500');
-                if (firstError) {
-                  firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (errorData['image_path'] || errorData['image_path.0'] || errorData['image_path.1']) {
+                  const errorMsg = errorData['image_path'] || errorData['image_path.0'] || errorData['image_path.1'];
+                  this.errors.image_path = Array.isArray(errorMsg) ? errorMsg : [errorMsg];
+                  
+                  this.showNotification(
+                    'Gagal Mengunggah Gambar', 
+                    'Terdapat masalah dengan unggahan gambar. Pastikan ukuran file tidak terlalu besar dan format file didukung.',
+                    false
+                  );
+                } else {
+                  const errorMessage = typeof errorData === 'string' ? errorData : 'Terjadi kesalahan saat mengirim laporan.';
+                  this.showNotification('Error', errorMessage, false);
                 }
-              });
+              } catch (parseError) {
+                this.showNotification('Error', 'Terjadi kesalahan saat memproses respons server.', false);
+              }
             }
-          } else {
-            this.showNotification('Error Koneksi', 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.', false);
-          }
-        });
+          });
       } catch (error) {
         console.error('Error in submitForm:', error);
         this.loading = false;
         this.showNotification('Error', 'Terjadi kesalahan tak terduga. Silakan coba lagi.', false);
       }
     },
+    // Alternative upload using XMLHttpRequest directly
+    uploadWithXHR(formData, authToken) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        
+        xhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan/add_laporan', true);
+        xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+        
+        xhr.onload = function() {
+          if (this.status >= 200 && this.status < 300) {
+            resolve(JSON.parse(xhr.response));
+          } else {
+            reject({
+              status: this.status,
+              statusText: xhr.statusText,
+              response: xhr.response
+            });
+          }
+        };
+        
+        xhr.onerror = function() {
+          reject({
+            status: this.status,
+            statusText: xhr.statusText,
+            response: xhr.response
+          });
+        };
+        
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
+          }
+        };
+        
+        xhr.send(formData);
+      });
+    },
+    // Add this debug function
+    debugFormDataRequest(formData) {
+      console.log('---DEBUG REQUEST START---');
+      console.log('FormData contents:');
+      for (let [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(`${key}: File - ${value.name} (${value.type}, ${value.size} bytes)`);
+        } else {
+          console.log(`${key}: ${value}`);
+        }
+      }
+      
+      // Create a test request to check what's actually being sent
+      const testFormData = new FormData();
+      testFormData.append('test_file', this.form.image_path[0]);
+      
+      fetch('https://httpbin.org/post', {
+        method: 'POST',
+        body: testFormData
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Test FormData upload result:', data);
+      })
+      .catch(error => {
+        console.error('Test FormData upload error:', error);
+      });
+      
+      console.log('---DEBUG REQUEST END---');
+    },
+    
     resetForm() {
       this.form = {
         judul: '',
