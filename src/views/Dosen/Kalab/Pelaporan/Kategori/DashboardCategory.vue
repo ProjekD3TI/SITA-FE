@@ -275,7 +275,7 @@ export default {
     },
     
     deleteCategory(categoryId) {
-      // Use SweetAlert2 for confirmation
+      // Confirmation dialog
       Swal.fire({
         title: 'Konfirmasi Hapus',
         text: "Kategori ini akan dihapus secara permanen!",
@@ -287,103 +287,107 @@ export default {
         cancelButtonText: 'Batal'
       }).then((result) => {
         if (result.isConfirmed) {
-          // Get token
-          const token = this.getAuthToken();
-          
-          if (!token) {
-            Swal.fire({
-              title: 'Error!',
-              text: 'Anda perlu login kembali untuk melanjutkan',
-              icon: 'error',
-              confirmButtonText: 'OK'
-            });
-            return;
-          }
-
-          // Log the token being used (first 10 chars + last 10 chars)
-          console.log('Using token:', token.length > 20 ? 
-                     token.substring(0, 10) + '...' + token.substring(token.length - 10) : token);
-          
-          // Set loading state
+          // Show loading state
           this.loading = true;
           
-          // Use XMLHttpRequest for better control over the process
-          const xhr = new XMLHttpRequest();
-          xhr.open('DELETE', `${this.apiBaseUrl}/api/category/${categoryId}`);
-          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-          xhr.setRequestHeader('Content-Type', 'application/json');
-          // Set withCredentials to true to include cookies in the request
-          xhr.withCredentials = true;
+          // Get token - try multiple sources
+          let token = null;
           
-          xhr.onload = () => {
-            this.loading = false;
-            
-            if (xhr.status >= 200 && xhr.status < 300) {
-              // Success
-              console.log('Delete successful:', xhr.responseText);
-              
-              Swal.fire({
-                title: 'Berhasil!',
-                text: 'Kategori telah dihapus.',
-                icon: 'success',
-                timer: 2000,
-                timerProgressBar: true,
-                showConfirmButton: false
-              });
-              
-              // Refresh the categories list
-              this.fetchCategories();
-            } else {
-              // Error
-              console.error('Error response:', xhr.status, xhr.responseText);
-              
-              try {
-                const response = JSON.parse(xhr.responseText);
-                Swal.fire({
-                  title: 'Error!',
-                  text: response.message || 'Gagal menghapus kategori.',
-                  icon: 'error'
-                });
-              } catch (e) {
-                Swal.fire({
-                  title: 'Error!',
-                  text: `Gagal menghapus kategori. Status: ${xhr.status}`,
-                  icon: 'error'
-                });
+          // Method 1: Try cookie
+          const getCookie = (name) => {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+              let cookie = cookies[i].trim();
+              if (cookie.startsWith(name + '=')) {
+                return cookie.substring(name.length + 1);
               }
             }
+            return null;
           };
           
-          xhr.onerror = () => {
+          // Get token from cookie and decode it
+          const encodedToken = getCookie('auth_token');
+          if (encodedToken) {
+            token = decodeURIComponent(encodedToken);
+            console.log('Token found in cookie');
+          } 
+          // Method 2: Try localStorage
+          else {
+            token = localStorage.getItem('auth_token');
+            console.log('Token found in localStorage');
+          }
+          
+          if (!token) {
             this.loading = false;
-            console.error('Network error during delete operation');
+            Swal.fire('Error!', 'Anda perlu login kembali untuk melanjutkan', 'error');
+            return;
+          }
+          
+          // For debugging in production - log token format
+          console.log('Token type:', typeof token);
+          console.log('Token length:', token.length);
+          console.log('Token preview:', token.substring(0, 10) + '...' + token.substring(token.length - 10));
+          
+          // Production-friendly API call using form-data with method spoofing
+          const formData = new FormData();
+          formData.append('_method', 'DELETE');
+          
+          // Make the request - using POST with _method=DELETE for better compatibility
+          fetch(`https://v3422040.mhs.d3tiuns.com/api/category/${categoryId}`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+              // Don't set Content-Type with FormData
+            },
+            body: formData,
+            credentials: 'include' // Include cookies
+          })
+          .then(response => {
+            this.loading = false;
             
-            // Check if this is a CORS error
-            if (!xhr.status) {
-              Swal.fire({
-                title: 'CORS Error!',
-                html: `
-                  <p>Terjadi masalah CORS saat menghubungi server.</p>
-                  <p class="mt-2">Hal ini biasanya terjadi karena:</p>
-                  <ul class="text-left mt-2">
-                    <li>Server tidak mengizinkan permintaan dari origin Anda</li>
-                    <li>Server tidak mengizinkan metode DELETE dari origin Anda</li>
-                  </ul>
-                  <p class="mt-2">Silakan hubungi administrator untuk mengatur CORS pada server.</p>
-                `,
-                icon: 'error'
-              });
-            } else {
-              Swal.fire({
-                title: 'Error!',
-                text: 'Terjadi kesalahan jaringan saat menghapus kategori.',
-                icon: 'error'
+            // Log full response for debugging
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
+            if (!response.ok) {
+              // Try to get error details
+              return response.text().then(text => {
+                try {
+                  return Promise.reject(JSON.parse(text));
+                } catch (e) {
+                  return Promise.reject({message: `Server error: ${response.status}`});
+                }
               });
             }
-          };
-          
-          // Send the request
-          xhr.send();
+            
+            return response.json();
+          })
+          .then(data => {
+            console.log('Delete successful:', data);
+            
+            Swal.fire({
+              title: 'Berhasil!',
+              text: 'Kategori telah dihapus.',
+              icon: 'success',
+              timer: 2000,
+              timerProgressBar: true,
+              showConfirmButton: false
+            });
+            
+            // Refresh the categories list
+            this.fetchCategories();
+          })
+          .catch(error => {
+            console.error('Delete error:', error);
+            
+            Swal.fire({
+              title: 'Error!',
+              text: error.message || 'Gagal menghapus kategori.',
+              icon: 'error'
+            });
+          });
         }
       });
     },
