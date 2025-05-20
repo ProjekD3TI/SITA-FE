@@ -719,8 +719,8 @@ export default {
       isSubmitting: false,
       imagePreviews: [],
       selectedFiles: [],
-      currentUser: 'miftahul01',
-      formattedDateTime: '2025-05-16 02:31:01', // Current UTC time in YYYY-MM-DD HH:MM:SS format
+      currentUser: null,
+      formattedDateTime: null, // Current UTC time in YYYY-MM-DD HH:MM:SS format
       
       // reCAPTCHA v2 Configuration
       recaptchaSiteKey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // Replace with your reCAPTCHA v2 site key (using test key)
