@@ -6,6 +6,11 @@ import ProgressBarBAB from "@/components/Tugas-akhir/ProgressBarBAB.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Table from "@/components/Tugas-akhir/Table.vue";
 import StatusLabel from "@/components/Tugas-akhir/Label.vue";
+import ModalVerifikasiBimbingan from "@/components/Tugas-akhir/Modals/ModalVerifikasiBimbingan.vue";
+import ModalDetailBimbingan from "@/components/Tugas-akhir/Modals/ModalDetailBimbingan.vue";
+import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
+import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
+import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -124,14 +129,6 @@ const highestChapter = computed(() => {
 // Handler untuk klik baris tabel (modal verifikasi bimbingan)
 const handleRowClick = (item) => {
   console.log("Row clicked:", item);
-  router.push({
-    path: `/dosen/tugas-akhir/bimbingan/detail-bimbingan/detail-catatan`,
-    query: {
-      id: item.id,
-      nim: studentInfo.value.nim,
-      name: studentInfo.value.name,
-    },
-  });
 };
 
 // Fungsi untuk mengupdate data dari query parameters
@@ -174,6 +171,77 @@ watch(
   },
   { deep: true, immediate: true }
 );
+
+// Ref for modal components
+const verifikasiModal = ref(null);
+const detailModal = ref(null);
+const nilaiModal = ref(false); // Changed to boolean for visibility control
+
+// Data for bimbingan detail (needed for nilai modal)
+const bimbinganDetail = ref({
+  nilaiDisiplin: 85,
+  nilaiKomunikasi: 80,
+  nilaiPengetahuan: 90,
+  nilaiTingkahLaku: 85,
+  catatanRevisi:
+    "Perbaikan pada metodologi dan analisis data sudah dilakukan dengan baik.",
+  nilaiRataRata: 86.25,
+});
+
+// Create refs for modal form data
+const id = ref(0);
+const tanggal = ref("");
+const bab = ref("");
+const catatan = ref("");
+const status = ref("");
+const statusLabel = ref("");
+
+// Functions for modal handling
+const openVerifikasiModal = () => {
+  // Find bimbingan data with id 6
+  const bimbingan = bimbinganData.value.find((item) => item.id === 6);
+
+  if (bimbingan) {
+    // Set modal data from bimbingan data
+    id.value = bimbingan.id;
+    tanggal.value = bimbingan.tanggal;
+    bab.value = bimbingan.bab;
+    catatan.value = bimbingan.catatan;
+  }
+
+  // Open the modal using the exposed method
+  verifikasiModal.value.open();
+};
+
+const openDetailModal = () => {
+  // Find bimbingan data with id 6
+  const bimbingan = bimbinganData.value.find((item) => item.id === 6);
+
+  if (bimbingan) {
+    // Set modal data from bimbingan data
+    id.value = bimbingan.id;
+    tanggal.value = bimbingan.tanggal;
+    bab.value = bimbingan.bab;
+    catatan.value = bimbingan.catatan;
+    status.value = getStatusClass(bimbingan.status); // Pass the CSS class name instead of the status text
+    statusLabel.value = getStatusLabel(bimbingan.status);
+  }
+
+  // Open the modal using the exposed method
+  detailModal.value.open();
+};
+
+// Function to open nilai modal
+const openNilaiModal = () => {
+  nilaiModal.value = true;
+  console.log("Nilai modal opened");
+};
+
+const closeModal = () => {
+  console.log("Modal closed");
+  nilaiModal.value = false;
+  // Any cleanup logic here
+};
 </script>
 
 <template>
@@ -233,38 +301,40 @@ watch(
         <!-- Progress Bar BAB -->
         <ProgressBarBAB class="sm:ms-3" :currentStep="highestChapter" />
 
-        <!-- Tombol  Bimbingan -->
-        <router-link
-          :to="{
-            path: '/dosen/tugas-akhir/bimbingan/detail-bimbingan/input-nilai-bimbingan',
-            query: {
-              nim: studentInfo.nim,
-              name: studentInfo.name,
-              category: studentInfo.category,
-              title: studentInfo.title,
-            },
-          }"
-        >
-          <!-- Desktop Button -->
-          <Button
-            class="hidden lg:flex"
-            variant="primary"
-            size="xl"
-            left-icon-path="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25-1e-4Z"
+        <!-- Action Buttons -->
+        <div class="flex gap-2">
+          <!-- Tombol Nilai (Desktop) -->
+          <router-link
+            :to="{
+              path: '/dosen/tugas-akhir/bimbingan/detail-bimbingan/input-nilai-bimbingan',
+              query: {
+                nim: studentInfo.nim,
+                name: studentInfo.name,
+                category: studentInfo.category,
+                title: studentInfo.title,
+              },
+            }"
           >
-            Nilai
-          </Button>
+            <Button
+              class="hidden lg:flex"
+              variant="primary"
+              size="xl"
+              left-icon-path="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z"
+            >
+              Nilai
+            </Button>
 
-          <!-- Mobile Button -->
-          <Button
-            class="lg:hidden"
-            variant="primary"
-            size="md"
-            left-icon-path="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z"
-          >
-            Nilai
-          </Button>
-        </router-link>
+            <!-- Tombol Nilai (Mobile) -->
+            <Button
+              class="lg:hidden"
+              variant="primary"
+              size="md"
+              left-icon-path="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z"
+            >
+              Nilai
+            </Button>
+          </router-link>
+        </div>
       </div>
     </div>
     <!-- Tabel Riwayat Bimbingan -->
@@ -332,4 +402,88 @@ watch(
     </div>
   </div>
   <router-view v-else></router-view>
+
+  <!-- Modal Verifikasi Bimbingan with ref -->
+  <ModalVerifikasiBimbingan
+    ref="verifikasiModal"
+    @close="closeModal"
+    title="Verfikasi Bimbingan"
+    :bimbinganKe="id"
+    :tanggalBimbingan="tanggal"
+    :bab="bab"
+    :catatan="catatan"
+  ></ModalVerifikasiBimbingan>
+
+  <!-- Modal Detail Bimbingan -->
+  <ModalDetailBimbingan
+    ref="detailModal"
+    @close="closeModal"
+    title="Detail Bimbingan"
+    :bimbinganKe="id"
+    :tanggalBimbingan="tanggal"
+    :bab="bab"
+    :catatan="catatan"
+    :status="status"
+    :statusLabel="statusLabel"
+  ></ModalDetailBimbingan>
+
+  <!-- Modal Lihat Nilai -->
+  <DefaultModal
+    v-if="nilaiModal"
+    @close="closeModal"
+    headText="Nilai Bimbingan"
+    :bodyText="`${studentInfo.name} | ${studentInfo.nim} | ${studentInfo.title}`"
+  >
+    <div class="space-y-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+        <InputNumber
+          id="disiplin"
+          label="Disiplin (20%)"
+          :modelValue="bimbinganDetail.nilaiDisiplin"
+          disabled
+        ></InputNumber>
+        <InputNumber
+          id="komunikasi"
+          label="Komunikasi (20%)"
+          :modelValue="bimbinganDetail.nilaiKomunikasi"
+          disabled
+        ></InputNumber>
+        <InputNumber
+          id="pengetahuan"
+          label="Skill / Pengetahuan (45%)"
+          :modelValue="bimbinganDetail.nilaiPengetahuan"
+          disabled
+        ></InputNumber>
+        <InputNumber
+          id="tingkahLaku"
+          label="Tingkah Laku (15%)"
+          :modelValue="bimbinganDetail.nilaiTingkahLaku"
+          disabled
+        ></InputNumber>
+      </div>
+
+      <div>
+        <InputTextarea
+          id="catatanRevisi"
+          label="Catatan Revisi"
+          :modelValue="bimbinganDetail.catatanRevisi"
+          disabled
+        ></InputTextarea>
+      </div>
+
+      <div class="">
+        <InputNumber
+          id="nilaiRataRata"
+          label="Nilai Rata-Rata"
+          :modelValue="bimbinganDetail.nilaiRataRata"
+          class="font-semibold"
+          disabled
+        ></InputNumber>
+      </div>
+
+      <div class="flex justify-end mt-6">
+        <Button variant="secondary" size="lg"> Edit Nilai </Button>
+      </div>
+    </div>
+  </DefaultModal>
 </template>

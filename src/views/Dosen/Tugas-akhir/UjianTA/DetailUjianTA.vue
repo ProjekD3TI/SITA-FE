@@ -6,14 +6,14 @@ import JadwalUjian from "@/components/Tugas-akhir/JadwalUjian.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Tooltip from "@/components/Tugas-akhir/Tooltip.vue";
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
-import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
+import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import router from "@/router";
 
 const route = useRoute();
 
 // App State
-const dinilai = ref(false);
+const dinilai = ref(true); // Changed to true to show the student has been graded
 const showNilaiModal = ref(false);
 
 // PDF handling
@@ -23,8 +23,8 @@ const pdfUrl =
 // Data untuk komponen penguji
 const examiners = [
   { name: "John Batubara, A. Xioo, M. Si, A. Cer", role: "Ketua" },
-  { name: "Dr. Sinta Wijaya, M.Kom", role: "Anggota" },
-  { name: "Prof. Ahmad Rizal, Ph.D", role: "Anggota" },
+  { name: "Dr. Sinta Wijaya, M.Kom", role: "Sekretaris" },
+  { name: "Prof. Ahmad Rizal, Ph.D", role: "Dosen Penguji" },
 ];
 
 // Jadwal ujian dari query parameters
@@ -45,6 +45,26 @@ const tugasAkhirDetails = ref({
   nilai: 90,
   catatan:
     "Tugas akhir sangat baik, presentasi lancar, dan mahasiswa dapat menjawab semua pertanyaan dengan tepat.",
+});
+
+// Data nilai mahasiswa untuk ditampilkan
+const statusKelulusan = ref("Lulus dengan revisi");
+const tataLaporan = ref(85);
+const kemampuanTeknis = ref(90);
+const hasilProduk = ref(88);
+const presentasi = ref(92);
+const catatanRevisi = ref(
+  "Perbaiki format penulisan pada BAB II dan tambahkan detail pada bab metodologi. Referensi perlu diperbaharui dengan sumber terbaru (maksimal 5 tahun terakhir)."
+);
+
+// Computed untuk total nilai
+const totalNilai = computed(() => {
+  return (
+    tataLaporan.value * 0.15 +
+    kemampuanTeknis.value * 0.35 +
+    hasilProduk.value * 0.25 +
+    presentasi.value * 0.25
+  ).toFixed(2);
 });
 
 // Load data from query parameters
@@ -245,30 +265,30 @@ const modalBodyText = computed(() => {
                   variant="primary"
                   size="lg"
                   class="w-fit sm:flex hidden"
-                  @click="
-                    router.push({
-                      name: 'input-nilai-ujian-ta',
-                      query: { nim: tugasAkhirDetails.nim },
-                    })
-                  "
                 >
                   Input Nilai
                 </Button>
               </router-link>
 
-              <Button
-                variant="primary"
-                size="md"
-                class="w-fit sm:hidden"
-                @click="
-                  router.push({
-                    name: 'input-nilai-ujian-ta',
-                    query: { nim: tugasAkhirDetails.nim },
-                  })
-                "
+              <router-link
+                :to="{
+                  path: '/dosen/tugas-akhir/ujian-ta/detail-ujian-ta/input-nilai-ujian-ta',
+                  query: {
+                    nim: tugasAkhirDetails.nim,
+                    name: tugasAkhirDetails.nama,
+                    category: tugasAkhirDetails.kategori,
+                    title: tugasAkhirDetails.judul,
+                  },
+                }"
               >
-                Input Nilai
-              </Button>
+                <Button
+                  variant="primary"
+                  size="md"
+                  class="w-fit sm:hidden"
+                >
+                  Input Nilai
+                </Button>
+              </router-link>
             </div>
           </div>
         </div>
@@ -276,27 +296,81 @@ const modalBodyText = computed(() => {
     </div>
   </div>
   <router-view v-else></router-view>
-  <!-- Modal Nilai -->
+
+  <!-- Modal Lihat Nilai -->
   <DefaultModal
     v-if="showNilaiModal"
     @close="closeNilaiModal"
     headText="Nilai Ujian Tugas Akhir"
     :bodyText="modalBodyText"
   >
-    <div class="flex flex-col gap-4 mt-4">
-      <InputText
-        id="nilai-ujian-ta"
-        label="Nilai Ujian Tugas Akhir"
-        :modelValue="tugasAkhirDetails.nilai"
-        disabled
-      />
+    <div>
+      <div class="my-5">
+        <p class="heading5 text-[#00A2EA] font-semibold mb-3">
+          Status Kelulusan
+        </p>
+        <p class="body1 font-medium">{{ statusKelulusan }}</p>
+      </div>
+      <div class="my-5">
+        <p class="heading5 text-[#00A2EA] font-semibold mb-5">Nilai Ujian</p>
+        <div class="flex flex-wrap gap-4">
+          <div class="w-full sm:w-[calc(50%-0.5rem)]">
+            <InputNumber
+              id="tataLaporan"
+              label="Kualitas Tata Laporan Tugas Akhir (15%)"
+              placeholder="85"
+              v-model="tataLaporan"
+              disabled
+            />
+          </div>
 
-      <InputTextarea
-        id="catatan-ujian-ta"
-        label="Catatan"
-        :modelValue="tugasAkhirDetails.catatan"
-        disabled
-      />
+          <div class="w-full sm:w-[calc(50%-0.5rem)]">
+            <InputNumber
+              id="kemampuanTeknis"
+              label="Kemampuan Teknis (35%)"
+              placeholder="90"
+              v-model="kemampuanTeknis"
+              disabled
+            />
+          </div>
+
+          <div class="w-full sm:w-[calc(50%-0.5rem)]">
+            <InputNumber
+              id="hasilProduk"
+              label="Kualitas Produk yang Dihasilkan (25%)"
+              placeholder="88"
+              v-model="hasilProduk"
+              disabled
+            />
+          </div>
+
+          <div class="w-full sm:w-[calc(50%-0.5rem)]">
+            <InputNumber
+              id="presentasi"
+              label="Presentasi dan Question Handling (25%)"
+              placeholder="92"
+              v-model="presentasi"
+              disabled
+            />
+          </div>
+        </div>
+        <div class="my-5">
+          <p class="heading5 text-[#00A2EA] font-semibold mb-3">
+            Nilai Rata-Rata
+          </p>
+          <p class="body1 font-bold text-xl">{{ totalNilai }}</p>
+        </div>
+      </div>
+      <div class="my-5" v-if="catatanRevisi">
+        <p class="heading5 text-[#00A2EA] font-semibold mb-5">Catatan Revisi</p>
+        <InputTextarea
+          id="catatanRevisi"
+          label=""
+          placeholder="Perbaiki format penulisan pada BAB II dan tambahkan detail pada bab metodologi. Referensi perlu diperbaharui dengan sumber terbaru (maksimal 5 tahun terakhir)."
+          v-model="catatanRevisi"
+          disabled
+        ></InputTextarea>
+      </div>
     </div>
   </DefaultModal>
 </template>

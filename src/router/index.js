@@ -38,6 +38,7 @@ import InputNilaiBimbinganforDosen from "@/views/Dosen/Tugas-akhir/Bimbingan/Inp
 import UjianTAforDosen from "../views/Dosen/Tugas-akhir/UjianTA/UjianTA.vue";
 import detailUjianTAforDosen from "../views/Dosen/Tugas-akhir/UjianTA/DetailUjianTA.vue";
 import InputNilaiUjianTAforDosen from "@/views/Dosen/Tugas-akhir/UjianTA/InputNilaiUjianTA.vue";
+import path from "path";
 
 //define a routes
 const routes = [
@@ -264,7 +265,9 @@ const routes = [
                   {
                     path: "input-nilai-bimbingan",
                     component: InputNilaiBimbinganforDosen,
-                    meta: { breadcrumb: "Input Nilai" },
+                    meta: {
+                      breadcrumb: "Input Nilai",
+                    },
                   },
                 ],
               },
@@ -283,6 +286,15 @@ const routes = [
                 meta: {
                   breadcrumb: "Detail",
                 },
+                children: [
+                  {
+                    path: "input-nilai-ujian-ta",
+                    component: InputNilaiUjianTAforDosen,
+                    meta: {
+                      breadcrumb: "Input Nilai",
+                    },
+                  },
+                ],
               },
             ],
           },
@@ -426,7 +438,7 @@ const routes = [
               breadcrumb: "Detail Bimbingan",
             },
           },
-        ]
+        ],
       },
       {
         path: "proposal",
@@ -458,10 +470,10 @@ const routes = [
                 meta: {
                   breadcrumb: "Input Nilai",
                 },
-              }
-            ]
+              },
+            ],
           },
-        ]
+        ],
       },
       {
         path: "ujian-ta",
@@ -470,7 +482,7 @@ const routes = [
         meta: {
           breadcrumb: "Ujian Tugas Akhir",
         },
-        children:[
+        children: [
           {
             path: "plotting-penguji/:nim",
             name: "PlottingPengujiForAdmin",
@@ -495,7 +507,7 @@ const routes = [
               breadcrumb: "Penjadwalan",
             },
           },
-        ]
+        ],
       },
       {
         path: "ruang-sesi",
