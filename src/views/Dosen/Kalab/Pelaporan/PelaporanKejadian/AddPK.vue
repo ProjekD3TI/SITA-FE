@@ -666,7 +666,7 @@ export default {
       }
     },
     fetchCategories() {
-      axios.get('http://localhost:8000/api/category')
+      axios.get('https://v3422040.mhs.d3tiuns.com/api/category')
         .then(response => {
           this.categories = response.data;
         })
@@ -888,63 +888,148 @@ export default {
       }
       // IMPORTANT: Do NOT add any saksi field if there are no valid entries
       
-      // Add images
-      if (this.formData.image_path && this.formData.image_path.length > 0) {
-        for (let i = 0; i < this.formData.image_path.length; i++) {
-          formData.append('image_path[]', this.formData.image_path[i]);
-        }
-      }
+      // Fix the file handling in submitForm method
+if (this.formData.image_path && this.formData.image_path.length > 0) {
+  // Try the format the server expects based on the error
+  // Option 1: Using standard array notation
+  this.formData.image_path.forEach((file, index) => {
+    formData.append('image_path[]', file);
+    console.log(`Appending image as array: image_path[]`, file.name, file.type, file.size);
+  });
+  
+  // Option 2: Also try this format which might be what the server expects
+  formData.append('image_path_count', this.formData.image_path.length.toString());
+}
 
-      // Debug what is being sent
-      console.log("Submitting form data:");
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}: ${value}`);
-      }
+// Debug what is being sent
+console.log("Submitting form data:");
+for (let [key, value] of formData.entries()) {
+  if (value instanceof File) {
+    console.log(`${key}: File - ${value.name} (${value.size} bytes)`);
+  } else {
+    console.log(`${key}: ${value}`);
+  }
+}
 
-      axios.post('http://localhost:8000/api/laporan/add_laporan', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-        .then(response => {
-          this.loading = false;
-          Swal.fire({
-            title: 'Berhasil!',
-            text: 'Laporan berhasil ditambahkan.',
-            icon: 'success',
-            timer: 2000,
-            timerProgressBar: true,
-            showConfirmButton: false
-          }).then(() => {
-            this.$router.push('/kalab/pelaporankejadiankalab');
-          });
-          this.resetForm();
-        })
-        .catch(error => {
-          this.loading = false;
-          console.error("Error response:", error.response);
-          
-          if (error.response && error.response.status === 400) {
-            console.log("Full error data:", error.response.data);
-            
-            if (error.response.data.terlapor) {
-              console.error("Terlapor validation errors:", error.response.data.terlapor);
-            }
-            
-            if (error.response.data.saksi) {
-              console.error("Saksi validation errors:", error.response.data.saksi);
-            }
-
-            if (error.response.data.bukti_pelanggaran) {
-              console.error("Bukti pelanggaran validation errors:", error.response.data.bukti_pelanggaran);
-            }
-            
-            this.errors = error.response.data;
-          } else {
-            this.showNotification('Error', 'Terjadi kesalahan saat mengirim laporan.', false);
+// Use XMLHttpRequest instead of axios for better upload control
+this.uploadWithXHR(formData)
+  .then(response => {
+    this.loading = false;
+    Swal.fire({
+      title: 'Berhasil!',
+      text: 'Laporan berhasil ditambahkan.',
+      icon: 'success',
+      timer: 2000,
+      timerProgressBar: true,
+      showConfirmButton: false
+    }).then(() => {
+      // Redirect or reset form as needed
+      this.$router.push('/pelaporan/kejadian');
+    });
+  })
+  .catch(error => {
+    this.loading = false;
+    console.error('Upload error:', error);
+    
+    // Handle authentication errors
+    if (error.status === 401) {
+      Swal.fire({
+        title: 'Sesi Berakhir',
+        text: 'Sesi login Anda telah berakhir. Silakan login kembali.',
+        icon: 'error',
+        confirmButtonText: 'OK'
+      }).then(() => {
+        this.$router.push('/mahasiswa/login');
+      });
+    } else {
+      // Handle other errors
+      let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
+      if (error.response && typeof error.response === 'string') {
+        try {
+          const responseData = JSON.parse(error.response);
+          if (responseData.message) {
+            errorMessage = responseData.message;
+          } else if (responseData.error) {
+            errorMessage = responseData.error;
           }
-        });
+        } catch (e) {
+          console.error('Error parsing response:', e);
+        }
+      }
+      
+      Swal.fire({
+        title: 'Error',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
+    }
+  });
     },
+
+    // Add this method to your component
+// Updated uploadWithXHR method
+uploadWithXHR(formData) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    
+    // Make sure we're using the correct endpoint
+    xhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan/add_laporan', true);
+    
+    // Get token from component data or from cookies
+    const authToken = this.token || this.$cookies.get('auth_token');
+    if (authToken) {
+      xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+    }
+    
+    // Don't set Content-Type header - let the browser set it with the proper boundary
+    // This is critical for multipart/form-data uploads
+    
+    xhr.onload = function() {
+      if (this.status >= 200 && this.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.response));
+        } catch (e) {
+          resolve(xhr.response);
+        }
+      } else {
+        // More detailed error information
+        console.error("Server error response:", xhr.response);
+        reject({
+          status: this.status,
+          statusText: xhr.statusText,
+          response: xhr.response
+        });
+      }
+    };
+    
+    xhr.onerror = function() {
+      console.error("XHR network error");
+      reject({
+        status: this.status,
+        statusText: xhr.statusText,
+        response: 'Network error occurred'
+      });
+    };
+    
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const percentComplete = (e.loaded / e.total) * 100;
+        console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
+      }
+    };
+    
+    // Before sending, log what we're about to send
+    console.log("Preparing to send form data with these files:");
+    if (this.formData.image_path) {
+      this.formData.image_path.forEach((file, i) => {
+        console.log(`File ${i}: ${file.name}, ${file.type}, ${file.size} bytes`);
+      });
+    }
+    
+    xhr.send(formData);
+  });
+},
 
     resetForm() {
       this.formData = {
