@@ -501,7 +501,7 @@ export default {
       this.loading = true;
       try {
         // Fetch categories first
-        const categoriesResponse = await axios.get('http://localhost:8000/api/category');
+        const categoriesResponse = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
         // Transform categories array to an object with id as key for easy lookup
         this.categories = categoriesResponse.data.reduce((acc, category) => {
           acc[category.category_id] = category.nama;
@@ -509,7 +509,7 @@ export default {
         }, {});
         
         // Then fetch laporan data
-        const laporanResponse = await axios.get('http://localhost:8000/api/laporan');
+        const laporanResponse = await axios.get('https://v3422040.mhs.d3tiuns.com/api/laporan');
         this.laporan = laporanResponse.data;
         
         // Initialize filteredLaporan with all data
