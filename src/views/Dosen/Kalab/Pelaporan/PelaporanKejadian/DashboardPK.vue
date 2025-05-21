@@ -139,17 +139,35 @@
       <!-- Table section -->
       <table class="data-table">
         <thead>
-          <tr>
-            <th>No</th>
-            <th>Nomor Laporan</th>
-            <th>Tanggal Laporan Masuk</th>
-            <th>Judul</th>
-            <th>Kategori</th>
-            <th>Nama Pelapor</th>
-            <th>Status</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
+            <tr>
+              <th>No</th>
+              <th @click="sortBy('nomor_laporan')" class="sortable">
+                Nomor Laporan
+                <i :class="getSortIcon('nomor_laporan')"></i>
+              </th>
+              <th @click="sortBy('created_at')" class="sortable">
+                Tanggal Laporan Masuk
+                <i :class="getSortIcon('created_at')"></i>
+              </th>
+              <th @click="sortBy('judul')" class="sortable">
+                Judul
+                <i :class="getSortIcon('judul')"></i>
+              </th>
+              <th @click="sortBy('category_id')" class="sortable">
+                Kategori
+                <i :class="getSortIcon('category_id')"></i>
+              </th>
+              <th @click="sortBy('nama_pelapor')" class="sortable">
+                Nama Pelapor
+                <i :class="getSortIcon('nama_pelapor')"></i>
+              </th>
+              <th @click="sortBy('status')" class="sortable">
+                Status
+                <i :class="getSortIcon('status')"></i>
+              </th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
         <tbody>
           <tr v-for="(item, index) in filteredLaporan" :key="item.id">
             <td>{{ startIndex + index + 1 }}</td>
@@ -307,7 +325,9 @@ export default {
       search: '', // Replace or use alongside searchQuery if you prefer
       totalFilteredCount: 0, // New property to store total filtered count
       exportInProgress: false, // Flag to prevent multiple exports at once
-      dataToExport: [] // Data that will be exported to PDF
+      dataToExport: [], // Data that will be exported to PDF
+      sortKey: '', // Add this for tracking sort column
+      sortOrder: 'asc', // Add this for tracking sort direction
     };
   },
   
@@ -324,6 +344,38 @@ export default {
           (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(searchTerm)) ||
           (item.nama_pelapor && item.nama_pelapor.toLowerCase().includes(searchTerm))
         );
+      }
+
+      // Apply sorting
+      if (this.sortKey) {
+        result.sort((a, b) => {
+          let aValue = a[this.sortKey];
+          let bValue = b[this.sortKey];
+          
+          // Special handling for category_id
+          if (this.sortKey === 'category_id') {
+            aValue = this.getCategoryName(aValue);
+            bValue = this.getCategoryName(bValue);
+          }
+          
+          // Special handling for status
+          if (this.sortKey === 'status') {
+            aValue = this.formatStatus(aValue);
+            bValue = this.formatStatus(bValue);
+          }
+          
+          // Handle dates
+          if (this.sortKey === 'created_at') {
+            aValue = new Date(aValue);
+            bValue = new Date(bValue);
+          }
+          
+          // Compare the values
+          if (aValue === bValue) return 0;
+          
+          const comparison = aValue > bValue ? 1 : -1;
+          return this.sortOrder === 'desc' ? -comparison : comparison;
+        });
       }
       
       // Apply category filter
@@ -523,6 +575,29 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+
+    sortBy(key) {
+      // If clicking the same column, toggle sort order
+      if (this.sortKey === key) {
+        this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+      } else {
+        // If clicking a different column, set it as the new sort key and default to ascending
+        this.sortKey = key;
+        this.sortOrder = 'asc';
+      }
+      
+      // Reset to first page when sorting changes
+      this.currentPage = 1;
+    },
+    
+    getSortIcon(key) {
+      if (this.sortKey !== key) {
+        return 'fas fa-sort'; // Default icon when column is not being sorted
+      }
+      return this.sortOrder === 'asc' 
+        ? 'fas fa-sort-up' 
+        : 'fas fa-sort-down';
     },
     
     getCategoryName(categoryId) {
