@@ -250,10 +250,10 @@
           </p>
         </div>
         
-        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed;">
           <thead>
             <tr style="background-color: #f2f2f2;">
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">No</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle; width: 5%;">No</th>
               <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Nomor Laporan</th>
               <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Tanggal</th>
               <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Judul</th>
@@ -623,38 +623,38 @@ export default {
     // Method baru untuk export PDF dengan html2pdf.js
     async exportToPDF() {
       if (this.exportInProgress) return;
-      
+
       this.exportInProgress = true;
-      
+
       try {
-        // Tentukan data yang akan diexport berdasarkan filter aktif atau semua data
+        // Determine the data to export based on active filters or all data
         this.dataToExport = this.isFilterActive ? this.allFilteredData : this.laporan;
-        
-        // Tunggu sampai vue merender data di elemen tersembunyi
+
+        // Wait for Vue to render hidden elements
         await this.$nextTick();
-        
-        // Dapatkan elemen yang akan dikonversi ke PDF
+
+        // Get the element to be converted to PDF
         const element = document.getElementById('pdf-content');
-        
-        // Tampilkan dulu elemen
+
+        // Ensure the element is visible
         element.style.display = 'block';
-        
-        // Opsi untuk html2pdf
+
+        // Options for html2pdf
         const options = {
-          margin: 10,
+          margin: [20, 10, 20, 10], // [top, right, bottom, left] in mm
           filename: `Laporan_Kejadian_${this.formatDate(new Date()).replace(/-/g, '')}.pdf`,
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
         };
-        
+
         // Generate PDF
         await html2pdf()
           .from(element)
           .set(options)
           .save();
-          
-        // Sembunyikan kembali elemen setelah diproses
+
+        // Hide the element again after processing
         element.style.display = 'none';
       } catch (error) {
         console.error('Error exporting to PDF:', error);
@@ -1294,9 +1294,7 @@ export default {
   color: white;
   border-color: #3b82f6;
 }
-</style>
 
-<style>
 /* You can keep your existing styles and add these if needed */
 .status-badge {
   padding: 4px 8px;
@@ -1328,5 +1326,31 @@ export default {
 .rejected {
   background-color: #fee2e2;
   color: #dc2626;
+}
+
+#pdf-content table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+#pdf-content th, #pdf-content td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+  vertical-align: middle;
+  page-break-inside: avoid; /* Prevent cells from splitting across pages */
+}
+
+#pdf-content thead {
+  display: table-header-group; /* Ensure headers repeat on each page */
+}
+
+#pdf-content tbody tr {
+  page-break-inside: avoid; /* Prevent rows from splitting */
+}
+
+#pdf-content {
+  page-break-inside: auto; /* Ensure the container doesn't break poorly */
 }
 </style>
