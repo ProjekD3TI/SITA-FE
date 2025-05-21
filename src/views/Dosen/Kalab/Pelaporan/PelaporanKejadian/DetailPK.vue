@@ -420,7 +420,7 @@ export default {
     methods: {
         async fetchCategories() {
             try {
-                const response = await axios.get('http://localhost:8000/api/category');
+                const response = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
                 this.categories = response.data.reduce((acc, category) => {
                     acc[category.category_id] = category.nama;
                     return acc;
@@ -435,7 +435,7 @@ export default {
             this.error = null;
             
             try {
-                const response = await axios.get(`http://localhost:8000/api/laporan/${this.laporanId}`);
+                const response = await axios.get(`https://v3422040.mhs.d3tiuns.com/api/laporan/${this.laporanId}`);
                 this.laporan = response.data;
                 
                 // Process tanggapan data
@@ -634,7 +634,20 @@ export default {
         
         getImageUrl(imagePath) {
             if (!imagePath) return '';
-            return `http://localhost:8000/storage/laporan/${imagePath}`;
+            
+            // Clean the path by removing any quotes if present
+            const cleanPath = typeof imagePath === 'string' ? imagePath.replace(/['"]/g, '') : imagePath;
+            
+            // Check if it's already a full URL
+            if (typeof cleanPath === 'string' && cleanPath.startsWith('http')) {
+                return cleanPath;
+            }
+            
+            // Define the base URL
+            const baseUrl = 'https://v3422040.mhs.d3tiuns.com';
+            
+            // Primary URL - use this as default
+            return `${baseUrl}/Backend-Port/backend/engine/public/storage/laporan/${cleanPath}`;
         },
         
         // Lightbox methods for multiple images
@@ -680,7 +693,7 @@ export default {
                 formData.append('status', 'verified');
                 
                 // Make the API call using POST with _method: PUT for compatibility
-                await axios.post(`http://localhost:8000/api/laporan/update_status/${this.laporanId}`, formData);
+                await axios.post(`https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${this.laporanId}`, formData);
                 
                 // Update local data after successful verification
                 this.laporan.status = 'verified';
@@ -738,7 +751,7 @@ export default {
                 formData.append('status', 'rejected');
 
                 await axios.post(
-                    `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+                    `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${this.laporanId}`, 
                     formData
                 );
                               
@@ -844,7 +857,7 @@ export default {
                 }
 
                 await axios.post(
-                    `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+                    `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${this.laporanId}`, 
                     formData
                 );
                 
@@ -936,7 +949,7 @@ export default {
                 }
 
                 await axios.post(
-                    `http://localhost:8000/api/laporan/update_status/${this.laporanId}`, 
+                    `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${this.laporanId}`, 
                     formData
                 );
                             
