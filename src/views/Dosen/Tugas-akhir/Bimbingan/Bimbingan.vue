@@ -5,6 +5,8 @@ import { RouterLink, useRouter } from "vue-router";
 import TabDiv from "@/components/Tugas-akhir/TabDiv.vue";
 import Table from "@/components/Tugas-akhir/Table.vue";
 import ModalResponBimbingan from "@/components/Tugas-akhir/Modals/ModalResponBimbingan.vue";
+import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
+import ModalFilter from "@/components/Tugas-akhir/Modals/ModalFilter.vue";
 
 const activeTab = ref("permintaan");
 const searchQuery = ref("");
@@ -395,65 +397,30 @@ const handleRejectRequest = () => {
       <!-- Search and Filter - Stack on mobile -->
       <div class="flex flex-row mb-2 gap-2">
         <div class="w-auto sm:w-auto sm:mr-2">
-          <button
-            class="flex items-center sm:w-auto px-3 py-2 border border-gray-300 rounded-md bg-white text-xs text-gray-700 justify-between"
-          >
-            <div class="flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                />
-              </svg>
-              <span class="hidden sm:inline">Kategori</span>
-            </div>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="sm:ms-2 h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
+          <ModalFilter
+            title="Kategori"
+            :items="[
+              'Internet Of Things',
+              'Machine Learning',
+              'Data Science',
+              'Web Development',
+              'Cybersecurity',
+              'Artificial Intelligence',
+            ]"
+            filterType="category"
+            triggerText="Kategori"
+            triggerVariant="outlined-black"
+            hint="*Pilih kategori tugas akhir"
+            @apply="(filter) => console.log('Filter applied:', filter)"
+          />
         </div>
         <div class="flex-grow w-full">
-          <div class="relative w-full">
-            <input
-              type="text"
-              placeholder="Search..."
-              class="w-full px-4 py-2 border border-gray-300 rounded-md pl-10 text-xs"
-              v-model="searchQuery"
-            />
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5 text-gray-400 absolute left-3 top-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </div>
+          <SearchBar
+            v-model="searchQuery"
+            placeholder="Search..."
+            :debounce="300"
+            @search="(query) => console.log('Searching for:', query)"
+          />
         </div>
       </div>
 

@@ -62,35 +62,35 @@ const summaryCards = [
 ];
 
 // Data yang sama dengan yang dikirim ke DoughnutChart
-const doughnutLabels = ['BAB I', 'BAB II', 'BAB III', 'BAB IV', 'BAB V']
-const doughnutData = [10, 20, 30, 40, 50]
-const doughnutColors = ['#62B2FD', '#9BDFC4', '#F99BAB', '#FFB44F', '#9F97F7']
+const doughnutLabels = ["BAB I", "BAB II", "BAB III", "BAB IV", "BAB V"];
+const doughnutData = [10, 20, 30, 40, 50];
+const doughnutColors = ["#62B2FD", "#9BDFC4", "#F99BAB", "#FFB44F", "#9F97F7"];
 </script>
 <template>
   <Breadcrumb :items="breadcrumbItems" />
   <div class="grid lg:grid-cols-3 gap-4 w-auto">
     <div class="card-style">
-       <h5 class="body2-bold mb-4">Progress Bimbingan Mahasiswa</h5>
-       <DoughnutChart 
-          class="w-44 h-44"
-          :labels="doughnutLabels"
-          datasetsLabel="Tugas Akhir Mahasiswa"
-          :dataValues="doughnutData"
-          :showCenterText="false"
-          :showInsideText="false"
-          :backgroundColor="doughnutColors"
-        />
-        <div class="flex flex-wrap gap-2 sm:gap-4 justify-center mt-2">
-          <template v-for="(label, idx) in doughnutLabels" :key="idx">
-            <p class="flex items-center gap-1 text-placeholder body5">
-              <span
-                class="w-2 h-2 inline-block rounded-full"
-                :style="{ backgroundColor: doughnutColors[idx] }"
-              ></span>
-              {{ label }}
-            </p>
-          </template>
-        </div>
+      <h5 class="body2-bold mb-4">Progress Bimbingan Mahasiswa</h5>
+      <DoughnutChart
+        class="w-44 h-44"
+        :labels="doughnutLabels"
+        datasetsLabel="Tugas Akhir Mahasiswa"
+        :dataValues="doughnutData"
+        :showCenterText="false"
+        :showInsideText="false"
+        :backgroundColor="doughnutColors"
+      />
+      <div class="flex flex-wrap gap-2 sm:gap-4 justify-center mt-2">
+        <template v-for="(label, idx) in doughnutLabels" :key="idx">
+          <p class="flex items-center gap-1 text-placeholder body5">
+            <span
+              class="w-2 h-2 inline-block rounded-full"
+              :style="{ backgroundColor: doughnutColors[idx] }"
+            ></span>
+            {{ label }}
+          </p>
+        </template>
+      </div>
     </div>
     <div
       class="lg:col-span-2 card-style p-4 flex sm:flex-row flex-col justify-evenly flex-grow"
@@ -241,7 +241,7 @@ const doughnutColors = ['#62B2FD', '#9BDFC4', '#F99BAB', '#FFB44F', '#9F97F7']
     </div>
 
     <div class="card-style lg:col-span-3">
-      <!-- <LineChart :chartValue="lineChartValue" /> -->
+      <LineChart :chartValue="lineChartValue" />
     </div>
   </div>
 </template>

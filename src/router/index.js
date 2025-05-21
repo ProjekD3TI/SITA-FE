@@ -15,6 +15,7 @@ import BimbinganforAdmin from "../views/Admin/AdminTa/Bimbingan/Bimbingan.vue";
 import ProposalforAdmin from "../views/Admin/AdminTa/Proposal/Proposal.vue";
 import TugasAkhirforAdmin from "../views/Admin/AdminTa/UjianTA/UjianTA.vue";
 import RuangSesiforAdmin from "../views/Admin/AdminTa/RuangSesi.vue";
+import KategoriforAdmin from "../views/Admin/AdminTa/Kategori.vue";
 import PlottingPengujiForAdmin from "../views/Admin/AdminTa//UjianTA/PlottingPenguji.vue";
 import DetailPendaftarForAdmin from "../views/Admin/AdminTa/UjianTA/DetailPendaftar.vue";
 import PenjadwalanForAdmin from "../views/Admin/AdminTa/UjianTA/Penjadwalan.vue";
@@ -513,7 +514,14 @@ const routes = [
         path: "ruang-sesi",
         component: RuangSesiforAdmin,
         meta: {
-          breadcrumb: "ruang-sesi",
+          breadcrumb: "Ruang Sesi",
+        },
+      },
+      {
+        path: "kategori",
+        component: KategoriforAdmin,
+        meta: {
+          breadcrumb: "Kategori",
         },
       },
     ],

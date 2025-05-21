@@ -3,8 +3,24 @@ import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import { ref, computed } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import Table from "@/components/Tugas-akhir/Table.vue";
+import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
+import ModalFilter from "@/components/Tugas-akhir/Modals/ModalFilter.vue";
 
 const searchQuery = ref("");
+// Add filter categories and selected filters
+const filterCategories = ref([
+  "Internet of Things",
+  "Mobile Development",
+  "Cyber Security",
+  "Big Data",
+  "Artificial Intelligence",
+  "Web Development",
+  "Multimedia",
+  "Blockchain",
+  "Geographic Information System",
+  "Network Security",
+]);
+const selectedFilters = ref([]);
 
 const mentorships = ref([
   {
@@ -222,19 +238,37 @@ const items = computed(() => {
   return mentorships.value;
 });
 
-const filteredItems = computed(() => {
-  if (!searchQuery.value) return items.value;
+// Handler for filter application
+const applyFilter = (filterData) => {
+  selectedFilters.value = filterData.values;
+  // You could add additional filtering logic here if needed
+};
 
-  const query = searchQuery.value.toLowerCase();
-  return items.value.filter((item) => {
-    return (
-      item.name.toLowerCase().includes(query) ||
-      item.nim.toLowerCase().includes(query) ||
-      item.category.toLowerCase().includes(query) ||
-      (item.title && item.title.toLowerCase().includes(query)) ||
-      (item.date && item.date.toLowerCase().includes(query))
+const filteredItems = computed(() => {
+  let filtered = items.value;
+
+  // Apply text search filter
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    filtered = filtered.filter((item) => {
+      return (
+        item.name.toLowerCase().includes(query) ||
+        item.nim.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query) ||
+        (item.title && item.title.toLowerCase().includes(query)) ||
+        (item.date && item.date.toLowerCase().includes(query))
+      );
+    });
+  }
+
+  // Apply category filter if any selected
+  if (selectedFilters.value.length > 0) {
+    filtered = filtered.filter((item) =>
+      selectedFilters.value.includes(item.category)
     );
-  });
+  }
+
+  return filtered;
 });
 
 const router = useRouter();
@@ -271,65 +305,22 @@ const handleRowClick = (item) => {
     <!-- Search and Filter - Stack on mobile -->
     <div class="flex flex-row mb-2 gap-2">
       <div class="w-auto sm:w-auto sm:mr-2">
-        <button
-          class="flex items-center sm:w-auto px-3 py-2 border border-gray-300 rounded-md bg-white text-xs text-gray-700 justify-between"
-        >
-          <div class="flex items-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-              />
-            </svg>
-            <span class="hidden sm:inline">Kategori</span>
-          </div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="sm:ms-2 h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </button>
+        <ModalFilter
+          title="Kategori"
+          :items="filterCategories"
+          :preselectedValues="selectedFilters"
+          triggerText="Kategori"
+          @apply="applyFilter"
+          triggerVariant="outlined-black"
+          modalPosition="bottom"
+        />
       </div>
       <div class="flex-grow w-full">
-        <div class="relative w-full">
-          <input
-            type="text"
-            placeholder="Search..."
-            class="w-full px-4 py-2 border border-gray-300 rounded-md pl-10 text-xs"
-            v-model="searchQuery"
-          />
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 text-gray-400 absolute left-3 top-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-        </div>
+        <SearchBar
+          v-model="searchQuery"
+          placeholder="Search..."
+          @search="(data) => (searchQuery = data.value)"
+        />
       </div>
     </div>
 
