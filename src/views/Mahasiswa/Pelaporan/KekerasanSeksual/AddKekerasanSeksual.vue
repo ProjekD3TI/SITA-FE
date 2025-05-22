@@ -616,6 +616,22 @@
               </div>
             </div>
 
+            <div class="mb-6">
+              <div class="flex flex-col items-center">
+                <div ref="recaptchaContainer"></div>
+                <div v-if="recaptchaError" class="text-red-500 text-xs mt-2">
+                  {{ recaptchaError }}
+                  <button 
+                    type="button" 
+                    @click="resetRecaptcha" 
+                    class="text-blue-600 hover:underline ml-2"
+                  >
+                    Muat ulang reCAPTCHA
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <!-- Form Actions -->
             <div class="flex justify-end space-x-3">
               <button 
@@ -720,13 +736,16 @@ export default {
       imagePreviews: [],
       selectedFiles: [],
       currentUser: null,
-      formattedDateTime: null, // Current UTC time in YYYY-MM-DD HH:MM:SS format
+      formattedDateTime: null,
       
-      // reCAPTCHA v2 Configuration
-      recaptchaSiteKey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // Replace with your reCAPTCHA v2 site key (using test key)
+      // reCAPTCHA improved configuration
+      recaptchaSiteKey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // Test key
       recaptchaVerified: false,
       recaptchaResponse: null,
-      recaptchaError: null
+      recaptchaError: null,
+      recaptchaWidget: null,
+      recaptchaAttempts: 0,
+      maxRecaptchaAttempts: 3
     };
   },
 
@@ -735,55 +754,108 @@ export default {
     // Initialize with one empty object for terduga and saksi
     this.addTerduga();
     this.addSaksi();
+    
+    // Set the current date time in the required format
+    const now = new Date();
+    this.formattedDateTime = now.toISOString().slice(0, 19).replace('T', ' ');
   },
 
   beforeUnmount() {
-    // Reset reCAPTCHA if component is destroyed
-    this.resetRecaptcha();
+    // Properly cleanup reCAPTCHA
+    this.cleanupRecaptcha();
   },
 
   mounted() {
     this.fetchCategories();
-    this.loadRecaptchaScript();
+    
+    // Improved reCAPTCHA initialization with retry mechanism
+    this.$nextTick(() => {
+      this.initRecaptcha();
+    });
   },
 
   methods: {
-    loadRecaptchaScript() {
-      // Only load the script if it hasn't been loaded yet
-      if (window.grecaptcha) {
-        this.renderRecaptcha();
+    // Improved reCAPTCHA methods
+    initRecaptcha() {
+      // Clear any existing error messages
+      this.recaptchaError = null;
+      
+      // Check if the recaptcha container is available
+      if (!this.$refs.recaptchaContainer) {
+        console.log("reCAPTCHA container not found, retrying...");
+        setTimeout(() => this.initRecaptcha(), 500);
         return;
       }
       
-      // Load the reCAPTCHA v2 script
-      const script = document.createElement('script');
-      script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit';
-      script.async = true;
-      script.defer = true;
+      // Track attempt count to prevent infinite loops
+      this.recaptchaAttempts++;
+      if (this.recaptchaAttempts > this.maxRecaptchaAttempts) {
+        this.recaptchaError = "Gagal memuat reCAPTCHA setelah beberapa percobaan. Silakan muat ulang halaman.";
+        return;
+      }
       
-      // Define the callback function that will be called when reCAPTCHA is loaded
-      window.onRecaptchaLoaded = () => {
-        this.renderRecaptcha();
-      };
-      
-      script.onerror = () => {
-        console.error('Error loading reCAPTCHA script');
-        this.recaptchaError = 'Gagal memuat reCAPTCHA. Silakan muat ulang halaman.';
-      };
-      
-      document.head.appendChild(script);
+      // Load reCAPTCHA script if not already loaded
+      if (window.grecaptcha) {
+        this.renderRecaptchaWidget();
+      } else {
+        this.loadRecaptchaScript()
+          .then(() => {
+            this.renderRecaptchaWidget();
+          })
+          .catch(error => {
+            console.error("Error loading reCAPTCHA script:", error);
+            this.recaptchaError = "Gagal memuat script reCAPTCHA. Silakan muat ulang halaman.";
+            
+            // Auto-retry after a delay
+            setTimeout(() => {
+              if (!window.grecaptcha) {
+                this.initRecaptcha();
+              }
+            }, 2000);
+          });
+      }
     },
     
-    renderRecaptcha() {
-      // Wait until the DOM element is available
-      if (!this.$refs.recaptchaContainer) {
-        setTimeout(() => this.renderRecaptcha(), 100);
-        return;
+    loadRecaptchaScript() {
+      return new Promise((resolve, reject) => {
+        // If already loading, wait for it
+        if (window.onRecaptchaLoaded) {
+          const originalCallback = window.onRecaptchaLoaded;
+          window.onRecaptchaLoaded = () => {
+            originalCallback();
+            resolve(window.grecaptcha);
+          };
+          return;
+        }
+
+        // Define callback for when reCAPTCHA loads
+        window.onRecaptchaLoaded = () => {
+          resolve(window.grecaptcha);
+        };
+        
+        // Add the script to the page
+        const script = document.createElement('script');
+        script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit';
+        script.async = true;
+        script.defer = true;
+        
+        script.onerror = () => {
+          reject(new Error('Failed to load reCAPTCHA script'));
+        };
+        
+        document.head.appendChild(script);
+      });
+    },
+    
+    renderRecaptchaWidget() {
+      // Ensure the container is empty before rendering
+      if (this.$refs.recaptchaContainer) {
+        this.$refs.recaptchaContainer.innerHTML = '';
       }
       
       try {
-        // Render the reCAPTCHA v2 checkbox widget
-        window.grecaptcha.render(this.$refs.recaptchaContainer, {
+        // Render the reCAPTCHA widget
+        this.recaptchaWidget = window.grecaptcha.render(this.$refs.recaptchaContainer, {
           'sitekey': this.recaptchaSiteKey,
           'callback': (response) => {
             this.recaptchaResponse = response;
@@ -800,28 +872,76 @@ export default {
           'error-callback': () => {
             this.recaptchaResponse = null;
             this.recaptchaVerified = false;
-            this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan muat ulang halaman.';
+            this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan coba lagi.';
             console.error('reCAPTCHA error');
+            
+            // Auto-retry after a delay
+            setTimeout(() => {
+              this.resetRecaptcha();
+            }, 2000);
           }
         });
       } catch (error) {
         console.error('Error rendering reCAPTCHA:', error);
         this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan muat ulang halaman.';
-      }
-    },
-    
-    resetRecaptcha() {
-      if (window.grecaptcha) {
-        try {
-          window.grecaptcha.reset();
-          this.recaptchaVerified = false;
-          this.recaptchaResponse = null;
-        } catch (error) {
-          console.error('Error resetting reCAPTCHA:', error);
+        
+        // Handle the case where rendering fails, possibly due to reCAPTCHA being already rendered
+        // This commonly happens with the test key
+        if (error.message && error.message.includes('already been rendered')) {
+          this.cleanupRecaptcha();
+          setTimeout(() => {
+            this.initRecaptcha();
+          }, 500);
         }
       }
     },
     
+    resetRecaptcha() {
+      try {
+        if (window.grecaptcha && this.recaptchaWidget !== null) {
+          window.grecaptcha.reset(this.recaptchaWidget);
+          this.recaptchaVerified = false;
+          this.recaptchaResponse = null;
+          return true;
+        }
+        // If reset fails, re-initialize
+        this.cleanupRecaptcha();
+        this.initRecaptcha();
+      } catch (error) {
+        console.error('Error resetting reCAPTCHA:', error);
+        // If there's an error, try to re-initialize
+        this.cleanupRecaptcha();
+        this.initRecaptcha();
+      }
+    },
+    
+    cleanupRecaptcha() {
+      // Reset state
+      this.recaptchaWidget = null;
+      this.recaptchaVerified = false;
+      this.recaptchaResponse = null;
+      this.recaptchaAttempts = 0;
+      
+      // Clear the container
+      if (this.$refs.recaptchaContainer) {
+        this.$refs.recaptchaContainer.innerHTML = '';
+      }
+    },
+    
+    // Get the most recent token directly from grecaptcha
+    getRecaptchaResponse() {
+      try {
+        if (window.grecaptcha && this.recaptchaWidget !== null) {
+          return window.grecaptcha.getResponse(this.recaptchaWidget);
+        }
+        return this.recaptchaResponse;
+      } catch (error) {
+        console.error('Error getting reCAPTCHA response:', error);
+        return this.recaptchaResponse;
+      }
+    },
+    
+    // Your existing methods (keep these unchanged)
     loadUserData() {
       try {
         const encryptedUserData = VueCookies.get("user_session");
@@ -988,6 +1108,7 @@ export default {
       this.$router.go(-1);
     },
     
+    // Improved form submission method
     submitReport() {
       // Reset warnings
       this.showBuktiWarning = false;
@@ -1005,8 +1126,12 @@ export default {
         return;
       }
       
+      // Get the latest reCAPTCHA response directly from the API
+      // This is more reliable than using the stored value
+      const recaptchaResponseToken = this.getRecaptchaResponse();
+      
       // Validate reCAPTCHA
-      if (!this.recaptchaVerified || !this.recaptchaResponse) {
+      if (!recaptchaResponseToken) {
         this.recaptchaError = 'Harap centang kotak reCAPTCHA "Saya bukan robot"';
         Swal.fire({
           icon: 'error',
@@ -1035,8 +1160,10 @@ export default {
       formData.append('nim_pelapor', this.report.nim);
       formData.append('nomor_telepon', this.report.phone);
       formData.append('current_datetime', this.formattedDateTime);
-      formData.append('username', this.currentUser);
-      formData.append('g-recaptcha-response', this.recaptchaResponse);
+      formData.append('username', this.currentUser || 'miftahul01');
+      
+      // Use the most recent reCAPTCHA token
+      formData.append('g-recaptcha-response', recaptchaResponseToken);
       
       // Tambahkan field baru
       formData.append('profesi', this.report.profesi);
@@ -1114,14 +1241,19 @@ export default {
         })
         .catch(error => {
           this.isSubmitting = false;
-          if (error.response && error.response.status === 400) {
-            console.error('Validation errors:', error.response.data);
+          
+          // Specific handling for reCAPTCHA errors
+          if (error.response && error.response.data) {
+            const errorData = error.response.data;
+            const errorMsg = errorData.message || '';
             
             // Check if it's a reCAPTCHA error
-            if (error.response.data.message && error.response.data.message.includes('reCAPTCHA')) {
+            if (errorMsg.toLowerCase().includes('recaptcha') || 
+                errorData.errors && errorData.errors['g-recaptcha-response']) {
+              
               this.recaptchaError = 'Verifikasi reCAPTCHA gagal. Silakan coba lagi.';
               
-              // Reset reCAPTCHA
+              // Reset and reinitialize reCAPTCHA
               this.resetRecaptcha();
               
               Swal.fire({
@@ -1132,6 +1264,11 @@ export default {
               
               return;
             }
+          }
+          
+          // Handle other validation errors
+          if (error.response && error.response.status === 400) {
+            console.error('Validation errors:', error.response.data);
             
             let errorMessage = 'Terjadi kesalahan pada form:';
             const errors = error.response.data.errors || error.response.data;
@@ -1161,6 +1298,7 @@ export default {
         });
     },
     
+    // Modified resetForm method with improved reCAPTCHA reset
     resetForm() {
       this.report = {
         title: '',
@@ -1193,6 +1331,7 @@ export default {
         jenis_kelamin: '',
         umur_pelapor: ''
       };
+      
       this.selectedFiles = [];
       this.selectedBukti = [];
       this.showLainnyaInput = false;
@@ -1200,18 +1339,16 @@ export default {
       this.showBuktiWarning = false;
       this.showAgreementWarning = false;
       this.imagePreviews = [];
-      this.recaptchaVerified = false;
-      this.recaptchaResponse = null;
-      this.recaptchaError = null;
-      
-      // Reset reCAPTCHA
-      this.resetRecaptcha();
       
       // Reset file input
       const fileInput = document.getElementById('evidence');
       if (fileInput) fileInput.value = '';
+      
+      // Reset reCAPTCHA - using our improved reset method
+      this.resetRecaptcha();
     }
   },
+  
   computed: {
     filteredCategories() {
       return this.categories.filter(category => 
