@@ -1222,8 +1222,7 @@ export default {
         return;
       }
       
-      // Get the latest reCAPTCHA response directly from the API
-      // This is more reliable than using the stored value
+      // Get the latest reCAPTCHA response directly
       const recaptchaResponseToken = this.getRecaptchaResponse();
       
       // Validate reCAPTCHA
@@ -1310,19 +1309,36 @@ export default {
       }
       
       // Agreement field
-      formData.append('agreement', this.report.agreement);
+      formData.append('agreement', this.report.agreement ? 1 : 0);
       
       // Show loading state
       this.isSubmitting = true;
       
-      axios.post('https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Accept': 'application/json'
-        }
-      })
-        .then(response => {
+      // Create XMLHttpRequest
+      const xhr = new XMLHttpRequest();
+      
+      // Configure request
+      xhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan', true);
+      
+      // Set timeout (30 seconds)
+      xhr.timeout = 30000;
+      
+      // Handle successful completion
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          // Success response
           this.isSubmitting = false;
+          
+          // Parse response if needed
+          let responseData;
+          try {
+            responseData = JSON.parse(xhr.responseText);
+            console.log('Response data:', responseData);
+          } catch (e) {
+            console.log('Response is not JSON:', xhr.responseText);
+          }
+          
+          // Show success message
           Swal.fire({
             icon: 'success',
             title: 'Sukses!',
@@ -1333,26 +1349,27 @@ export default {
           }).then(() => {
             this.$router.push('/pelaporan/kekerasan-seksual');
           });
+          
           this.resetForm();
-        })
-        .catch(error => {
+        } else {
+          // Error response
           this.isSubmitting = false;
           
-          if (error.response) {
-            console.log('Status:', error.response.status);
-            console.log('Data:', error.response.data);
-            console.log('Headers:', error.response.headers);
-            
-            let errorMessage = 'Terjadi kesalahan:';
+          let errorMessage = 'Terjadi kesalahan:';
+          
+          // Try to parse error response
+          try {
+            const errorResponse = JSON.parse(xhr.responseText);
+            console.log('Error response:', errorResponse);
             
             // Check if the error response has a detailed message
-            if (error.response.data && error.response.data.message) {
-              errorMessage += '\n- ' + error.response.data.message;
+            if (errorResponse && errorResponse.message) {
+              errorMessage += '\n- ' + errorResponse.message;
             }
             
             // Check for validation errors
-            if (error.response.data && error.response.data.errors) {
-              const errors = error.response.data.errors;
+            if (errorResponse && errorResponse.errors) {
+              const errors = errorResponse.errors;
               Object.keys(errors).forEach(key => {
                 if (Array.isArray(errors[key])) {
                   errorMessage += '\n- ' + errors[key].join(', ');
@@ -1361,28 +1378,72 @@ export default {
                 }
               });
             }
-            
-            Swal.fire({
-              icon: 'error',
-              title: 'Form Submission Error',
-              text: errorMessage
-            });
-          } else if (error.request) {
-            console.log('Request made but no response received:', error.request);
-            Swal.fire({
-              icon: 'error',
-              title: 'Network Error',
-              text: 'Server tidak merespon. Periksa koneksi internet Anda.'
-            });
-          } else {
-            console.log('Error setting up request:', error.message);
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'Terjadi kesalahan saat mengirim form: ' + error.message
-            });
+          } catch (e) {
+            console.log('Error parsing response:', e);
+            errorMessage += '\n- ' + xhr.statusText;
           }
+          
+          Swal.fire({
+            icon: 'error',
+            title: 'Form Submission Error',
+            text: errorMessage
+          });
+          
+          console.log('Status:', xhr.status);
+          console.log('Response:', xhr.responseText);
+        }
+      };
+      
+      // Handle network errors
+      xhr.onerror = () => {
+        this.isSubmitting = false;
+        console.log('Network error occurred');
+        
+        Swal.fire({
+          icon: 'error',
+          title: 'Network Error',
+          text: 'Server tidak merespon. Periksa koneksi internet Anda.'
         });
+      };
+      
+      // Handle timeouts
+      xhr.ontimeout = () => {
+        this.isSubmitting = false;
+        console.log('Request timed out');
+        
+        Swal.fire({
+          icon: 'error',
+          title: 'Timeout Error',
+          text: 'Permintaan melebihi batas waktu. Silakan coba lagi.'
+        });
+      };
+      
+      // Add a progress indicator for larger files
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable && this.report.evidenceFiles && this.report.evidenceFiles.length > 0) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
+          
+          // You could update a progress bar here if you have one
+        }
+      };
+      
+      // Log when request starts
+      console.log('Starting XHR request');
+      
+      // Send the request
+      try {
+        xhr.send(formData);
+      } catch (error) {
+        this.isSubmitting = false;
+        console.error('Error sending form:', error);
+        
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Terjadi kesalahan saat mengirim form: ' + error.message
+        });
+      }
     },
     
     // Modified resetForm method with improved reCAPTCHA reset
