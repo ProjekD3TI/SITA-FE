@@ -24,7 +24,7 @@ const mahasiswa = ref(
     });
 </script>
 <template>
-    <Breadcrumb :items="breadcrumbItems" />
+    <Breadcrumb />
     <div class="card-rounded card-rounded bg-white p-4 lg:p-8">
         <div class="max-w-screen-2xl mx-auto">
             <UserData
@@ -37,36 +37,44 @@ const mahasiswa = ref(
             <div class="flex flex-col gap-4 mt-4">
                 <div class="flex flex-col gap-4 opacity-50">
                     <InputText
+                        id="ketua-penguji"
                         label="Ketua Penguji"
                         placeholder="Pilih Dosen"
                         :value="penguji.ketua"
-                        disabled="true"
+                        :disabled="true"
                     />
                     <InputText
+                        id="sekretaris-penguji"
                         label="Sekretaris Penguji"
                         placeholder="Pilih Dosen"
                         :value="penguji.sekretaris"
-                        disabled="true"
+                        :disabled="true"
                     />
                     <InputText
+                        id="penguji"
                         label="Penguji"
                         placeholder="Pilih Dosen"
                         :value="penguji.penguji"
-                        disabled="true"
+                        :disabled="true"
                     />
                 </div>
                 <div class="flex flex-wrap sm:flex-nowrap gap-4 justify-between">
                     <InputDate
+                        id="tanggal"
                         label="Tanggal"
                         :value="Today"
                     />
                     <InputDropdown
+                        id="ruang"
                         label="Ruang"
                         placeholder="Pilih ruang"
+                        :options="[{ value: 'Ruang 101', label: 'Ruang 101' }, { value: 'Ruang 102', label: 'Ruang 102' }]"
                     />
                     <InputDropdown
+                        id="sesi"
                         label="Sesi"
                         placeholder="Pilih sesi"
+                        :options="[{ value: 'Sesi 1', label: 'Sesi 1' }, { value: 'Sesi 2', label: 'Sesi 2' }]"
                     />
                 </div>
                 <Button

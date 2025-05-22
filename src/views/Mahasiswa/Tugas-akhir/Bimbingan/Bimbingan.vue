@@ -260,7 +260,7 @@ onMounted(async () => {
 
     <div v-else>
       <!-- Breadcrumb untuk navigasi -->
-      <Breadcrumb :items="breadcrumbItems" />
+      <Breadcrumb />
 
       <!-- Error State -->
       <ErrorMsg v-if="error" :msg="error" />

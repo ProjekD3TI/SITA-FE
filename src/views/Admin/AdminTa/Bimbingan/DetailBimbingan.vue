@@ -124,7 +124,7 @@ function toRoman(num) {
 }
 </script>
 <template>
-    <Breadcrumb :items="breadcrumbItems"/>
+    <Breadcrumb />
     <Loading v-if="loading" />
     <ErrorMsg v-else-if="error" :message="errorMessage" />
     <div v-else>

@@ -7,9 +7,13 @@ import DefaultAvatar from '@/assets/images/Profile Avatar.svg';
 import StatusLabel from '@/components/Tugas-akhir/Label.vue';
 import Breadcrumb from '@/components/Tugas-akhir/Breadcrumb.vue';
 import ModalTimer from '@/components/Tugas-akhir/Modals/ModalTimer.vue';
+import DefaultModal from '@/components/Tugas-akhir/Modals/DefaultModal.vue';
 import Slider from '@/components/Tugas-akhir/Slider.vue';
 import { ref, computed, watch } from 'vue';
 import router from '@/router';
+import ValidationFile from '@/components/Tugas-akhir/Forms/ValidationFile.vue';
+import FilePDFDummy from '@/assets/SV-Undangan Sosialisasi Teknis dan Informasi Lomba OLIVIA Tahun 2025.pdf';
+import InputTextarea from '@/components/Tugas-akhir/Forms/InputTextarea.vue';
 
 // Search dan filter state
 const statusForm = ref(0);
@@ -17,6 +21,19 @@ const searchQueryPengajuan = ref('');
 const searchQuerySeminar = ref('');
 const selectedStatusesPengajuan = ref([]);
 const selectedStatusesSeminar = ref([]);
+
+const filePDF = FilePDFDummy;
+
+const modalRef = ref(false);
+const modalHeadText = ref('');
+const modalBodyText = ref('');
+const fileNaskahProposal = ref(null);
+const fileTranskrip = ref(null);
+const tempValidasi = ref({
+  naskah_proposal_status_valid: null,
+  file_transkrip_status_valid: null,
+});
+const catatan = ref('');
 
 // debug 
 watch(statusForm, (val) => {
@@ -29,6 +46,20 @@ watch(statusForm, (val) => {
 
 
 // Data dummy
+function getProposalStatus(berkas) {
+  // Ambil semua status valid dari setiap berkas
+  const statusList = berkas.flatMap(b => [
+    b.naskah_proposal_status_valid,
+    b.file_transkrip_status_valid
+  ]);
+  if (statusList.every(s => s === 1)) return '1'; // Semua valid
+  if (statusList.some(s => s === 2)) return '2';  // Ada yang ditolak
+  if (statusList.every(s => s === 0)) return '0'; // Semua menunggu
+  // Jika campuran 0 dan 1, anggap menunggu (atau bisa custom sesuai kebutuhan)
+  return '0';
+}
+
+// Ganti status di proposalMhs agar dinamis berdasarkan berkas
 const proposalMhs = ref([
   {
     nim: '12345678',
@@ -38,7 +69,16 @@ const proposalMhs = ref([
     dosen_pembimbing: 'Dr. Budi Santoso',
     nilai: 90,
     catatan: 'Sangat Baik',
-    status: '1',
+    berkas: [
+      {
+        naskah_proposal: "naskah-proposal-ta.pdf",
+        naskah_proposal_url: filePDF,
+        naskah_proposal_status_valid: 1, 
+        file_transkrip: "transkrip-nilai-mahasiswa.pdf",
+        file_transkrip_url: filePDF,
+        file_transkrip_status_valid: 1,
+      },
+    ],
   },
   {
     nim: '87654321',
@@ -48,7 +88,16 @@ const proposalMhs = ref([
     dosen_pembimbing: 'Prof. Andi Wijaya',
     nilai: 85,
     catatan: 'Baik',
-    status: '0',
+    berkas: [
+      {
+        naskah_proposal: "naskah-proposal-ta.pdf",
+        naskah_proposal_url: filePDF,
+        naskah_proposal_status_valid: 0, 
+        file_transkrip: "transkrip-nilai-mahasiswa.pdf",
+        file_transkrip_url: filePDF,
+        file_transkrip_status_valid: 0,
+      },
+    ],
   },
   {
     nim: '11223344',
@@ -58,9 +107,26 @@ const proposalMhs = ref([
     dosen_pembimbing: 'Dr. Clara Susanti',
     nilai: null,
     catatan: null,
-    status: '2',
+    berkas: [
+      {
+        naskah_proposal: "naskah-proposal-ta.pdf",
+        naskah_proposal_url: filePDF,
+        naskah_proposal_status_valid: 1, 
+        file_transkrip: "transkrip-nilai-mahasiswa.pdf",
+        file_transkrip_url: filePDF,
+        file_transkrip_status_valid: 2,
+      },
+    ],
   },
 ]);
+
+// Computed untuk menambahkan status dinamis ke setiap proposal
+const proposalMhsWithStatus = computed(() =>
+  proposalMhs.value.map(item => ({
+    ...item,
+    status: getProposalStatus(item.berkas)
+  }))
+);
 
 const statuses = [
   { value: '1', label: 'Disetujui' },
@@ -87,7 +153,7 @@ const getStatusLabel = (status) => {
 };
 
 const countStatus0 = computed(() =>
-  proposalMhs.value.filter(item => item.status === '0').length
+  proposalMhsWithStatus.value.filter(item => item.status === '0' || null).length
 );
 
 
@@ -107,7 +173,7 @@ const tabs = [
 
 // Filter dan search mirip Bimbingan
 const filteredProposalPengajuan = computed(() => {
-  let data = proposalMhs.value;
+  let data = proposalMhsWithStatus.value;
   if (selectedStatusesPengajuan.value.length > 0) {
     data = data.filter(item =>
       selectedStatusesPengajuan.value.includes(item.status)
@@ -126,7 +192,7 @@ const filteredProposalPengajuan = computed(() => {
 });
 
 const filteredProposalSeminar = computed(() => {
-  let data = proposalMhs.value;
+  let data = proposalMhsWithStatus.value;
   if (selectedStatusesSeminar.value.length > 0) {
     data = data.filter(item =>
       selectedStatusesSeminar.value.includes(item.status)
@@ -169,11 +235,39 @@ const handleRowClickSeminar = (item) => {
     params: { nim: item.nim },
   });
 };
+// Handler row click untuk tab Pengajuan
 const handleRowClickPengajuan = (item) => {
-  router.push({
-    name: 'DetailPengajuanForAdmin',
-    params: { nim: item.nim },
-  });
+  if (item.status === '0') {
+    // Status menunggu, redirect ke detail
+    router.push({
+      name: 'DetailPengajuanForAdmin',
+      params: { nim: item.nim },
+    });
+  } else {
+    // Status diterima/ditolak, buka modal
+    modalHeadText.value = `Detail Validasi Proposal`;
+    modalBodyText.value = `${item.nim} | ${item.nama} | ${item.judul_proposal_ta}.`;
+    // Siapkan data file dan status validasi
+    fileNaskahProposal.value = item.berkas[0]
+      ? {
+          name: item.berkas[0].naskah_proposal,
+          url: item.berkas[0].naskah_proposal_url
+        }
+      : null;
+
+    fileTranskrip.value = item.berkas[0]
+      ? {
+          name: item.berkas[0].file_transkrip,
+          url: item.berkas[0].file_transkrip_url
+        }
+      : null;
+    tempValidasi.value = {
+      naskah_proposal_status_valid: item.berkas[0]?.naskah_proposal_status_valid ?? null,
+      file_transkrip_status_valid: item.berkas[0]?.file_transkrip_status_valid ?? null,
+    };
+    catatan.value = item.catatan || 'Lorem ipsum';
+    modalRef.value = true;
+  }
 };
 
 const pendingStatusForm = ref(0);
@@ -214,10 +308,10 @@ const modalTimerBodyText = computed(() => {
   <router-view v-if="$route.path.includes('detail-pengajuan')"></router-view>
   <router-view v-else-if="$route.path.includes('detail-proposal')"></router-view>
   <div v-else>
-    <Breadcrumb :items="Breadcrumb" />
+    <Breadcrumb />
     <TabDiv
       :tabs="tabs"
-      use-named-slots="true"
+      :use-named-slots="true"
       @tab-changed="handleTabChange"
     >
       <template #1>
@@ -320,6 +414,35 @@ const modalTimerBodyText = computed(() => {
       </template>
     </TabDiv>
   </div>
+  <DefaultModal
+    v-if="modalRef"
+    @close="modalRef = false"
+    :headText="modalHeadText"
+    :bodyText="modalBodyText"
+  >
+  <div class="flex flex-col gap-4 mt-4">
+      <ValidationFile
+        id="naskah-ta"
+        label="Naskah Tugas Akhir"
+        :fileFromDatabase="fileNaskahProposal"
+        :statusValid="tempValidasi.naskah_proposal_status_valid"
+        @update:statusValid="tempValidasi.naskah_proposal_status_valid = $event"
+      />
+      <ValidationFile
+        id="transkrip-nilai-mahasiswa"
+        label="Transkrip Nilai Mahasiswa"
+        :fileFromDatabase="fileTranskrip"
+        :statusValid="tempValidasi.file_transkrip_status_valid"
+        @update:statusValid="tempValidasi.file_transkrip_status_valid = $event"
+      />
+      <InputTextarea
+        id="catatan"
+        label="Catatan"
+        placeholder="Masukkan catatan"
+        v-model="catatan"     
+      />
+  </div>
+  </DefaultModal>
   <ModalTimer
     v-if="modalTimerVisible"
     @close="handleModalCancel"

@@ -9,7 +9,7 @@ defineProps({
     default: 'danger'
   },
   title: {
-    type: String,
+    type: [String, Number],
     required: true
   },
   subtitle: {

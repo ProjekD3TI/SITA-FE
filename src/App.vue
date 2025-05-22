@@ -1,10 +1,10 @@
 <!-- src/App.vue -->
 <template>
-  <Header />
+  <!-- <Header /> -->
   <div id="app">
     <router-view />
   </div>
-  <Footer />
+  <!-- <Footer /> -->
 </template>
 
 <script>

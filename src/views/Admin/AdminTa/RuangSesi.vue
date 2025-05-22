@@ -1,11 +1,11 @@
 <script setup>
-import { ref, computed } from "vue";
-import TabDiv from "@/components/Tugas-akhir/TabDiv.vue";
-import Modal from "@/components/Tugas-akhir/Modals/ModalRuang&sesi.vue";
-import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
-import Button from "@/components/Tugas-akhir/Button.vue";
-import ModalDeleteRuangSesi from "@/components/Tugas-akhir/Modals/ModalDeleteRuang&sesi.vue";
-import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
+import { ref, computed } from 'vue';
+import TabDiv from '@/components/Tugas-akhir/TabDiv.vue';
+import Modal from '@/components/Tugas-akhir/Modals/ModalRuang&sesi.vue'; 
+import SearchBar from '@/components/Tugas-akhir/Forms/SearchBar.vue';
+import Button from '@/components/Tugas-akhir/Button.vue';
+import ModalDeleteRuangSesi from '@/components/Tugas-akhir/Modals/ModalDeleteRuang&sesi.vue';
+import Breadcrumb from '@/components/Tugas-akhir/Breadcrumb.vue';
 
 // Data tab
 const tabs = [
@@ -156,7 +156,7 @@ const confirmDeleteSesi = (sesi) => {
 </script>
 
 <template>
-  <Breadcrumb :items="breadcrumbItems" />
+  <Breadcrumb />
   <TabDiv :tabs="tabs" :use-named-slots="true">
     <!-- === TAB 1: RUANG === -->
     <template #tab1>

@@ -246,10 +246,10 @@ function handleFilterBimbingan({ values }) {
     <router-view v-else-if="$route.path.includes('detail-bimbingan')"></router-view>
 
     <div v-else>
-      <Breadcrumb :items="breadcrumbItems" />
+      <Breadcrumb />
       <TabDiv
           :tabs="tabs"
-          use-named-slots="true"
+          :use-named-slots="true"
           @tab-changed="handleTabChange"
 
       >

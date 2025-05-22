@@ -79,7 +79,7 @@ const selectedPengujiDosenData = computed(() => {
 });
 </script>
 <template>
-    <Breadcrumb :items="breadcrumbItems" />
+    <Breadcrumb />
     <div class="card-rounded card-rounded bg-white p-4 lg:p-8">
         <div class="max-w-screen-2xl mx-auto">
             <UserData
@@ -92,6 +92,7 @@ const selectedPengujiDosenData = computed(() => {
             <div class="flex flex-col gap-4 mt-4">
                 <div class="flex flex-col gap-2 ">
                     <InputDropdown
+                        id="ketua-penguji"
                         label="Ketua Penguji"
                         placeholder="Pilih Dosen"
                         :options="pembimbings"
@@ -110,11 +111,12 @@ const selectedPengujiDosenData = computed(() => {
                         </div>
                     </div>
                     <InputText
+                        id="dosen-pembimbing"
                         class="mt-2"
                         label="Sekretaris Penguji"
                         placeholder="Pilih Dosen"
                         :value="tugas_akhir.dosen_pembimbing.name"
-                        disabled="true"
+                        :disabled="true"
                     />
                     <div class="flex mb-2 gap-2 sm:gap-4">
                         <div  class="flex gap-2 sm:gap-4">
@@ -129,6 +131,7 @@ const selectedPengujiDosenData = computed(() => {
                         </div>
                     </div>
                     <InputDropdown
+                        id="penguji"
                         class="mt-2"
                         label="Penguji"
                         placeholder="Pilih Dosen"

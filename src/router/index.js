@@ -26,10 +26,10 @@ import DetailBimbinganForAdmin from "../views/Admin/AdminTa/Bimbingan/DetailBimb
 import PlotPembimbingForAdmin from "../views/Admin/AdminTa/Bimbingan/PlotPembimbing.vue";
 // Route Mhs TA
 import DashboardTAMhs from "../views/Mahasiswa/Tugas-akhir/Dashboard.vue";
-import BimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan/Index.vue";
+import BimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan/Bimbingan.vue";
 import TambahBimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan/Tambah.vue";
 import ProposalforMhs from "../views/Mahasiswa/Tugas-akhir/Proposal.vue";
-import TugasAkhirforMhs from "../views/Mahasiswa/Tugas-akhir/UjianTA/Daftar.vue";
+import TugasAkhirforMhs from "../views/Mahasiswa/Tugas-akhir/UjianTA/UjianTA.vue";
 import detailUjianTAforMhs from "../views/Mahasiswa/Tugas-akhir/UjianTA/Detail.vue";
 // Route Dosen TA
 import DashboardTADosen from "../views/Dosen/Tugas-akhir/Dashboard.vue";
@@ -39,7 +39,6 @@ import InputNilaiBimbinganforDosen from "@/views/Dosen/Tugas-akhir/Bimbingan/Inp
 import UjianTAforDosen from "../views/Dosen/Tugas-akhir/UjianTA/UjianTA.vue";
 import detailUjianTAforDosen from "../views/Dosen/Tugas-akhir/UjianTA/DetailUjianTA.vue";
 import InputNilaiUjianTAforDosen from "@/views/Dosen/Tugas-akhir/UjianTA/InputNilaiUjianTA.vue";
-import path from "path";
 
 //define a routes
 const routes = [
@@ -167,10 +166,10 @@ const routes = [
         meta: {
           breadcrumb: "Tugas Akhir",
         },
-        name: "DashboardTugasAkhirMhs",
         children: [
           {
             path: "",
+            name: "DashboardTugasAkhirMhs",
             component: DashboardTAMhs,
             meta: {
               breadcrumb: "Dashboard",
@@ -396,7 +395,6 @@ const routes = [
   // admin ta
   {
     path: "/admin-ta/tugas-akhir",
-    name: "DashboardAdminTa",
     component: AdminLayoutTA,
     meta: {
       requiresAuth: true,
@@ -411,6 +409,7 @@ const routes = [
       // },
       {
         path: "",
+        name: "DashboardAdminTa",
         component: DashboardTAAdmin,
         meta: {
           breadcrumb: "Dashboard",
@@ -514,16 +513,16 @@ const routes = [
         path: "ruang-sesi",
         component: RuangSesiforAdmin,
         meta: {
-          breadcrumb: "Ruang Sesi",
+          breadcrumb: "Ruang & Sesi",
         },
       },
       {
         path: "kategori",
         component: KategoriforAdmin,
         meta: {
-          breadcrumb: "Kategori",
+          breadcrumb: "Kategori Tugas Akhir",
         },
-      },
+      }
     ],
   },
 

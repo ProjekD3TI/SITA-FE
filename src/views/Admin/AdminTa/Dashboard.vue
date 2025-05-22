@@ -34,19 +34,19 @@ const summaryCards = [
   {
     icon: iconPaths.book,
     iconColor: "danger",
-    title: ActiveTA,
+    title: ActiveTA.value,
     subtitle: "Tugas Akhir Aktif",
   },
   {
     icon: iconPaths.calendar,
     iconColor: "success",
-    title: ScheduledUjian,
+    title: ScheduledUjian.value,
     subtitle: "Ujian Terjadwal",
   },
   {
     icon: iconPaths.graduation,
     iconColor: "warning",
-    title: TotalBimbingan,
+    title: TotalBimbingan.value ,
     subtitle: "Mahasiswa Terdaftar",
   },
 ];
@@ -163,7 +163,7 @@ const BarChartData = ref(
 )
 </script>
 <template>
-<Breadcrumb :items="breadcrumbItems" />
+<Breadcrumb />
     <!-- Status card & Summary Cards -->
     <div class="flex flex-col sm:flex-row sm:flex-wrap gap-4">
       <!-- Doughnut Card -->

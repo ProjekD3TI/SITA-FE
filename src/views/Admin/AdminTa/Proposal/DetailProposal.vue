@@ -51,7 +51,7 @@ const goToInputNilai = () => {
     <router-view v-if="$route.path.includes('input-nilai')"></router-view>
 
     <div v-else>
-        <Breadcrumb :items="breadcrumbItems" />
+        <Breadcrumb />
         <div class="card-rounded bg-white p-6 lg:p-8 mt-6">
             <div class="max-w-screen-2xl mx-auto">
                 <div class="flex flex-col md:flex-row">
@@ -109,7 +109,6 @@ const goToInputNilai = () => {
                                 variant="primary"
                                 size="lg"
                                 class="w-fit sm:flex hidden"
-                                :class="buttonClasses"
                                 @click="goToInputNilai"
                             >
                             Input Nilai
@@ -120,7 +119,6 @@ const goToInputNilai = () => {
                                 variant="primary"
                                 size="md"
                                 class="w-fit sm:hidden"
-                                :class="buttonClasses"
                                 @click="goToInputNilai"
                             >
                             Input Nilai
@@ -131,7 +129,6 @@ const goToInputNilai = () => {
                                 variant="success"
                                 size="lg"
                                 class="w-fit sm:flex hidden"
-                                :class="buttonClasses"
                                 @click="openNilaiModal"
                             >
                             Lihat Nilai
@@ -142,7 +139,6 @@ const goToInputNilai = () => {
                                 variant="success"
                                 size="md"
                                 class="w-fit sm:hidden"
-                                :class="buttonClasses"
                                 @click="openNilaiModal"
                             >
                             Lihat Nilai

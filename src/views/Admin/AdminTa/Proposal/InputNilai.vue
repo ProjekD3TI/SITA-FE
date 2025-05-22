@@ -7,7 +7,7 @@ import InputTextArea from '@/components/Tugas-akhir/Forms/InputTextarea.vue';
 
 </script>
 <template>
-    <Breadcrumb :items="breadcrumbItems"/>
+    <Breadcrumb />
     <div class="card-rounded bg-white p-6 lg:p-8 mt-6">
         <div class="max-w-screen-2xl mx-auto">
             <div class="">

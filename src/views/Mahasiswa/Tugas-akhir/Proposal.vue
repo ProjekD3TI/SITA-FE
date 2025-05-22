@@ -25,7 +25,6 @@ const fileProposal = ref(null);
 const fileTranskrip = ref(null);
 
 // Student state
-const statusProposal = ref(null); // 0: menunggu, 1: diterima, 2: ditolak
 const hasPembimbing = ref(true); // true jika sudah memiliki pembimbing, false jika belum
 const dinilai = ref(true); // true jika sudah terjadwal, false jika belum
 
@@ -43,9 +42,36 @@ const proposalData = {
   judul_proposal: "Pengembangan El Pikir Satu Dua Tiga",
   file_proposal: "naskah-proposal-ta.pdf",
   file_proposal_url: filePDF,
+  file_proposal_status_valid: 1,
   file_transkrip: "transkrip-nilai-mahasiswa.pdf",
   file_transkrip_url: filePDF,
+  file_transkrip_status_valid: 1,
 };
+const overallStatus = computed(() => {
+  // Jika salah satu status 2 (Ditolak), maka Ditolak
+  if (
+    proposalData.file_proposal_status_valid === STATUS.REJECTED ||
+    proposalData.file_transkrip_status_valid === STATUS.REJECTED
+  ) {
+    return STATUS.REJECTED;
+  }
+  // Jika semua 1 (Diterima), maka Diterima
+  if (
+    proposalData.file_proposal_status_valid === STATUS.ACCEPTED &&
+    proposalData.file_transkrip_status_valid === STATUS.ACCEPTED
+  ) {
+    return STATUS.ACCEPTED;
+  }
+  // Jika ada yang 0 (Menunggu), maka Menunggu
+  if (
+    proposalData.file_proposal_status_valid === STATUS.WAITING ||
+    proposalData.file_transkrip_status_valid === STATUS.WAITING
+  ) {
+    return STATUS.WAITING;
+  }
+  // Default
+  return STATUS.NULL;
+});
 
 // Demo data for tugas akhir results
 const tugas_akhir = {
@@ -53,7 +79,6 @@ const tugas_akhir = {
   catatan_proposal: "Proposal sudah sesuai dengan pedoman",
 };
 
-// User data configuration
 const userDataConfig = computed(() => {
   const config = {
     headText: "Dosen Pembimbing",
@@ -61,12 +86,11 @@ const userDataConfig = computed(() => {
     headText2: "Kategori TA",
     bodyText2: "Internet of Things",
     tahunAjaran: "2023/2024",
-    showStatus: statusProposal.value !== null
+    showStatus: proposalData.file_proposal && proposalData.file_transkrip_status_valid !== null
   };
 
-  // Add status properties if we're showing status
   if (config.showStatus) {
-    switch (statusProposal.value) {
+    switch (overallStatus.value) {
       case STATUS.WAITING:
         config.status = "warning";
         config.statusLabel = "Menunggu";
@@ -85,21 +109,20 @@ const userDataConfig = computed(() => {
   return config;
 });
 
-// Form configuration based on proposal status
 const formConfig = computed(() => {
-  const isDisabled = statusProposal.value === STATUS.WAITING || 
-                    statusProposal.value === STATUS.ACCEPTED;
-  const isOpacity = statusProposal.value === STATUS.WAITING || 
-                   statusProposal.value === STATUS.ACCEPTED;
-                  
+  const isDisabled =
+    proposalData.file_proposal &&
+    (overallStatus.value === STATUS.WAITING || overallStatus.value === STATUS.ACCEPTED);
+  const isOpacity = isDisabled;
+
   return {
     isDisabled,
     wrapperClass: isOpacity ? 'opacity-50' : '',
-    showSubmitButton: statusProposal.value === STATUS.NULL || 
-                      statusProposal.value === STATUS.REJECTED
+    showSubmitButton:
+      proposalData.file_proposal &&
+      (overallStatus.value === STATUS.NULL || overallStatus.value === STATUS.REJECTED)
   };
 });
-
 // Methods
 const showModal = () => {
   modalRef.value = true;
@@ -146,7 +169,7 @@ const handleSubmit = () => {
 
     <!-- Has Pembimbing States -->
     <template v-if="hasPembimbing">
-      <Breadcrumb :items="breadcrumbItems" />
+      <Breadcrumb />
       
       <div class="card-rounded bg-white p-4 lg:p-8">
         <!-- User Data Section -->
@@ -162,23 +185,23 @@ const handleSubmit = () => {
               label="Judul Proposal Tugas Akhir"
               placeholder="Masukkan judul proposal tugas akhir"
               v-model="judulProposal"
-              :value="statusProposal !== STATUS.NULL ? proposalData.judul_proposal : ''"
+              :value="proposalData.judul_proposal !== null ? proposalData.judul_proposal : ''"
               :disabled="formConfig.isDisabled"
             />
             <InputFile
               id="naskah-proposal-ta"
               label="Naskah Proposal Tugas Akhir"
               v-model="fileProposal"
-              :existingFileName="statusProposal !== STATUS.NULL ? proposalData.file_proposal : ''"
-              :existingFileUrl="statusProposal !== STATUS.NULL ? proposalData.file_proposal_url : ''"
+              :existingFileName="proposalData.file_proposal ? proposalData.file_proposal : ''"
+              :existingFileUrl="proposalData.file_proposal_url ? proposalData.file_proposal_url : ''"
               :disabled="formConfig.isDisabled"
             />
             <InputFile
               id="transkrip-nilai-mahasiswa"
               label="Transkrip Nilai Mahasiswa"
               v-model="fileTranskrip"
-              :existingFileName="statusProposal !== STATUS.NULL ? proposalData.file_transkrip : ''"
-              :existingFileUrl="statusProposal !== STATUS.NULL ? proposalData.file_transkrip_url : ''"
+              :existingFileName="proposalData.file_transkrip ? proposalData.file_transkrip : ''"
+              :existingFileUrl="proposalData.file_transkrip_url ? proposalData.file_transkrip_url : ''"
               :disabled="formConfig.isDisabled"
             />
           </div>
@@ -206,7 +229,7 @@ const handleSubmit = () => {
             </template>
             
             <!-- Nilai Button - show for accepted proposal -->
-            <template v-if="statusProposal === STATUS.ACCEPTED">
+              <template v-if="proposalData.file_proposal_status_valid === STATUS.ACCEPTED && proposalData.file_transkrip_status_valid === STATUS.ACCEPTED">
               <Tooltip v-if="!dinilai" text="Menunggu Dinilai" size="md" position="left">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />

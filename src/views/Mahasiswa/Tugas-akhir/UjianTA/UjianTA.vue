@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, reactive } from 'vue';
 import Button from '@/components/Tugas-akhir/Button.vue';
 import InputText from '@/components/Tugas-akhir/Forms/InputText.vue';
 import InputFile from '@/components/Tugas-akhir/Forms/InputFile.vue';
@@ -24,7 +24,6 @@ const STATUS = {
 const loading = ref(false);
 const error = ref(null);
 const modalRef = ref(false);
-const statusPendaftaran = ref(1); // Status pendaftaran ujian
 const bimbinganCount = ref(9); // Jumlah bimbingan yang telah dilakukan
 const scheduled = ref(true); // Status apakah ujian sudah dijadwalkan
 const judulTugasAkhir = ref(''); // Form input for judul
@@ -44,6 +43,44 @@ const minimalBimbingan = computed(() => {
   return bimbinganCount.value >= 9;
 });
 
+const formConfig = computed(() => {
+  const statusList = [
+    daftarTugasAkhir.naskah_ta_status_valid,
+    daftarTugasAkhir.krs_status_valid,
+    daftarTugasAkhir.persetujuan_pembimbing_status_valid,
+    daftarTugasAkhir.file_transkrip_status_valid,
+    daftarTugasAkhir.sertifikat_kompetensi_status_valid,
+    daftarTugasAkhir.toeic_status_valid,
+    daftarTugasAkhir.berita_acara_semhas_status_valid,
+    daftarTugasAkhir.masa_perpanjangan_studi_status_valid
+  ];
+
+  let isDisabled = false;
+  let status = STATUS.NULL;
+
+  if (statusList.includes(2)) {
+    isDisabled = false;
+    status = STATUS.REJECTED;
+  } else if (statusList.every(s => s === 1)) {
+    isDisabled = true;
+    status = STATUS.ACCEPTED;
+  } else if (statusList.some(s => s === 0)) {
+    isDisabled = true;
+    status = STATUS.WAITING;
+  }
+
+  return {
+    isDisabled,
+    wrapperClass: isDisabled ? 'opacity-50' : '',
+    showSubmitButton: status === STATUS.NULL || status === STATUS.REJECTED,
+    status // <-- pastikan ini ada!
+  };
+});
+
+// Ganti statusPendaftaran dengan computed dari status formConfig
+const statusPendaftaran = computed(() => formConfig.value.status);
+
+// userDataConfig juga gunakan statusPendaftaran yang baru
 const userDataConfig = computed(() => {
   const config = {
     headText: "Dosen Pembimbing",
@@ -74,40 +111,35 @@ const userDataConfig = computed(() => {
   return config;
 });
 
-const formConfig = computed(() => {
-  const isDisabled = statusPendaftaran.value === STATUS.WAITING || 
-                    statusPendaftaran.value === STATUS.ACCEPTED;
-  
-  return {
-    isDisabled,
-    wrapperClass: isDisabled ? 'opacity-50' : '',
-    showSubmitButton: statusPendaftaran.value === STATUS.NULL || 
-                      statusPendaftaran.value === STATUS.REJECTED
-  };
-});
-
-
 // Data for Ujian TA
-const daftarTugasAkhir = {
+const daftarTugasAkhir = reactive({
   id: 1,
   judul_tugas_akhir: "Pengembangan El Pikir Satu Dua Tiga",
   naskah_ta: "naskah_ta.pdf",
   naskah_ta_url: PDF_SAMPLE,
+  naskah_ta_status_valid: 0,
   krs: "krs.pdf",
   krs_url: PDF_SAMPLE,
+  krs_status_valid: 0,
   persetujuan_pembimbing: "bukti_persetujuan_pembimbing.pdf",
   persetujuan_pembimbing_url: PDF_SAMPLE,
+  persetujuan_pembimbing_status_valid: 0,
   file_transkrip: "transkrip.pdf",
   file_transkrip_url: PDF_SAMPLE,
+  file_transkrip_status_valid: 0,
   sertifikat_kompetensi: "sertifikat_kompetensi.pdf",
   sertifikat_kompetensi_url: PDF_SAMPLE,
+  sertifikat_kompetensi_status_valid: 0,
   toeic: "sertifikat_toeic.pdf",
   toeic_url: PDF_SAMPLE,
+  toeic_status_valid: 0,
   berita_acara_semhas: "berita_acara_semhas.pdf",
   berita_acara_semhas_url: PDF_SAMPLE,
+  berita_acara_semhas_status_valid: 0,
   masa_perpanjangan_studi: "surat_perpanjangan_masa_studi.pdf",
   masa_perpanjangan_studi_url: PDF_SAMPLE,
-};
+  masa_perpanjangan_studi_status_valid: 0,
+});
 
 // Data for schedule modal
 const examiners = [

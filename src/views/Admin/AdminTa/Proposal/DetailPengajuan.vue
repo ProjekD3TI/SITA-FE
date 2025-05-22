@@ -6,70 +6,37 @@ import Button from '@/components/Tugas-akhir/Button.vue';
 import UserData from '@/components/Tugas-akhir/UserData.vue';
 import ModalTimer from '@/components/Tugas-akhir/Modals/ModalTimer.vue';
 import FilePDFDummy from '@/assets/SV-Undangan Sosialisasi Teknis dan Informasi Lomba OLIVIA Tahun 2025.pdf';
-import { ref, computed } from 'vue';
+import { ref, computed, reactive } from 'vue';
 
-const modalRef=ref(false);
+const modalRef = ref(false);
+const filePDF = FilePDFDummy;
 
-const openModal = () => {
-  modalRef.value = true;
-};
-
-// const PDF_SAMPLE = "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf";
-const PDF_SAMPLE = FilePDFDummy;
-
-// Data for Ujian TA
-const daftarTugasAkhir = {
+const proposalData = reactive({
   id: 1,
-  judul_tugas_akhir: "Pengembangan El Pikir Satu Dua Tiga",
-  naskah_ta: "naskah_ta.pdf",
-  naskah_ta_url: PDF_SAMPLE,
-  krs: "krs.pdf",
-  krs_url: PDF_SAMPLE,
-  persetujuan_pembimbing: "bukti_persetujuan_pembimbing.pdf",
-  persetujuan_pembimbing_url: PDF_SAMPLE,
-  file_transkrip: "transkrip.pdf",
-  file_transkrip_url: PDF_SAMPLE,
-  sertifikat_kompetensi: "sertifikat_kompetensi.pdf",
-  sertifikat_kompetensi_url: PDF_SAMPLE,
-  toeic: "sertifikat_toeic.pdf",
-  toeic_url: PDF_SAMPLE,
-  berita_acara_semhas: "berita_acara_semhas.pdf",
-  berita_acara_semhas_url: PDF_SAMPLE,
-  masa_perpanjangan_studi: "surat_perpanjangan_masa_studi.pdf",
-  masa_perpanjangan_studi_url: PDF_SAMPLE,
+  judul_proposal: "Pengembangan El Pikir Satu Dua Tiga",
+  naskah_proposal: "naskah-proposal-ta.pdf",
+  naskah_proposal_url: filePDF,
+  naskah_proposal_status_valid: 0, 
+  file_transkrip: "transkrip-nilai-mahasiswa.pdf",
+  file_transkrip_url: filePDF,
+  file_transkrip_status_valid: 0,
+});
+
+// Variabel sementara untuk validasi (untuk radio)
+const tempValidasi = reactive({
+  naskah_proposal_status_valid: proposalData.naskah_proposal_status_valid,
+  file_transkrip_status_valid: proposalData.file_transkrip_status_valid,
+});
+
+const fileNaskahProposal = {
+  name: proposalData.naskah_proposal,
+  url: proposalData.naskah_proposal_url,
 };
-const fileNaskahTA = computed(() => ({
-  name: daftarTugasAkhir.naskah_ta,
-  url: daftarTugasAkhir.naskah_ta_url,
-}));
-const fileKRS = computed(() => ({
-  name: daftarTugasAkhir.krs,
-  url: daftarTugasAkhir.krs_url,
-}));
-const filePersetujuanPembimbing = computed(() => ({
-  name: daftarTugasAkhir.persetujuan_pembimbing,
-  url: daftarTugasAkhir.persetujuan_pembimbing_url,
-}));
-const fileTranskrip = computed(() => ({
-  name: daftarTugasAkhir.file_transkrip,
-  url: daftarTugasAkhir.file_transkrip_url,
-}));
-const fileSertifikatKompetensi = computed(() => ({
-  name: daftarTugasAkhir.sertifikat_kompetensi,
-  url: daftarTugasAkhir.sertifikat_kompetensi_url,
-}));
-const fileTOEIC = computed(() => ({
-  name: daftarTugasAkhir.toeic,
-  url: daftarTugasAkhir.toeic_url,
-}));
-const fileBeritaAcaraSemhas = computed(() => ({
-  name: daftarTugasAkhir.berita_acara_semhas,
-  url: daftarTugasAkhir.berita_acara_semhas_url,
-}));
-const fileMasaPerpanjanganStudi = computed(() => ({
-  name: daftarTugasAkhir.masa_perpanjangan_studi,
-  url: daftarTugasAkhir.masa_perpanjangan_studi_url,
-}));
+const fileTranskrip = {
+  name: proposalData.file_transkrip,
+  url: proposalData.file_transkrip_url,
+};
+
 const catatan = ref('');
 const mahasiswa = ref({
     nim: 'V234567890',
@@ -85,57 +52,71 @@ const tugas_akhir = ref({
     },
     tahun_ajaran: '2024/2025',
 })
+const naskahRef = ref(null);
+const transkripRef = ref(null);
+
+const handleValidasi = () => {
+  naskahRef.value.submitValidation();
+  transkripRef.value.submitValidation();
+  proposalData.naskah_proposal_status_valid = tempValidasi.naskah_proposal_status_valid;
+  proposalData.file_transkrip_status_valid = tempValidasi.file_transkrip_status_valid;
+  modalRef.value = true;
+};
 </script>
+
 <template>
-      <Breadcrumb :items="breadcrumbItems" />
-      <div class="card-rounded card-rounded bg-white p-4 lg:p-8">
-            <div class="flex flex-col gap-4 max-w-screen-2xl mx-auto">
-                  <UserData
-                        :headText="mahasiswa.nim"
-                        :bodyText="mahasiswa.name"
-                        :headText2="tugas_akhir.kategori"
-                        :bodyText2="tugas_akhir.judul_proposal_ta"
-                        :tahunAjaran="tugas_akhir.tahun_ajaran"
-                  />                  
-                  <!-- All the file uploads -->
-                  <ValidationFile
-                  id="naskah-ta"
-                  label="Naskah Tugas Akhir"
-                  :fileFromDatabase="fileNaskahTA"
-                  />
-                  
-                  <ValidationFile
-                  id="transkrip-nilai-mahasiswa"
-                  label="Transkrip Nilai Mahasiswa"
-                  :fileFromDatabase="fileTranskrip"
-                  />
-
-                  <InputTextArea
-                        id="catatan"
-                        label="Catatan"
-                        placeholder="Masukkan catatan"
-                        v-model="catatan"     
-                  />
-                  <Button
-                        variant="primary"
-                        class="w-fit self-end"
-                        size="lg"
-                        @click="openModal"
-                  >
-                        Validasi                        
-                  </Button>
-            </div>   
-      </div>
-      <ModalTimer
-        v-if="modalRef"
-        @close="modalRef = false"
-        headText="Pastikan pengecekan berkas sudah benar."
-        bodyText="Anda tidak dapat merubah status validasi yang telah terkirim."
-        submitText="Validasi"
-        :showCancel="false"
-        :showSubmit="true"
-        :enableTimer="true"
-        :timerDuration="5"
+  <Breadcrumb />
+  <div class="card-rounded card-rounded bg-white p-4 lg:p-8">
+    <div class="flex flex-col gap-4 max-w-screen-2xl mx-auto">
+      <UserData
+        :headText="mahasiswa.nim"
+        :bodyText="mahasiswa.name"
+        :headText2="tugas_akhir.kategori"
+        :bodyText2="tugas_akhir.judul_proposal_ta"
+        :tahunAjaran="tugas_akhir.tahun_ajaran"
+      />                  
+      <!-- All the file uploads -->
+      <ValidationFile
+        ref="naskahRef"
+        id="naskah-ta"
+        label="Naskah Tugas Akhir"
+        :fileFromDatabase="fileNaskahProposal"
+        :statusValid="tempValidasi.naskah_proposal_status_valid"
+        @update:statusValid="tempValidasi.naskah_proposal_status_valid = $event"
       />
-
+      <ValidationFile
+        ref="transkripRef"
+        id="transkrip-nilai-mahasiswa"
+        label="Transkrip Nilai Mahasiswa"
+        :fileFromDatabase="fileTranskrip"
+        :statusValid="tempValidasi.file_transkrip_status_valid"
+        @update:statusValid="tempValidasi.file_transkrip_status_valid = $event"
+      />
+      <InputTextArea
+        id="catatan"
+        label="Catatan"
+        placeholder="Masukkan catatan"
+        v-model="catatan"     
+      />
+      <Button
+        variant="primary"
+        class="w-fit self-end"
+        size="lg"
+        @click="handleValidasi"
+      >
+        Validasi                        
+      </Button>
+    </div>   
+  </div>
+  <ModalTimer
+    v-if="modalRef"
+    @close="modalRef = false"
+    headText="Pastikan pengecekan berkas sudah benar."
+    bodyText="Anda tidak dapat merubah status validasi yang telah terkirim."
+    submitText="Validasi"
+    :showCancel="false"
+    :showSubmit="true"
+    :enableTimer="true"
+    :timerDuration="5"
+  />
 </template>

@@ -18,12 +18,11 @@ const props = defineProps({
 });
 
 const breadcrumbItems = computed(() => {
-  // If items are provided explicitly, use them
+  // Jika props.items ada, pakai itu
   if (props.items && props.items.length > 0) {
     return props.items;
   }
-
-  // Otherwise, build from route
+  // Jika tidak, generate otomatis dari route meta
   const routeMatched = route.matched;
   return routeMatched
     .filter(item => item.meta && item.meta.breadcrumb)
@@ -87,8 +86,8 @@ const breadcrumbItems = computed(() => {
             <span 
               v-else
               :class="[
-                'body5 sm:body4', 
-                item.active ? 'text-primary' : 'text-placholder'
+                '', 
+                item.active ? 'text-primary body5-bold sm:body4-bold' : 'text-placholder body5 sm:body4'
               ]"
             >
               {{ item.label }}

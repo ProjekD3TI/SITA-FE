@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, useSlots, watch } from 'vue';
+import { computed, ref, useSlots, watch, isRef } from 'vue';
 
 const props = defineProps({
   tabs: {
@@ -20,6 +20,10 @@ const props = defineProps({
     default: '' 
   },
 });
+
+function countValue(val) {
+  return isRef(val) ? val.value : val;
+}
 
 const emit = defineEmits(['tab-changed','update:activeTab']);
 const slots = useSlots();
@@ -92,7 +96,7 @@ defineExpose({
           {{ tab.label }} 
           <!-- Counter/Badge (jika ada) -->
           <span 
-            v-if="tab.count !== undefined" 
+            v-if="countValue(tab.count) !== null && countValue(tab.count) !== undefined && countValue(tab.count) !== 0" 
             class="text-sm px-2 py-0.5 ml-1 rounded-full text-white"
             :class="[
               internalActiveTab === tab.id 
@@ -104,7 +108,7 @@ defineExpose({
             {{ tab.count }}
           </span>
         </span>
-        <div v-if="tab.count !== undefined && internalActiveTab != tab.id" class="2xl:hidden absolute top-2 right-4 xl:top-4 xl:right-4 w-3 h-3 bg-secondary rounded-full border-2 border-white z-20 duration-200"></div>
+        <div v-if="countValue(tab.count) !== null && countValue(tab.count) !== undefined && internalActiveTab != tab.id" class="2xl:hidden absolute top-2 right-4 xl:top-4 xl:right-4 w-3 h-3 bg-secondary rounded-full border-2 border-white z-20 duration-200"></div>
       </button>
     </div>
     

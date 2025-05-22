@@ -51,7 +51,7 @@ const selectedDosenPembimbing = computed(() => {
 });
 </script>
 <template>
-    <Breadcrumb :items="breadcrumbItems"/>
+    <Breadcrumb />
     <Loading v-if="loading" />
     <ErrorMsg v-else-if="error" :message="errorMessage" />
     <div v-else class="card-rounded bg-white p-6 lg:p-8">
@@ -64,6 +64,7 @@ const selectedDosenPembimbing = computed(() => {
                 :tahunAjaran="tugas_akhir.tahunAjaran"
             />
             <InputDropdown
+                id="dosen-pembimbing"
                 label="Dosen Pembimbing"
                 :options="dosen_list"
                 placeholder="Pilih Dosen Pembimbing"

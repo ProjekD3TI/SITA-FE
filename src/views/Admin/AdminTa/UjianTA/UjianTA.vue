@@ -12,13 +12,67 @@ import Breadcrumb from '@/components/Tugas-akhir/Breadcrumb.vue';
 import DefaultModal from '@/components/Tugas-akhir/Modals/DefaultModal.vue';
 import JadwalUjian from '@/components/Tugas-akhir/JadwalUjian.vue';
 import ModalTimer from '@/components/Tugas-akhir/Modals/ModalTimer.vue';
+import ValidationFile from '@/components/Tugas-akhir/Forms/ValidationFile.vue';
+import FilePDFDummy from '@/assets/SV-Undangan Sosialisasi Teknis dan Informasi Lomba OLIVIA Tahun 2025.pdf';
 import Button from '@/components/Tugas-akhir/Button.vue';
 import ErrorMsg from '@/components/ErrorMsg.vue';
 import router from '@/router';
 import { useRoute } from 'vue-router';
+import InputTextarea from '@/components/Tugas-akhir/Forms/InputTextarea.vue';
 
 const route = useRoute();
+const modalHeadText = ref('');
+const modalBodyText = ref('');
+const fileNaskahTA = ref(null);
+const fileKRS = ref(null);
+const filePersetujuanPembimbing = ref(null);
+const fileTranskrip = ref(null);
+const fileSertifikatKompetensi = ref(null);
+const fileSertifikatTOEIC = ref(null);
+const fileBeritaAcaraSemhas = ref(null);
+const fileMasaPerpanjanganStudi = ref(null);
+const catatan = ref('');
+const modalRef2 = ref(false);
+const tempValidasi = ref({
+  naskah_ta_status_valid: null,
+  krs_status_valid: null,
+  persetujuan_pembimbing_status_valid: null,
+  sertifikat_kompetensi_status_valid: null,
+  toeic_status_valid: null,
+  berita_acara_semhas_status_valid: null,
+  masa_perpanjangan_studi_status_valid: null,
+  file_transkrip_status_valid: null,
+});
+function getUjianStatus(berkas) {
+  // Kumpulkan semua status valid dari setiap berkas
+  const statusList = [
+    berkas?.naskah_ta_status_valid,
+    berkas?.file_transkrip_status_valid,
+    berkas?.krs_status_valid,
+    berkas?.persetujuan_pembimbing_status_valid,
+    berkas?.sertifikat_kompetensi_status_valid,
+    berkas?.toeic_status_valid,
+    berkas?.berita_acara_semhas_status_valid,
+    berkas?.masa_perpanjangan_studi_status_valid,
+  ].filter(s => s !== undefined && s !== null);
 
+  if (statusList.length === 0) return '0'; // default menunggu jika tidak ada data
+
+  if (statusList.every(s => s === 1)) return '1'; // Semua valid
+  if (statusList.some(s => s === 2)) return '2';  // Ada yang ditolak
+  if (statusList.every(s => s === 0)) return '0'; // Semua menunggu
+  // Jika campuran 0 dan 1, anggap menunggu
+  return '0';
+}
+
+// Computed untuk menambahkan status dinamis ke setiap pendaftar ujian
+const pendaftarUjianWithStatus = computed(() =>
+  pendaftarUjian.value.map(item => ({
+    ...item,
+    status: getUjianStatus(item.berkas)
+  }))
+);
+const filePDF = FilePDFDummy;
 onMounted(() => {
   if (route.query.tab && tabs.some(t => t.id === route.query.tab)) {
     selectedTab.value = route.query.tab;
@@ -65,16 +119,17 @@ const schedule = {
   room: 'Lab. Jaringan'
 };
 const countPlottingDitolak = computed(() =>
-  plottingPenguji.value.filter(item => item.status === '2').length
+  plottingPenguji.value.filter(item => item.status === 2 || null).length
 );
 // Hitung jumlah pendaftar ujian dengan status '0' (Menunggu)
 const countPendaftarMenunggu = computed(() =>
-  pendaftarUjian.value.filter(item => item.status === '0').length
+  pendaftarUjian.value.filter(item => item.status === 0 || null).length
 );
 // Hitung jumlah penjadwalan dengan status menunggu (status === '1' dan jadwal null)
 const countPenjadwalanMenunggu = computed(() =>
-  pendaftarUjian.value.filter(item => item.status === '1' && !item.jadwal).length
+  pendaftarUjian.value.filter(item => item.status === 1 && !item.jadwal).length
 );
+
 
 const tabs = [
   {
@@ -113,7 +168,7 @@ const plottingPenguji = ref([
     img: DefaultAvatar,
     judul_proposal_ta: 'Sistem Informasi Akademik',
     dosen_pembimbing: 'Dr. Budi Santoso',
-    status: '1',
+    status: 1,
   },
   {
     nim: '87654321',
@@ -121,7 +176,7 @@ const plottingPenguji = ref([
     img: DefaultAvatar,
     judul_proposal_ta: 'Pengembangan Aplikasi Mobile',
     dosen_pembimbing: 'Prof. Andi Wijaya',
-    status: '0',
+    status: 0,
   },
   {
     nim: '11223344',
@@ -129,7 +184,7 @@ const plottingPenguji = ref([
     img: DefaultAvatar,
     judul_proposal_ta: 'Analisis Data Big Data',
     dosen_pembimbing: 'Dr. Clara Susanti',
-    status: '2',
+    status: 2,
   },
 ]);
 
@@ -139,8 +194,35 @@ const pendaftarUjian = ref([
     nama: 'Budi Prasetyo',
     img: DefaultAvatar,
     judul_ta: 'Optimasi Algoritma Genetika',
+    berkas: 
+     {
+        naskah_ta: "naskah_ta.pdf",
+        naskah_ta_url: filePDF,
+        naskah_ta_status_valid: 1, 
+        krs: "krs.pdf",
+        krs_url: filePDF,
+        krs_status_valid: 1,
+        persetujuan_pembimbing: "bukti_persetujuan_pembimbing.pdf",
+        persetujuan_pembimbing_url: filePDF,
+        persetujuan_pembimbing_status_valid: 1,
+        file_transkrip: "transkrip.pdf",
+        file_transkrip_url: filePDF,
+        file_transkrip_status_valid: 1,
+        sertifikat_kompetensi: "sertifikat_kompetensi.pdf",
+        sertifikat_kompetensi_url: filePDF,
+        sertifikat_kompetensi_status_valid: 1,
+        toeic: "sertifikat_toeic.pdf",
+        toeic_url: filePDF,
+        toeic_status_valid: 1,
+        berita_acara_semhas: "berita_acara_semhas.pdf",
+        berita_acara_semhas_url: filePDF,
+        berita_acara_semhas_status_valid: 1,
+        masa_perpanjangan_studi: "surat_perpanjangan_masa_studi.pdf",
+        masa_perpanjangan_studi_url: filePDF,
+        masa_perpanjangan_studi_status_valid: 1,
+     },
     tanggal: '2025-05-10',
-    status: '1',
+    status: 1,
     jadwal: '2025-05-20',
   },
   {
@@ -148,8 +230,35 @@ const pendaftarUjian = ref([
     nama: 'John Doe',
     img: DefaultAvatar,
     judul_ta: 'Sistem Informasi Akademik',
+    berkas: 
+     {
+        naskah_ta: "naskah_ta.pdf",
+        naskah_ta_url: filePDF,
+        naskah_ta_status_valid: 1, 
+        krs: "krs.pdf",
+        krs_url: filePDF,
+        krs_status_valid: 1,
+        persetujuan_pembimbing: "bukti_persetujuan_pembimbing.pdf",
+        persetujuan_pembimbing_url: filePDF,
+        persetujuan_pembimbing_status_valid: 1,
+        file_transkrip: "transkrip.pdf",
+        file_transkrip_url: filePDF,
+        file_transkrip_status_valid: 1,
+        sertifikat_kompetensi: "sertifikat_kompetensi.pdf",
+        sertifikat_kompetensi_url: filePDF,
+        sertifikat_kompetensi_status_valid: 2,
+        toeic: "sertifikat_toeic.pdf",
+        toeic_url: filePDF,
+        toeic_status_valid: 1,
+        berita_acara_semhas: "berita_acara_semhas.pdf",
+        berita_acara_semhas_url: filePDF,
+        berita_acara_semhas_status_valid: 1,
+        masa_perpanjangan_studi: "surat_perpanjangan_masa_studi.pdf",
+        masa_perpanjangan_studi_url: filePDF,
+        masa_perpanjangan_studi_status_valid: 1,
+     },
     tanggal: '2025-05-12',
-    status: '1',
+    status: 2,
     jadwal: null,
   },
   {
@@ -157,8 +266,35 @@ const pendaftarUjian = ref([
     nama: 'Siti Aminah',
     img: DefaultAvatar,
     judul_ta: 'Penerapan Machine Learning pada Prediksi Cuaca',
+    berkas: 
+     {
+        naskah_ta: "naskah_ta.pdf",
+        naskah_ta_url: filePDF,
+        naskah_ta_status_valid: 0, 
+        krs: "krs.pdf",
+        krs_url: filePDF,
+        krs_status_valid: 0,
+        persetujuan_pembimbing: "bukti_persetujuan_pembimbing.pdf",
+        persetujuan_pembimbing_url: filePDF,
+        persetujuan_pembimbing_status_valid: 0,
+        file_transkrip: "transkrip.pdf",
+        file_transkrip_url: filePDF,
+        file_transkrip_status_valid: 0,
+        sertifikat_kompetensi: "sertifikat_kompetensi.pdf",
+        sertifikat_kompetensi_url: filePDF,
+        sertifikat_kompetensi_status_valid: 0,
+        toeic: "sertifikat_toeic.pdf",
+        toeic_url: filePDF,
+        toeic_status_valid: 0,
+        berita_acara_semhas: "berita_acara_semhas.pdf",
+        berita_acara_semhas_url: filePDF,
+        berita_acara_semhas_status_valid: 0,
+        masa_perpanjangan_studi: "surat_perpanjangan_masa_studi.pdf",
+        masa_perpanjangan_studi_url: filePDF,
+        masa_perpanjangan_studi_status_valid: 0,
+     },
     tanggal: '2025-05-12',
-    status: '0',
+    status: 0,
     jadwal: null,
   },
   {
@@ -166,8 +302,35 @@ const pendaftarUjian = ref([
     nama: 'Rizky Ramadhan',
     img: DefaultAvatar,
     judul_ta: 'Analisis Sistem Informasi Rumah Sakit',
+    berkas: 
+     {
+        naskah_ta: "naskah_ta.pdf",
+        naskah_ta_url: filePDF,
+        naskah_ta_status_valid: 1, 
+        krs: "krs.pdf",
+        krs_url: filePDF,
+        krs_status_valid: 2,
+        persetujuan_pembimbing: "bukti_persetujuan_pembimbing.pdf",
+        persetujuan_pembimbing_url: filePDF,
+        persetujuan_pembimbing_status_valid: 1,
+        file_transkrip: "transkrip.pdf",
+        file_transkrip_url: filePDF,
+        file_transkrip_status_valid: 1,
+        sertifikat_kompetensi: "sertifikat_kompetensi.pdf",
+        sertifikat_kompetensi_url: filePDF,
+        sertifikat_kompetensi_status_valid: 1,
+        toeic: "sertifikat_toeic.pdf",
+        toeic_url: filePDF,
+        toeic_status_valid: 1,
+        berita_acara_semhas: "berita_acara_semhas.pdf",
+        berita_acara_semhas_url: filePDF,
+        berita_acara_semhas_status_valid: 1,
+        masa_perpanjangan_studi: "surat_perpanjangan_masa_studi.pdf",
+        masa_perpanjangan_studi_url: filePDF,
+        masa_perpanjangan_studi_status_valid: 1,
+     },
     tanggal: '2025-05-15',
-    status: '2',
+    status: 2,
     jadwal: null,
   },
 ]);
@@ -182,9 +345,15 @@ const selectedStatusesTab2 = ref([]);
 const selectedStatusesTab3 = ref([]);
 const selectedStatusesTab4 = ref([]);
 
-// Filter & search computed mirip proposal/bimbingan
-const filteredPlottingPenguji = computed(() => {
-  let data = plottingPenguji.value;
+const plottingPengujiWithStatus = computed(() =>
+  plottingPenguji.value.map(item => ({
+    ...item,
+    status: item.status !== undefined && item.status !== null ? String(item.status) : '0'
+  }))
+);
+
+const filteredPlottingPengujiWithStatus = computed(() => {
+  let data = plottingPengujiWithStatus.value;
   if (selectedStatusesTab1.value.length > 0) {
     data = data.filter(item =>
       selectedStatusesTab1.value.includes(item.status)
@@ -203,7 +372,7 @@ const filteredPlottingPenguji = computed(() => {
 });
 
 const filteredPendaftarUjian = computed(() => {
-  let data = pendaftarUjian.value;
+  let data = pendaftarUjianWithStatus.value;
   if (selectedStatusesTab2.value.length > 0) {
     data = data.filter(item =>
       selectedStatusesTab2.value.includes(item.status)
@@ -221,7 +390,7 @@ const filteredPendaftarUjian = computed(() => {
 });
 
 const filteredPendaftarUjianDisetujui = computed(() => {
-  let data = pendaftarUjian.value.filter(item => item.status === '1');
+  let data = pendaftarUjianWithStatus.value.filter(item => item.status === '1');
   if (selectedStatusesTab3.value.length > 0) {
     data = data.filter(item =>
       selectedStatusesTab3.value.includes(item.status)
@@ -239,7 +408,7 @@ const filteredPendaftarUjianDisetujui = computed(() => {
 });
 
 const filteredPendaftarUjianDisetujuiTab4 = computed(() => {
-  let data = pendaftarUjian.value.filter(item => item.status === '1');
+  let data = pendaftarUjianWithStatus.value.filter(item => item.status === '1');
   if (selectedStatusesTab4.value.length > 0) {
     data = data.filter(item =>
       selectedStatusesTab4.value.includes(item.status)
@@ -257,7 +426,7 @@ const filteredPendaftarUjianDisetujuiTab4 = computed(() => {
 });
 
 const filteredPenjadwalan = computed(() => {
-  let data = pendaftarUjian.value.filter(item => item.status === '1');
+  let data = pendaftarUjianWithStatus.value.filter(item => item.status === '1');
   if (selectedStatusesTab3.value.length > 0) {
     data = data.filter(item =>
       selectedStatusesTab3.value.includes(item.status)
@@ -344,12 +513,55 @@ const handleRowClickPlot = (item) => {
   });
 };
 const handleRowClickDaftar = (item) => {
-  router.push({
-    name: 'DetailPendaftarForAdmin',
-    params: { nim: item.nim },
-  });
+  // Jika status sudah divalidasi (bukan menunggu), buka modal detail validasi
+  if (item.status !== '0') {
+    modalHeadText.value = `Detail Validasi Pengajuan Ujian TA`;
+    modalBodyText.value = `${item.nim} | ${item.nama} | ${item.judul_ta}`;
+    // Siapkan data file dan status validasi
+    fileNaskahTA.value = item.berkas
+      ? { name: item.berkas.naskah_ta, url: item.berkas.naskah_ta_url }
+      : null;
+    fileTranskrip.value = item.berkas
+      ? { name: item.berkas.file_transkrip, url: item.berkas.file_transkrip_url }
+      : null;
+    fileKRS.value = item.berkas
+      ? { name: item.berkas.krs, url: item.berkas.krs_url }
+      : null;
+    filePersetujuanPembimbing.value = item.berkas
+      ? { name: item.berkas.persetujuan_pembimbing, url: item.berkas.persetujuan_pembimbing_url }
+      : null;
+    fileSertifikatKompetensi.value = item.berkas
+      ? { name: item.berkas.sertifikat_kompetensi, url: item.berkas.sertifikat_kompetensi_url }
+      : null;
+    fileSertifikatTOEIC.value = item.berkas
+      ? { name: item.berkas.toeic, url: item.berkas.toeic_url }
+      : null;
+    fileBeritaAcaraSemhas.value = item.berkas
+      ? { name: item.berkas.berita_acara_semhas, url: item.berkas.berita_acara_semhas_url }
+      : null;
+    fileMasaPerpanjanganStudi.value = item.berkas
+      ? { name: item.berkas.masa_perpanjangan_studi, url: item.berkas.masa_perpanjangan_studi_url }
+      : null;
+    tempValidasi.value = {
+      naskah_ta_status_valid: item.berkas?.naskah_ta_status_valid ?? null,
+      krs_status_valid: item.berkas?.krs_status_valid ?? null,
+      persetujuan_pembimbing_status_valid: item.berkas?.persetujuan_pembimbing_status_valid ?? null,
+      sertifikat_kompetensi_status_valid: item.berkas?.sertifikat_kompetensi_status_valid ?? null,
+      toeic_status_valid: item.berkas?.toeic_status_valid ?? null,
+      berita_acara_semhas_status_valid: item.berkas?.berita_acara_semhas_status_valid ?? null,
+      masa_perpanjangan_studi_status_valid: item.berkas?.masa_perpanjangan_studi_status_valid ?? null,
+      file_transkrip_status_valid: item.berkas?.file_transkrip_status_valid ?? null,
+    };
+    catatan.value = item.catatan || 'Tidak ada catatan';
+    modalRef2.value = true;
+  } else {
+    // Jika status menunggu, redirect ke detail
+    router.push({
+      name: 'DetailPendaftarForAdmin',
+      params: { nim: item.nim },
+    });
+  }
 };
-const selectedJadwalNim = ref(null);
 const handleRowClickJadwal = (item) => {
   if (item.jadwal) {
     modalRef1.value = true;
@@ -403,6 +615,7 @@ const modalTimerBodyText = computed(() => {
     ? 'Apakah anda yakin ingin membuka form pengajuan proposal tugas akhir?'
     : 'Apakah anda yakin ingin menutup form pengajuan proposal tugas akhir?';
 });
+
 </script>
 
 <template>
@@ -416,7 +629,7 @@ const modalTimerBodyText = computed(() => {
     <router-view v-else-if="$route.path.includes('penjadwalan')"></router-view>
     
     <div v-else>
-      <Breadcrumb :items="breadcrumbItems" />
+      <Breadcrumb />
 
       <TabDiv
         :tabs="tabs"
@@ -442,7 +655,7 @@ const modalTimerBodyText = computed(() => {
             
               <Table
                 :headers="['NIM', 'Nama','Judul Proposal Tugas Akhir', 'Dosen Pembimbing' , 'Status']"
-                :items="filteredPlottingPenguji"
+                :items="filteredPlottingPengujiWithStatus"
                 @rowClick="handleRowClickPlot"
               >
                 <template #row="{ item }">
@@ -665,6 +878,78 @@ const modalTimerBodyText = computed(() => {
         </template>
       </TabDiv>
     </div>
+    <!-- Modal Validasi  -->
+    <DefaultModal
+      v-if="modalRef2"
+      @close="modalRef2 = false"
+      :headText="modalHeadText"
+      :bodyText="modalBodyText"
+    >
+    <div class="flex flex-col gap-4 mt-4">
+        <ValidationFile
+          id="naskah-ta"
+          label="Naskah Tugas Akhir"
+          :fileFromDatabase="fileNaskahTA"
+          :statusValid="tempValidasi.naskah_ta_status_valid"
+          @update:statusValid="tempValidasi.naskah_ta_status_valid = $event"
+        />
+        <ValidationFile
+          id="transkrip-nilai-mahasiswa"
+          label="Transkrip Nilai Mahasiswa"
+          :fileFromDatabase="fileTranskrip"
+          :statusValid="tempValidasi.file_transkrip_status_valid"
+          @update:statusValid="tempValidasi.file_transkrip_status_valid = $event"
+        />
+        <ValidationFile
+          id="krs"
+          label="KRS"
+          :fileFromDatabase="fileKRS"
+          :statusValid="tempValidasi.krs_status_valid"
+          @update:statusValid="tempValidasi.krs_status_valid = $event"
+        />
+        <ValidationFile
+          id="persetujuan-dosen-pembimbing"
+          label="Persetujuan Dosen Pembimbing"
+          :fileFromDatabase="filePersetujuanPembimbing"
+          :statusValid="tempValidasi.persetujuan_pembimbing_status_valid"
+          @update:statusValid="tempValidasi.persetujuan_pembimbing_status_valid = $event"
+        />
+        <ValidationFile
+          id="sertifikat-kompetensi"
+          label="Sertifikat Kompetensi"
+          :fileFromDatabase="fileSertifikatKompetensi"
+          :statusValid="tempValidasi.sertifikat_kompetensi_status_valid"
+          @update:statusValid="tempValidasi.sertifikat_kompetensi_status_valid = $event"
+        />
+        <ValidationFile
+          id="sertifikat-toeic"
+          label="Sertifikat TOEIC"
+          :fileFromDatabase="fileSertifikatTOEIC"
+          :statusValid="tempValidasi.toeic_status_valid"
+          @update:statusValid="tempValidasi.toeic_status_valid = $event"
+        />
+        <ValidationFile
+          id="berita-acara-semhas"
+          label="Berita Acara Semhas"
+          :fileFromDatabase="fileBeritaAcaraSemhas"
+          :statusValid="tempValidasi.berita_acara_semhas_status_valid"
+          @update:statusValid="tempValidasi.berita_acara_semhas_status_valid = $event"
+        />
+        <ValidationFile
+          id="masa-perpanjangan-studi"
+          label="Masa Perpanjangan Studi"
+          :fileFromDatabase="fileMasaPerpanjanganStudi"
+          :statusValid="tempValidasi.masa_perpanjangan_studi_status_valid"
+          @update:statusValid="tempValidasi.masa_perpanjangan_studi_status_valid = $event"
+        />
+        <InputTextarea
+          id="catatan"
+          label="Catatan"
+          placeholder="Masukkan catatan"
+          v-model="catatan"     
+        />
+    </div>
+    </DefaultModal>
 
     <!-- Modal Validasi Form  -->
     <ModalTimer

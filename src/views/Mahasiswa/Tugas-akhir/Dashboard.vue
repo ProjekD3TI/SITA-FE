@@ -133,19 +133,19 @@ const summaryCards = [
   {
     icon: iconPaths.book,
     iconColor: "danger",
-    title: BAB,
+    title: BAB.value,
     subtitle: "Progress Bimbingan",
   },
   {
     icon: iconPaths.calendar,
     iconColor: "success",
-    title: TanggalUjian,
+    title: TanggalUjian.value,
     subtitle: "Jadwal Ujian TA",
   },
   {
     icon: iconPaths.graduation,
     iconColor: "warning",
-    title: TotalBimbingan,
+    title: TotalBimbingan.value,
     subtitle: "Total Bimbingan",
   },
 ];
@@ -165,7 +165,7 @@ const handleAccept = () => {
   <ErrorMsg v-else-if="error" :msg="error" />
 
   <template v-else>
-    <Breadcrumb :items="breadcrumbItems" />
+    <Breadcrumb/>
 
     <!-- Flow bar card -->
     <div class="card-rounded bg-white p-4 lg:p-8">
