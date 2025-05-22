@@ -37,16 +37,42 @@
                 </div>
                 <p class="description">{{ laporan.deskripsi }}</p>
                 
-                <div v-if="laporan.image_path" class="image-container">
-                    <img 
-                        :src="getImageUrl(laporan.image_path)" 
-                        :data-path="laporan.image_path"
-                        alt="Gambar Kejadian" 
-                        class="evidence-image" 
-                        @click="showFullImage = true"
-                        @error="handleImageError"
-                    >
-                    <div class="image-caption">Foto Bukti Kejadian (klik untuk memperbesar)</div>
+                <!-- Image Gallery untuk multiple images -->
+                <div v-if="imagePaths && imagePaths.length > 0" class="image-gallery">
+                    <h4 class="gallery-title">Foto Bukti Kejadian</h4>
+                    <div class="image-grid">
+                        <div v-for="(path, index) in imagePaths" :key="index" class="image-item">
+                            <img 
+                                :src="getImageUrl(path)" 
+                                :data-path="path"
+                                :alt="`Foto Kejadian ${index + 1}`" 
+                                class="evidence-image" 
+                                @click="openFullImage(index)"
+                                @error="handleImageError"
+                            >
+                        </div>
+                    </div>
+                    <div class="image-caption">Klik untuk memperbesar gambar</div>
+                </div>
+
+                <!-- Modal for full image view -->
+                <div class="fullscreen-modal" v-if="showFullImage" @click="showFullImage = false">
+                    <div class="modal-content">
+                        <span class="close-modal">&times;</span>
+                        <img 
+                            :src="currentFullImageUrl" 
+                            alt="Bukti Kejadian" 
+                            class="fullscreen-image"
+                            @error="handleFullscreenImageError"
+                        >
+                        
+                        <!-- Navigation buttons for multiple images -->
+                        <div v-if="imagePaths && imagePaths.length > 1" class="image-navigation">
+                            <button class="nav-button prev" @click.stop="prevImage">&lt;</button>
+                            <div class="image-counter">{{ currentImageIndex + 1 }} / {{ imagePaths.length }}</div>
+                            <button class="nav-button next" @click.stop="nextImage">&gt;</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -65,6 +91,68 @@
                         
                         <div class="info-label">No. Telepon:</div>
                         <div class="info-value">{{ laporan.nomor_telepon }}</div>
+
+                        <!-- Tambahan informasi pelapor -->
+                        <div class="info-label">Jenis Kelamin:</div>
+                        <div class="info-value">{{ formatJenisKelamin(laporan.jenis_kelamin) || '-' }}</div>
+                        
+                        <div class="info-label">Profesi:</div>
+                        <div class="info-value">{{ formatStatusWarga(laporan.profesi) || '-' }}</div>
+                        
+                        <div class="info-label">Rentang Umur:</div>
+                        <div class="info-value">{{ formatUmur(laporan.umur_pelapor) || '-' }}</div>
+                    </div>
+                </div>
+
+                <!-- Add this inside your content-wrapper div after the existing cards/sections -->
+
+                <!-- Terlapor Section -->
+                <div class="detail-card" v-if="terlaporArray && terlaporArray.length > 0">
+                    <h3 class="detail-section-title"><i class="fas fa-user-shield"></i> Informasi Terlapor/Terduga</h3>
+                    
+                    <div v-for="(terlapor, index) in terlaporArray" :key="`terlapor-${index}`" class="person-item">
+                        <h4 class="person-title">Terlapor #{{ index + 1 }}</h4>
+                        <div class="info-grid">
+                            <div class="info-label">Nama Lengkap:</div>
+                            <div class="info-value">{{ terlapor.nama_lengkap || '-' }}</div>
+                            
+                            <div class="info-label">Email:</div>
+                            <div class="info-value">{{ terlapor.email || '-' }}</div>
+                            
+                            <div class="info-label">Nomor Telepon:</div>
+                            <div class="info-value">{{ terlapor.nomor_telepon || '-' }}</div>
+                            
+                            <div class="info-label">Jenis Kelamin:</div>
+                            <div class="info-value">{{ formatJenisKelamin(terlapor.jenis_kelamin) || '-' }}</div>
+                            
+                            <div class="info-label">Rentang Umur:</div>
+                            <div class="info-value">{{ formatUmur(terlapor.umur_terlapor) || '-' }}</div>
+                            
+                            <div class="info-label">Status Warga:</div>
+                            <div class="info-value">{{ formatStatusWarga(terlapor.status_warga) || '-' }}</div>
+                            
+                            <div class="info-label">Unit Kerja:</div>
+                            <div class="info-value">{{ terlapor.unit_kerja || '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Saksi Section -->
+                <div class="detail-card" v-if="saksiArray && saksiArray.length > 0">
+                    <h3 class="detail-section-title"><i class="fas fa-eye"></i> Informasi Saksi</h3>
+                    
+                    <div v-for="(saksi, index) in saksiArray" :key="`saksi-${index}`" class="person-item">
+                        <h4 class="person-title">Saksi #{{ index + 1 }}</h4>
+                        <div class="info-grid">
+                            <div class="info-label">Nama Lengkap:</div>
+                            <div class="info-value">{{ saksi.nama_lengkap || '-' }}</div>
+                            
+                            <div class="info-label">Email:</div>
+                            <div class="info-value">{{ saksi.email || '-' }}</div>
+                            
+                            <div class="info-label">Nomor Telepon:</div>
+                            <div class="info-value">{{ saksi.nomor_telepon || '-' }}</div>
+                        </div>
                     </div>
                 </div>
 
@@ -126,13 +214,6 @@
           </div>
         </div>
 
-        <!-- Modal for full image view -->
-        <div class="fullscreen-modal" v-if="showFullImage" @click="showFullImage = false">
-            <div class="modal-content">
-                <span class="close-modal">&times;</span>
-                <img :src="getImageUrl(laporan.image_path)" alt="Bukti Kejadian" class="fullscreen-image">
-            </div>
-        </div>
         <!-- Close report confirmation modal -->
         <div class="modal-overlay" v-if="showCloseModal">
             <div class="modal-container" @click.stop>
@@ -185,15 +266,16 @@
 <script>
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import VueCookies from 'vue-cookies';
 
 export default {
-    name: 'DetailPK',
+    name: 'DetailPKDosen',
     data() {
         return {
             laporanId: null,
             laporan: null,
             categories: {},
-            loading: false,
+            loading: true,
             loadingAction: false,
             error: null,
             showFullImage: false,
@@ -201,50 +283,123 @@ export default {
             tanggapanText: '',
             showVerificationModal: false,
             isVerifying: false,
-            showCloseModal: false, // Add this
-            isClosing: false,      // Add this
-            isAdmin: true,       // Add this
+            showCloseModal: false,
+            isClosing: false,
+            isAdmin: false,
+            currentUser: null,
+            // Auth data
+            token: null,
+            userRole: null,
+            imagePaths: [],
+            currentImageIndex: 0,
+            currentFullImageUrl: ''
         };
     },
     
     created() {
+        this.checkAuth();
         this.laporanId = this.$route.params.id;
-        this.fetchCategories();
-        this.fetchLaporanDetail();
-    },
-
-    computed: {
-        hasTanggapan() {
-            if (!this.laporan) return false;
-            if (!this.laporan.tanggapan) return false;
-            
-            if (Array.isArray(this.laporan.tanggapan)) {
-                return this.laporan.tanggapan.length > 0;
-            }
-            
-            return typeof this.laporan.tanggapan === 'string' && this.laporan.tanggapan.trim() !== '';
+        
+        if (this.token) {
+            this.setupAxiosInterceptors();
+            this.fetchCategories();
+            this.fetchLaporanDetail();
         }
+
+        this.$watch('laporan', (newVal) => {
+            if (newVal && newVal.image_path) {
+                this.imagePaths = this.parseImagePaths(newVal.image_path);
+                console.log('Image paths loaded:', this.imagePaths);
+            }
+        }, { immediate: true });
     },
     
     methods: {
+        checkAuth() {
+            // Get authentication data from cookies
+            this.token = this.$cookies.get('auth_token');
+            this.currentUser = this.$cookies.get('user_name') || 'miftahul01';
+            this.userRole = this.$cookies.get('user_role');
+            this.isAdmin = this.userRole === 'admin' || this.userRole === 'superadmin';
+            
+            console.log('Auth check:', {
+                token: this.token ? 'exists' : null,
+                user: this.currentUser,
+                role: this.userRole,
+                isAdmin: this.isAdmin
+            });
+            
+            if (!this.token) {
+                this.handleUnauthorized();
+                return false;
+            }
+            
+            return true;
+        },
+        
+        handleUnauthorized() {
+            console.warn('Unauthorized: No auth token found');
+            this.error = 'Sesi Anda telah berakhir. Silakan login kembali.';
+            
+            // Redirect to login page after a brief delay
+            setTimeout(() => {
+                this.$router.push('/login'); // Adjust this to your login route
+            }, 2000);
+        },
+        
+        setupAxiosInterceptors() {
+            // Add authorization header to all requests
+            axios.interceptors.request.use(config => {
+                if (this.token) {
+                    config.headers['Authorization'] = `Bearer ${this.token}`;
+                }
+                return config;
+            });
+            
+            // Handle 401 responses globally
+            axios.interceptors.response.use(
+                response => response,
+                error => {
+                    if (error.response && error.response.status === 401) {
+                        console.log('Intercepted 401 error, handling unauthorized');
+                        this.handleUnauthorized();
+                    }
+                    return Promise.reject(error);
+                }
+            );
+        },
+        
         async fetchCategories() {
+            if (!this.checkAuth()) return;
+            
             try {
-                const response = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
+                const response = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category', {
+                    headers: { Authorization: `Bearer ${this.token}` }
+                });
+                
                 this.categories = response.data.reduce((acc, category) => {
                     acc[category.category_id] = category.nama;
                     return acc;
                 }, {});
             } catch (error) {
                 console.error('Error fetching categories:', error);
+                if (error.response && error.response.status === 401) {
+                    this.handleUnauthorized();
+                }
             }
         },
         
         async fetchLaporanDetail() {
+            if (!this.checkAuth()) return;
+            
             this.loading = true;
             this.error = null;
             
             try {
-                const response = await axios.get(`https://v3422040.mhs.d3tiuns.com/api/laporan/${this.laporanId}`);
+                const response = await axios.get(`https://v3422040.mhs.d3tiuns.com/api/laporan/${this.laporanId}`, {
+                    headers: { Authorization: `Bearer ${this.token}` }
+                });
+                
                 this.laporan = response.data;
                 
                 // Process tanggapan data: Parse it if it's a JSON string
@@ -266,6 +421,14 @@ export default {
             } catch (error) {
                 console.error('Error fetching laporan detail:', error);
                 this.error = 'Gagal memuat data laporan. Silakan coba lagi.';
+                
+                if (error.response) {
+                    if (error.response.status === 401) {
+                        this.handleUnauthorized();
+                    } else if (error.response.data && error.response.data.message) {
+                        this.error = error.response.data.message;
+                    }
+                }
             } finally {
                 this.loading = false;
             }
@@ -304,11 +467,56 @@ export default {
             return this.categories[categoryId] || `Kategori ${categoryId}`;
         },
         
-        getImageUrl(imagePath) {
-            if (!imagePath) return '';
+        parseImagePaths(imagePath) {
+            if (!imagePath) {
+                return [];
+            }
+            
+            if (typeof imagePath === 'string') {
+                // Check if it's a JSON array string
+                if ((imagePath.startsWith('[') && imagePath.endsWith(']')) || 
+                    (imagePath.startsWith('"[') && imagePath.endsWith(']"'))) {
+                    try {
+                        // Clean the string and parse it
+                        let cleanedPath = imagePath.replace(/\\/g, '');
+                        
+                        if (cleanedPath.startsWith('"') && cleanedPath.endsWith('"')) {
+                            cleanedPath = cleanedPath.substring(1, cleanedPath.length - 1);
+                        }
+                        
+                        const parsed = JSON.parse(cleanedPath);
+                        if (Array.isArray(parsed)) {
+                            return parsed;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing image path JSON:', e);
+                        // If parse fails, treat as single path
+                        return [imagePath];
+                    }
+                }
+                
+                // Handle comma-separated paths
+                if (imagePath.includes(',')) {
+                    return imagePath.split(',').map(p => p.trim());
+                }
+                
+                // Single path case
+                return [imagePath];
+            }
+            
+            // If already an array
+            if (Array.isArray(imagePath)) {
+                return imagePath;
+            }
+            
+            return [];
+        },
+        
+        getImageUrl(path) {
+            if (!path) return '';
             
             // Clean the path by removing any quotes if present
-            const cleanPath = typeof imagePath === 'string' ? imagePath.replace(/['"]/g, '') : imagePath;
+            const cleanPath = typeof path === 'string' ? path.replace(/['"]/g, '') : path;
             
             // Check if it's already a full URL
             if (typeof cleanPath === 'string' && cleanPath.startsWith('http')) {
@@ -321,33 +529,154 @@ export default {
             // Primary URL - use this as default
             return `${baseUrl}/Backend-Port/backend/engine/public/storage/laporan/${cleanPath}`;
         },
-
-        // Add this method to handle image loading errors
-        handleImageError(event) {
+        
+        handleImageError(event, index) {
             const img = event.target;
-            const src = img.src;
-            const path = img.getAttribute('data-path') || this.laporan.image_path;
-            const baseUrl = 'https://v3422040.mhs.d3tiuns.com';
+            const originalSrc = img.src;
+            const path = img.dataset.path;
             
-            // Try different URL patterns if the original fails
-            if (src.includes('/Backend-Port/backend/engine/public/')) {
-                // Try alternative URL pattern
-                img.src = `${baseUrl}/public/storage/laporan/${path}`;
-            } else if (src.includes('/public/storage/laporan/')) {
-                // Try another alternative
-                img.src = `${baseUrl}/storage/laporan/${path}`;
-            } else {
-                // Final fallback to placeholder
-                img.src = 'https://via.placeholder.com/400x300?text=Image+Not+Found';
+            if (originalSrc.includes('fallback=4')) {
+                img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+                return;
             }
+            
+            const baseDomain = 'https://v3422040.mhs.d3tiuns.com';
+            let newUrl;
+            
+            if (!originalSrc.includes('fallback=')) {
+                newUrl = `${baseDomain}/public/storage/laporan/${path}?fallback=2`;
+            } else if (originalSrc.includes('fallback=2')) {
+                newUrl = `${baseDomain}/storage/laporan/${path}?fallback=3`;
+            } else if (originalSrc.includes('fallback=3')) {
+                newUrl = `${baseDomain}/storage/${path}?fallback=4`;
+            } else {
+                newUrl = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+            }
+            
+            img.src = newUrl;
         },
 
-        // Add specific methods for verification and rejection
+        handleImageError(event) {
+            const img = event.target;
+            const originalSrc = img.src;
+            const path = img.dataset.path;
+            
+            if (originalSrc.includes('fallback=4')) {
+                img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+                return;
+            }
+            
+            const baseDomain = 'https://v3422040.mhs.d3tiuns.com';
+            let newUrl;
+            
+            if (!originalSrc.includes('fallback=')) {
+                newUrl = `${baseDomain}/public/storage/laporan/${path}?fallback=2`;
+            } else if (originalSrc.includes('fallback=2')) {
+                newUrl = `${baseDomain}/storage/laporan/${path}?fallback=3`;
+            } else if (originalSrc.includes('fallback=3')) {
+                newUrl = `${baseDomain}/storage/${path}?fallback=4`;
+            } else {
+                newUrl = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+            }
+            
+            img.src = newUrl;
+        },
+        
+        openFullImage(index) {
+            this.currentImageIndex = index || 0;
+            this.currentFullImageUrl = this.getImageUrl(this.imagePaths[this.currentImageIndex]);
+            this.showFullImage = true;
+        },
+
+        nextImage(e) {
+            if (e) e.stopPropagation();
+            if (!this.imagePaths || this.imagePaths.length <= 1) return;
+            
+            this.currentImageIndex = (this.currentImageIndex + 1) % this.imagePaths.length;
+            this.currentFullImageUrl = this.getImageUrl(this.imagePaths[this.currentImageIndex]);
+        },
+
+        prevImage(e) {
+            if (e) e.stopPropagation();
+            if (!this.imagePaths || this.imagePaths.length <= 1) return;
+            
+            this.currentImageIndex = (this.currentImageIndex - 1 + this.imagePaths.length) % this.imagePaths.length;
+            this.currentFullImageUrl = this.getImageUrl(this.imagePaths[this.currentImageIndex]);
+        },
+
+        handleFullscreenImageError(event) {
+            const img = event.target;
+            const originalSrc = img.src;
+            const path = this.imagePaths[this.currentImageIndex];
+            
+            if (originalSrc.includes('fallback=4')) {
+                img.src = 'https://via.placeholder.com/800x600?text=Gambar+Tidak+Ditemukan';
+                return;
+            }
+            
+            const baseDomain = 'https://v3422040.mhs.d3tiuns.com';
+            let newUrl;
+            
+            if (!originalSrc.includes('fallback=')) {
+                newUrl = `${baseDomain}/public/storage/laporan/${path}?fallback=2`;
+            } else if (originalSrc.includes('fallback=2')) {
+                newUrl = `${baseDomain}/storage/laporan/${path}?fallback=3`;
+            } else if (originalSrc.includes('fallback=3')) {
+                newUrl = `${baseDomain}/storage/${path}?fallback=4`;
+            } else {
+                newUrl = 'https://via.placeholder.com/800x600?text=Gambar+Tidak+Ditemukan';
+            }
+            
+            img.src = newUrl;
+        },
+        
+        formatJenisKelamin(jenis) {
+            if (!jenis) return '-';
+            
+            if (typeof jenis === 'string') {
+                if (jenis.toLowerCase() === 'laki-laki') return 'Laki-laki';
+                if (jenis.toLowerCase() === 'perempuan') return 'Perempuan';
+            }
+            return jenis;
+        },
+        
+        formatUmur(umur) {
+            if (!umur) return '-';
+            
+            if (typeof umur === 'string') {
+                if (umur === '<20') return 'Kurang dari 20 tahun';
+                if (umur === '20-40') return '20 - 40 tahun';
+                if (umur === '40<') return 'Lebih dari 40 tahun';
+            }
+            return umur;
+        },
+        
+        formatStatusWarga(status) {
+            if (!status) return '-';
+            
+            const statusMap = {
+                'dosen': 'Dosen',
+                'mahasiswa': 'Mahasiswa', 
+                'staff': 'Staff',
+                'lainnya': 'Lainnya'
+            };
+            
+            return statusMap[status] || status;
+        },
+
         verifyReport() {
+            if (!this.checkAuth()) return;
             this.showVerificationModal = true;
+        },
+
+        finishReport() {
+            if (!this.checkAuth()) return;
+            this.showCloseModal = true;
         },
         
         async saveTanggapan() {
+            if (!this.checkAuth()) return;
+            
             try {
                 if (!this.laporanId) {
                     Swal.fire({
@@ -368,7 +697,7 @@ export default {
                 const newTanggapan = {
                     text: this.tanggapanText,
                     timestamp: new Date().toISOString(),
-                    user: 'miftahul01' // Using the current user information from the data
+                    user: this.currentUser // Using the current user from cookie
                 };
                 
                 // Create/update the tanggapan array
@@ -438,7 +767,13 @@ export default {
 
                 const response = await axios.post(
                     `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${this.laporanId}`, 
-                    formData
+                    formData,
+                    {
+                        headers: { 
+                            Authorization: `Bearer ${this.token}`,
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    }
                 );
                 
                 console.log('Response:', response);
@@ -467,6 +802,11 @@ export default {
             } catch (error) {
                 console.error('Error saving tanggapan:', error);
                 
+                if (error.response && error.response.status === 401) {
+                    this.handleUnauthorized();
+                    return;
+                }
+                
                 // More detailed error logging for debugging
                 if (error.response) {
                     console.error('Error response data:', error.response.data);
@@ -491,96 +831,9 @@ export default {
             }
         },
 
-        async finishReport() {
-            try {
-                if (!this.laporanId) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Laporan ID tidak ditemukan',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000
-                    });
-                    return;
-                }
-                
-                // Show confirmation dialog first
-                const result = await Swal.fire({
-                    title: 'Tutup Kasus Laporan',
-                    text: 'Apakah Anda yakin ingin menutup dan menyelesaikan kasus laporan ini?',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Ya, Selesaikan!',
-                    cancelButtonText: 'Batal'
-                });
-                
-                if (!result.isConfirmed) {
-                    return; // User canceled
-                }
-                
-                // Make the API call using POST with _method: PUT
-                const formData = new FormData();
-                formData.append('_method', 'PUT');
-                formData.append('status', 'finished');
-                
-                // IMPORTANT: Preserve the existing tanggapan data
-                if (this.laporan.tanggapan) {
-                    let tanggapanData = this.laporan.tanggapan;
-                    
-                    // If it's already a string (old format), keep it as is
-                    if (typeof tanggapanData !== 'string') {
-                        // If it's an array (new format), convert it to JSON string
-                        tanggapanData = JSON.stringify(tanggapanData);
-                    }
-                    
-                    formData.append('tanggapan', tanggapanData);
-                }
-
-                const response = await axios.post(
-                    `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${this.laporanId}`, 
-                    formData
-                );
-                            
-                // Update local data after successful completion
-                this.laporan.status = 'finished';
-                
-                // Show success message with Swal
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: 'Laporan berhasil ditutup dan selesai',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-                
-                // Refresh data
-                await this.fetchLaporanDetail();
-                
-            } catch (error) {
-                console.error('Error finishing report:', error);
-                // Safely access error message with optional chaining
-                const errorMessage = error.response?.data?.message || 'Gagal menyelesaikan laporan';
-                
-                // Show error message with Swal
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal!',
-                    text: `Gagal menyelesaikan laporan: ${errorMessage}`,
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-            }
-        },
-
         async closeReport() {
+            if (!this.checkAuth()) return;
+            
             try {
                 this.isClosing = true;
                 
@@ -608,12 +861,22 @@ export default {
                 
                 // If there's tanggapan, preserve it
                 if (this.laporan.tanggapan) {
-                    formData.append('tanggapan', this.laporan.tanggapan);
+                    if (typeof this.laporan.tanggapan === 'string') {
+                        formData.append('tanggapan', this.laporan.tanggapan);
+                    } else {
+                        formData.append('tanggapan', JSON.stringify(this.laporan.tanggapan));
+                    }
                 }
 
                 const response = await axios.post(
                     `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${this.laporanId}`, 
-                    formData
+                    formData,
+                    {
+                        headers: { 
+                            Authorization: `Bearer ${this.token}`,
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    }
                 );
                         
                 console.log('Response:', response);
@@ -638,6 +901,11 @@ export default {
             } catch (error) {
                 console.error('Error closing report:', error);
                 
+                if (error.response && error.response.status === 401) {
+                    this.handleUnauthorized();
+                    return;
+                }
+                
                 // Safely access error message with optional chaining
                 const errorMessage = error.response?.data?.message || 'Gagal menutup laporan';
                 
@@ -656,11 +924,73 @@ export default {
                 this.showCloseModal = false;
             }
         },
+    },
+    
+    computed: {
+        hasTanggapan() {
+            if (!this.laporan) return false;
+            if (!this.laporan.tanggapan) return false;
+            
+            if (Array.isArray(this.laporan.tanggapan)) {
+                return this.laporan.tanggapan.length > 0;
+            }
+            
+            return typeof this.laporan.tanggapan === 'string' && this.laporan.tanggapan.trim() !== '';
+        },
+        
+        // Process terlapor data to get an array
+        terlaporArray() {
+            if (!this.laporan || !this.laporan.terlapor) return [];
+            
+            // If already an array, return it
+            if (Array.isArray(this.laporan.terlapor)) {
+                return this.laporan.terlapor;
+            }
+            
+            // If it's a JSON string, parse it
+            if (typeof this.laporan.terlapor === 'string') {
+                try {
+                    const parsedArray = JSON.parse(this.laporan.terlapor);
+                    if (Array.isArray(parsedArray)) {
+                        return parsedArray;
+                    }
+                } catch (e) {
+                    console.log('Terlapor is not a valid JSON string', e);
+                }
+            }
+            
+            return [];
+        },
+        
+        // Process saksi data to get an array
+        saksiArray() {
+            if (!this.laporan || !this.laporan.saksi) return [];
+            
+            // If already an array, return it
+            if (Array.isArray(this.laporan.saksi)) {
+                return this.laporan.saksi;
+            }
+            
+            // If it's a JSON string, parse it
+            if (typeof this.laporan.saksi === 'string') {
+                try {
+                    const parsedArray = JSON.parse(this.laporan.saksi);
+                    if (Array.isArray(parsedArray)) {
+                        return parsedArray;
+                    }
+                } catch (e) {
+                    console.log('Saksi is not a valid JSON string', e);
+                }
+            }
+            
+            return [];
+        }
     }
 };
 </script>
 
 <style scoped>
+/* Your CSS styles remain unchanged */
 .detail-pk-container {
     padding: 24px;
     max-width: 1200px;
@@ -1150,6 +1480,123 @@ export default {
     color: #374151;
     white-space: pre-line;
     margin: 0;
+}
+
+/* Add these styles to the <style> section */
+.person-item {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.person-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.person-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 16px;
+    padding-left: 8px;
+    border-left: 3px solid #3b82f6;
+}
+
+.info-item {
+    margin-bottom: 12px;
+}
+
+.info-item .label {
+    color: #6b7280;
+    font-size: 14px;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.info-item .value {
+    color: #111827;
+    font-weight: 500;
+}
+
+/* Tambahkan CSS berikut ke bagian style */
+/* CSS untuk image gallery */
+.image-gallery {
+    margin-top: 20px;
+}
+
+.gallery-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.image-item {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.evidence-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.evidence-image:hover {
+    transform: scale(1.05);
+}
+
+/* CSS untuk navigasi image fullscreen */
+.image-navigation {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-button {
+    background-color: rgba(255, 255, 255, 0.3);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin: 0 10px;
+    transition: background-color 0.2s;
+}
+
+.nav-button:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.image-counter {
+    color: white;
+    font-size: 16px;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 5px 10px;
+    border-radius: 15px;
 }
 
 /* Responsive design */
