@@ -1107,6 +1107,98 @@ export default {
     goBack() {
       this.$router.go(-1);
     },
+
+    validateForm() {
+      let isValid = true;
+      let errors = [];
+      
+      // Check required fields
+      if (!this.report.title) {
+        errors.push('Judul Laporan wajib diisi');
+        isValid = false;
+      }
+      
+      if (!this.report.category) {
+        errors.push('Kategori wajib dipilih');
+        isValid = false;
+      }
+      
+      if (!this.report.description) {
+        errors.push('Deskripsi wajib diisi');
+        isValid = false;
+      }
+      
+      if (!this.report.incidentDate) {
+        errors.push('Tanggal & Waktu Kejadian wajib diisi');
+        isValid = false;
+      }
+      
+      if (this.report.bukti_pelanggaran.length === 0) {
+        errors.push('Bukti Pelanggaran wajib dipilih minimal satu');
+        isValid = false;
+      }
+      
+      if (!this.report.profesi) {
+        errors.push('Profesi wajib dipilih');
+        isValid = false;
+      }
+      
+      if (!this.report.jenis_kelamin) {
+        errors.push('Jenis Kelamin wajib dipilih');
+        isValid = false;
+      }
+      
+      if (!this.report.umur_pelapor) {
+        errors.push('Rentang Umur wajib dipilih');
+        isValid = false;
+      }
+      
+      // Check if evidence files exist
+      if (!this.selectedFiles || this.selectedFiles.length === 0) {
+        errors.push('Lampiran Foto wajib diupload');
+        isValid = false;
+      }
+      
+      // Check terlapor entries
+      let validTerlapor = false;
+      for (const terduga of this.report.terlapor) {
+        if (terduga.nama_lengkap && terduga.jenis_kelamin && 
+            terduga.status_warga && terduga.unit_kerja && 
+            terduga.umur_terlapor) {
+          validTerlapor = true;
+          break;
+        }
+      }
+      
+      if (!validTerlapor) {
+        errors.push('Data Terduga/Terlapor wajib diisi lengkap minimal untuk satu orang');
+        isValid = false;
+      }
+      
+      // Check saksi entries
+      let validSaksi = false;
+      for (const saksi of this.report.saksi) {
+        if (saksi.nama_lengkap && saksi.email && saksi.nomor_telepon) {
+          validSaksi = true;
+          break;
+        }
+      }
+      
+      if (!validSaksi) {
+        errors.push('Data Saksi wajib diisi lengkap minimal untuk satu orang');
+        isValid = false;
+      }
+      
+      if (!isValid) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Form Tidak Lengkap',
+          html: '<ul><li>' + errors.join('</li><li>') + '</li></ul>'
+        });
+      }
+      
+      return isValid;
+    },
     
     // Improved form submission method
     submitReport() {
@@ -1114,6 +1206,10 @@ export default {
       this.showBuktiWarning = false;
       this.showAgreementWarning = false;
       this.recaptchaError = null;
+
+      if (!this.validateForm()) {
+        return;
+      }
       
       // Validate agreement
       if (!this.report.agreement) {
@@ -1242,57 +1338,48 @@ export default {
         .catch(error => {
           this.isSubmitting = false;
           
-          // Specific handling for reCAPTCHA errors
-          if (error.response && error.response.data) {
-            const errorData = error.response.data;
-            const errorMsg = errorData.message || '';
+          if (error.response) {
+            console.log('Status:', error.response.status);
+            console.log('Data:', error.response.data);
+            console.log('Headers:', error.response.headers);
             
-            // Check if it's a reCAPTCHA error
-            if (errorMsg.toLowerCase().includes('recaptcha') || 
-                errorData.errors && errorData.errors['g-recaptcha-response']) {
-              
-              this.recaptchaError = 'Verifikasi reCAPTCHA gagal. Silakan coba lagi.';
-              
-              // Reset and reinitialize reCAPTCHA
-              this.resetRecaptcha();
-              
-              Swal.fire({
-                icon: 'error',
-                title: 'Verifikasi Gagal',
-                text: 'Verifikasi reCAPTCHA gagal. Silakan coba lagi.'
-              });
-              
-              return;
+            let errorMessage = 'Terjadi kesalahan:';
+            
+            // Check if the error response has a detailed message
+            if (error.response.data && error.response.data.message) {
+              errorMessage += '\n- ' + error.response.data.message;
             }
-          }
-          
-          // Handle other validation errors
-          if (error.response && error.response.status === 400) {
-            console.error('Validation errors:', error.response.data);
             
-            let errorMessage = 'Terjadi kesalahan pada form:';
-            const errors = error.response.data.errors || error.response.data;
-            
-            // Create a readable error message
-            Object.keys(errors).forEach(key => {
-              if (Array.isArray(errors[key])) {
-                errorMessage += `\n- ${errors[key][0]}`;
-              } else {
-                errorMessage += `\n- ${errors[key]}`;
-              }
-            });
+            // Check for validation errors
+            if (error.response.data && error.response.data.errors) {
+              const errors = error.response.data.errors;
+              Object.keys(errors).forEach(key => {
+                if (Array.isArray(errors[key])) {
+                  errorMessage += '\n- ' + errors[key].join(', ');
+                } else {
+                  errorMessage += '\n- ' + errors[key];
+                }
+              });
+            }
             
             Swal.fire({
               icon: 'error',
-              title: 'Validasi Form Gagal',
+              title: 'Form Submission Error',
               text: errorMessage
             });
+          } else if (error.request) {
+            console.log('Request made but no response received:', error.request);
+            Swal.fire({
+              icon: 'error',
+              title: 'Network Error',
+              text: 'Server tidak merespon. Periksa koneksi internet Anda.'
+            });
           } else {
-            console.error('Error submitting form:', error);
+            console.log('Error setting up request:', error.message);
             Swal.fire({
               icon: 'error',
               title: 'Error',
-              text: 'Terjadi kesalahan saat mengirim laporan.'
+              text: 'Terjadi kesalahan saat mengirim form: ' + error.message
             });
           }
         });
