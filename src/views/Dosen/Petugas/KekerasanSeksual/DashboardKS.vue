@@ -412,8 +412,8 @@ export default {
       this.loading = true;
       try {
         const [categoriesResponse, laporanResponse] = await Promise.all([
-          axios.get('http://localhost:8000/api/category'),
-          axios.get('http://localhost:8000/api/laporan_kekerasan')
+          axios.get('https://v3422040.mhs.d3tiuns.com/api/category'),
+          axios.get('https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan')
         ]);
 
         this.categories = categoriesResponse.data.reduce((acc, category) => {
@@ -441,8 +441,16 @@ export default {
       };
     },
 
-    getImageUrl(imagePath) {
-      return `http://localhost:8000/storage/laporankekerasan/${imagePath}`;
+    getImageUrlForPath(path) {
+      if (!path) return '';
+        
+      if (path.startsWith('http')) {
+        return path;
+      }
+        
+      const cleanPath = path.replace(/['"]/g, '');
+        
+      return `${this.baseUrl}/public/storage/laporankekerasan/${cleanPath}`;
     },
 
     viewReport(report) {

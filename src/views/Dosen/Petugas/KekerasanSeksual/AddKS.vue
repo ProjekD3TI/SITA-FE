@@ -48,7 +48,7 @@
             <div class="form-group">
               <label for="image_path">Lampiran Foto <span class="required">*</span></label>
               <div class="file-upload-container">
-                <div class="file-upload-box">
+                <div class="file-upload-box relative">
                   <input
                     type="file"
                     id="image_path"
@@ -459,7 +459,25 @@
         </div>
       </div>
 
-      <!-- Section 5: Pernyataan -->
+      <!-- Section 5: reCAPTCHA verification -->
+      <div class="form-section">
+        <h2>Verifikasi</h2>
+        <div class="form-row single-column">
+          <div class="form-column">
+            <div class="form-group">
+              <div ref="recaptchaContainer" class="g-recaptcha-container"></div>
+              <div v-if="errors['g-recaptcha-response']" class="invalid-feedback d-block">
+                {{ errors['g-recaptcha-response'][0] || 'Harap centang reCAPTCHA' }}
+              </div>
+              <div v-if="recaptchaError" class="invalid-feedback d-block">
+                {{ recaptchaError }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 6: Pernyataan -->
       <div class="form-section">
         <h2>Pernyataan</h2>
         <div class="statement-box">
@@ -488,7 +506,10 @@
       <div class="form-actions">
         <button type="button" @click="goBack" class="btn btn-secondary">Kembali</button>
         <button type="submit" class="btn btn-danger" :disabled="loading || !formData.agreement">
-          <span v-if="loading">Mengirim...</span>
+          <span v-if="loading">
+            <i class="fas fa-spinner fa-spin mr-2"></i>
+            Mengirim...
+          </span>
           <span v-else>Kirim Laporan</span>
         </button>
       </div>
@@ -497,7 +518,6 @@
 </template>
 
 <script>
-import axios from 'axios';
 import { decryptData } from '../../../../services/encrypt';
 import VueCookies from "vue-cookies";
 import Swal from 'sweetalert2';
@@ -556,14 +576,25 @@ export default {
       errors: {},
       loading: false,
       imagePreviews: [],
+      // reCAPTCHA v2 Configuration
+      recaptchaSiteKey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // Test key
+      recaptchaVerified: false,
+      recaptchaResponse: null,
+      recaptchaError: null,
+      recaptchaWidget: null,
+      recaptchaAttempts: 0,
+      maxRecaptchaAttempts: 3
     };
   },
   computed: {
     kekerasanCategories() {
       // Filter for categories that start with "Kekerasan"
       return this.categories.filter(category => 
-        category.nama.startsWith('Kekerasan')
+        category.nama && category.nama.startsWith('Kekerasan')
       );
+    },
+    apiBaseUrl() {
+      return 'https://v3422040.mhs.d3tiuns.com/api';
     }
   },
   created() {
@@ -574,8 +605,111 @@ export default {
   },
   mounted() {
     this.fetchCategories();
+    this.loadRecaptchaScript();
   },
   methods: {
+    // reCAPTCHA Methods
+    loadRecaptchaScript() {
+      if (window.grecaptcha) {
+        this.renderRecaptchaWidget();
+        return;
+      }
+
+      // Create script element
+      const script = document.createElement('script');
+      script.src = `https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit`;
+      script.async = true;
+      script.defer = true;
+
+      // Define callback when reCAPTCHA is loaded
+      window.onRecaptchaLoaded = () => {
+        this.renderRecaptchaWidget();
+      };
+
+      // Handle script loading errors
+      script.onerror = () => {
+        console.error('Failed to load reCAPTCHA script');
+        this.recaptchaError = 'Gagal memuat reCAPTCHA. Silakan muat ulang halaman.';
+      };
+
+      // Add script to document
+      document.head.appendChild(script);
+    },
+
+    renderRecaptchaWidget() {
+      // Wait until the container is mounted
+      this.$nextTick(() => {
+        if (!this.$refs.recaptchaContainer) {
+          console.error('reCAPTCHA container not found');
+          setTimeout(() => this.renderRecaptchaWidget(), 500);
+          return;
+        }
+
+        try {
+          // Render reCAPTCHA widget
+          this.recaptchaWidget = window.grecaptcha.render(this.$refs.recaptchaContainer, {
+            'sitekey': this.recaptchaSiteKey,
+            'callback': (response) => {
+              this.recaptchaResponse = response;
+              this.recaptchaVerified = true;
+              this.recaptchaError = null;
+              console.log('reCAPTCHA verification successful');
+            },
+            'expired-callback': () => {
+              this.recaptchaResponse = null;
+              this.recaptchaVerified = false;
+              this.recaptchaError = 'Verifikasi reCAPTCHA telah kedaluwarsa. Silakan centang kembali.';
+            },
+            'error-callback': () => {
+              this.recaptchaResponse = null;
+              this.recaptchaVerified = false;
+              this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan coba lagi.';
+            }
+          });
+        } catch (error) {
+          console.error('Error rendering reCAPTCHA:', error);
+          
+          // If the widget is already rendered, just reset it
+          if (error.message && error.message.includes('already been rendered')) {
+            this.resetRecaptcha();
+          } else {
+            this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan muat ulang halaman.';
+          }
+        }
+      });
+    },
+
+    resetRecaptcha() {
+      try {
+        if (window.grecaptcha && this.recaptchaWidget !== null) {
+          window.grecaptcha.reset(this.recaptchaWidget);
+          this.recaptchaVerified = false;
+          this.recaptchaResponse = null;
+        } else {
+          // If reset fails, re-initialize
+          this.recaptchaAttempts = 0; 
+          this.renderRecaptchaWidget();
+        }
+      } catch (error) {
+        console.error('Error resetting reCAPTCHA:', error);
+        this.recaptchaAttempts = 0;
+        this.renderRecaptchaWidget();
+      }
+    },
+
+    getRecaptchaResponse() {
+      try {
+        if (window.grecaptcha && this.recaptchaWidget !== null) {
+          return window.grecaptcha.getResponse(this.recaptchaWidget);
+        }
+        return this.recaptchaResponse;
+      } catch (error) {
+        console.error('Error getting reCAPTCHA response:', error);
+        return this.recaptchaResponse;
+      }
+    },
+
+    // Data loading methods
     loadUserData() {
       try {
         const encryptedUserData = VueCookies.get("user_session");
@@ -594,43 +728,109 @@ export default {
         this.setDefaultUserData();
       }
     },
+    
     setDefaultUserData() {
       // Default user data if cookie is not available
       this.formData.nama_pelapor = 'Miftahul';
       this.formData.nim_pelapor = 'miftahul01';
       this.formData.nomor_telepon = '';
     },
+    
     fetchCategories() {
-      axios.get('http://localhost:8000/api/category')
-        .then(response => {
-          if (Array.isArray(response.data)) {
-            this.categories = response.data;
-          } else if (response.data && response.data.data) {
-            this.categories = response.data.data;
-          } else {
-            console.error('Unexpected API response structure:', response.data);
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', `${this.apiBaseUrl}/category`, true);
+      xhr.timeout = 10000; // 10 seconds
+      
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            if (Array.isArray(response)) {
+              this.categories = response;
+            } else if (response && response.data) {
+              this.categories = response.data;
+            } else {
+              console.error('Unexpected API response structure:', response);
+              this.categories = [];
+            }
+          } catch (error) {
+            console.error('Error parsing categories response:', error);
             this.categories = [];
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Gagal memuat kategori laporan.'
+            });
           }
-        })
-        .catch(error => {
-          console.error('Error fetching categories:', error);
+        } else {
+          console.error('Failed to fetch categories:', xhr.status, xhr.statusText);
           Swal.fire({
             icon: 'error',
             title: 'Error',
             text: 'Gagal memuat kategori laporan.'
           });
+        }
+      };
+      
+      xhr.onerror = () => {
+        console.error('Network error while fetching categories');
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Gagal memuat kategori laporan. Periksa koneksi internet Anda.'
         });
+      };
+      
+      xhr.ontimeout = () => {
+        console.error('Timeout while fetching categories');
+        Swal.fire({
+          icon: 'error',
+          title: 'Timeout',
+          text: 'Permintaan kategori melebihi batas waktu. Silakan coba lagi.'
+        });
+      };
+      
+      xhr.send();
     },
+    
+    // File handling methods
     handleFileUpload(event) {
+      const selectedFiles = Array.from(event.target.files);
+      
+      // Validate the files
+      const { validFiles, invalidFiles } = this.validateFiles(selectedFiles);
+      
+      // Show warning for invalid files
+      if (invalidFiles.length > 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Beberapa file tidak valid',
+          html: `
+            <p>Beberapa file tidak dapat digunakan:</p>
+            <ul>
+              ${invalidFiles.map(name => `<li>${name}</li>`).join('')}
+            </ul>
+            <p>Pastikan semua file berformat JPEG, PNG, atau GIF dan ukuran tidak melebihi 5MB.</p>
+          `
+        });
+      }
+      
       // Store selected files for form submission
-      this.selectedFiles = Array.from(event.target.files);
+      this.selectedFiles = validFiles;
+      
+      // Create a new FileList-like object from valid files
+      const dataTransfer = new DataTransfer();
+      validFiles.forEach(file => {
+        dataTransfer.items.add(file);
+      });
+      
       // Update the formData.image_path for form submission
-      this.formData.image_path = event.target.files;
+      this.formData.image_path = dataTransfer.files;
       
       // Generate preview images
       this.imagePreviews = [];
-      for (let i = 0; i < event.target.files.length; i++) {
-        const file = event.target.files[i];
+      for (let i = 0; i < validFiles.length; i++) {
+        const file = validFiles[i];
         const reader = new FileReader();
         reader.onload = e => {
           this.imagePreviews.push(e.target.result);
@@ -639,7 +839,6 @@ export default {
       }
     },
     
-    // Add this new method
     removeImage(index) {
       // Remove from previews
       this.imagePreviews.splice(index, 1);
@@ -657,10 +856,38 @@ export default {
       this.formData.image_path = dataTransfer.files;
       document.getElementById('image_path').files = dataTransfer.files;
     },
+    
+    validateFiles(files) {
+      const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      
+      let validFiles = [];
+      let invalidFiles = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        if (file.size > maxSizeInBytes) {
+          invalidFiles.push(`${file.name} (melebihi batas ukuran)`);
+        } else if (!allowedTypes.includes(file.type)) {
+          invalidFiles.push(`${file.name} (format tidak didukung)`);
+        } else {
+          validFiles.push(file);
+        }
+      }
+      
+      return {
+        validFiles,
+        invalidFiles
+      };
+    },
+    
+    // Navigation methods
     goBack() {
       this.$router.go(-1);
     },
-    // Method for updating the bukti_pelanggaran array based on selected checkboxes
+    
+    // Form data handling methods
     updateBuktiPelanggaran() {
       // Start with selected standard options
       let buktiArray = [...this.selectedBukti];
@@ -672,8 +899,13 @@ export default {
       
       // Update the formData
       this.formData.bukti_pelanggaran = buktiArray;
+      
+      // Clear bukti warning if we have selected items
+      if (buktiArray.length > 0) {
+        this.showBuktiWarning = false;
+      }
     },
-    // New methods for handling terlapor
+    
     addTerduga() {
       this.formData.terlapor.push({
         nama_lengkap: '',
@@ -685,13 +917,14 @@ export default {
         umur_terlapor:''
       });
     },
+    
     removeTerduga(index) {
       this.formData.terlapor.splice(index, 1);
       if (this.formData.terlapor.length === 0) {
         this.addTerduga(); // Always keep at least one terduga field
       }
     },
-    // New methods for handling saksi
+    
     addSaksi() {
       this.formData.saksi.push({
         nama_lengkap: '',
@@ -699,33 +932,85 @@ export default {
         nomor_telepon: ''
       });
     },
+    
     removeSaksi(index) {
       this.formData.saksi.splice(index, 1);
       if (this.formData.saksi.length === 0) {
         this.addSaksi(); // Always keep at least one saksi field
       }
     },
-    submitForm() {
-      // Reset warnings
-      this.showBuktiWarning = false;
+    
+    // Form validation and submission
+    validateForm() {
+      let isValid = true;
+      this.errors = {};
       
-      // Validate agreement
-      if (!this.formData.agreement) {
-        this.errors.agreement = ['Anda harus menyetujui pernyataan untuk melanjutkan'];
-        return;
+      // Basic validations
+      if (!this.formData.judul) {
+        this.errors.judul = ['Judul laporan harus diisi'];
+        isValid = false;
       }
       
-      // Update bukti_pelanggaran array before submission
-      this.updateBuktiPelanggaran();
+      if (!this.formData.category_id) {
+        this.errors.category_id = ['Kategori harus dipilih'];
+        isValid = false;
+      }
+      
+      if (!this.formData.deskripsi) {
+        this.errors.deskripsi = ['Deskripsi harus diisi'];
+        isValid = false;
+      }
+      
+      if (!this.formData.tanggal_kejadian) {
+        this.errors.tanggal_kejadian = ['Tanggal kejadian harus diisi'];
+        isValid = false;
+      }
       
       // Validate bukti_pelanggaran
       if (this.formData.bukti_pelanggaran.length === 0) {
         this.showBuktiWarning = true;
+        isValid = false;
+      }
+      
+      // Validate file uploads
+      if (!this.selectedFiles || this.selectedFiles.length === 0) {
+        this.errors.image_path = ['Lampiran foto harus diunggah'];
+        isValid = false;
+      }
+      
+      // Validate reCAPTCHA
+      const recaptchaResponse = this.getRecaptchaResponse();
+      if (!recaptchaResponse) {
+        this.errors['g-recaptcha-response'] = ['Harap centang reCAPTCHA'];
+        isValid = false;
+      }
+      
+      // Validate agreement
+      if (!this.formData.agreement) {
+        this.errors.agreement = ['Anda harus menyetujui pernyataan untuk melanjutkan'];
+        isValid = false;
+      }
+      
+      return isValid;
+    },
+    
+    submitForm() {
+      // Update and validate bukti_pelanggaran
+      this.updateBuktiPelanggaran();
+      
+      if (!this.validateForm()) {
+        // Scroll to first error
+        this.$nextTick(() => {
+          const firstError = document.querySelector('.is-invalid') || 
+                             document.querySelector('.invalid-feedback.d-block');
+          if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        });
         return;
       }
       
       this.loading = true;
-      this.errors = {};
       
       const formData = new FormData();
       formData.append('judul', this.formData.judul);
@@ -735,8 +1020,9 @@ export default {
       formData.append('nama_pelapor', this.formData.nama_pelapor);
       formData.append('nim_pelapor', this.formData.nim_pelapor);
       formData.append('nomor_telepon', this.formData.nomor_telepon);
+      formData.append('g-recaptcha-response', this.getRecaptchaResponse());
       
-      // Add lampiran_link
+      // Add lampiran_link if exists
       if (this.formData.lampiran_link) {
         formData.append('lampiran_link', this.formData.lampiran_link);
       }
@@ -753,7 +1039,7 @@ export default {
       if (terlaporFiltered.length > 0) {
         terlaporFiltered.forEach((item, index) => {
           Object.keys(item).forEach(key => {
-            if (item[key]) { // Only append if value exists
+            if (item[key] !== null && item[key] !== undefined && item[key] !== '') {
               formData.append(`terlapor[${index}][${key}]`, item[key]);
             }
           });
@@ -765,7 +1051,7 @@ export default {
       if (saksiFiltered.length > 0) {
         saksiFiltered.forEach((item, index) => {
           Object.keys(item).forEach(key => {
-            if (item[key]) { // Only append if value exists
+            if (item[key] !== null && item[key] !== undefined && item[key] !== '') {
               formData.append(`saksi[${index}][${key}]`, item[key]);
             }
           });
@@ -773,22 +1059,48 @@ export default {
       }
       
       // Append multiple files if they exist
-      if (this.formData.image_path && this.formData.image_path.length > 0) {
-        for (let i = 0; i < this.formData.image_path.length; i++) {
-          formData.append('image_path[]', this.formData.image_path[i]);
+      if (this.selectedFiles && this.selectedFiles.length > 0) {
+        for (let i = 0; i < this.selectedFiles.length; i++) {
+          formData.append('image_path[]', this.selectedFiles[i]);
         }
       }
       
       // Agreement field
-      formData.append('agreement', this.formData.agreement);
-
-      axios.post('http://localhost:8000/api/laporan_kekerasan/add_laporan', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-        .then(response => {
-          this.loading = false;
+      formData.append('agreement', this.formData.agreement ? 1 : 0);
+      
+      // Create XMLHttpRequest
+      const xhr = new XMLHttpRequest();
+      
+      // Configure request
+      xhr.open('POST', `${this.apiBaseUrl}/laporan_kekerasan/add_laporan`, true);
+      
+      // Set timeout (30 seconds)
+      xhr.timeout = 30000;
+      
+      // Handle completion
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState !== 4) return;
+        
+        this.loading = false;
+        
+        // Log raw response for debugging
+        console.log('XHR Response Status:', xhr.status);
+        console.log('XHR Response Headers:', xhr.getAllResponseHeaders());
+        
+        if (xhr.status >= 200 && xhr.status < 300) {
+          // Success response
+          let responseData;
+          try {
+            responseData = JSON.parse(xhr.responseText);
+            console.log('Parsed response data:', responseData);
+          } catch (e) {
+            console.log('Response is not JSON:', xhr.responseText);
+          }
+          
+          // Reset reCAPTCHA
+          this.resetRecaptcha();
+          
+          // Show success message
           Swal.fire({
             title: 'Berhasil!',
             text: 'Laporan berhasil ditambahkan.',
@@ -799,97 +1111,96 @@ export default {
           }).then(() => {
             this.$router.push('/kalab/pelaporankekerasanseksual');
           });
+          
           this.resetForm();
-        })
-        .catch(error => {
-          this.loading = false;
-          if (error.response && error.response.status === 400) {
-            this.errors = error.response.data;
+        } else {
+          // Error handling
+          console.error('Form submission error:', xhr.status, xhr.statusText);
+          
+          let errorMessage = 'Terjadi kesalahan pada server.';
+          
+          // Try to parse error response
+          try {
+            const errorResponse = JSON.parse(xhr.responseText);
+            console.log('Error response:', errorResponse);
+            
+            if (errorResponse.errors) {
+              this.errors = errorResponse.errors;
+            } else if (typeof errorResponse === 'object') {
+              // Handle flattened validation errors
+              this.errors = errorResponse;
+            }
+            
+            // Check for reCAPTCHA errors
+            if (this.errors['g-recaptcha-response'] || 
+                (errorResponse.message && errorResponse.message.toLowerCase().includes('recaptcha'))) {
+              this.resetRecaptcha();
+            }
+            
+            if (errorResponse.message) {
+              errorMessage = errorResponse.message;
+            }
+            
             console.error('Validation errors:', this.errors);
-          } else {
-            console.error('Error submitting form:', error);
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'Terjadi kesalahan saat mengirim laporan.'
+            
+            // Scroll to first error
+            this.$nextTick(() => {
+              const firstError = document.querySelector('.is-invalid') || 
+                                document.querySelector('.invalid-feedback.d-block');
+              if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
             });
+          } catch (e) {
+            console.error('Error parsing error response:', e);
           }
-        });
-    },
-    // Special handling for bukti_pelanggaran array error
-    handleBuktiPelanggaranError() {
-      const formData = new FormData();
-      formData.append('judul', this.formData.judul);
-      formData.append('category_id', this.formData.category_id);
-      formData.append('deskripsi', this.formData.deskripsi);
-      formData.append('tanggal_kejadian', this.formData.tanggal_kejadian);
-      formData.append('nama_pelapor', this.formData.nama_pelapor);
-      formData.append('nim_pelapor', this.formData.nim_pelapor);
-      formData.append('nomor_telepon', this.formData.nomor_telepon);
-      
-      if (this.formData.lampiran_link) {
-        formData.append('lampiran_link', this.formData.lampiran_link);
-      }
-      
-      // Try a different format for bukti_pelanggaran
-      // Instead of JSON.stringify, try adding each item separately
-      if (this.formData.bukti_pelanggaran && this.formData.bukti_pelanggaran.length > 0) {
-        for (let i = 0; i < this.formData.bukti_pelanggaran.length; i++) {
-          formData.append('bukti_pelanggaran[]', this.formData.bukti_pelanggaran[i]);
-        }
-      } else {
-        // Ensure there's at least an empty array
-        formData.append('bukti_pelanggaran[]', '');
-      }
-      
-      formData.append('terlapor', JSON.stringify(this.formData.terlapor.filter(t => t.nama_lengkap.trim() !== '')));
-      formData.append('saksi', JSON.stringify(this.formData.saksi.filter(s => s.nama_lengkap.trim() !== '')));
-      
-      if (this.formData.image_path && this.formData.image_path.length > 0) {
-        for (let i = 0; i < this.formData.image_path.length; i++) {
-          formData.append('image_path[]', this.formData.image_path[i]);
-        }
-      }
-      
-      formData.append('agreement', this.formData.agreement);
-
-      this.loading = true;
-      
-      axios.post('http://localhost:8000/api/laporan_kekerasan/add_laporan', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-        .then(response => {
-          this.loading = false;
+          
           Swal.fire({
-            title: 'Berhasil!',
-            text: 'Laporan berhasil ditambahkan.',
-            icon: 'success',
-            timer: 2000,
-            timerProgressBar: true,
-            showConfirmButton: false
-          }).then(() => {
-            this.$router.push('/kalab/pelaporankekerasanseksual');
+            icon: 'error',
+            title: 'Error',
+            text: errorMessage
           });
-          this.resetForm();
-        })
-        .catch(error => {
-          this.loading = false;
-          if (error.response && error.response.status === 400) {
-            this.errors = error.response.data;
-            console.error('Validation errors after retry:', this.errors);
-          } else {
-            console.error('Error submitting form after retry:', error);
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'Terjadi kesalahan saat mengirim laporan.'
-            });
-          }
+        }
+      };
+      
+      // Handle network errors
+      xhr.onerror = () => {
+        this.loading = false;
+        console.error('Network error occurred');
+        
+        Swal.fire({
+          icon: 'error',
+          title: 'Network Error',
+          text: 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.'
         });
+      };
+      
+      // Handle timeouts
+      xhr.ontimeout = () => {
+        this.loading = false;
+        console.error('Request timed out');
+        
+        Swal.fire({
+          icon: 'error',
+          title: 'Timeout',
+          text: 'Permintaan melebihi batas waktu. Silakan coba lagi.'
+        });
+      };
+      
+      // Add upload progress tracking
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
+        }
+      };
+      
+      // Send the request
+      xhr.send(formData);
     },
+    
     resetForm() {
+      // Reset form data
       this.formData = {
         judul: '',
         category_id: '',
@@ -917,477 +1228,47 @@ export default {
         }],
         agreement: false
       };
+      
+      // Reset other form state
       this.selectedFiles = [];
       this.selectedBukti = [];
       this.showLainnyaInput = false;
       this.buktiLainnya = '';
       this.showBuktiWarning = false;
       this.errors = {};
+      this.imagePreviews = [];
+      
+      // Reset file input
+      const fileInput = document.getElementById('image_path');
+      if (fileInput) fileInput.value = '';
+      
+      // Reset reCAPTCHA
+      this.resetRecaptcha();
     }
   }
 };
 </script>
 
 <style scoped>
-.add-ks-container {
-  max-width: 1000px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.form-header {
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.form-header h1 {
-  font-size: 1.8rem;
-  color: #333;
-}
-
-.form-section {
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #eee;
-}
-
-.form-section h2 {
-  font-size: 1.4rem;
-  color: #333;
-  margin-bottom: 1.5rem;
-}
-
-.form-section h3 {
-  font-size: 1.2rem;
-  color: #555;
-  margin-bottom: 1rem;
-}
-
-.ks-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.form-row {
-  display: flex;
-  gap: 2rem;
-}
-
-.form-row.single-column {
-  max-width: 600px;
-}
-
-.form-column {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-label {
-  font-weight: 600;
-  color: #333;
-}
-
-.required {
-  color: #dc3545;
-}
-
-.form-control {
-  padding: 0.75rem;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
-.form-control:focus {
-  border-color: #80bdff;
-  outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.form-control:disabled {
-  background-color: #e9ecef;
-  opacity: 1;
-}
-
-.is-invalid {
-  border-color: #dc3545;
-}
-
-.invalid-feedback {
-  color: #dc3545;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-}
-
-.d-block {
-  display: block;
-}
-
-.custom-file-upload {
+/* Your existing CSS styles */
+.file-upload-box.relative {
   position: relative;
 }
 
-.text-muted {
-  color: #6c757d;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-}
-
-/* Selected Files Display */
-.selected-files {
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  padding: 0.75rem;
-  font-size: 0.875rem;
-}
-
-.selected-files p {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.selected-files ul {
-  margin: 0;
-  padding-left: 1.25rem;
-}
-
-.selected-files li {
-  margin-bottom: 0.25rem;
-}
-
-.mt-2 {
-  margin-top: 0.5rem;
-}
-
-.mb-1 {
-  margin-bottom: 0.25rem;
-}
-
-/* Radio buttons styling */
-.radio-group {
-  padding: 0.5rem 0;
-}
-
-.form-check-inline {
-  display: inline-flex;
-  align-items: center;
-  margin-right: 1.5rem;
-}
-
-.form-check-input[type="radio"] {
-  margin-top: 0;
-}
-
-/* Bukti Pelanggaran Checkboxes */
-.bukti-pelanggaran-container {
-  margin-top: 1rem;
-}
-
-.bukti-checkbox-group {
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  padding: 1rem;
-  margin-top: 0.5rem;
-  background-color: #f8f9fa;
-}
-
-.bukti-checkbox-group.is-invalid {
-  border-color: #dc3545;
-}
-
-.bukti-check {
-  margin-bottom: 0.75rem;
+/* New styles for reCAPTCHA */
+.g-recaptcha-container {
+  margin: 20px 0;
+  min-height: 78px;
   display: flex;
-  align-items: flex-start;
-}
-
-.bukti-check .form-check-input {
-  margin-top: 0.25rem;
-  margin-right: 0.5rem;
-}
-
-.bukti-check .form-check-label {
-  font-weight: normal;
-}
-
-.lainnya-input-container {
-  margin-top: 0.5rem;
-  margin-left: 1.5rem;
-  width: 100%;
-}
-
-/* Styling untuk section pernyataan */
-.statement-box {
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.statement-box p {
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.statement-box ol {
-  margin-bottom: 1.5rem;
-  padding-left: 1.5rem;
-}
-
-.statement-box ol li {
-  margin-bottom: 0.75rem;
-  line-height: 1.5;
-}
-
-.form-check {
-  display: flex;
-  align-items: flex-start;
-  margin-top: 1rem;
-}
-
-.form-check-input {
-  margin-top: 0.25rem;
-  margin-right: 0.5rem;
-}
-
-.form-check-label {
-  font-weight: 500;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 1.5rem;
-}
-
-.btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-primary {
-  background-color: #007bff;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #0069d9;
-}
-
-.btn-secondary {
-  background-color: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background-color: #5a6268;
-}
-
-.btn-danger {
-  background-color: #dc3545;
-  color: white;
-}
-
-.btn-danger:hover {
-  background-color: #c82333;
-}
-
-.btn-sm {
-  padding: 0.4rem 0.8rem;
-  font-size: 0.875rem;
-}
-
-.btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-/* Styles for terduga and saksi sections */
-.terduga-container, .saksi-container {
-  background-color: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 4px;
-  margin-bottom: 1.5rem;
-  border: 1px solid #dee2e6;
-}
-
-.terduga-actions, .saksi-actions {
-  margin-top: 1rem;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.terduga-add, .saksi-add {
-  margin-top: 1rem;
-}
-.file-upload-container {
-  margin-bottom: 1rem;
-}
-
-.file-upload-box {
-  position: relative;
-  border: 2px dashed #ced4da;
-  border-radius: 8px;
-  padding: 2rem 1rem;
-  text-align: center;
-  background-color: #f8f9fa;
-  cursor: pointer;
-  transition: border-color 0.3s, background-color 0.3s;
-}
-
-.file-upload-box:hover {
-  border-color: #80bdff;
-  background-color: #e8f0fe;
-}
-
-.file-input {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.upload-icon-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.upload-icon-container i {
-  font-size: 2rem;
-  color: #6c757d;
-}
-
-.upload-icon-container p {
-  margin: 0;
-  font-weight: 600;
-  color: #495057;
-}
-
-.upload-icon-container small {
-  color: #6c757d;
-}
-
-/* Perbaikan untuk Image Preview */
-.image-previews-container {
-  margin-top: 1.5rem;
-}
-
-.image-previews-container h4 {
-  font-size: 1rem;
-  color: #495057;
-  margin-bottom: 0.75rem;
-}
-
-.image-previews {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 15px;
-}
-
-.image-preview-item {
-  position: relative;
-  width: 100%;
-  height: 150px;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid #dee2e6;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-.remove-image {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(220, 53, 69, 0.8);
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: background 0.2s;
-  color: white;
-  font-size: 14px;
 }
 
-.remove-image:hover {
-  background: rgba(220, 53, 69, 1);
+/* Fix for the relative class */
+.relative {
+  position: relative;
 }
 
-/* Styling untuk Radio Button Rentang Umur */
-.standard-radio {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 10px;
-  background-color: #f8f9fa;
-  border: 1px solid #ced4da;
-  border-radius: 6px;
-}
-
-.standard-radio.is-invalid {
-  border-color: #dc3545;
-}
-
-/* Perbaikan untuk vertical alignment pada radio buttons */
-.standard-radio .form-check {
-  margin-bottom: 5px;
-  padding-left: 10px;
-  display: flex;
-  align-items: center; /* Menambahkan ini untuk vertical alignment */
-}
-
-.standard-radio .form-check-input {
-  margin-right: 10px;
-  margin-top: 0; /* Menghilangkan margin-top default */
-}
-
-.standard-radio .form-check-label {
-  font-weight: normal;
-  cursor: pointer;
-  display: inline-block; /* Memastikan label bersifat inline */
-  line-height: 1; /* Mengatur line-height agar lebih pendek */
-}
-
-/* Responsive layout */
-@media (max-width: 768px) {
-  .form-row {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .lainnya-input-container {
-    margin-left: 0;
-    margin-top: 0.75rem;
-  }
-  
-  .form-check-inline {
-    margin-right: 1rem;
-  }
+.fa-spinner {
+  margin-right: 0.5rem;
 }
 </style>
