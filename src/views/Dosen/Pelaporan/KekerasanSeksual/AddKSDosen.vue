@@ -602,16 +602,20 @@
           </div>
         </div>
 
-        <!-- reCAPTCHA Section in your template -->
+        <!-- reCAPTCHA Section -->
         <div class="form-section border-t pt-6 mb-6">
           <h3 class="text-xl font-semibold mb-4">Verifikasi</h3>
           <div class="flex flex-col items-center mb-4">
-            <div ref="recaptchaContainer" class="recaptcha-wrapper"></div>
+            <div ref="recaptchaContainer" class="g-recaptcha-container recaptcha-wrapper"></div>
+            <p v-if="errors['g-recaptcha-response']" class="text-red-500 text-xs text-center mt-1">
+              {{ errors['g-recaptcha-response'][0] }}
+            </p>
+            <p v-if="recaptchaError" class="text-red-500 text-xs text-center mt-1">
+              {{ recaptchaError }}
+            </p>
           </div>
-          <p v-if="errors['g-recaptcha-response']" class="text-red-500 text-xs text-center mt-1">{{ errors['g-recaptcha-response'][0] }}</p>
-          <p v-if="recaptchaError" class="text-red-500 text-xs text-center mb-4">{{ recaptchaError }}</p>
         </div>
-                
+
         <!-- Form Actions -->
         <div class="flex justify-between pt-6">
           <button
@@ -622,21 +626,21 @@
             Kembali
           </button>
           <button
-  type="button"  
-  class="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-  :disabled="isSubmitting"
-  :class="{'opacity-70 cursor-not-allowed': isSubmitting}"
-  @click="submitReportWithDebug"
->
-  <span v-if="isSubmitting">
-    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-    </svg>
-    Mengirim...
-  </span>
-  <span v-else>Simpan Laporan</span>
-</button>
+            type="button"  
+            class="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+            :disabled="isSubmitting"
+            :class="{'opacity-70 cursor-not-allowed': isSubmitting}"
+            @click="submitReport"
+          >
+            <span v-if="isSubmitting">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Mengirim...
+            </span>
+            <span v-else>Simpan Laporan</span>
+          </button>
         </div>
       </form>
     </div>
@@ -710,10 +714,13 @@ export default {
       formattedDateTime: null,
       
       // reCAPTCHA v2 Configuration
-      recaptchaSiteKey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI',
+      recaptchaSiteKey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // Test key
       recaptchaVerified: false,
       recaptchaResponse: null,
-      recaptchaError: null
+      recaptchaError: null,
+      recaptchaWidget: null,
+      recaptchaAttempts: 0,
+      maxRecaptchaAttempts: 3
     };
   },
   
@@ -725,12 +732,16 @@ export default {
   
   mounted() {
     this.fetchCategories();
-    this.loadRecaptchaScript();
+    
+    // Initialize reCAPTCHA with the improved implementation
+    this.$nextTick(() => {
+      this.initRecaptcha();
+    });
   },
-  
+
   beforeUnmount() {
-    // Reset reCAPTCHA if component is destroyed
-    this.resetRecaptcha();
+    // Properly cleanup reCAPTCHA
+    this.cleanupRecaptcha();
   },
   
   computed: {
@@ -743,139 +754,170 @@ export default {
   
   methods: {
     // Add these methods to your component
-loadRecaptchaScript() {
-  // First, check if reCAPTCHA is already loaded
-  if (window.grecaptcha && window.grecaptcha.render) {
-    console.log("reCAPTCHA already loaded, rendering directly");
-    this.renderRecaptcha();
-    return;
-  }
-  
-  // Define the callback function that will be called when reCAPTCHA is loaded
-  window.onRecaptchaLoaded = () => {
-    console.log("reCAPTCHA script loaded");
-    this.renderRecaptcha();
-  };
-  
-  // Load the script only if it's not already present
-  const existingScript = document.querySelector('script[src*="recaptcha/api.js"]');
-  if (!existingScript) {
-    const script = document.createElement('script');
-    script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit';
-    script.async = true;
-    script.defer = true;
-    
-    script.onerror = () => {
-      console.error('Error loading reCAPTCHA script');
-      this.recaptchaError = 'Gagal memuat reCAPTCHA. Silakan muat ulang halaman.';
-    };
-    
-    document.head.appendChild(script);
-  }
-},
-
-renderRecaptcha() {
-  // Wait until the DOM element is available
-  if (!this.$refs.recaptchaContainer) {
-    console.log("recaptchaContainer ref not found, retrying...");
-    setTimeout(() => this.renderRecaptcha(), 100);
-    return;
-  }
-  
-  try {
-    console.log("Rendering reCAPTCHA");
-    
-    // Clear existing content
-    this.$refs.recaptchaContainer.innerHTML = '';
-    
-    // Render the reCAPTCHA v2 checkbox widget
-    if (window.grecaptcha && window.grecaptcha.render) {
-      const widgetId = window.grecaptcha.render(this.$refs.recaptchaContainer, {
-        'sitekey': '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // Google's test key
-        'callback': (response) => {
-          console.log("reCAPTCHA callback received");
-          this.recaptchaResponse = response;
-          this.recaptchaVerified = true;
-          this.recaptchaError = null;
-        },
-        'expired-callback': () => {
-          console.log("reCAPTCHA expired");
-          this.recaptchaResponse = null;
-          this.recaptchaVerified = false;
-          this.recaptchaError = 'Verifikasi reCAPTCHA telah kedaluwarsa. Silakan centang kembali.';
-        },
-        'error-callback': () => {
-          console.log("reCAPTCHA error");
-          this.recaptchaResponse = null;
-          this.recaptchaVerified = false;
-          this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan muat ulang halaman.';
-        }
-      });
+    initRecaptcha() {
+      // Clear any existing error messages
+      this.recaptchaError = null;
       
-      // Store the widget ID for future reference
-      this.recaptchaWidgetId = widgetId;
-    } else {
-      console.error("grecaptcha.render is not available");
-      this.recaptchaError = 'Gagal memuat reCAPTCHA. Silakan muat ulang halaman.';
-      
-      // Try to load the script again
-      setTimeout(() => this.loadRecaptchaScript(), 500);
-    }
-  } catch (error) {
-    console.error('Error rendering reCAPTCHA:', error);
-    this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan muat ulang halaman.';
-  }
-},
-
-resetRecaptcha() {
-  if (window.grecaptcha) {
-    try {
-      if (typeof this.recaptchaWidgetId !== 'undefined') {
-        window.grecaptcha.reset(this.recaptchaWidgetId);
-      } else if (this.$refs.recaptchaContainer) {
-        // If we don't have a widget ID, try to reset all widgets
-        window.grecaptcha.reset();
+      // Check if the recaptcha container is available
+      if (!this.$refs.recaptchaContainer) {
+        console.log("reCAPTCHA container not found, retrying...");
+        setTimeout(() => this.initRecaptcha(), 500);
+        return;
       }
       
+      // Track attempt count to prevent infinite loops
+      this.recaptchaAttempts++;
+      if (this.recaptchaAttempts > this.maxRecaptchaAttempts) {
+        this.recaptchaError = "Gagal memuat reCAPTCHA setelah beberapa percobaan. Silakan muat ulang halaman.";
+        return;
+      }
+      
+      // Load reCAPTCHA script if not already loaded
+      if (window.grecaptcha) {
+        this.renderRecaptchaWidget();
+      } else {
+        this.loadRecaptchaScript()
+          .then(() => {
+            this.renderRecaptchaWidget();
+          })
+          .catch(error => {
+            console.error("Error loading reCAPTCHA script:", error);
+            this.recaptchaError = "Gagal memuat script reCAPTCHA. Silakan muat ulang halaman.";
+            
+            // Auto-retry after a delay
+            setTimeout(() => {
+              if (!window.grecaptcha) {
+                this.initRecaptcha();
+              }
+            }, 2000);
+          });
+      }
+    },
+    
+    loadRecaptchaScript() {
+      return new Promise((resolve, reject) => {
+        // If already loading, wait for it
+        if (window.onRecaptchaLoaded) {
+          const originalCallback = window.onRecaptchaLoaded;
+          window.onRecaptchaLoaded = () => {
+            originalCallback();
+            resolve(window.grecaptcha);
+          };
+          return;
+        }
+
+        // Define callback for when reCAPTCHA loads
+        window.onRecaptchaLoaded = () => {
+          resolve(window.grecaptcha);
+        };
+        
+        // Add the script to the page
+        const script = document.createElement('script');
+        script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit';
+        script.async = true;
+        script.defer = true;
+        
+        script.onerror = () => {
+          reject(new Error('Failed to load reCAPTCHA script'));
+        };
+        
+        document.head.appendChild(script);
+      });
+    },
+    
+    renderRecaptchaWidget() {
+      // Ensure the container is empty before rendering
+      if (this.$refs.recaptchaContainer) {
+        this.$refs.recaptchaContainer.innerHTML = '';
+      }
+      
+      try {
+        // Render the reCAPTCHA widget
+        this.recaptchaWidget = window.grecaptcha.render(this.$refs.recaptchaContainer, {
+          'sitekey': this.recaptchaSiteKey,
+          'callback': (response) => {
+            this.recaptchaResponse = response;
+            this.recaptchaVerified = true;
+            this.recaptchaError = null;
+            console.log('reCAPTCHA verification successful');
+          },
+          'expired-callback': () => {
+            this.recaptchaResponse = null;
+            this.recaptchaVerified = false;
+            this.recaptchaError = 'Verifikasi reCAPTCHA telah kedaluwarsa. Silakan centang kembali.';
+            console.log('reCAPTCHA verification expired');
+          },
+          'error-callback': () => {
+            this.recaptchaResponse = null;
+            this.recaptchaVerified = false;
+            this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan coba lagi.';
+            console.error('reCAPTCHA error');
+            
+            // Auto-retry after a delay
+            setTimeout(() => {
+              this.resetRecaptcha();
+            }, 2000);
+          }
+        });
+      } catch (error) {
+        console.error('Error rendering reCAPTCHA:', error);
+        this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan muat ulang halaman.';
+        
+        // Handle the case where rendering fails, possibly due to reCAPTCHA being already rendered
+        // This commonly happens with the test key
+        if (error.message && error.message.includes('already been rendered')) {
+          this.cleanupRecaptcha();
+          setTimeout(() => {
+            this.initRecaptcha();
+          }, 500);
+        }
+      }
+    },
+    
+    resetRecaptcha() {
+      try {
+        if (window.grecaptcha && this.recaptchaWidget !== null) {
+          window.grecaptcha.reset(this.recaptchaWidget);
+          this.recaptchaVerified = false;
+          this.recaptchaResponse = null;
+          return true;
+        }
+        // If reset fails, re-initialize
+        this.cleanupRecaptcha();
+        this.initRecaptcha();
+      } catch (error) {
+        console.error('Error resetting reCAPTCHA:', error);
+        // If there's an error, try to re-initialize
+        this.cleanupRecaptcha();
+        this.initRecaptcha();
+      }
+    },
+    
+    cleanupRecaptcha() {
+      // Reset state
+      this.recaptchaWidget = null;
       this.recaptchaVerified = false;
       this.recaptchaResponse = null;
-      console.log("reCAPTCHA reset successful");
-    } catch (e) {
-      console.error("Error resetting reCAPTCHA:", e);
+      this.recaptchaAttempts = 0;
       
-      // If reset fails, try to re-render
-      setTimeout(() => this.renderRecaptcha(), 200);
-    }
-  }
-},
-
-reloadReCaptcha() {
-  console.log("Reloading reCAPTCHA");
-  
-  // Reset state
-  this.recaptchaVerified = false;
-  this.recaptchaResponse = null;
-  
-  // Clear the container
-  if (this.$refs.recaptchaContainer) {
-    this.$refs.recaptchaContainer.innerHTML = '';
-  }
-  
-  // Load the script again
-  this.loadRecaptchaScript();
-  
-  // Show user feedback
-  this.$nextTick(() => {
-    Swal.fire({
-      icon: 'info',
-      title: 'Memuat Ulang Verifikasi',
-      text: 'Sistem verifikasi sedang dimuat ulang...',
-      timer: 1500,
-      timerProgressBar: true,
-      showConfirmButton: false
-    });
-  });
-},
+      // Clear the container
+      if (this.$refs.recaptchaContainer) {
+        this.$refs.recaptchaContainer.innerHTML = '';
+      }
+    },
+    
+    // Get the most recent token directly from grecaptcha
+    getRecaptchaResponse() {
+      try {
+        if (window.grecaptcha && this.recaptchaWidget !== null) {
+          return window.grecaptcha.getResponse(this.recaptchaWidget);
+        }
+        return this.recaptchaResponse;
+      } catch (error) {
+        console.error('Error getting reCAPTCHA response:', error);
+        return this.recaptchaResponse;
+      }
+    },
     
     fetchCategories() {
       axios.get('https://v3422040.mhs.d3tiuns.com/api/category', {
@@ -1108,6 +1150,14 @@ reloadReCaptcha() {
         isValid = false;
         console.log("Agreement validation failed");
       }
+
+      // Improved reCAPTCHA validation
+      const recaptchaValid = this.verifyRecaptchaClientSide();
+      if (!recaptchaValid) {
+        this.errors['g-recaptcha-response'] = ['Harap centang kotak reCAPTCHA "Saya bukan robot"'];
+        isValid = false;
+        console.log("reCAPTCHA validation failed");
+      }
       
       // Check reCAPTCHA again
       if (!this.recaptchaVerified || !this.recaptchaResponse) {
@@ -1119,217 +1169,6 @@ reloadReCaptcha() {
       console.log("Validation result:", isValid ? "PASS" : "FAIL");
       return isValid;
     },
-    
-    submsubmitReport() {
-  // Update bukti_pelanggaran before validation
-  this.updateBuktiPelanggaran();
-  
-  // Check reCAPTCHA first
-  if (!this.recaptchaVerified || !this.recaptchaResponse) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Verifikasi Diperlukan',
-      text: 'Harap centang kotak "I\'m not a robot" untuk melanjutkan'
-    });
-    
-    // Scroll to reCAPTCHA
-    if (this.$refs.recaptchaContainer) {
-      this.$refs.recaptchaContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-    return;
-  }
-  
-  // Validate form
-  if (!this.validateForm()) {
-    // Scroll to the first error
-    const firstError = document.querySelector('.text-red-500');
-    if (firstError) {
-      firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-    return;
-  }
-  
-  // Set loading state
-  this.isSubmitting = true;
-  
-  // Create FormData object
-  const formData = new FormData();
-  
-  // Add all basic form fields
-  formData.append('judul', this.report.title);
-  formData.append('category_id', this.report.category);
-  formData.append('deskripsi', this.report.description);
-  formData.append('tanggal_kejadian', this.report.incidentDate);
-  formData.append('nama_pelapor', this.report.reporterName);
-  formData.append('nim_pelapor', this.report.nim);
-  formData.append('nomor_telepon', this.report.phone);
-  
-  // IMPORTANT: Add reCAPTCHA token with the exact field name the server expects
-  formData.append('g-recaptcha-response', this.recaptchaResponse);
-  
-  // Log the token being sent (for debugging)
-  console.log('reCAPTCHA token:', this.recaptchaResponse);
-  
-  // Add profesi, jenis_kelamin, and umur_pelapor
-  formData.append('profesi', this.report.profesi);
-  formData.append('jenis_kelamin', this.report.jenis_kelamin);
-  formData.append('umur_pelapor', this.report.umur_pelapor);
-  
-  // Add lampiran_link if exists
-  if (this.report.lampiran_link) {
-    formData.append('lampiran_link', this.report.lampiran_link);
-  }
-  
-  // Add bukti_pelanggaran array
-  if (this.report.bukti_pelanggaran && this.report.bukti_pelanggaran.length > 0) {
-    this.report.bukti_pelanggaran.forEach(item => {
-      formData.append('bukti_pelanggaran[]', item);
-    });
-  }
-  
-  // Add terlapor data
-  if (this.report.terlapor && this.report.terlapor.length > 0) {
-    this.report.terlapor.forEach((item, index) => {
-      Object.keys(item).forEach(key => {
-        if (item[key] !== null && item[key] !== undefined && item[key] !== '') {
-          formData.append(`terlapor[${index}][${key}]`, item[key]);
-        }
-      });
-    });
-  }
-  
-  // Add saksi data
-  if (this.report.saksi && this.report.saksi.length > 0) {
-    this.report.saksi.forEach((item, index) => {
-      Object.keys(item).forEach(key => {
-        if (item[key] !== null && item[key] !== undefined && item[key] !== '') {
-          formData.append(`saksi[${index}][${key}]`, item[key]);
-        }
-      });
-    });
-  }
-  
-  // Append evidence files
-  if (this.selectedFiles && this.selectedFiles.length > 0) {
-    for (let i = 0; i < this.selectedFiles.length; i++) {
-      formData.append('image_path[]', this.selectedFiles[i]);
-    }
-  }
-  
-  // Include agreement
-  formData.append('agreement', this.report.agreement ? 1 : 0);
-  
-  // For debugging - log the form data entries
-  console.log('Form data entries:');
-  for (let pair of formData.entries()) {
-    console.log(pair[0] + ': ' + (pair[1] instanceof File ? pair[1].name : pair[1]));
-  }
-  
-  // Make API call
-  axios.post('https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      'Accept': 'application/json'
-    }
-  })
-  .then(response => {
-    console.log('Success response:', response);
-    // Handle success
-    Swal.fire({
-      icon: 'success',
-      title: 'Berhasil!',
-      text: 'Laporan berhasil ditambahkan.',
-      timer: 2000,
-      timerProgressBar: true,
-      showConfirmButton: false
-    }).then(() => {
-      this.$router.push('/pelaporan/kekerasan-seksual');
-    });
-    
-    this.resetForm();
-  })
-  .catch(error => {
-    // Handle errors
-    console.error('Error submitting form:', error);
-    console.log('Error response:', error.response);
-    
-    if (error.response) {
-      if (error.response.status === 400 || error.response.status === 422) {
-        // Handle validation errors
-        const errorData = error.response.data;
-        console.log('Error data:', errorData);
-        
-        // Check specifically for reCAPTCHA errors
-        if (errorData.message && 
-            (errorData.message.toLowerCase().includes('recaptcha') || 
-             errorData.message.toLowerCase().includes('captcha'))) {
-          
-          // Reset reCAPTCHA and show specific message
-          this.resetRecaptcha();
-          
-          // Try to re-render reCAPTCHA
-          setTimeout(() => {
-            this.renderRecaptcha();
-          }, 500);
-          
-          Swal.fire({
-            icon: 'error',
-            title: 'Verifikasi Gagal',
-            text: 'Verifikasi reCAPTCHA gagal. Silakan coba lagi.',
-            confirmButtonText: 'OK'
-          });
-          return;
-        }
-        
-        // Handle other validation errors
-        if (typeof errorData === 'object') {
-          this.errors = errorData.errors || errorData;
-          
-          let errorMessage = 'Validasi gagal:';
-          if (this.errors) {
-            Object.keys(this.errors).forEach(key => {
-              if (Array.isArray(this.errors[key])) {
-                errorMessage += `\n- ${this.errors[key][0]}`;
-              } else {
-                errorMessage += `\n- ${this.errors[key]}`;
-              }
-            });
-          }
-          
-          Swal.fire({
-            icon: 'error',
-            title: 'Validasi Gagal',
-            text: errorMessage || 'Mohon periksa kembali form Anda',
-            confirmButtonText: 'OK'
-          });
-        } else {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Terjadi kesalahan validasi.'
-          });
-        }
-      } else {
-        // Handle other API errors
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Terjadi kesalahan pada server. Silakan coba lagi nanti.'
-        });
-      }
-    } else {
-      // Handle network errors
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Terjadi kesalahan jaringan. Silakan periksa koneksi internet Anda.'
-      });
-    }
-  })
-  .finally(() => {
-    this.isSubmitting = false;
-  });
-},
     
     resetForm() {
       this.report = {
@@ -1377,411 +1216,327 @@ reloadReCaptcha() {
       // Reset reCAPTCHA
       this.resetRecaptcha();
     },
-    submitReport() {
-    console.log("submitReport called");
-    
-    // Set loading state
-    this.isSubmitting = true;
-    console.log("isSubmitting set to true");
-    
-    // Create FormData object
-    const formData = new FormData();
-    
-    // Add all basic form fields
-    formData.append('judul', this.report.title);
-    formData.append('category_id', this.report.category);
-    formData.append('deskripsi', this.report.description);
-    formData.append('tanggal_kejadian', this.report.incidentDate);
-    formData.append('nama_pelapor', this.report.reporterName);
-    formData.append('nim_pelapor', this.report.nim);
-    formData.append('nomor_telepon', this.report.phone);
-    
-    // IMPORTANT: Add reCAPTCHA token
-    formData.append('g-recaptcha-response', this.recaptchaResponse);
-    
-    // Add profesi, jenis_kelamin, and umur_pelapor
-    formData.append('profesi', this.report.profesi);
-    formData.append('jenis_kelamin', this.report.jenis_kelamin);
-    formData.append('umur_pelapor', this.report.umur_pelapor);
-    
-    // Add lampiran_link if exists
-    if (this.report.lampiran_link) {
-      formData.append('lampiran_link', this.report.lampiran_link);
-    }
-    
-    // Add bukti_pelanggaran array
-    if (this.report.bukti_pelanggaran && this.report.bukti_pelanggaran.length > 0) {
-      this.report.bukti_pelanggaran.forEach(item => {
-        formData.append('bukti_pelanggaran[]', item);
-      });
-    }
-    
-    // Add terlapor data
-    if (this.report.terlapor && this.report.terlapor.length > 0) {
-      let validTerlaporCount = 0;
+
+    verifyRecaptchaClientSide() {
+      // Check if reCAPTCHA is verified 
+      if (!window.grecaptcha) {
+        console.error('reCAPTCHA not loaded');
+        return false;
+      }
       
-      this.report.terlapor.forEach((item, index) => {
-        // Only include terlapor with at least a name
-        if (item.nama_lengkap && item.nama_lengkap.trim()) {
-          validTerlaporCount++;
+      try {
+        // Reset any previous errors
+        this.recaptchaError = null;
+        
+        // Get fresh token
+        const token = window.grecaptcha.getResponse(this.recaptchaWidget);
+        
+        if (!token) {
+          this.recaptchaError = 'reCAPTCHA tidak dicentang';
+          return false;
+        }
+        
+        // Store the token for submission
+        this.recaptchaResponse = token;
+        this.recaptchaVerified = true;
+        
+        // Check if using test key
+        if (this.recaptchaSiteKey === '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI') {
+          console.warn('Using Google test key which may cause inconsistent server validation');
+        }
+        
+        return true;
+      } catch (error) {
+        console.error('reCAPTCHA verification error:', error);
+        this.recaptchaError = 'Terjadi kesalahan saat verifikasi reCAPTCHA';
+        return false;
+      }
+    },
+
+    submitReport() {
+      // Reset warnings and update bukti_pelanggaran
+      this.showBuktiWarning = false;
+      this.recaptchaError = null;
+      this.updateBuktiPelanggaran();
+      
+      // Validate form before submission
+      if (!this.validateForm()) {
+        const firstError = document.querySelector('.text-red-500');
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+      
+      // Get latest reCAPTCHA token
+      const recaptchaToken = this.getRecaptchaResponse();
+      if (!recaptchaToken) {
+        this.recaptchaError = 'Harap centang kotak reCAPTCHA "Saya bukan robot"';
+        Swal.fire({
+          icon: 'warning',
+          title: 'Verifikasi Diperlukan',
+          text: 'Harap centang kotak "I\'m not a robot" untuk melanjutkan'
+        });
+        
+        if (this.$refs.recaptchaContainer) {
+          this.$refs.recaptchaContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+      
+      // Set loading state
+      this.isSubmitting = true;
+      
+      // Create FormData object
+      const formData = new FormData();
+      
+      // Add basic form fields
+      formData.append('judul', this.report.title);
+      formData.append('category_id', this.report.category);
+      formData.append('deskripsi', this.report.description);
+      formData.append('tanggal_kejadian', this.report.incidentDate);
+      formData.append('nama_pelapor', this.report.reporterName);
+      formData.append('nim_pelapor', this.report.nim);
+      formData.append('nomor_telepon', this.report.phone);
+      formData.append('g-recaptcha-response', recaptchaToken);
+      formData.append('profesi', this.report.profesi);
+      formData.append('jenis_kelamin', this.report.jenis_kelamin);
+      formData.append('umur_pelapor', this.report.umur_pelapor);
+      
+      // Add optional link if exists
+      if (this.report.lampiran_link) {
+        formData.append('lampiran_link', this.report.lampiran_link);
+      }
+      
+      // Add bukti_pelanggaran array
+      if (this.report.bukti_pelanggaran && this.report.bukti_pelanggaran.length > 0) {
+        this.report.bukti_pelanggaran.forEach(item => {
+          formData.append('bukti_pelanggaran[]', item);
+        });
+      }
+      
+      // Add terlapor data
+      if (this.report.terlapor && this.report.terlapor.length > 0) {
+        this.report.terlapor.forEach((item, index) => {
           Object.keys(item).forEach(key => {
             if (item[key] !== null && item[key] !== undefined && item[key] !== '') {
               formData.append(`terlapor[${index}][${key}]`, item[key]);
             }
           });
-        }
-      });
+        });
+      }
       
-      console.log(`Added ${validTerlaporCount} valid terlapor records`);
-    }
-    
-    // Add saksi data
-    if (this.report.saksi && this.report.saksi.length > 0) {
-      let validSaksiCount = 0;
-      
-      this.report.saksi.forEach((item, index) => {
-        // Only include saksi with at least a name
-        if (item.nama_lengkap && item.nama_lengkap.trim()) {
-          validSaksiCount++;
+      // Add saksi data
+      if (this.report.saksi && this.report.saksi.length > 0) {
+        this.report.saksi.forEach((item, index) => {
           Object.keys(item).forEach(key => {
             if (item[key] !== null && item[key] !== undefined && item[key] !== '') {
               formData.append(`saksi[${index}][${key}]`, item[key]);
             }
           });
+        });
+      }
+      
+      // Append evidence files
+      if (this.selectedFiles && this.selectedFiles.length > 0) {
+        for (let i = 0; i < this.selectedFiles.length; i++) {
+          formData.append('image_path[]', this.selectedFiles[i]);
         }
-      });
-      
-      console.log(`Added ${validSaksiCount} valid saksi records`);
-    }
-    
-    // Append evidence files
-    if (this.selectedFiles && this.selectedFiles.length > 0) {
-      console.log(`Adding ${this.selectedFiles.length} files`);
-      for (let i = 0; i < this.selectedFiles.length; i++) {
-        formData.append('image_path[]', this.selectedFiles[i]);
-        console.log(`Added file ${i+1}: ${this.selectedFiles[i].name}`);
       }
-    }
-    
-    // Include agreement
-    formData.append('agreement', this.report.agreement ? 1 : 0);
-    
-    console.log("Form data prepared, sending request...");
-    
-    // Make API call
-    axios.post('https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        'Accept': 'application/json'
+      
+      // Include agreement
+      formData.append('agreement', this.report.agreement ? 1 : 0);
+      
+      // Log form data being sent (for debugging)
+      console.log("Form data being sent:");
+      for (let [key, value] of formData.entries()) {
+        if (key === 'g-recaptcha-response') {
+          console.log(`${key}: [TOKEN]`);
+        } else if (value instanceof File) {
+          console.log(`${key}: ${value.name} (${value.type}, ${Math.round(value.size/1024)}KB)`);
+        } else {
+          console.log(`${key}: ${value}`);
+        }
       }
-    })
-    .then(response => {
-      console.log('Success response:', response);
-      // Handle success
-      Swal.fire({
-        icon: 'success',
-        title: 'Berhasil!',
-        text: 'Laporan berhasil ditambahkan.',
-        timer: 2000,
-        timerProgressBar: true,
-        showConfirmButton: false
-      }).then(() => {
-        this.$router.push('/pelaporan/kekerasan-seksual');
-      });
       
-      this.resetForm();
-    })
-    .catch(error => {
-      // Detailed error handling
-      console.error('Error submitting form:', error);
+      // Create and configure XHR
+      const xhr = new XMLHttpRequest();
       
-      let errorMessage = 'Terjadi kesalahan.';
+      // Setup timeout handling (30 seconds)
+      xhr.timeout = 30000;
+      xhr.ontimeout = () => {
+        this.isSubmitting = false;
+        console.error('Request timed out');
+        Swal.fire({
+          icon: 'error',
+          title: 'Timeout',
+          text: 'Permintaan melebihi batas waktu. Silakan coba lagi.'
+        });
+      };
       
-      if (error.response) {
-        console.log('Error status:', error.response.status);
-        console.log('Error data:', error.response.data);
+      // Setup completion handling
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState !== 4) return;
         
-        // Extract error details for better user feedback
-        if (error.response.data && typeof error.response.data === 'object') {
-          if (error.response.data.message) {
-            errorMessage = error.response.data.message;
+        // Log raw response for debugging
+        console.log('XHR Response Status:', xhr.status);
+        console.log('XHR Response Headers:', xhr.getAllResponseHeaders());
+        console.log('XHR Response Text:', xhr.responseText);
+        
+        // Process response
+        if (xhr.status >= 200 && xhr.status < 300) {
+          // Success handling
+          console.log('Form submitted successfully');
+          
+          let responseData;
+          try {
+            responseData = JSON.parse(xhr.responseText);
+            console.log('Parsed response data:', responseData);
+          } catch (e) {
+            console.log('Response is not JSON:', xhr.responseText);
           }
           
-          if (error.response.data.errors) {
-            this.errors = error.response.data.errors;
-            
-            // Create a readable error message from all validation errors
-            const errorDetails = Object.entries(error.response.data.errors)
-              .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
-              .join('\n');
-            
-            errorMessage += '\n\nDetail:\n' + errorDetails;
-          }
-        }
-      } else if (error.request) {
-        errorMessage = 'Tidak ada respons dari server. Periksa koneksi internet Anda.';
-      } else {
-        errorMessage = `Kesalahan: ${error.message}`;
-      }
-      
-      // Show error message to user
-      Swal.fire({
-        icon: 'error',
-        title: 'Gagal Mengirim Laporan',
-        text: errorMessage
-      });
-      
-      // If it's a reCAPTCHA error, reset it
-      if (errorMessage.toLowerCase().includes('recaptcha') || 
-          errorMessage.toLowerCase().includes('captcha')) {
-        this.resetRecaptcha();
-        setTimeout(() => this.renderRecaptcha(), 500);
-      }
-    })
-    .finally(() => {
-      console.log("Request completed, isSubmitting set to false");
-      this.isSubmitting = false;
-    });
-  },
-
-  // Then, define submitReportWithDebug which will call submitReport
-  // Replace your submitReportWithDebug method with this version
-submitReportWithDebug() {
-  console.log("Submit button clicked");
-  
-  // Check if reCAPTCHA is verified
-  console.log("reCAPTCHA verified:", this.recaptchaVerified);
-  console.log("reCAPTCHA response:", this.recaptchaResponse ? "exists" : "missing");
-  
-  // Update bukti_pelanggaran before validation
-  this.updateBuktiPelanggaran();
-  console.log("Bukti pelanggaran updated:", this.report.bukti_pelanggaran);
-  
-  // Log form validation status
-  const isFormValid = this.validateForm();
-  console.log("Form valid:", isFormValid);
-  
-  if (!isFormValid) {
-    console.log("Form validation failed with errors:", this.errors);
-    // Scroll to the first error
-    const firstError = document.querySelector('.text-red-500');
-    if (firstError) {
-      firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-    return;
-  }
-  
-  // Set loading state
-  this.isSubmitting = true;
-  
-  // Create FormData object
-  const formData = new FormData();
-  
-  // Add all basic form fields
-  formData.append('judul', this.report.title);
-  formData.append('category_id', this.report.category);
-  formData.append('deskripsi', this.report.description);
-  
-  // Format date properly
-  let formattedDate = this.report.incidentDate;
-  if (this.report.incidentDate && this.report.incidentDate.includes('T')) {
-    formattedDate = this.report.incidentDate.replace('T', ' ');
-  }
-  formData.append('tanggal_kejadian', formattedDate);
-  
-  formData.append('nama_pelapor', this.report.reporterName);
-  formData.append('nim_pelapor', this.report.nim);
-  formData.append('nomor_telepon', this.report.phone);
-  
-  // IMPORTANT: Add reCAPTCHA token
-  formData.append('g-recaptcha-response', this.recaptchaResponse);
-  
-  // Add profesi, jenis_kelamin, and umur_pelapor
-  formData.append('profesi', this.report.profesi);
-  formData.append('jenis_kelamin', this.report.jenis_kelamin);
-  formData.append('umur_pelapor', this.report.umur_pelapor);
-  
-  // Add lampiran_link if exists
-  if (this.report.lampiran_link) {
-    formData.append('lampiran_link', this.report.lampiran_link);
-  }
-  
-  // Add bukti_pelanggaran array
-  if (this.report.bukti_pelanggaran && this.report.bukti_pelanggaran.length > 0) {
-    this.report.bukti_pelanggaran.forEach(item => {
-      formData.append('bukti_pelanggaran[]', item);
-    });
-  }
-  
-  // Add terlapor data
-  if (this.report.terlapor && this.report.terlapor.length > 0) {
-    this.report.terlapor.forEach((item, index) => {
-      Object.keys(item).forEach(key => {
-        if (item[key] !== null && item[key] !== undefined && item[key] !== '') {
-          formData.append(`terlapor[${index}][${key}]`, item[key]);
-        }
-      });
-    });
-  }
-  
-  // Add saksi data
-  if (this.report.saksi && this.report.saksi.length > 0) {
-    this.report.saksi.forEach((item, index) => {
-      Object.keys(item).forEach(key => {
-        if (item[key] !== null && item[key] !== undefined && item[key] !== '') {
-          formData.append(`saksi[${index}][${key}]`, item[key]);
-        }
-      });
-    });
-  }
-  
-  // Log form data before sending
-  console.log("Form data being sent:");
-  for (let pair of formData.entries()) {
-    if (pair[0] === 'g-recaptcha-response') {
-      console.log(pair[0] + ': [TOKEN HIDDEN]');
-    } else {
-      console.log(pair[0] + ': ' + (pair[1] instanceof File ? pair[1].name : pair[1]));
-    }
-  }
-  
-  // Append evidence files
-  if (this.selectedFiles && this.selectedFiles.length > 0) {
-    console.log(`Attaching ${this.selectedFiles.length} files:`);
-    for (let i = 0; i < this.selectedFiles.length; i++) {
-      console.log(`- File ${i+1}: ${this.selectedFiles[i].name} (${this.selectedFiles[i].type}, ${Math.round(this.selectedFiles[i].size/1024)}KB)`);
-      formData.append('image_path[]', this.selectedFiles[i]);
-    }
-  } else {
-    console.warn("No files selected for upload");
-  }
-  
-  // Include agreement
-  formData.append('agreement', this.report.agreement ? '1' : '0');
-  
-  // Make API call
-  axios.post('https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      'Accept': 'application/json'
-    }
-  })
-  .then(response => {
-    console.log('Success response:', response);
-    
-    // Handle success
-    Swal.fire({
-      icon: 'success',
-      title: 'Berhasil!',
-      text: 'Laporan berhasil ditambahkan.',
-      timer: 2000,
-      timerProgressBar: true,
-      showConfirmButton: false
-    }).then(() => {
-      this.$router.push('/pelaporan/kekerasan-seksual');
-    });
-    
-    this.resetForm();
-  })
-  .catch(error => {
-    console.error('Error submitting form:', error);
-    
-    // Enhanced error logging
-    if (error.response) {
-      console.log('Error status:', error.response.status);
-      console.log('Error headers:', error.response.headers);
-      console.log('Error data:', error.response.data);
-      
-      // Special handling for reCAPTCHA errors with test key
-      if (error.response.data && 
-          error.response.data.message && 
-          error.response.data.message.toLowerCase().includes('recaptcha')) {
-        
-        console.log("reCAPTCHA verification failed - this is expected with the test key");
-        
-        // Since we're using the test key, let's handle this specially
-        // In a real app, you'd never do this, but for development it's acceptable
-        Swal.fire({
-          icon: 'info',
-          title: 'Verifikasi reCAPTCHA',
-          html: `
-            <p>Anda menggunakan kunci test untuk reCAPTCHA.</p>
-            <p class="mt-2">Pada situasi nyata, validasi akan gagal di server.</p>
-            <p class="mt-2">Apakah Anda ingin melanjutkan simulasi submit?</p>
-          `,
-          showCancelButton: true,
-          confirmButtonText: 'Ya, Simulasikan Submit',
-          cancelButtonText: 'Tidak, Kembali'
-        }).then((result) => {
-          if (result.isConfirmed) {
-            // Simulate successful submission
-            Swal.fire({
-              icon: 'success',
-              title: 'Simulasi Berhasil!',
-              text: 'Dalam lingkungan produksi, laporan Anda akan berhasil dikirim.',
-              timer: 3000,
-              timerProgressBar: true
-            }).then(() => {
-              this.$router.push('/pelaporan/kekerasan-seksual');
-            });
-          } else {
-            // Reset the form state
-            this.isSubmitting = false;
-            this.resetRecaptcha();
-          }
-        });
-        
-        return;
-      }
-      
-      // Handle other validation errors
-      if (error.response.data && typeof error.response.data === 'object') {
-        // Show validation errors
-        let errorMessage = 'Validasi gagal:';
-        
-        if (error.response.data.errors) {
-          Object.entries(error.response.data.errors).forEach(([field, messages]) => {
-            const message = Array.isArray(messages) ? messages[0] : messages;
-            errorMessage += `\n- ${message}`;
+          this.isSubmitting = false;
+          Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: 'Laporan berhasil ditambahkan.',
+            timer: 2000,
+            timerProgressBar: true,
+            showConfirmButton: false
+          }).then(() => {
+            this.$router.push('/pelaporan/kekerasan-seksual');
           });
-        } else if (error.response.data.message) {
-          errorMessage = error.response.data.message;
+          
+          this.resetForm();
+          
+        } else {
+          // Error handling
+          this.isSubmitting = false;
+          console.error('Form submission error:', xhr.status, xhr.statusText);
+          
+          let errorMessage = 'Terjadi kesalahan pada server.';
+          let errorDetails = null;
+          
+          // Try to parse error response
+          try {
+            const errorResponse = JSON.parse(xhr.responseText);
+            console.log('Error response:', errorResponse);
+            
+            if (errorResponse.message) {
+              errorMessage = errorResponse.message;
+              
+              // Special handling for reCAPTCHA errors
+              if (errorMessage.toLowerCase().includes('recaptcha') || 
+                  errorMessage.toLowerCase().includes('captcha')) {
+                this.resetRecaptcha();
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Verifikasi Gagal',
+                  text: 'Verifikasi reCAPTCHA gagal. Silakan coba lagi.',
+                  confirmButtonText: 'OK'
+                });
+                return;
+              }
+            }
+            
+            if (errorResponse.errors) {
+              errorDetails = Object.entries(errorResponse.errors)
+                .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+                .join('\n');
+            }
+          } catch (e) {
+            console.error('Error parsing error response:', e);
+          }
+          
+          // Show error message
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: errorMessage,
+            ...(errorDetails && { footer: `<details><summary>Detail Error</summary><pre>${errorDetails}</pre></details>` })
+          });
         }
+      };
+      
+      // Open connection
+      xhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan', true);
+      
+      // Add retry capability for better stability
+      let retryCount = 0;
+      const maxRetries = 2;
+      
+      xhr.onerror = () => {
+        console.error('XHR network error occurred');
         
-        Swal.fire({
-          icon: 'error',
-          title: 'Validasi Gagal',
-          text: errorMessage,
-          confirmButtonText: 'OK'
-        });
-      } else {
-        // General server error
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Terjadi kesalahan pada server. Silakan coba lagi nanti.'
-        });
+        if (retryCount < maxRetries) {
+          retryCount++;
+          console.log(`Retrying request (${retryCount} of ${maxRetries})...`);
+          
+          // Wait a bit before retrying (exponential backoff)
+          setTimeout(() => {
+            const newXhr = new XMLHttpRequest();
+            // Copy all the event handlers and configuration
+            Object.assign(newXhr, xhr);
+            newXhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan', true);
+            newXhr.send(formData);
+          }, 1000 * Math.pow(2, retryCount));
+          
+        } else {
+          this.isSubmitting = false;
+          Swal.fire({
+            icon: 'error',
+            title: 'Kesalahan Jaringan',
+            text: 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.'
+          });
+        }
+      };
+      
+      // Send request
+      xhr.send(formData);
+    },
+
+    // Update reset form to handle reCAPTCHA properly
+    resetForm() {
+      this.report = {
+        title: '',
+        category: '',
+        description: '',
+        reporterName: this.report.reporterName,
+        nim: this.report.nim,
+        phone: this.report.phone,
+        incidentDate: '',
+        evidenceFiles: [],
+        lampiran_link: '',
+        agreement: false,
+        terlapor: [],
+        saksi: [],
+        bukti_pelanggaran: [],
+        profesi: '',
+        jenis_kelamin: '',
+        umur_pelapor: ''
+      };
+      
+      this.selectedBukti = [];
+      this.showLainnyaInput = false;
+      this.buktiLainnya = '';
+      this.showBuktiWarning = false;
+      this.errors = {};
+      this.imagePreviews = [];
+      this.selectedFiles = [];
+      
+      // Reset file input if it exists
+      if (this.$refs.fileInput) {
+        this.$refs.fileInput.value = '';
       }
-    } else if (error.request) {
-      // Network error
-      Swal.fire({
-        icon: 'error',
-        title: 'Kesalahan Jaringan',
-        text: 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda dan coba lagi.'
-      });
-    } else {
-      // Other errors
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: `Terjadi kesalahan: ${error.message}`
-      });
+      
+      // Reset reCAPTCHA
+      this.resetRecaptcha();
+      
+      // Ensure we have at least one terduga and saksi field
+      this.addTerduga();
+      this.addSaksi();
     }
-  })
-  .finally(() => {
-    this.isSubmitting = false;
-  });
-},
   }
 };
 </script>
