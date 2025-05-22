@@ -135,10 +135,12 @@
                 <p v-if="errors.tanggal_kejadian" class="text-red-500 text-xs mt-1">{{ errors.tanggal_kejadian[0] }}</p>
               </div>
               
-              <!-- Bukti Laporan (File Input) Multiple -->
               <div class="mb-4">
-                <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-1">Lampiran Foto <span class="text-red-500">*</span></label>
-                <div class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center bg-gray-50 hover:bg-gray-100 transition cursor-pointer">
+                <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-1">
+                  Lampiran Foto <span class="text-red-500">*</span>
+                </label>
+                <div class="relative border-2 border-dashed border-gray-300 rounded-md p-4 text-center bg-gray-50 hover:bg-gray-100 transition cursor-pointer">
+                  <!-- Hidden file input -->
                   <input
                     type="file"
                     id="fileInput"
@@ -149,6 +151,8 @@
                     class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     required
                   />
+                  
+                  <!-- Visible content -->
                   <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
@@ -1405,7 +1409,8 @@ export default {
             timerProgressBar: true,
             showConfirmButton: false
           }).then(() => {
-            this.$router.push('/pelaporan/kekerasan-seksual');
+            // Redirect to dosen dashboard instead of kekerasan-seksual
+            this.$router.push('/dosen/dashboardksdosen');
           });
           
           this.resetForm();
