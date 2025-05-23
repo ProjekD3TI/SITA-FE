@@ -22,9 +22,6 @@
         <div v-else class="detail-content">
             <div class="status-header">
                 <div class="laporan-number">{{ laporan.nomor_laporan_kekerasan }}</div>
-                <div :class="['status-badge', laporan.status || 'unverified']">
-                    {{ formatStatus(laporan.status) }}
-                </div>
             </div>
 
             <div class="detail-card main-info">
@@ -33,7 +30,7 @@
                     <i class="fas fa-tag"></i> {{ getCategoryName(laporan.category_id) }}
                 </div>
                 <div class="date-info">
-                    <i class="fas fa-calendar-alt"></i> Tanggal Kejadian: {{ formatDate(laporan.tanggal_kejadian) }}
+                    <i class="fas fa-calendar-alt"></i> Tanggal Kejadian: {{ formatedDate(laporan.tanggal_kejadian) }}
                 </div>
                 <p class="description">{{ laporan.deskripsi }}</p>
                 
@@ -78,12 +75,6 @@
                 <div class="detail-card">
                     <h3 class="detail-section-title"><i class="fas fa-clipboard-check"></i> Status Laporan</h3>
                     <div class="info-grid">
-                        <div class="info-label">Status:</div>
-                        <div class="info-value">
-                            <span :class="['status-badge', laporan.status || 'unverified']">
-                                {{ formatStatus(laporan.status) }}
-                            </span>
-                        </div>
                         
                         <div class="info-label">Tanggal Laporan:</div>
                         <div class="info-value">{{ formatDate(laporan.created_at) }}</div>
@@ -558,6 +549,29 @@ export default {
     
     goBack() {
       this.$router.go(-1);
+    },
+
+    formatedDate(dateString) {
+      if (!dateString) return '-';
+      
+      try {
+        let date = new Date(dateString.replace(' ', 'T') + 'Z'); // Menambahkan 'Z' untuk menunjukkan UTC
+        
+        // Format tanggal dalam gaya Indonesia dengan timezone UTC
+        const options = { 
+          day: 'numeric', 
+          month: 'long', 
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone: 'UTC'
+        };
+        
+        return date.toLocaleDateString('id-ID', options);
+      } catch (e) {
+        console.error('Error formatting date:', e);
+        return dateString || '-';
+      }
     },
     
     formatDate(dateString) {
