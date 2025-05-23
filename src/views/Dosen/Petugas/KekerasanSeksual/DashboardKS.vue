@@ -2,7 +2,7 @@
   <div class="dashboard-pelaporan-kejadian">
     <h1 class="page-title">Dashboard Kekerasan Seksual</h1>
     
-    <!-- Statistics Cards -->
+    <!-- Statistics Cards - Only Total Laporan -->
     <div class="statistics-cards">
       <div class="stats-card">
         <div class="stats-icon">
@@ -11,26 +11,6 @@
         <div class="stats-content">
           <h3>Total Laporan</h3>
           <p class="stats-number">{{ laporan.length }}</p>
-        </div>
-      </div>
-      
-      <div class="stats-card">
-        <div class="stats-icon-procces">
-          <i class="fas fa-clock"></i>
-        </div>
-        <div class="stats-content">
-          <h3>Pending</h3>
-          <p class="stats-number">{{ pendingCount }}</p>
-        </div>
-      </div>
-      
-      <div class="stats-card">
-        <div class="stats-icon-done">
-          <i class="fas fa-check-circle"></i>
-        </div>
-        <div class="stats-content">
-          <h3>Ditanggapi</h3>
-          <p class="stats-number">{{ respondedCount }}</p>
         </div>
       </div>
     </div>
@@ -127,11 +107,26 @@
           <thead>
             <tr>
               <th>No.</th>
-              <th>Nomor Laporan</th>
-              <th>Tanggal Laporan Masuk</th>
-              <th>Judul</th>
-              <th>Kategori</th>
-              <th>Nama Pelapor</th>
+              <th @click="sort('nomor_laporan_kekerasan')" class="sortable-header">
+                Nomor Laporan
+                <i :class="getSortIcon('nomor_laporan_kekerasan')"></i>
+              </th>
+              <th @click="sort('created_at')" class="sortable-header">
+                Tanggal Laporan Masuk
+                <i :class="getSortIcon('created_at')"></i>
+              </th>
+              <th @click="sort('judul')" class="sortable-header">
+                Judul
+                <i :class="getSortIcon('judul')"></i>
+              </th>
+              <th @click="sort('category_id')" class="sortable-header">
+                Kategori
+                <i :class="getSortIcon('category_id')"></i>
+              </th>
+              <th @click="sort('nama_pelapor')" class="sortable-header">
+                Nama Pelapor
+                <i :class="getSortIcon('nama_pelapor')"></i>
+              </th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -282,8 +277,10 @@ export default {
       },
       exportInProgress: false,
       dataToExport: [],
-      currentUser: 'miftahul01', // Menggunakan login yang disediakan
-      currentDateTime: '2025-05-22 13:45:15' // Updated with provided date
+      currentUser: 'miftahul01',
+      currentDateTime: '2025-05-22 13:45:15',
+      sortKey: '', // Column to sort by
+      sortOrder: 1 // 1 for ascending, -1 for descending
     };
   },
 
@@ -344,6 +341,11 @@ export default {
         });
       }
       
+      // Apply sorting if enabled
+      if (this.sortKey) {
+        result = this.sortItems([...result]);
+      }
+      
       return result;
     },
     
@@ -361,60 +363,10 @@ export default {
     startIndex() {
       return (this.currentPage - 1) * this.itemsPerPage;
     },
-
-    pendingCount() {
-      return this.laporan.filter(item => !item.tanggapan).length;
-    },
-
-    respondedCount() {
-      return this.laporan.filter(item => item.tanggapan).length;
-    },
     
     // Computed property untuk mendapatkan semua data yang terfilter tanpa pagination
     allFilteredData() {
-      let result = [...this.laporan];
-      
-      // Apply search filter
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
-        result = result.filter(item => 
-          (item.judul && item.judul.toLowerCase().includes(query)) || 
-          (item.nomor_laporan_kekerasan && item.nomor_laporan_kekerasan.toLowerCase().includes(query))
-        );
-      }
-      
-      // Apply category filter
-      if (this.filters.category_id) {
-        result = result.filter(item => 
-          String(item.category_id) === String(this.filters.category_id)
-        );
-      }
-      
-      // Apply date range filter
-      if (this.filters.startDate || this.filters.endDate) {
-        result = result.filter(item => {
-          // Convert to Date objects for comparison
-          const itemDate = new Date(item.created_at || item.tanggal);
-          
-          // Check start date if specified
-          if (this.filters.startDate) {
-            const startDate = new Date(this.filters.startDate);
-            startDate.setHours(0, 0, 0, 0);
-            if (itemDate < startDate) return false;
-          }
-          
-          // Check end date if specified
-          if (this.filters.endDate) {
-            const endDate = new Date(this.filters.endDate);
-            endDate.setHours(23, 59, 59, 999);
-            if (itemDate > endDate) return false;
-          }
-          
-          return true;
-        });
-      }
-      
-      return result;
+      return this.filteredLaporan;
     },
     
     // Check if any filter is active
@@ -628,13 +580,6 @@ export default {
       return this.categories[categoryId] || `Kategori ${categoryId}`;
     },
 
-    getStatusClass(item) {
-      return {
-        'badge bg-success': item.tanggapan,
-        'badge bg-warning': !item.tanggapan
-      };
-    },
-
     getImageUrlForPath(path) {
       if (!path) return '';
         
@@ -747,6 +692,59 @@ export default {
       const year = date.getFullYear();
       
       return `${day}-${month}-${year}`;
+    },
+    
+    // New sorting methods
+    sort(key) {
+      // If already sorting by this key, reverse the order
+      if (this.sortKey === key) {
+        this.sortOrder = this.sortOrder * -1;
+      } else {
+        // Otherwise, set new sort key and default to ascending
+        this.sortKey = key;
+        this.sortOrder = 1;
+      }
+    },
+    
+    sortItems(items) {
+      const key = this.sortKey;
+      const order = this.sortOrder;
+      
+      return items.sort((a, b) => {
+        let valueA, valueB;
+        
+        // Special case for category which needs to be resolved to a name
+        if (key === 'category_id') {
+          valueA = this.getCategoryName(a[key]).toLowerCase();
+          valueB = this.getCategoryName(b[key]).toLowerCase();
+        } 
+        // Special case for dates
+        else if (key === 'created_at') {
+          valueA = new Date(a[key] || 0).getTime();
+          valueB = new Date(b[key] || 0).getTime();
+        }
+        // For nomor_laporan_kekerasan, extract the numeric part for sorting
+        else if (key === 'nomor_laporan_kekerasan') {
+          const numA = parseInt((a[key] || '').replace(/\D/g, '') || '0');
+          const numB = parseInt((b[key] || '').replace(/\D/g, '') || '0');
+          return (numA - numB) * order;
+        }
+        // Default case for string fields
+        else {
+          valueA = (a[key] || '').toLowerCase();
+          valueB = (b[key] || '').toLowerCase();
+        }
+        
+        // Standard comparison
+        if (valueA < valueB) return -1 * order;
+        if (valueA > valueB) return 1 * order;
+        return 0;
+      });
+    },
+    
+    getSortIcon(key) {
+      if (this.sortKey !== key) return 'fas fa-sort'; // default icon
+      return this.sortOrder === 1 ? 'fas fa-sort-up' : 'fas fa-sort-down';
     },
     
     // Method untuk export PDF dengan html2pdf.js
@@ -912,32 +910,6 @@ export default {
   border-radius: 50%;
   background: #f0f4f8;
   color: #3498db;
-}
-
-.stats-icon-procces {
-  font-size: 24px;
-  margin-right: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #f0f4f8;
-  color: #d97706;
-}
-
-.stats-icon-done {
-  font-size: 24px;
-  margin-right: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #f0f4f8;
-  color: #16a34a;
 }
 
 .stats-content h3 {
@@ -1378,6 +1350,22 @@ export default {
 .data-table td:nth-child(7) {
   width: 15%;
   text-align: center;
+}
+
+/* New styles for sortable headers */
+.sortable-header {
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+}
+
+.sortable-header:hover {
+  background-color: #f2f2f2;
+}
+
+.sortable-header i {
+  margin-left: 5px;
+  font-size: 12px;
 }
 
 /* Status badge styling */
