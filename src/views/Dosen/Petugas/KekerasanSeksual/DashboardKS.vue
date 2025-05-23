@@ -108,8 +108,21 @@
         </div>
       </div>
 
+      <!-- Loading State -->
+      <div v-if="loading" class="loading-indicator">
+        <div class="spinner"></div>
+        <p>Memuat data...</p>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="error-message">
+        <i class="fas fa-exclamation-circle"></i>
+        <p>{{ error }}</p>
+        <button class="retry-button" @click="fetchData">Coba Lagi</button>
+      </div>
+
       <!-- Table -->
-      <div class="table-responsive">
+      <div v-else class="table-responsive">
         <table class="data-table">
           <thead>
             <tr>
@@ -138,10 +151,16 @@
             </tr>
           </tbody>
         </table>
+
+        <!-- No Data State -->
+        <div v-if="paginatedLaporan.length === 0" class="no-data">
+          <i class="fas fa-info-circle"></i>
+          <p>Tidak ada data laporan yang ditemukan</p>
+        </div>
       </div>
 
       <!-- Pagination -->
-      <div class="pagination-container">
+      <div v-if="!loading && !error && filteredLaporan.length > 0" class="pagination-container">
         <div class="pagination-info-total">
           Total: {{ filteredLaporan.length }} laporan
         </div>
@@ -235,15 +254,17 @@
 </template>
 
 <script>
-import axios from 'axios';
+import VueCookies from 'vue-cookies';
 import html2pdf from 'html2pdf.js';
-import d3tiLogo from '../../../../assets/images/d3ti-logo.png'; // Sesuaikan path sesuai struktur proyek Anda
+import d3tiLogo from '../../../../assets/images/d3ti-logo.png';
+import { decryptData } from '../../../../services/encrypt';
 
 export default {
   name: 'DashboardKS',
   data() {
     return {
       d3tiLogoSrc: d3tiLogo,
+      apiBaseUrl: 'https://v3422040.mhs.d3tiuns.com/api',
       laporan: [],
       categories: {},
       loading: false,
@@ -262,8 +283,8 @@ export default {
       exportInProgress: false,
       dataToExport: [],
       currentUser: 'miftahul01', // Menggunakan login yang disediakan
-      currentDateTime: '2025-04-16 06:25:20' // Menggunakan waktu yang disediakan
-    }
+      currentDateTime: '2025-05-22 13:45:15' // Updated with provided date
+    };
   },
 
   computed: {
@@ -272,7 +293,7 @@ export default {
       
       // Loop through the categories object and include only those starting with "Kekerasan"
       for (const [id, name] of Object.entries(this.categories)) {
-        if (name.startsWith('Kekerasan')) {
+        if (name && name.startsWith('Kekerasan')) {
           filtered[id] = name;
         }
       }
@@ -410,23 +431,196 @@ export default {
   methods: {
     async fetchData() {
       this.loading = true;
+      this.error = null;
+      
       try {
-        const [categoriesResponse, laporanResponse] = await Promise.all([
-          axios.get('https://v3422040.mhs.d3tiuns.com/api/category'),
-          axios.get('https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan')
-        ]);
-
-        this.categories = categoriesResponse.data.reduce((acc, category) => {
-          acc[category.category_id] = category.nama;
-          return acc;
-        }, {});
+        // Use the getCurrentUser method to get user data
+        const userData = this.getCurrentUser();
+        let token = '';
         
-        this.laporan = laporanResponse.data;
+        if (userData) {
+          // Try to get token from userData
+          token = userData.token || userData.access_token || '';
+          
+          // If we still don't have a token, check if the userData is the token itself
+          if (!token && typeof userData === 'string') {
+            token = userData;
+          }
+        }
+        
+        // Check if we have a token from authDosen
+        if (!token && window.$auth && typeof window.$auth.getToken === 'function') {
+          token = window.$auth.getToken();
+        }
+
+        console.log('Token available:', !!token, 'Token length:', token ? token.length : 0);
+        
+        if (!token) {
+          // Try one more approach - direct access from cookies with a specific key
+          const directToken = VueCookies.get('auth_token') || 
+                              VueCookies.get('access_token') || 
+                              VueCookies.get('token');
+          
+          if (directToken) {
+            token = directToken;
+          }
+        }
+
+        // If still no token, try to use authDosen for authentication
+        if (!token && window.authDosen && typeof window.authDosen.getToken === 'function') {
+          token = window.authDosen.getToken();
+        }
+        
+        // Add token validation before proceeding
+        if (!token) {
+          // Show error but don't throw - this allows the UI to display properly
+          this.error = 'Sesi login Anda telah berakhir. Silakan login kembali.';
+          this.loading = false;
+          
+          // Add a button or auto-redirect to login
+          setTimeout(() => {
+            // Check if router is available
+            if (this.$router) {
+              this.$router.push('/login');
+            } else {
+              window.location.href = '/login';
+            }
+          }, 3000);
+          
+          return; // Exit the function early
+        }
+
+        console.log('Token available:', !!token, 'Token length:', token.length);
+        
+        // For debugging
+        console.log('Token available:', !!token);
+        
+        // Use XMLHttpRequest instead of axios for better control
+        const fetchCategories = new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('GET', `${this.apiBaseUrl}/category`, true);
+          xhr.setRequestHeader('Accept', 'application/json');
+          
+          if (token) {
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+          }
+          
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const response = JSON.parse(xhr.responseText);
+                const categories = Array.isArray(response) ? 
+                  response.reduce((acc, category) => {
+                    acc[category.category_id] = category.nama;
+                    return acc;
+                  }, {}) : {};
+                resolve(categories);
+              } catch (error) {
+                console.error('Error parsing categories response:', error);
+                reject(new Error('Failed to parse categories data'));
+              }
+            } else {
+              reject(new Error(`Failed to fetch categories: ${xhr.status}`));
+            }
+          };
+          
+          xhr.onerror = () => {
+            reject(new Error('Network error while fetching categories'));
+          };
+          
+          xhr.send();
+        });
+        
+        const fetchLaporan = new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('GET', `${this.apiBaseUrl}/laporan_kekerasan`, true);
+          xhr.setRequestHeader('Accept', 'application/json');
+          
+          if (token) {
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+          }
+          
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const response = JSON.parse(xhr.responseText);
+                resolve(response);
+              } catch (error) {
+                console.error('Error parsing laporan response:', error);
+                reject(new Error('Failed to parse laporan data'));
+              }
+            } else if (xhr.status === 401) {
+              // Handle unauthorized specifically
+              console.error('Authentication failed: 401 Unauthorized');
+              reject(new Error('Authentication failed. Please login again.'));
+            } else {
+              reject(new Error(`Failed to fetch laporan: ${xhr.status}`));
+            }
+          };
+          
+          xhr.onerror = () => {
+            reject(new Error('Network error while fetching laporan'));
+          };
+          
+          xhr.send();
+        });
+
+        try {
+          // Try to fetch categories first
+          this.categories = await fetchCategories;
+          
+          // Then try to fetch laporan data
+          this.laporan = await fetchLaporan;
+        } catch (error) {
+          console.error('Error fetching data:', error);
+          
+          // If authentication failed, provide a more specific error
+          if (error.message.includes('Authentication failed')) {
+            this.error = 'Sesi login Anda telah berakhir. Silakan login kembali.';
+          } else {
+            this.error = 'Gagal memuat data. Silakan coba lagi nanti.';
+          }
+        }
       } catch (error) {
-        console.error('Error fetching data:', error);
-        this.error = 'Gagal memuat data. Silakan coba lagi nanti.';
+        console.error('Error in fetch operation:', error);
+        this.error = 'Terjadi kesalahan. Silakan coba lagi nanti.';
       } finally {
         this.loading = false;
+      }
+    },
+
+    // Add this method to your component
+    getCurrentUser() {
+      try {
+        const encryptedUserData = VueCookies.get("user_session");
+        if (encryptedUserData) {
+          // Try decryption first as this seems to be the expected format based on your getCurrentUser code
+          try {
+            const userData = decryptData(encryptedUserData);
+            this.userData = userData;
+            return userData;
+          } catch (decryptError) {
+            // If decryption fails, try parsing as JSON
+            if (typeof encryptedUserData === 'string') {
+              try {
+                const parsedData = JSON.parse(encryptedUserData);
+                this.userData = parsedData;
+                return parsedData;
+              } catch (jsonError) {
+                // Not JSON either, might be just the token
+                this.userData = { token: encryptedUserData };
+                return { token: encryptedUserData };
+              }
+            } else if (typeof encryptedUserData === 'object') {
+              this.userData = encryptedUserData;
+              return encryptedUserData;
+            }
+          }
+        }
+        return null;
+      } catch (error) {
+        console.error("Error getting user data:", error);
+        return null;
       }
     },
 
@@ -450,7 +644,7 @@ export default {
         
       const cleanPath = path.replace(/['"]/g, '');
         
-      return `${this.baseUrl}/public/storage/laporankekerasan/${cleanPath}`;
+      return `${this.apiBaseUrl.replace('/api', '')}/storage/laporankekerasan/${cleanPath}`;
     },
 
     viewReport(report) {
@@ -496,7 +690,7 @@ export default {
 
     handleSearch() {
       // Implement search logic
-      this.applyFilters()
+      this.applyFilters();
     },
     
     addNewReport() {
@@ -602,6 +796,23 @@ export default {
 
   mounted() {
     this.fetchData();
+    
+    // Safer way to access currentUser information
+    const userData = VueCookies.get('user_session');
+    if (userData) {
+      if (typeof userData === 'object' && userData.username) {
+        this.currentUser = userData.username;
+      } else if (typeof userData === 'string') {
+        try {
+          const parsedData = JSON.parse(userData);
+          if (parsedData && parsedData.username) {
+            this.currentUser = parsedData.username;
+          }
+        } catch (e) {
+          // Keep default value
+        }
+      }
+    }
   }
 }
 </script>
@@ -953,6 +1164,50 @@ export default {
   font-size: 14px;
 }
 
+/* Loading State */
+.loading-indicator {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top: 4px solid #3498db;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error State */
+.error-message {
+  text-align: center;
+  padding: 40px 0;
+  color: #e53e3e;
+}
+
+.retry-button {
+  background-color: #e53e3e;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  margin-top: 15px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.retry-button:hover {
+  background-color: #c53030;
+}
+
 @media (max-width: 768px) {
   .statistics-cards {
     flex-direction: column;
@@ -1067,11 +1322,6 @@ export default {
 .data-table th:nth-child(7),
 .data-table td:nth-child(7) {
   width: 15%;
-}
-
-.data-table th:nth-child(8),
-.data-table td:nth-child(8) {
-  width: 15%;
   text-align: center;
 }
 
@@ -1110,7 +1360,6 @@ export default {
   background-color: #fee2e2;
   color: #dc2626;
 }
-
 
 /* Button styling */
 .btn-detail {
@@ -1223,10 +1472,17 @@ export default {
   color: white;
   border-color: #3b82f6;
 }
+
+/* Table responsive fixes */
+.table-responsive {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  -webkit-overflow-scrolling: touch;
+}
 </style>
 
 <style>
-/* You can keep your existing styles and add these if needed */
+/* Global status badge styles */
 .status-badge {
   padding: 4px 8px;
   border-radius: 4px;
