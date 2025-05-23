@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import FlowBar from "@/components/Tugas-akhir/Dashboard/FlowBar.vue";
 import SummaryCard from "@/components/Tugas-akhir/Dashboard/SummaryCard.vue";
@@ -7,18 +7,22 @@ import StatusCard from "@/components/Tugas-akhir/Dashboard/StatusCard.vue";
 import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
 import LineChart from "@/components/Tugas-akhir/Dashboard/LineChart.vue";
+import {
+  BAB,
+  TanggalUjian,
+  TotalBimbingan,
+  currentFlowStep,
+  StatusCardIdentifier,
+  statusProperties,
+  statuses,
+  STATUS,
+  useDashboard
+} from "@/services/TugasAkhir/Mhs/Dashboard.js";
+
+const { loading, error, fetchData } = useDashboard();
 // Student progress state
-const BAB = ref("BAB III");
-const TanggalUjian = ref("3 Juli");
-const TotalBimbingan = ref("8");
-const loading = ref(false);
-const error = ref(null);
-
-// Flow progress tracking
-const currentFlowStep = ref(2); // 0-based index: 0 = Request Pembimbing, 2 = Seminar Proposal, etc.
-
-// Statuscard identifier
-const StatusCardIdentifier = ref(0); // 0: Req Bimbingan, 1: Proposal, 2: Ujian TA
+// const loading = ref(false);
+// const error = ref(null);
 
 // statusCard titles
 const cardTitles = {
@@ -55,21 +59,6 @@ const getIconPath = () => {
   }
 };
 
-// default value untuk kondisi status_respon
-const statusValues = {
-  WAITING: 0,
-  ACCEPTED: 1,
-  REJECTED: 2,
-};
-
-// Status untuk masing-masing step
-// 0: Menunggu, 1: Diterima, 2: Ditolak
-const statuses = {
-  reqBimbingan: ref(0),
-  proposal: ref(0),
-  ujianTA: ref(0),
-};
-
 // Flow steps dari flowbar
 const flowSteps = [
   { name: "Request Pembimbing" },
@@ -95,25 +84,6 @@ const iconPaths = {
     "M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5",
 };
 
-// Status property ketika mendapati status_respon
-const statusProperties = {
-  [statusValues.WAITING]: {
-    iconColor: "warning",
-    statusLabel: "Menunggu",
-    statusType: "warning",
-  },
-  [statusValues.ACCEPTED]: {
-    iconColor: "success",
-    statusLabel: "Diterima",
-    statusType: "success",
-  },
-  [statusValues.REJECTED]: {
-    iconColor: "danger",
-    statusLabel: "Ditolak",
-    statusType: "danger",
-  },
-};
-
 // Computed property for status card configuration
 const statusCardConfig = computed(() => {
   const activeStatus = getActiveStatus();
@@ -129,7 +99,7 @@ const statusCardConfig = computed(() => {
 });
 
 // Summary cards configuration
-const summaryCards = [
+const summaryCards = computed(() => [
   {
     icon: iconPaths.book,
     iconColor: "danger",
@@ -148,79 +118,60 @@ const summaryCards = [
     title: TotalBimbingan.value,
     subtitle: "Total Bimbingan",
   },
-];
-
-// Event handlers
-const handleAccept = () => {
-  console.log("Permintaan diterima!");
-  // Lakukan aksi lain setelah diterima
-};
+]);
 </script>
 
 <template>
   <!-- Loading State -->
-  <Loading v-if="loading" />
-
+  <div v-if="loading" class="flex items-center justify-center min-h-[80dvh]">
+    <Loading />
+  </div>
   <!-- Error State -->
   <ErrorMsg v-else-if="error" :msg="error" />
 
   <template v-else>
-    <Breadcrumb/>
+    <Breadcrumb />
 
     <!-- Flow bar card -->
-    <div class="card-rounded bg-white p-4 lg:p-8">
-      <div class="flex flex-col gap-4 max-w-screen-2xl mx-auto">
+    <div class="p-4 bg-white card-rounded lg:p-8">
+      <div class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
         <h5 class="body2-bold sm:body1-bold">Flow Tugas Akhir</h5>
         <div class="overflow-x-auto">
-          <FlowBar
-            class="pb-16 sm:pb-20 mx-auto"
-            :current-step="currentFlowStep"
-            :steps="flowSteps"
-          />
+          <FlowBar class="pb-16 mx-auto sm:pb-20" :current-step="currentFlowStep" :steps="flowSteps" />
         </div>
       </div>
     </div>
 
     <!-- Status card & Summary Cards -->
-    <div class="flex flex-col sm:flex-row sm:flex-wrap gap-4">
+    <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
       <!-- Status Card -->
-      <div class="card-rounded bg-white p-4 lg:p-8 mt-4 flex-1">
-        <StatusCard
-          :title="statusCardConfig.title"
-          :icon="statusCardConfig.icon"
-          :iconColor="statusCardConfig.iconColor"
-          :statusLabel="statusCardConfig.statusLabel"
-          :statusType="statusCardConfig.statusType"
-          labelSize="lg"
-        />
+      <!-- filepath: /var/www/html/Frontend-Port/src/views/Mahasiswa/Tugas-akhir/Dashboard.vue -->
+      <div class="flex-1 p-4 mt-4 bg-white card-rounded lg:p-8">
+        <div v-if="statuses.reqBimbingan.value === STATUS.PLACEHOLDER && StatusCardIdentifier.value === 0"
+          class="text-center body2-bold">
+          Silahkan Request Pembimbing
+        </div>
+        <StatusCard v-else :title="statusCardConfig.title" :icon="statusCardConfig.icon"
+          :iconColor="statusCardConfig.iconColor" :statusLabel="statusCardConfig.statusLabel"
+          :statusType="statusCardConfig.statusType" labelSize="lg" />
       </div>
 
       <!-- Summary Cards -->
-      <div
-        class="card-rounded bg-white p-4 lg:p-8 sm:mt-4 flex sm:flex-row flex-col justify-evenly flex-grow"
-      >
+      <div class="flex flex-col flex-grow p-4 bg-white card-rounded lg:p-8 sm:mt-4 sm:flex-row justify-evenly">
         <template v-for="(card, index) in summaryCards" :key="index">
           <!-- Card -->
-          <SummaryCard
-            :icon="card.icon"
-            :iconColor="card.iconColor"
-            :title="card.title || '-'"
-            :subtitle="card.subtitle"
-          />
+          <SummaryCard :icon="card.icon" :iconColor="card.iconColor" :title="card.title || '-'"
+            :subtitle="card.subtitle" />
 
           <!-- Divider (except after last card) -->
           <template v-if="index < summaryCards.length - 1">
-            <div
-              class="hidden sm:flex h-auto w-px my-8 bg-placeholder mx-4 self-stretch"
-            ></div>
-            <div
-              class="sm:hidden max-w-[240px] w-10/12 h-px bg-placeholder mx-auto my-4"
-            ></div>
+            <div class="self-stretch hidden w-px h-auto mx-4 my-8 sm:flex bg-placeholder"></div>
+            <div class="sm:hidden max-w-[240px] w-10/12 h-px bg-placeholder mx-auto my-4"></div>
           </template>
         </template>
       </div>
     </div>
-    <div class="card-rounded bg-white p-4 lg:p-8 mt-4 min-h-fit">
+    <div class="p-4 mt-4 bg-white card-rounded lg:p-8 min-h-fit">
     </div>
   </template>
 </template>
