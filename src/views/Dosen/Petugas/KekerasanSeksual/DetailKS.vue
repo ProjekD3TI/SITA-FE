@@ -198,590 +198,475 @@
 </template>
 
 <script>
+import axios from 'axios';
 import VueCookies from 'vue-cookies';
 
 export default {
-    name: 'DetailKS',
-    data() {
-        return {
-            apiBaseUrl: 'https://v3422040.mhs.d3tiuns.com/api',
-            laporanId: null,
-            laporan: {},
-            categories: {},
-            loading: true,
-            error: null,
-            showFullImage: false,
-            currentImageIndex: 0,
-            showTanggapanModal: false,
-            tanggapanText: ''
-        };
+  name: 'DetailKS',
+  
+  data() {
+    return {
+      laporanId: null,
+      laporan: {},
+      categories: {},
+      loading: true,
+      error: null,
+      showFullImage: false,
+      showTanggapanModal: false,
+      tanggapanText: '',
+      apiBaseUrl: 'https://v3422040.mhs.d3tiuns.com/api',
+      baseUrl: 'https://v3422040.mhs.d3tiuns.com',
+      authToken: null,
+      imagePaths: [],
+      currentImageIndex: 0,
+      currentFullImageUrl: ''
+    };
+  },
+  
+  created() {
+    this.initializeComponent();
+  },
+  
+  methods: {
+    initializeComponent() {
+      // Extract the ID from the route params
+      const routeParam = this.$route.params.id;
+      console.log('Route param received:', routeParam, typeof routeParam);
+      
+      // Handle different formats of the ID parameter
+      if (typeof routeParam === 'object') {
+        this.laporanId = this.extractIdFromObject(routeParam);
+      } else {
+        this.laporanId = routeParam;
+      }
+      
+      console.log('Extracted ID:', this.laporanId);
+      
+      if (!this.laporanId) {
+        this.error = 'Invalid report ID';
+        this.loading = false;
+        return;
+      }
+      
+      this.fetchCategories();
+      this.fetchLaporanDetail();
     },
     
-    computed: {
-        // Process images for display
-        processedImages() {
-            if (!this.laporan.image_path) return [];
-            
-            try {
-                // Check if image_path is already an array
-                if (Array.isArray(this.laporan.image_path)) {
-                    return this.laporan.image_path;
-                }
-                
-                // Check if it's a JSON string
-                if (typeof this.laporan.image_path === 'string') {
-                    try {
-                        const parsed = JSON.parse(this.laporan.image_path);
-                        if (Array.isArray(parsed)) {
-                            return parsed;
-                        }
-                    } catch (e) {
-                        // Not JSON, treat as a single image
-                    }
-                }
-                
-                // Fallback to treating as a single image
-                return [this.laporan.image_path];
-                
-            } catch (error) {
-                console.error('Error processing images:', error);
-                return [this.laporan.image_path];
-            }
-        },
-        
-        // Get current image for fullscreen view
-        currentImageSrc() {
-            if (!this.processedImages || this.processedImages.length === 0) return '';
-            return this.getImageUrl(this.processedImages[this.currentImageIndex]);
-        },
-        
-        // Process bukti_pelanggaran for display
-        processedBuktiPelanggaran() {
-            if (!this.laporan.bukti_pelanggaran) return [];
-            
-            try {
-                // Check if already an array
-                if (Array.isArray(this.laporan.bukti_pelanggaran)) {
-                    return this.laporan.bukti_pelanggaran;
-                }
-                
-                // Check if it's a JSON string
-                if (typeof this.laporan.bukti_pelanggaran === 'string') {
-                    try {
-                        const parsed = JSON.parse(this.laporan.bukti_pelanggaran);
-                        if (Array.isArray(parsed)) {
-                            return parsed;
-                        }
-                    } catch (e) {
-                        // Not JSON, return as is
-                        return [this.laporan.bukti_pelanggaran];
-                    }
-                }
-                
-                return [];
-            } catch (error) {
-                console.error('Error processing bukti_pelanggaran:', error);
-                return [];
-            }
-        },
-        
-        // Process terlapor for display
-        processedTerlapor() {
-            if (!this.laporan.terlapor) return [];
-            
-            try {
-                // Check if already an array
-                if (Array.isArray(this.laporan.terlapor)) {
-                    return this.laporan.terlapor;
-                }
-                
-                // Check if it's a JSON string
-                if (typeof this.laporan.terlapor === 'string') {
-                    try {
-                        const parsed = JSON.parse(this.laporan.terlapor);
-                        if (Array.isArray(parsed)) {
-                            return parsed;
-                        } else if (typeof parsed === 'object') {
-                            return [parsed];
-                        }
-                    } catch (e) {
-                        // Not JSON, return as is
-                        return [];
-                    }
-                }
-                
-                return [];
-            } catch (error) {
-                console.error('Error processing terlapor:', error);
-                return [];
-            }
-        },
-        
-        // Process saksi for display
-        processedSaksi() {
-            if (!this.laporan.saksi) return [];
-            
-            try {
-                // Check if already an array
-                if (Array.isArray(this.laporan.saksi)) {
-                    return this.laporan.saksi;
-                }
-                
-                // Check if it's a JSON string
-                if (typeof this.laporan.saksi === 'string') {
-                    try {
-                        const parsed = JSON.parse(this.laporan.saksi);
-                        if (Array.isArray(parsed)) {
-                            return parsed;
-                        } else if (typeof parsed === 'object') {
-                            return [parsed];
-                        }
-                    } catch (e) {
-                        // Not JSON, return as is
-                        return [];
-                    }
-                }
-                
-                return [];
-            } catch (error) {
-                console.error('Error processing saksi:', error);
-                return [];
-            }
-        },
-        
-        hasBuktiPelanggaran() {
-            return this.processedBuktiPelanggaran && this.processedBuktiPelanggaran.length > 0;
-        },
-        
-        hasTerlapor() {
-            return this.processedTerlapor && this.processedTerlapor.length > 0;
-        },
-        
-        hasSaksi() {
-            return this.processedSaksi && this.processedSaksi.length > 0;
+    extractIdFromObject(routeParam) {
+      if (routeParam.id) {
+        return routeParam.id;
+      } else {
+        // Try to find the ID in the object
+        const keys = Object.keys(routeParam);
+        if (keys.length > 0) {
+          return routeParam[keys[0]];
         }
+        return null;
+      }
     },
     
-    created() {
-        // Extract the ID from the route params
-        const routeParam = this.$route.params.id;
-        console.log('Route param received:', routeParam, typeof routeParam);
-        
-        // Handle different formats of the ID parameter
-        if (typeof routeParam === 'object') {
-            // If it's an object, try to extract the ID
-            if (routeParam.id) {
-                this.laporanId = routeParam.id;
-            } else {
-                // Try to find the ID in the object
-                const keys = Object.keys(routeParam);
-                if (keys.length > 0) {
-                    this.laporanId = routeParam[keys[0]];
-                } else {
-                    console.error('Could not extract ID from object');
-                    this.error = 'Invalid report ID';
-                    return;
-                }
+    async fetchCategories() {
+      try {
+        const response = await axios.get(`${this.apiBaseUrl}/category`);
+        this.categories = response.data.reduce((acc, category) => {
+          acc[category.category_id] = category.nama;
+          return acc;
+        }, {});
+        console.log('Categories loaded successfully');
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    },
+    
+    getAuthToken() {
+      // Try to get token from auth_token cookie first
+      let token = VueCookies.get("auth_token");
+      
+      // If not found, check user_session as fallback
+      if (!token) {
+        const userData = VueCookies.get("user_session");
+        if (userData) {
+          // If userData exists, try to extract token based on its type
+          if (typeof userData === 'object' && userData.token) {
+            token = userData.token;
+          } else if (typeof userData === 'string') {
+            try {
+              // Try parsing as JSON
+              const parsed = JSON.parse(userData);
+              if (parsed && parsed.token) {
+                token = parsed.token;
+              }
+            } catch (e) {
+              // Not JSON, use as is
+              token = userData;
             }
-        } else {
-            this.laporanId = routeParam;
+          }
         }
-        
-        console.log('Extracted ID:', this.laporanId);
-        this.fetchCategories();
-        this.fetchLaporanDetail();
+      }
+      
+      if (token) {
+        this.authToken = token;
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        console.log('Auth token loaded and set in axios defaults');
+        return true;
+      } else {
+        console.warn('No auth token found in cookies');
+        this.error = "Sesi login telah berakhir. Silakan login kembali.";
+        return false;
+      }
     },
-    
-    methods: {
-        // API calls with XMLHttpRequest
-        fetchCategories() {
-            const xhr = new XMLHttpRequest();
-            xhr.open('GET', `${this.apiBaseUrl}/category`, true);
-            xhr.timeout = 10000; // 10 seconds timeout
-            
-            xhr.onload = () => {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    try {
-                        const response = JSON.parse(xhr.responseText);
-                        
-                        // Create a map of category_id to category name
-                        this.categories = Array.isArray(response) ? 
-                            response.reduce((acc, category) => {
-                                acc[category.category_id] = category.nama;
-                                return acc;
-                            }, {}) : {};
-                            
-                        console.log('Categories loaded:', this.categories);
-                    } catch (error) {
-                        console.error('Error parsing categories:', error);
-                    }
-                } else {
-                    console.error('Failed to fetch categories:', xhr.status);
-                }
-            };
-            
-            xhr.onerror = () => {
-                console.error('Network error while fetching categories');
-            };
-            
-            xhr.ontimeout = () => {
-                console.error('Timeout while fetching categories');
-            };
-            
-            xhr.send();
-        },
-        
-        fetchLaporanDetail() {
-            try {
-                if (!this.laporanId) {
-                    this.error = 'No valid ID provided';
-                    this.loading = false;
-                    return;
-                }
-                
-                this.loading = true;
-                
-                // Get token from Vue Cookies
-                const userData = VueCookies.get('user_session');
-                let token = '';
-                
-                if (userData) {
-                    // If it's an object with token property
-                    if (typeof userData === 'object' && userData.token) {
-                        token = userData.token;
-                    }
-                    // If it's a string (possibly JSON)
-                    else if (typeof userData === 'string') {
-                        try {
-                            const parsedData = JSON.parse(userData);
-                            if (parsedData.token) {
-                                token = parsedData.token;
-                            }
-                        } catch (e) {
-                            // Not JSON, might be just the token
-                            token = userData;
-                        }
-                    }
-                }
-                
-                console.log('Fetching with ID:', this.laporanId, typeof this.laporanId);
-                
-                const xhr = new XMLHttpRequest();
-                xhr.open('GET', `${this.apiBaseUrl}/laporan_kekerasan/${this.laporanId}`, true);
-                xhr.timeout = 15000; // 15 seconds timeout
-                
-                // Set headers
-                if (token) {
-                    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-                }
-                xhr.setRequestHeader('Accept', 'application/json');
-                
-                xhr.onload = () => {
-                    this.loading = false;
-                    
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        try {
-                            const response = JSON.parse(xhr.responseText);
-                            this.laporan = response;
-                            console.log('Laporan data:', this.laporan);
-                        } catch (error) {
-                            console.error('Error parsing response:', error);
-                            this.error = 'Failed to parse response data';
-                        }
-                    } else {
-                        console.error('Error fetching laporan detail:', xhr.status);
-                        this.error = 'Failed to load laporan detail';
-                    }
-                };
-                
-                xhr.onerror = () => {
-                    this.loading = false;
-                    console.error('Network error occurred');
-                    this.error = 'Network error. Please check your connection.';
-                };
-                
-                xhr.ontimeout = () => {
-                    this.loading = false;
-                    console.error('Request timed out');
-                    this.error = 'Request timed out. Please try again.';
-                };
-                
-                xhr.send();
-                
-            } catch (error) {
-                console.error('Error in fetchLaporanDetail:', error);
-                this.error = 'Failed to load laporan detail';
-                this.loading = false;
-            }
-        },
-        
-        async updateStatus(newStatus) {
-            try {
-                this.loading = true;
-                
-                // Get token from Vue Cookies
-                const userData = VueCookies.get('user_session');
-                let token = '';
-                
-                if (userData) {
-                    if (typeof userData === 'object' && userData.token) {
-                        token = userData.token;
-                    } else if (typeof userData === 'string') {
-                        try {
-                            const parsedData = JSON.parse(userData);
-                            if (parsedData.token) {
-                                token = parsedData.token;
-                            }
-                        } catch (e) {
-                            token = userData;
-                        }
-                    }
-                }
-                
-                const xhr = new XMLHttpRequest();
-                xhr.open('PUT', `${this.apiBaseUrl}/laporan_kekerasan/${this.laporanId}/status`, true);
-                xhr.timeout = 10000;
-                
-                // Set headers
-                if (token) {
-                    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-                }
-                xhr.setRequestHeader('Content-Type', 'application/json');
-                xhr.setRequestHeader('Accept', 'application/json');
-                
-                xhr.onload = () => {
-                    this.loading = false;
-                    
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        this.laporan.status = newStatus;
-                        this.$notify({
-                            type: 'success',
-                            text: `Status laporan berhasil diperbarui menjadi ${this.formatStatus(newStatus)}`
-                        });
-                    } else {
-                        console.error('Error updating status:', xhr.status);
-                        this.$notify({
-                            type: 'error',
-                            text: 'Gagal memperbarui status laporan'
-                        });
-                    }
-                };
-                
-                xhr.onerror = () => {
-                    this.loading = false;
-                    console.error('Network error occurred');
-                    this.$notify({
-                        type: 'error',
-                        text: 'Gagal memperbarui status laporan karena masalah jaringan'
-                    });
-                };
-                
-                xhr.ontimeout = () => {
-                    this.loading = false;
-                    console.error('Request timed out');
-                    this.$notify({
-                        type: 'error',
-                        text: 'Permintaan melebihi batas waktu. Silakan coba lagi.'
-                    });
-                };
-                
-                // Send request with data
-                xhr.send(JSON.stringify({ status: newStatus }));
-                
-            } catch (error) {
-                this.loading = false;
-                console.error('Error in updateStatus:', error);
-                this.$notify({
-                    type: 'error',
-                    text: 'Gagal memperbarui status laporan'
-                });
-            }
-        },
-        
-        async saveTanggapan() {
-            if (!this.tanggapanText.trim()) {
-                this.$notify({
-                    type: 'error',
-                    text: 'Tanggapan tidak boleh kosong'
-                });
-                return;
-            }
-            
-            try {
-                this.loading = true;
-                
-                // Get token from Vue Cookies
-                const userData = VueCookies.get('user_session');
-                let token = '';
-                
-                if (userData) {
-                    if (typeof userData === 'object' && userData.token) {
-                        token = userData.token;
-                    } else if (typeof userData === 'string') {
-                        try {
-                            const parsedData = JSON.parse(userData);
-                            if (parsedData.token) {
-                                token = parsedData.token;
-                            }
-                        } catch (e) {
-                            token = userData;
-                        }
-                    }
-                }
-                
-                const xhr = new XMLHttpRequest();
-                xhr.open('PUT', `${this.apiBaseUrl}/laporan_kekerasan/${this.laporanId}/tanggapan`, true);
-                xhr.timeout = 10000;
-                
-                // Set headers
-                if (token) {
-                    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-                }
-                xhr.setRequestHeader('Content-Type', 'application/json');
-                xhr.setRequestHeader('Accept', 'application/json');
-                
-                xhr.onload = () => {
-                    this.loading = false;
-                    
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        this.laporan.tanggapan = this.tanggapanText;
-                        this.showTanggapanModal = false;
-                        this.tanggapanText = '';
-                        
-                        this.$notify({
-                            type: 'success',
-                            text: 'Tanggapan berhasil disimpan'
-                        });
-                    } else {
-                        console.error('Error saving tanggapan:', xhr.status);
-                        this.$notify({
-                            type: 'error',
-                            text: 'Gagal menyimpan tanggapan'
-                        });
-                    }
-                };
-                
-                xhr.onerror = () => {
-                    this.loading = false;
-                    console.error('Network error occurred');
-                    this.$notify({
-                        type: 'error',
-                        text: 'Gagal menyimpan tanggapan karena masalah jaringan'
-                    });
-                };
-                
-                xhr.ontimeout = () => {
-                    this.loading = false;
-                    console.error('Request timed out');
-                    this.$notify({
-                        type: 'error',
-                        text: 'Permintaan melebihi batas waktu. Silakan coba lagi.'
-                    });
-                };
-                
-                // Send request with data
-                xhr.send(JSON.stringify({ tanggapan: this.tanggapanText }));
-                
-            } catch (error) {
-                this.loading = false;
-                console.error('Error in saveTanggapan:', error);
-                this.$notify({
-                    type: 'error',
-                    text: 'Gagal menyimpan tanggapan'
-                });
-            }
-        },
-        
-        // Helper Methods
-        goBack() {
-            this.$router.go(-1);
-        },
-        
-        formatDate(dateString) {
-            if (!dateString) return '-';
-            
-            const options = { 
-                day: 'numeric', 
-                month: 'long', 
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            };
-            
-            return new Date(dateString).toLocaleDateString('id-ID', options);
-        },
-        
-        formatStatus(status) {
-            const statusMap = {
-                'unverified': 'Belum Diverifikasi',
-                'verified': 'Diverifikasi',
-                'processed': 'Diproses',
-                'completed': 'Selesai',
-                'rejected': 'Ditolak',
-                'finished': 'Selesai'
-            };
-            
-            return statusMap[status] || 'Belum Diverifikasi';
-        },
-        
-        formatJenisKelamin(jenisKelamin) {
-            if (!jenisKelamin) return 'Tidak ada';
-            
-            const formattedMap = {
-                'laki-laki': 'Laki-laki',
-                'perempuan': 'Perempuan'
-            };
-            
-            return formattedMap[jenisKelamin] || jenisKelamin;
-        },
 
-        formatUmur(umur) {
-            if (umur === '<20') return 'Kurang dari 20 tahun';
-            if (umur === '20-40') return '20 - 40 tahun';
-            if (umur === '40<') return 'Lebih dari 40 tahun';
-            return umur;
-        },
-        
-        getCategoryName(categoryId) {
-            return this.categories[categoryId] || `Kategori ${categoryId}`;
-        },
-        
-        getImageUrl(imagePath) {
-            if (!imagePath) return '';
-            return `${this.apiBaseUrl.replace('/api', '')}/storage/laporankekerasan/${imagePath}`;
-        },
-        
-        startChat() {
-            // Get the phone number from the laporan data
-            let phoneNumber = this.laporan.nomor_telepon;
-            this.startChatWithPerson(phoneNumber);
-        },
-        
-        startChatWithPerson(phoneNumber) {
-            if (phoneNumber) {
-                // Remove any non-digit characters
-                phoneNumber = phoneNumber.replace(/\D/g, '');
-                
-                // Add country code if not present (assuming Indonesia +62)
-                if (phoneNumber.startsWith('0')) {
-                    phoneNumber = '62' + phoneNumber.substring(1);
-                } else if (!phoneNumber.startsWith('62')) {
-                    phoneNumber = '62' + phoneNumber;
-                }
-                
-                // Create WhatsApp URL
-                const whatsappUrl = `https://wa.me/${phoneNumber}`;
-                
-                // Open WhatsApp in a new tab
-                window.open(whatsappUrl, '_blank');
-            } else {
-                this.$notify({
-                    type: 'error',
-                    text: 'Nomor telepon tidak tersedia'
-                });
-            }
+    async fetchLaporanDetail() {
+      if (!this.laporanId) {
+        this.error = "ID laporan tidak valid";
+        this.loading = false;
+        return;
+      }
+      
+      this.loading = true;
+      this.error = null;
+      
+      try {
+        if (!this.authToken && !this.getAuthToken()) {
+          return;
         }
+
+        console.log('Fetching laporan detail with ID:', this.laporanId);
+        console.log('Using auth token:', this.authToken ? 'Yes (available)' : 'No');
+        
+        const response = await axios.get(`${this.apiBaseUrl}/laporan_kekerasan/${this.laporanId}`, {
+          headers: {
+            'Authorization': `Bearer ${this.authToken}`
+          }
+        });
+        
+        // Process the response
+        this.laporan = response.data;
+        console.log('Laporan data received successfully');
+        this.processImagePaths();
+        
+      } catch (err) {
+        console.error('Error fetching laporan detail:', err);
+        
+        if (err.response && err.response.status === 401) {
+          this.error = 'Sesi anda telah berakhir. Silakan login kembali.';
+          
+          // Try to refresh token or redirect to login
+          this.handleAuthError();
+        } else {
+          this.error = 'Gagal memuat detail laporan. Silakan coba lagi.';
+        }
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    handleAuthError() {
+      // Clear the invalid token
+      this.authToken = null;
+      VueCookies.remove('auth_token');
+      
+      // Optionally redirect to login page
+      // setTimeout(() => this.$router.push('/login'), 2000);
+    },
+    
+    processImagePaths() {
+      if (this.laporan.image_path) {
+        let imagePathData = this.laporan.image_path;
+        
+        if (typeof imagePathData === 'string' && imagePathData.startsWith('"[') && imagePathData.endsWith(']"')) {
+          try {
+            imagePathData = JSON.parse(imagePathData);
+          } catch (e) {
+            console.error('Error unescaping image_path:', e);
+          }
+        }
+        
+        this.imagePaths = this.parseImagePaths(imagePathData);
+        console.log('Parsed image paths:', this.imagePaths);
+      }
+    },
+    
+    // The rest of your methods remain unchanged
+    goBack() {
+      this.$router.go(-1);
+    },
+    
+    formatDate(dateString) {
+      if (!dateString) return '-';
+      
+      const options = { 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      
+      return new Date(dateString).toLocaleDateString('id-ID', options);
+    },
+    
+    formatStatus(status) {
+      const statusMap = {
+        'unverified': 'Belum Diverifikasi',
+        'verified': 'Diverifikasi',
+        'processed': 'Diproses',
+        'completed': 'Selesai',
+        'rejected': 'Ditolak'
+      };
+      
+      return statusMap[status] || status;
+    },
+    
+    getCategoryName(categoryId) {
+      return this.categories[categoryId] || `Kategori ${categoryId}`;
+    },
+    
+    getImageUrl(imagePath) {
+      if (!imagePath) return '';
+      
+      // Check if image_path is a JSON string and parse it
+      if (typeof imagePath === 'string' && (imagePath.startsWith('[') || imagePath.startsWith('["'))) {
+        try {
+          const images = JSON.parse(imagePath);
+          if (Array.isArray(images) && images.length > 0) {
+            // Use the first image from the array
+            return `${this.baseUrl}/public/storage/laporankekerasan/${images[0]}`;
+          }
+        } catch (e) {
+          console.error('Error parsing image path:', e);
+        }
+      }
+      
+      // If not a JSON string or parsing failed, return as is
+      return `${this.baseUrl}/public/storage/laporankekerasan/${imagePath}`;
+    },
+
+    parseImagePaths(imagePath) {
+      if (!imagePath) {
+        return [];
+      }
+      
+      if (typeof imagePath === 'string') {
+        if ((imagePath.startsWith('[') && imagePath.endsWith(']')) || 
+            (imagePath.startsWith('"[') && imagePath.endsWith(']"'))) {
+            
+          try {
+            let cleanedPath = imagePath.replace(/\\/g, '');
+            
+            if (cleanedPath.startsWith('"') && cleanedPath.endsWith('"')) {
+              cleanedPath = cleanedPath.substring(1, cleanedPath.length - 1);
+            }
+            
+            const parsed = JSON.parse(cleanedPath);
+            if (Array.isArray(parsed)) {
+              return parsed;
+            }
+          } catch (e) {
+            console.error('Error parsing JSON:', e);
+          }
+        }
+        
+        if (imagePath.includes(',')) {
+          return imagePath.split(',').map(item => item.trim());
+        }
+        
+        return [imagePath];
+      }
+      
+      if (Array.isArray(imagePath)) {
+        return imagePath;
+      }
+      
+      return [];
+    },
+
+    getImageUrlForPath(path) {
+      if (!path) return '';
+      
+      if (path.startsWith('http')) {
+        return path;
+      }
+      
+      const cleanPath = path.replace(/['"]/g, '');
+      
+      return `${this.baseUrl}/public/storage/laporankekerasan/${cleanPath}`;
+    },
+
+    handleImageError(event, index) {
+      const img = event.target;
+      const originalSrc = img.src;
+      const path = this.imagePaths[index];
+      
+      if (originalSrc.includes('fallback=4')) {
+        img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+        return;
+      }
+      
+      const baseDomain = this.baseUrl;
+      let newUrl;
+      
+      if (!originalSrc.includes('fallback=')) {
+        // Try Backend-Port path first
+        newUrl = `${baseDomain}/Backend-Port/backend/engine/public/storage/laporankekerasan/${path}?fallback=2`;
+      } else if (originalSrc.includes('fallback=2')) {
+        newUrl = `${baseDomain}/api/storage/laporankekerasan/${path}?fallback=3`;
+      } else if (originalSrc.includes('fallback=3')) {
+        newUrl = `${baseDomain}/storage/laporankekerasan/${path}?fallback=4`;
+      } else {
+        newUrl = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+      }
+      
+      img.src = newUrl;
+    },
+    
+    openFullImage(index) {
+      this.currentImageIndex = index;
+      this.currentFullImageUrl = this.getImageUrlForPath(this.imagePaths[index]);
+      this.showFullImage = true;
+    },
+
+    navigateImages(direction) {
+      if (direction === 'prev' && this.currentImageIndex > 0) {
+        this.currentImageIndex--;
+      } else if (direction === 'next' && this.currentImageIndex < this.imagePaths.length - 1) {
+        this.currentImageIndex++;
+      }
+      
+      this.currentFullImageUrl = this.getImageUrlForPath(this.imagePaths[this.currentImageIndex]);
+    },
+    
+    async updateStatus(newStatus) {
+      try {
+        this.loading = true;
+        
+        // Ensure we have a valid auth token
+        if (!this.authToken && !this.getAuthToken()) {
+          return;
+        }
+        
+        await axios.put(`${this.apiBaseUrl}/laporan_kekerasan/${this.laporanId}/status`, {
+          status: newStatus
+        }, {
+          headers: {
+            'Authorization': `Bearer ${this.authToken}`
+          }
+        });
+        
+        this.laporan.status = newStatus;
+        this.$notify({
+          type: 'success',
+          text: `Status laporan berhasil diperbarui menjadi ${this.formatStatus(newStatus)}`
+        });
+        
+        // Refresh data after status update
+        await this.fetchLaporanDetail();
+      } catch (error) {
+        console.error('Error updating status:', error);
+        
+        // Check if it's an authentication error
+        if (error.response && error.response.status === 401) {
+          this.$notify({
+            type: 'error',
+            text: 'Sesi anda telah berakhir. Silakan login kembali.'
+          });
+          this.handleAuthError();
+        } else {
+          this.$notify({
+            type: 'error',
+            text: 'Gagal mengubah status laporan'
+          });
+        }
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    async saveTanggapan() {
+      if (!this.tanggapanText.trim()) {
+        this.$notify({
+          type: 'error',
+          text: 'Tanggapan tidak boleh kosong'
+        });
+        return;
+      }
+      
+      try {
+        this.loading = true;
+        
+        // Ensure we have a valid auth token
+        if (!this.authToken && !this.getAuthToken()) {
+          return;
+        }
+        
+        await axios.put(`${this.apiBaseUrl}/laporan_kekerasan/${this.laporanId}/tanggapan`, {
+          tanggapan: this.tanggapanText
+        }, {
+          headers: {
+            'Authorization': `Bearer ${this.authToken}`
+          }
+        });
+        
+        this.laporan.tanggapan = this.tanggapanText;
+        this.showTanggapanModal = false;
+        
+        this.$notify({
+          type: 'success',
+          text: 'Tanggapan berhasil disimpan'
+        });
+        
+        // Refresh data
+        await this.fetchLaporanDetail();
+      } catch (error) {
+        console.error('Error saving tanggapan:', error);
+        
+        // Check if it's an authentication error
+        if (error.response && error.response.status === 401) {
+          this.$notify({
+            type: 'error',
+            text: 'Sesi anda telah berakhir. Silakan login kembali.'
+          });
+          this.handleAuthError();
+        } else {
+          this.$notify({
+            type: 'error',
+            text: 'Gagal menyimpan tanggapan'
+          });
+        }
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    startChat() {
+      // Get the phone number from the laporan data
+      let phoneNumber = this.laporan.nomor_telepon;
+      
+      // Validate and format the phone number
+      if (phoneNumber) {
+        // Remove any non-digit characters
+        phoneNumber = phoneNumber.replace(/\D/g, '');
+        
+        // Add country code if not present (assuming Indonesia +62)
+        if (phoneNumber.startsWith('0')) {
+          phoneNumber = '62' + phoneNumber.substring(1);
+        } else if (!phoneNumber.startsWith('62')) {
+          phoneNumber = '62' + phoneNumber;
+        }
+        
+        // Create WhatsApp URL
+        const whatsappUrl = `https://wa.me/${phoneNumber}`;
+        
+        // Open WhatsApp in a new tab
+        window.open(whatsappUrl, '_blank');
+      } else {
+        this.$notify({
+          type: 'error',
+          text: 'Nomor telepon tidak tersedia'
+        });
+      }
     }
+  }
 };
 </script>
 

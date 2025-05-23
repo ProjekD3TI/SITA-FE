@@ -139,26 +139,39 @@
           </div>
         </div>
   
-        <!-- Reported Person Section -->
-        <div class="detail-card">
+        <div class="detail-card" v-if="hasReportedPerson">
           <h3 class="detail-section-title">
             <i class="fas fa-user-times"></i> Informasi Terlapor
           </h3>
-          <div class="info-grid">
-            <div class="info-label">Nama</div>
-            <div class="info-value">{{ laporan.terlapor_name || 'Tidak ada data' }}</div>
-            
-            <div class="info-label">Umur</div>
-            <div class="info-value">{{ laporan.terlapor_umur ? laporan.terlapor_umur + ' tahun' : 'Tidak ada data' }}</div>
-            
-            <div class="info-label">Jenis Kelamin</div>
-            <div class="info-value">{{ laporan.terlapor_jenis_kelamin || 'Tidak ada data' }}</div>
-            
-            <div class="info-label">Profesi</div>
-            <div class="info-value">{{ laporan.terlapor_profesi || 'Tidak ada data' }}</div>
-            
-            <div class="info-label">Kontak</div>
-            <div class="info-value">{{ laporan.terlapor_kontak || 'Tidak ada data' }}</div>
+          <div v-for="(terlapor, index) in processedTerlapor" :key="index" class="person-item">
+            <h4 class="person-title">Terlapor #{{ index + 1 }}</h4>
+            <div class="info-grid">
+              <div class="info-label">Nama</div>
+              <div class="info-value">{{ terlapor.nama_lengkap || 'Tidak ada data' }}</div>
+              
+              <div class="info-label">Email</div>
+              <div class="info-value">{{ terlapor.email || 'Tidak ada data' }}</div>
+              
+              <div class="info-label">No. Telepon</div>
+              <div class="info-value">
+                {{ terlapor.nomor_telepon || 'Tidak ada data' }}
+                <button v-if="terlapor.nomor_telepon" class="chat-icon-button" @click="startChatWithPerson(terlapor.nomor_telepon)" title="Chat dengan terlapor">
+                  <i class="fas fa-comment"></i>
+                </button>
+              </div>
+              
+              <div class="info-label">Status</div>
+              <div class="info-value">{{ formatStatusWarga(terlapor.status_warga) || 'Tidak ada data' }}</div>
+              
+              <div class="info-label">Unit Kerja</div>
+              <div class="info-value">{{ terlapor.unit_kerja || 'Tidak ada data' }}</div>
+              
+              <div class="info-label">Jenis Kelamin</div>
+              <div class="info-value">{{ formatJenisKelamin(terlapor.jenis_kelamin) || 'Tidak ada data' }}</div>
+              
+              <div class="info-label">Umur</div>
+              <div class="info-value">{{ formatUmur(terlapor.umur_terlapor) || 'Tidak ada data' }}</div>
+            </div>
           </div>
         </div>
   
@@ -171,19 +184,18 @@
             <h4 class="person-title">Saksi #{{ index + 1 }}</h4>
             <div class="info-grid">
               <div class="info-label">Nama</div>
-              <div class="info-value">{{ saksi.nama || 'Tidak ada data' }}</div>
+              <div class="info-value">{{ saksi.nama_lengkap || 'Tidak ada data' }}</div>
               
-              <div class="info-label">Umur</div>
-              <div class="info-value">{{ saksi.umur ? saksi.umur + ' tahun' : 'Tidak ada data' }}</div>
+              <div class="info-label">Email</div>
+              <div class="info-value">{{ saksi.email || 'Tidak ada data' }}</div>
               
-              <div class="info-label">Jenis Kelamin</div>
-              <div class="info-value">{{ saksi.jenis_kelamin || 'Tidak ada data' }}</div>
-              
-              <div class="info-label">Profesi</div>
-              <div class="info-value">{{ saksi.profesi || 'Tidak ada data' }}</div>
-              
-              <div class="info-label">Kontak</div>
-              <div class="info-value">{{ saksi.kontak || 'Tidak ada data' }}</div>
+              <div class="info-label">No. Telepon</div>
+              <div class="info-value">
+                {{ saksi.nomor_telepon || 'Tidak ada data' }}
+                <button v-if="saksi.nomor_telepon" class="chat-icon-button" @click="startChatWithPerson(saksi.nomor_telepon)" title="Chat dengan saksi">
+                  <i class="fas fa-comment"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -215,411 +227,484 @@
           </div>
         </div>
       </div>
-  
-      <!-- Modal for adding tanggapan -->
-      <div class="modal-overlay" v-if="showTanggapanModal">
-        <div class="modal-container" @click.stop>
-          <div class="modal-header">
-            <h3>Tambah Tanggapan</h3>
-            <button class="close-button" @click="showTanggapanModal = false">&times;</button>
-          </div>
-          <div class="modal-body">
-            <textarea 
-              v-model="tanggapanText" 
-              placeholder="Masukkan tanggapan anda di sini..." 
-              rows="5"
-              class="tanggapan-textarea">
-            </textarea>
-          </div>
-          <div class="modal-footer">
-            <button class="btn-cancel" @click="showTanggapanModal = false">Batal</button>
-            <button class="btn-save" @click="saveTanggapan">Simpan Tanggapan</button>
-          </div>
-        </div>
-      </div>
     </div>
-  </template>
+</template>
   
-  <script>
-  import axios from 'axios';
-  import VueCookies from 'vue-cookies';
-  import { decryptData } from '../../../../services/encrypt';
+<script>
+import axios from 'axios';
+import VueCookies from 'vue-cookies';
+import { decryptData } from '../../../../services/encrypt';
+
+export default {
+  name: 'DetailKS',
   
-  export default {
-    name: 'DetailKS',
-    
-    data() {
-      return {
-        laporanId: null,
-        laporan: {},
-        categories: {},
-        loading: true,
-        error: null,
-        showFullImage: false,
-        showTanggapanModal: false,
-        tanggapanText: '',
-        apiBaseUrl: 'https://v3422040.mhs.d3tiuns.com/api',
-        baseUrl: 'https://v3422040.mhs.d3tiuns.com',
-        authToken: null,
-        imagePaths: [],
-        currentImageIndex: 0,
-        currentFullImageUrl: ''
-      };
-    },
-    
-    created() {
-      this.initializeComponent();
-    },
-    
-    methods: {
-      initializeComponent() {
-        // Extract the ID from the route params
-        const routeParam = this.$route.params.id;
-        console.log('Route param received:', routeParam, typeof routeParam);
-        
-        // Handle different formats of the ID parameter
-        if (typeof routeParam === 'object') {
-          this.laporanId = this.extractIdFromObject(routeParam);
-        } else {
-          this.laporanId = routeParam;
-        }
-        
-        console.log('Extracted ID:', this.laporanId);
-        
-        if (!this.laporanId) {
-          this.error = 'Invalid report ID';
-          this.loading = false;
-          return;
-        }
-        
-        this.fetchCategories();
-        this.fetchLaporanDetail();
-      },
-      
-      extractIdFromObject(routeParam) {
-        if (routeParam.id) {
-          return routeParam.id;
-        } else {
-          // Try to find the ID in the object
-          const keys = Object.keys(routeParam);
-          if (keys.length > 0) {
-            return routeParam[keys[0]];
-          }
-          return null;
-        }
-      },
-      
-      async fetchCategories() {
-        try {
-          const response = await axios.get(`${this.apiBaseUrl}/category`);
-          this.categories = response.data.reduce((acc, category) => {
-            acc[category.category_id] = category.nama;
-            return acc;
-          }, {});
-        } catch (error) {
-          console.error('Error fetching categories:', error);
-        }
-      },
-      
-      getAuthToken() {
-        const token = VueCookies.get("auth_token");
-        if (token) {
-          this.authToken = token;
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          console.log('Auth token loaded from cookies');
-          return true;
-        } else {
-          console.warn('No auth token found in cookies');
-          this.error = "Sesi login telah berakhir. Silakan login kembali.";
-          return false;
-        }
-      },
+  data() {
+    return {
+      laporanId: null,
+      laporan: {},
+      categories: {},
+      loading: true,
+      error: null,
+      showFullImage: false,
+      showTanggapanModal: false,
+      tanggapanText: '',
+      apiBaseUrl: 'https://v3422040.mhs.d3tiuns.com/api',
+      baseUrl: 'https://v3422040.mhs.d3tiuns.com',
+      authToken: null,
+      imagePaths: [],
+      currentImageIndex: 0,
+      currentFullImageUrl: ''
+    };
+  },
   
-      async fetchLaporanDetail() {
-        if (!this.laporanId) {
-          this.error = "ID laporan tidak valid";
-          this.loading = false;
-          return;
+  computed: {
+    processedTerlapor() {
+      try {
+        if (!this.laporan.terlapor) return [];
+        
+        // Check if already an array
+        if (Array.isArray(this.laporan.terlapor)) {
+          return this.laporan.terlapor;
         }
         
-        this.loading = true;
-        this.error = null;
-        
-        try {
-          if (!this.authToken && !this.getAuthToken()) {
-            return;
-          }
-  
-          const response = await axios.get(`${this.apiBaseUrl}/laporan_kekerasan/${this.laporanId}`, {
-            headers: {
-              'Authorization': `Bearer ${this.authToken}`
-            }
-          });
-          
-          // Process the response
-          this.laporan = response.data;
-          this.processImagePaths();
-          
-        } catch (err) {
-          console.error('Error fetching laporan detail:', err);
-          
-          if (err.response && err.response.status === 401) {
-            this.error = 'Sesi anda telah berakhir. Silakan login kembali.';
-          } else {
-            this.error = 'Gagal memuat detail laporan. Silakan coba lagi.';
-          }
-        } finally {
-          this.loading = false;
-        }
-      },
-      
-      processImagePaths() {
-        if (this.laporan.image_path) {
-          let imagePathData = this.laporan.image_path;
-          
-          if (typeof imagePathData === 'string' && imagePathData.startsWith('"[') && imagePathData.endsWith(']"')) {
-            try {
-              imagePathData = JSON.parse(imagePathData);
-            } catch (e) {
-              console.error('Error unescaping image_path:', e);
-            }
-          }
-          
-          this.imagePaths = this.parseImagePaths(imagePathData);
-          console.log('Parsed image paths:', this.imagePaths);
-        }
-      },
-      
-      goBack() {
-        this.$router.go(-1);
-      },
-      
-      formatDate(dateString) {
-        if (!dateString) return '-';
-        
-        const options = { 
-          day: 'numeric', 
-          month: 'long', 
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        };
-        
-        return new Date(dateString).toLocaleDateString('id-ID', options);
-      },
-      
-      formatStatus(status) {
-        const statusMap = {
-          'unverified': 'Belum Diverifikasi',
-          'verified': 'Diverifikasi',
-          'processed': 'Diproses',
-          'completed': 'Selesai',
-          'rejected': 'Ditolak'
-        };
-        
-        return statusMap[status] || status;
-      },
-      
-      getCategoryName(categoryId) {
-        return this.categories[categoryId] || `Kategori ${categoryId}`;
-      },
-      
-      getImageUrl(imagePath) {
-        if (!imagePath) return '';
-        
-        // Check if image_path is a JSON string and parse it
-        if (typeof imagePath === 'string' && (imagePath.startsWith('[') || imagePath.startsWith('["'))) {
+        // Check if it's a JSON string
+        if (typeof this.laporan.terlapor === 'string') {
           try {
-            const images = JSON.parse(imagePath);
-            if (Array.isArray(images) && images.length > 0) {
-              // Use the first image from the array
-              return `${this.baseUrl}/public/storage/laporankekerasan/${images[0]}`;
+            const parsed = JSON.parse(this.laporan.terlapor);
+            if (Array.isArray(parsed)) {
+              return parsed;
+            } else if (typeof parsed === 'object') {
+              return [parsed];
             }
           } catch (e) {
-            console.error('Error parsing image path:', e);
+            console.error('Error parsing terlapor data:', e);
           }
         }
         
-        // If not a JSON string or parsing failed, return as is
-        return `${this.baseUrl}/public/storage/laporankekerasan/${imagePath}`;
-      },
-  
-      parseImagePaths(imagePath) {
-        if (!imagePath) {
-          return [];
-        }
-        
-        if (typeof imagePath === 'string') {
-          if ((imagePath.startsWith('[') && imagePath.endsWith(']')) || 
-              (imagePath.startsWith('"[') && imagePath.endsWith(']"'))) {
-              
-            try {
-              let cleanedPath = imagePath.replace(/\\/g, '');
-              
-              if (cleanedPath.startsWith('"') && cleanedPath.endsWith('"')) {
-                cleanedPath = cleanedPath.substring(1, cleanedPath.length - 1);
-              }
-              
-              const parsed = JSON.parse(cleanedPath);
-              if (Array.isArray(parsed)) {
-                return parsed;
-              }
-            } catch (e) {
-              console.error('Error parsing JSON:', e);
-            }
-          }
-          
-          if (imagePath.includes(',')) {
-            return imagePath.split(',').map(item => item.trim());
-          }
-          
-          return [imagePath];
-        }
-        
-        if (Array.isArray(imagePath)) {
-          return imagePath;
+        // If it's a single object but not in an array
+        if (typeof this.laporan.terlapor === 'object' && !Array.isArray(this.laporan.terlapor)) {
+          return [this.laporan.terlapor];
         }
         
         return [];
-      },
-  
-      getImageUrlForPath(path) {
-        if (!path) return '';
+      } catch (error) {
+        console.error('Error processing terlapor data:', error);
+        return [];
+      }
+    },
+    
+    processedSaksi() {
+      try {
+        if (!this.laporan.saksi) return [];
         
-        if (path.startsWith('http')) {
-          return path;
+        // Check if already an array
+        if (Array.isArray(this.laporan.saksi)) {
+          return this.laporan.saksi;
         }
         
-        const cleanPath = path.replace(/['"]/g, '');
+        // Check if it's a JSON string
+        if (typeof this.laporan.saksi === 'string') {
+          try {
+            const parsed = JSON.parse(this.laporan.saksi);
+            if (Array.isArray(parsed)) {
+              return parsed;
+            } else if (typeof parsed === 'object') {
+              return [parsed];
+            }
+          } catch (e) {
+            console.error('Error parsing saksi data:', e);
+          }
+        }
         
-        return `${this.baseUrl}/public/storage/laporankekerasan/${cleanPath}`;
-      },
+        // If it's a single object but not in an array
+        if (typeof this.laporan.saksi === 'object' && !Array.isArray(this.laporan.saksi)) {
+          return [this.laporan.saksi];
+        }
+        
+        return [];
+      } catch (error) {
+        console.error('Error processing saksi data:', error);
+        return [];
+      }
+    },
+    
+    hasReportedPerson() {
+      return this.processedTerlapor && this.processedTerlapor.length > 0;
+    },
+    
+    hasWitnesses() {
+      return this.processedSaksi && this.processedSaksi.length > 0;
+    }
+  },
   
-      handleImageError(event, index) {
-        const img = event.target;
-        const originalSrc = img.src;
-        const path = this.imagePaths[index];
-        
-        if (originalSrc.includes('fallback=4')) {
-          img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+  created() {
+    this.initializeComponent();
+  },
+  
+  methods: {
+    initializeComponent() {
+      // Extract the ID from the route params
+      const routeParam = this.$route.params.id;
+      console.log('Route param received:', routeParam, typeof routeParam);
+      
+      // Handle different formats of the ID parameter
+      if (typeof routeParam === 'object') {
+        this.laporanId = this.extractIdFromObject(routeParam);
+      } else {
+        this.laporanId = routeParam;
+      }
+      
+      console.log('Extracted ID:', this.laporanId);
+      
+      if (!this.laporanId) {
+        this.error = 'Invalid report ID';
+        this.loading = false;
+        return;
+      }
+      
+      this.fetchCategories();
+      this.fetchLaporanDetail();
+    },
+    
+    extractIdFromObject(routeParam) {
+      if (routeParam.id) {
+        return routeParam.id;
+      } else {
+        // Try to find the ID in the object
+        const keys = Object.keys(routeParam);
+        if (keys.length > 0) {
+          return routeParam[keys[0]];
+        }
+        return null;
+      }
+    },
+    
+    async fetchCategories() {
+      try {
+        const response = await axios.get(`${this.apiBaseUrl}/category`);
+        this.categories = response.data.reduce((acc, category) => {
+          acc[category.category_id] = category.nama;
+          return acc;
+        }, {});
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    },
+    
+    getAuthToken() {
+      const token = VueCookies.get("auth_token");
+      if (token) {
+        this.authToken = token;
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        console.log('Auth token loaded from cookies');
+        return true;
+      } else {
+        console.warn('No auth token found in cookies');
+        this.error = "Sesi login telah berakhir. Silakan login kembali.";
+        return false;
+      }
+    },
+
+    async fetchLaporanDetail() {
+      if (!this.laporanId) {
+        this.error = "ID laporan tidak valid";
+        this.loading = false;
+        return;
+      }
+      
+      this.loading = true;
+      this.error = null;
+      
+      try {
+        if (!this.authToken && !this.getAuthToken()) {
           return;
         }
+
+        const response = await axios.get(`${this.apiBaseUrl}/laporan_kekerasan/${this.laporanId}`, {
+          headers: {
+            'Authorization': `Bearer ${this.authToken}`
+          }
+        });
         
-        const baseDomain = this.baseUrl;
-        let newUrl;
+        // Process the response
+        this.laporan = response.data;
+        this.processImagePaths();
         
-        if (!originalSrc.includes('fallback=')) {
-          // Try Backend-Port path first
-          newUrl = `${baseDomain}/Backend-Port/backend/engine/public/storage/laporankekerasan/${path}?fallback=2`;
-        } else if (originalSrc.includes('fallback=2')) {
-          newUrl = `${baseDomain}/api/storage/laporankekerasan/${path}?fallback=3`;
-        } else if (originalSrc.includes('fallback=3')) {
-          newUrl = `${baseDomain}/storage/laporankekerasan/${path}?fallback=4`;
+      } catch (err) {
+        console.error('Error fetching laporan detail:', err);
+        
+        if (err.response && err.response.status === 401) {
+          this.error = 'Sesi anda telah berakhir. Silakan login kembali.';
         } else {
-          newUrl = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+          this.error = 'Gagal memuat detail laporan. Silakan coba lagi.';
         }
-        
-        img.src = newUrl;
-      },
-      
-      openFullImage(index) {
-        this.currentImageIndex = index;
-        this.currentFullImageUrl = this.getImageUrlForPath(this.imagePaths[index]);
-        this.showFullImage = true;
-      },
-  
-      navigateImages(direction) {
-        if (direction === 'prev' && this.currentImageIndex > 0) {
-          this.currentImageIndex--;
-        } else if (direction === 'next' && this.currentImageIndex < this.imagePaths.length - 1) {
-          this.currentImageIndex++;
-        }
-        
-        this.currentFullImageUrl = this.getImageUrlForPath(this.imagePaths[this.currentImageIndex]);
-      },
-      
-      async updateStatus(newStatus) {
-        try {
-          this.loading = true;
-          
-          // Ensure we have a valid auth token
-          if (!this.authToken && !this.getAuthToken()) {
-            return;
-          }
-          
-          await axios.put(`${this.apiBaseUrl}/laporan_kekerasan/${this.laporanId}/status`, {
-            status: newStatus
-          }, {
-            headers: {
-              'Authorization': `Bearer ${this.authToken}`
-            }
-          });
-          
-          this.laporan.status = newStatus;
-          this.$notify({
-            type: 'success',
-            text: `Status laporan berhasil diperbarui menjadi ${this.formatStatus(newStatus)}`
-          });
-          
-          // Refresh data after status update
-          await this.fetchLaporanDetail();
-        } catch (error) {
-          console.error('Error updating status:', error);
-          
-          // Check if it's an authentication error
-          if (error.response && error.response.status === 401) {
-            this.$notify({
-              type: 'error',
-              text: 'Sesi anda telah berakhir. Silakan login kembali.'
-            });
-          } else {
-            this.$notify({
-              type: 'error',
-              text: 'Gagal mengubah status laporan'
-            });
-          }
-        } finally {
-          this.loading = false;
-        }
-      },
-      
-      startChat() {
-        // Get the phone number from the laporan data
-        let phoneNumber = this.laporan.nomor_telepon;
-        
-        // Validate and format the phone number
-        if (phoneNumber) {
-          // Remove any non-digit characters
-          phoneNumber = phoneNumber.replace(/\D/g, '');
-          
-          // Add country code if not present (assuming Indonesia +62)
-          if (phoneNumber.startsWith('0')) {
-            phoneNumber = '62' + phoneNumber.substring(1);
-          } else if (!phoneNumber.startsWith('62')) {
-            phoneNumber = '62' + phoneNumber;
-          }
-          
-          // Create WhatsApp URL
-          const whatsappUrl = `https://wa.me/${phoneNumber}`;
-          
-          // Open WhatsApp in a new tab
-          window.open(whatsappUrl, '_blank');
-        } else {
-          this.$notify({
-            type: 'error',
-            text: 'Nomor telepon tidak tersedia'
-          });
-        }
-      },
-      
-      saveTanggapan() {
-        // This method is called but not implemented
-        console.log('Save tanggapan function not implemented yet');
-        this.showTanggapanModal = false;
+      } finally {
+        this.loading = false;
       }
+    },
+    
+    processImagePaths() {
+      if (this.laporan.image_path) {
+        let imagePathData = this.laporan.image_path;
+        
+        if (typeof imagePathData === 'string' && imagePathData.startsWith('"[') && imagePathData.endsWith(']"')) {
+          try {
+            imagePathData = JSON.parse(imagePathData);
+          } catch (e) {
+            console.error('Error unescaping image_path:', e);
+          }
+        }
+        
+        this.imagePaths = this.parseImagePaths(imagePathData);
+        console.log('Parsed image paths:', this.imagePaths);
+      }
+    },
+    
+    goBack() {
+      this.$router.go(-1);
+    },
+    
+    formatDate(dateString) {
+      if (!dateString) return '-';
+      
+      const options = { 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      
+      return new Date(dateString).toLocaleDateString('id-ID', options);
+    },
+    
+    formatStatus(status) {
+      const statusMap = {
+        'unverified': 'Belum Diverifikasi',
+        'verified': 'Diverifikasi',
+        'processed': 'Diproses',
+        'completed': 'Selesai',
+        'rejected': 'Ditolak'
+      };
+      
+      return statusMap[status] || status;
+    },
+    
+    getCategoryName(categoryId) {
+      return this.categories[categoryId] || `Kategori ${categoryId}`;
+    },
+    
+    getImageUrl(imagePath) {
+      if (!imagePath) return '';
+      
+      // Check if image_path is a JSON string and parse it
+      if (typeof imagePath === 'string' && (imagePath.startsWith('[') || imagePath.startsWith('["'))) {
+        try {
+          const images = JSON.parse(imagePath);
+          if (Array.isArray(images) && images.length > 0) {
+            // Use the first image from the array
+            return `${this.baseUrl}/public/storage/laporankekerasan/${images[0]}`;
+          }
+        } catch (e) {
+          console.error('Error parsing image path:', e);
+        }
+      }
+      
+      // If not a JSON string or parsing failed, return as is
+      return `${this.baseUrl}/public/storage/laporankekerasan/${imagePath}`;
+    },
+
+    parseImagePaths(imagePath) {
+      if (!imagePath) {
+        return [];
+      }
+      
+      if (typeof imagePath === 'string') {
+        if ((imagePath.startsWith('[') && imagePath.endsWith(']')) || 
+            (imagePath.startsWith('"[') && imagePath.endsWith(']"'))) {
+            
+          try {
+            let cleanedPath = imagePath.replace(/\\/g, '');
+            
+            if (cleanedPath.startsWith('"') && cleanedPath.endsWith('"')) {
+              cleanedPath = cleanedPath.substring(1, cleanedPath.length - 1);
+            }
+            
+            const parsed = JSON.parse(cleanedPath);
+            if (Array.isArray(parsed)) {
+              return parsed;
+            }
+          } catch (e) {
+            console.error('Error parsing JSON:', e);
+          }
+        }
+        
+        if (imagePath.includes(',')) {
+          return imagePath.split(',').map(item => item.trim());
+        }
+        
+        return [imagePath];
+      }
+      
+      if (Array.isArray(imagePath)) {
+        return imagePath;
+      }
+      
+      return [];
+    },
+
+    getImageUrlForPath(path) {
+      if (!path) return '';
+      
+      if (path.startsWith('http')) {
+        return path;
+      }
+      
+      const cleanPath = path.replace(/['"]/g, '');
+      
+      return `${this.baseUrl}/public/storage/laporankekerasan/${cleanPath}`;
+    },
+
+    handleImageError(event, index) {
+      const img = event.target;
+      const originalSrc = img.src;
+      const path = this.imagePaths[index];
+      
+      if (originalSrc.includes('fallback=4')) {
+        img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+        return;
+      }
+      
+      const baseDomain = this.baseUrl;
+      let newUrl;
+      
+      if (!originalSrc.includes('fallback=')) {
+        // Try Backend-Port path first
+        newUrl = `${baseDomain}/Backend-Port/backend/engine/public/storage/laporankekerasan/${path}?fallback=2`;
+      } else if (originalSrc.includes('fallback=2')) {
+        newUrl = `${baseDomain}/api/storage/laporankekerasan/${path}?fallback=3`;
+      } else if (originalSrc.includes('fallback=3')) {
+        newUrl = `${baseDomain}/storage/laporankekerasan/${path}?fallback=4`;
+      } else {
+        newUrl = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+      }
+      
+      img.src = newUrl;
+    },
+    
+    openFullImage(index) {
+      this.currentImageIndex = index;
+      this.currentFullImageUrl = this.getImageUrlForPath(this.imagePaths[index]);
+      this.showFullImage = true;
+    },
+
+    navigateImages(direction) {
+      if (direction === 'prev' && this.currentImageIndex > 0) {
+        this.currentImageIndex--;
+      } else if (direction === 'next' && this.currentImageIndex < this.imagePaths.length - 1) {
+        this.currentImageIndex++;
+      }
+      
+      this.currentFullImageUrl = this.getImageUrlForPath(this.imagePaths[this.currentImageIndex]);
+    },
+    
+    startChat() {
+      // Get the phone number from the laporan data
+      let phoneNumber = this.laporan.nomor_telepon;
+      
+      // Validate and format the phone number
+      if (phoneNumber) {
+        // Remove any non-digit characters
+        phoneNumber = phoneNumber.replace(/\D/g, '');
+        
+        // Add country code if not present (assuming Indonesia +62)
+        if (phoneNumber.startsWith('0')) {
+          phoneNumber = '62' + phoneNumber.substring(1);
+        } else if (!phoneNumber.startsWith('62')) {
+          phoneNumber = '62' + phoneNumber;
+        }
+        
+        // Create WhatsApp URL
+        const whatsappUrl = `https://wa.me/${phoneNumber}`;
+        
+        // Open WhatsApp in a new tab
+        window.open(whatsappUrl, '_blank');
+      } else {
+        this.$notify({
+          type: 'error',
+          text: 'Nomor telepon tidak tersedia'
+        });
+      }
+    },
+    
+    // New methods for terlapor and saksi handling
+    formatStatusWarga(status) {
+      if (!status) return 'Tidak ada';
+      
+      const statusMap = {
+        'mahasiswa': 'Mahasiswa',
+        'dosen': 'Dosen',
+        'tenaga_pendidikan': 'Tenaga Pendidikan',
+        'tenaga_kependidikan': 'Tenaga Kependidikan',
+        'lainnya': 'Lainnya'
+      };
+      
+      return statusMap[status] || status;
+    },
+    
+    formatJenisKelamin(jenisKelamin) {
+      if (!jenisKelamin) return 'Tidak ada';
+      
+      const genderMap = {
+        'laki-laki': 'Laki-laki',
+        'perempuan': 'Perempuan'
+      };
+      
+      return genderMap[jenisKelamin] || jenisKelamin;
+    },
+    
+    formatUmur(umur) {
+      if (!umur) return 'Tidak ada';
+      
+      const ageMap = {
+        '<20': 'Kurang dari 20 tahun',
+        '20-40': '20 - 40 tahun',
+        '40<': 'Lebih dari 40 tahun'
+      };
+      
+      return ageMap[umur] || umur;
+    },
+    
+    startChatWithPerson(phoneNumber) {
+      if (!phoneNumber) {
+        this.$notify({
+          type: 'error',
+          text: 'Nomor telepon tidak tersedia'
+        });
+        return;
+      }
+      
+      // Remove any non-digit characters
+      phoneNumber = phoneNumber.replace(/\D/g, '');
+      
+      // Add country code if not present (assuming Indonesia +62)
+      if (phoneNumber.startsWith('0')) {
+        phoneNumber = '62' + phoneNumber.substring(1);
+      } else if (!phoneNumber.startsWith('62') && !phoneNumber.startsWith('+')) {
+        phoneNumber = '62' + phoneNumber;
+      } else if (phoneNumber.startsWith('+')) {
+        phoneNumber = phoneNumber.substring(1); // Remove the + sign
+      }
+      
+      // Create WhatsApp URL
+      const whatsappUrl = `https://wa.me/${phoneNumber}`;
+      
+      // Open WhatsApp in a new tab
+      window.open(whatsappUrl, '_blank');
     }
-  };
-  </script>
+  }
+};
+</script>
   
   <style scoped>
   .detail-ks-container {
