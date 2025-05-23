@@ -176,7 +176,8 @@
       <!-- Section 2: Informasi Pelapor -->
       <div class="form-section">
         <h2>Informasi Pelapor</h2>
-        <div class="form-row single-column">
+        <div class="form-row">
+          <!-- Left Column -->
           <div class="form-column">
             <div class="form-group">
               <label for="nama_pelapor">Nama Pelapor</label>
@@ -187,6 +188,7 @@
                 class="form-control"
                 disabled
               />
+              <div v-if="errors.nama_pelapor" class="invalid-feedback">{{ errors.nama_pelapor[0] }}</div>
             </div>
 
             <div class="form-group">
@@ -198,6 +200,7 @@
                 class="form-control"
                 disabled
               />
+              <div v-if="errors.nim_pelapor" class="invalid-feedback">{{ errors.nim_pelapor[0] }}</div>
             </div>
 
             <div class="form-group">
@@ -209,6 +212,103 @@
                 class="form-control"
                 disabled
               />
+              <div v-if="errors.nomor_telepon" class="invalid-feedback">{{ errors.nomor_telepon[0] }}</div>
+            </div>
+            
+            <!-- Profesi Field -->
+            <div class="form-group">
+              <label for="profesi">Profesi <span class="required">*</span></label>
+              <select
+                id="profesi"
+                v-model="formData.profesi"
+                class="form-control"
+                :class="{ 'is-invalid': errors.profesi }"
+                required
+              >
+                <option value="" disabled selected>Pilih Profesi</option>
+                <option value="Mahasiswa">Mahasiswa</option>
+                <option value="Dosen">Dosen</option>
+                <option value="Staff">Staff</option>
+                <option value="Lainnya">Lainnya</option>
+              </select>
+              <div v-if="errors.profesi" class="invalid-feedback">{{ errors.profesi[0] }}</div>
+            </div>
+          </div>
+          
+          <!-- Right Column -->
+          <div class="form-column">
+            <!-- Jenis Kelamin Field -->
+            <div class="form-group">
+              <label>Jenis Kelamin Pelapor <span class="required">*</span></label>
+              <div class="radio-group" :class="{ 'is-invalid': errors.jenis_kelamin }">
+                <div class="form-check form-check-inline">
+                  <input 
+                    type="radio" 
+                    id="jenis_kelamin_male" 
+                    name="jenis_kelamin" 
+                    v-model="formData.jenis_kelamin" 
+                    value="laki-laki"
+                    class="form-check-input"
+                    required
+                  />
+                  <label for="jenis_kelamin_male" class="form-check-label">Laki-laki</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input 
+                    type="radio" 
+                    id="jenis_kelamin_female" 
+                    name="jenis_kelamin" 
+                    v-model="formData.jenis_kelamin" 
+                    value="perempuan"
+                    class="form-check-input"
+                    required
+                  />
+                  <label for="jenis_kelamin_female" class="form-check-label">Perempuan</label>
+                </div>
+              </div>
+              <div v-if="errors.jenis_kelamin" class="invalid-feedback">{{ errors.jenis_kelamin[0] }}</div>
+            </div>
+            
+            <!-- Rentang Umur Field -->
+            <div class="form-group">
+              <label>Rentang Umur <span class="required">*</span></label>
+              <div class="radio-group standard-radio" :class="{ 'is-invalid': errors.umur_pelapor }">
+                <div class="form-check">
+                  <input
+                    type="radio"
+                    id="below20"
+                    name="umur_pelapor"
+                    v-model="formData.umur_pelapor"
+                    value="<20"
+                    class="form-check-input"
+                    required
+                  />
+                  <label for="below20" class="form-check-label">Kurang dari 20 tahun</label>
+                </div>
+                <div class="form-check">
+                  <input
+                    type="radio"
+                    id="20to40"
+                    name="umur_pelapor"
+                    v-model="formData.umur_pelapor"
+                    value="20-40"
+                    class="form-check-input"
+                  />
+                  <label for="20to40" class="form-check-label">20 - 40 tahun</label>
+                </div>
+                <div class="form-check">
+                  <input
+                    type="radio"
+                    id="above40"
+                    name="umur_pelapor"
+                    v-model="formData.umur_pelapor"
+                    value="40<"
+                    class="form-check-input"
+                  />
+                  <label for="above40" class="form-check-label">Lebih dari 40 tahun</label>
+                </div>
+              </div>
+              <div v-if="errors.umur_pelapor" class="invalid-feedback d-block">{{ errors.umur_pelapor[0] }}</div>
             </div>
           </div>
         </div>
@@ -539,7 +639,11 @@ export default {
         bukti_pelanggaran: [], // Array for bukti_pelanggaran
         terlapor: [], // Array for terduga/terlapor
         saksi: [], // Array for saksi
-        agreement: false
+        agreement: false,
+        // Added fields for pelapor information
+        profesi: '',
+        jenis_kelamin: '',
+        umur_pelapor: ''
       },
       selectedFiles: [], // Array for tracking selected files
       selectedBukti: [], // Array for selected bukti checkboxes
@@ -966,6 +1070,22 @@ export default {
         isValid = false;
       }
       
+      // Validate pelapor fields
+      if (!this.formData.profesi) {
+        this.errors.profesi = ['Profesi harus dipilih'];
+        isValid = false;
+      }
+      
+      if (!this.formData.jenis_kelamin) {
+        this.errors.jenis_kelamin = ['Jenis kelamin harus dipilih'];
+        isValid = false;
+      }
+      
+      if (!this.formData.umur_pelapor) {
+        this.errors.umur_pelapor = ['Rentang umur harus dipilih'];
+        isValid = false;
+      }
+      
       // Validate bukti_pelanggaran
       if (this.formData.bukti_pelanggaran.length === 0) {
         this.showBuktiWarning = true;
@@ -1021,6 +1141,11 @@ export default {
       formData.append('nim_pelapor', this.formData.nim_pelapor);
       formData.append('nomor_telepon', this.formData.nomor_telepon);
       formData.append('g-recaptcha-response', this.getRecaptchaResponse());
+      
+      // Add pelapor specific fields
+      formData.append('profesi', this.formData.profesi);
+      formData.append('jenis_kelamin', this.formData.jenis_kelamin);
+      formData.append('umur_pelapor', this.formData.umur_pelapor);
       
       // Add lampiran_link if exists
       if (this.formData.lampiran_link) {
@@ -1109,7 +1234,7 @@ export default {
             timerProgressBar: true,
             showConfirmButton: false
           }).then(() => {
-            this.$router.push('/kalab/pelaporankekerasanseksual');
+            this.$router.push('/petugas/pelaporankekerasanseksualpetugas');
           });
           
           this.resetForm();
@@ -1226,7 +1351,11 @@ export default {
           email: '',
           nomor_telepon: ''
         }],
-        agreement: false
+        agreement: false,
+        // Reset pelapor fields
+        profesi: '',
+        jenis_kelamin: '',
+        umur_pelapor: ''
       };
       
       // Reset other form state
@@ -1250,12 +1379,305 @@ export default {
 </script>
 
 <style scoped>
-/* Your existing CSS styles */
-.file-upload-box.relative {
+/* Main container styles */
+.add-ks-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.form-header h1 {
+  color: #d32f2f;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+/* Form sections */
+.form-section {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.form-section h2 {
+  color: #333;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.form-section h3 {
+  color: #444;
+  font-size: 1.25rem;
+  margin: 1rem 0;
+}
+
+/* Form layout */
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: -0.75rem;
+}
+
+.form-column {
+  flex: 1 1 50%;
+  padding: 0.75rem;
+  min-width: 300px;
+}
+
+.form-row.single-column .form-column {
+  flex: 1 1 100%;
+}
+
+/* Form controls */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+  border-color: #d32f2f;
+  box-shadow: 0 0 0 0.2rem rgba(211, 47, 47, 0.25);
+  outline: none;
+}
+
+.form-control.is-invalid {
+  border-color: #dc3545;
+}
+
+.invalid-feedback {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  font-size: 0.875em;
+  color: #dc3545;
+}
+
+textarea.form-control {
+  min-height: 150px;
+  resize: vertical;
+}
+
+/* Form elements */
+.required {
+  color: #dc3545;
+}
+
+.text-muted {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+small {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+}
+
+/* Checkbox and radio styles */
+.form-check {
+  margin-bottom: 0.75rem;
+}
+
+.form-check-input {
+  margin-right: 0.5rem;
+}
+
+.form-check-label {
+  display: inline;
+  vertical-align: middle;
+}
+
+.radio-group {
+  margin-top: 0.5rem;
+}
+
+.form-check-inline {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 1.5rem;
+}
+
+.standard-radio .form-check {
+  margin-bottom: 0.5rem;
+}
+
+/* Bukti pelanggaran section */
+.bukti-checkbox-group {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 1rem;
+}
+
+.bukti-check {
+  margin-bottom: 0.5rem;
+}
+
+.lainnya-input-container {
+  margin-top: 0.5rem;
+  margin-left: 1.5rem;
+}
+
+/* File upload styles */
+.file-upload-container {
+  margin-bottom: 1rem;
+}
+
+.file-upload-box {
+  border: 2px dashed #ced4da;
+  border-radius: 6px;
+  padding: 2rem 1rem;
+  text-align: center;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.file-upload-box:hover {
+  background-color: #e9ecef;
+}
+
+.file-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.upload-icon-container {
+  color: #6c757d;
+}
+
+.upload-icon-container i {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.upload-icon-container p {
+  margin-bottom: 0.25rem;
+}
+
+/* Image previews */
+.image-previews-container {
+  margin-top: 1rem;
+}
+
+/* Image previews */
+.image-previews-container {
+  margin-top: 1rem;
+}
+
+.image-previews {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.image-preview-item {
   position: relative;
 }
 
-/* New styles for reCAPTCHA */
+.image-preview-item img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+}
+
+.remove-image {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: rgba(220, 53, 69, 0.9);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.image-preview-item:hover .remove-image {
+  opacity: 1;
+}
+
+/* Terduga & Saksi containers */
+.terduga-container, .saksi-container {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.terduga-actions, .saksi-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.terduga-add, .saksi-add {
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Statement box */
+.statement-box {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 1.5rem;
+}
+
+.statement-box p {
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.statement-box ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.statement-box li {
+  margin-bottom: 0.5rem;
+}
+
+/* reCAPTCHA container */
 .g-recaptcha-container {
   margin: 20px 0;
   min-height: 78px;
@@ -1263,12 +1685,90 @@ export default {
   justify-content: center;
 }
 
-/* Fix for the relative class */
-.relative {
-  position: relative;
+/* Form actions */
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
 }
 
+/* Buttons */
+.btn {
+  display: inline-block;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  border: 1px solid transparent;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: 4px;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+  cursor: pointer;
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 3px;
+}
+
+.btn-danger {
+  background-color: #d32f2f;
+  border-color: #d32f2f;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #b71c1c;
+  border-color: #b71c1c;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #545b62;
+}
+
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.mr-2 {
+  margin-right: 0.5rem;
+}
+
+/* Fixing position class */
+.relative {
+  position: relative !important;
+}
+
+/* Display block utility */
+.d-block {
+  display: block !important;
+}
+
+/* Fix for the spinner icon */
 .fa-spinner {
   margin-right: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+  .form-row {
+    flex-direction: column;
+  }
+  
+  .form-column {
+    flex: 100%;
+  }
 }
 </style>
