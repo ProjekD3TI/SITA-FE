@@ -37,11 +37,21 @@
                 </div>
                 <p class="description">{{ laporan.deskripsi }}</p>
                 
-                <div v-if="laporan.image_path" class="image-container">
-                    <div v-for="(image, index) in processedImages" :key="index" class="image-item">
-                        <img :src="getImageUrl(image)" alt="Gambar Kejadian" class="evidence-image" @click="showFullImage = true; currentImageIndex = index">
+                <!-- Evidence Images section -->
+                <div v-if="imagePaths && imagePaths.length > 0" class="image-container">
+                    <h4 class="image-section-title">Foto Bukti Kejadian</h4>
+                    <div class="image-grid">
+                        <div v-for="(path, index) in imagePaths" :key="index" class="image-item">
+                        <img 
+                            :src="getImageUrlForPath(path)" 
+                            :alt="`Bukti Kejadian ${index + 1}`" 
+                            class="kejadian-image-thumbnail" 
+                            @click="openFullImage(index)"
+                            @error="handleImageError($event, index)"
+                        />
+                        </div>
                     </div>
-                    <div class="image-caption">Foto Bukti Kejadian (klik untuk memperbesar)</div>
+                    <div class="image-caption">Klik untuk memperbesar</div>
                 </div>
             </div>
 
@@ -166,10 +176,29 @@
         </div>
 
         <!-- Modal for full image view -->
-        <div class="fullscreen-modal" v-if="showFullImage" @click="showFullImage = false">
-            <div class="modal-content">
-                <span class="close-modal">&times;</span>
-                <img :src="currentImageSrc" alt="Bukti Kejadian" class="fullscreen-image">
+        <div class="fullscreen-modal" v-if="showFullImage" @click="closeFullImage">
+            <div class="modal-content" @click.stop>
+                <span class="close-modal" @click.stop="closeFullImage">&times;</span>
+                <img :src="currentFullImageUrl" alt="Bukti Kejadian" class="fullscreen-image" @error="handleFullImageError">
+                
+                <!-- Image navigation if multiple images -->
+                <div class="image-navigation" v-if="imagePaths.length > 1">
+                    <button 
+                        class="nav-button" 
+                        @click.stop="navigateImages('prev')" 
+                        :disabled="currentImageIndex === 0"
+                    >
+                        &lt; Prev
+                    </button>
+                    <span class="image-counter">{{ currentImageIndex + 1 }} / {{ imagePaths.length }}</span>
+                    <button 
+                        class="nav-button" 
+                        @click.stop="navigateImages('next')" 
+                        :disabled="currentImageIndex === imagePaths.length - 1"
+                    >
+                        Next &gt;
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -221,6 +250,146 @@ export default {
       currentImageIndex: 0,
       currentFullImageUrl: ''
     };
+  },
+  
+  computed: {
+    // Process bukti pelanggaran data
+    processedBuktiPelanggaran() {
+      try {
+        if (!this.laporan.bukti_pelanggaran) return [];
+        
+        // Handle array
+        if (Array.isArray(this.laporan.bukti_pelanggaran)) {
+          return this.laporan.bukti_pelanggaran;
+        }
+        
+        // Handle JSON string
+        if (typeof this.laporan.bukti_pelanggaran === 'string') {
+          try {
+            const parsed = JSON.parse(this.laporan.bukti_pelanggaran);
+            if (Array.isArray(parsed)) {
+              return parsed;
+            } else if (typeof parsed === 'object') {
+              return Object.values(parsed);
+            }
+            return [parsed];
+          } catch (e) {
+            // If it's not valid JSON, check if it's comma-separated
+            if (this.laporan.bukti_pelanggaran.includes(',')) {
+              return this.laporan.bukti_pelanggaran.split(',').map(item => item.trim());
+            }
+            return [this.laporan.bukti_pelanggaran];
+          }
+        }
+        
+        return [];
+      } catch (error) {
+        console.error('Error processing bukti_pelanggaran:', error);
+        return [];
+      }
+    },
+    
+    // Process terlapor data
+    processedTerlapor() {
+      try {
+        if (!this.laporan.terlapor) return [];
+        
+        // Handle array
+        if (Array.isArray(this.laporan.terlapor)) {
+          return this.laporan.terlapor;
+        }
+        
+        // Handle JSON string
+        if (typeof this.laporan.terlapor === 'string') {
+          try {
+            const parsed = JSON.parse(this.laporan.terlapor);
+            if (Array.isArray(parsed)) {
+              return parsed;
+            } else if (typeof parsed === 'object') {
+              return [parsed];
+            }
+          } catch (e) {
+            console.error('Error parsing terlapor data:', e);
+          }
+        }
+        
+        // Handle single object
+        if (typeof this.laporan.terlapor === 'object' && !Array.isArray(this.laporan.terlapor)) {
+          return [this.laporan.terlapor];
+        }
+        
+        return [];
+      } catch (error) {
+        console.error('Error processing terlapor data:', error);
+        return [];
+      }
+    },
+    
+    // Process saksi data
+    processedSaksi() {
+      try {
+        if (!this.laporan.saksi) return [];
+        
+        // Handle array
+        if (Array.isArray(this.laporan.saksi)) {
+          return this.laporan.saksi;
+        }
+        
+        // Handle JSON string
+        if (typeof this.laporan.saksi === 'string') {
+          try {
+            const parsed = JSON.parse(this.laporan.saksi);
+            if (Array.isArray(parsed)) {
+              return parsed;
+            } else if (typeof parsed === 'object') {
+              return [parsed];
+            }
+          } catch (e) {
+            console.error('Error parsing saksi data:', e);
+          }
+        }
+        
+        // Handle single object
+        if (typeof this.laporan.saksi === 'object' && !Array.isArray(this.laporan.saksi)) {
+          return [this.laporan.saksi];
+        }
+        
+        return [];
+      } catch (error) {
+        console.error('Error processing saksi data:', error);
+        return [];
+      }
+    },
+    
+    // Process images
+    processedImages() {
+      if (!this.laporan.image_path) return [];
+      
+      return this.parseImagePaths(this.laporan.image_path);
+    },
+    
+    // Helper computed properties for checking existence
+    hasBuktiPelanggaran() {
+      return this.processedBuktiPelanggaran.length > 0;
+    },
+    
+    hasTerlapor() {
+      return this.processedTerlapor.length > 0;
+    },
+    
+    hasSaksi() {
+      return this.processedSaksi.length > 0;
+    },
+    
+    // Current image src for fullscreen modal
+    currentImageSrc() {
+        if (this.imagePaths.length === 0 || this.currentImageIndex >= this.imagePaths.length) {
+        return '';
+        }
+        
+        const imagePath = this.imagePaths[this.currentImageIndex];
+        return this.getImageUrlForPath(imagePath);
+    }
   },
   
   created() {
@@ -342,7 +511,7 @@ export default {
         
         // Process the response
         this.laporan = response.data;
-        console.log('Laporan data received successfully');
+        console.log('Laporan data received successfully', this.laporan);
         this.processImagePaths();
         
       } catch (err) {
@@ -387,7 +556,6 @@ export default {
       }
     },
     
-    // The rest of your methods remain unchanged
     goBack() {
       this.$router.go(-1);
     },
@@ -415,7 +583,30 @@ export default {
         'rejected': 'Ditolak'
       };
       
-      return statusMap[status] || status;
+      return statusMap[status] || status || 'Belum Diverifikasi';
+    },
+    
+    formatJenisKelamin(jenisKelamin) {
+      if (!jenisKelamin) return 'Tidak ada data';
+      
+      const genderMap = {
+        'laki-laki': 'Laki-laki',
+        'perempuan': 'Perempuan'
+      };
+      
+      return genderMap[jenisKelamin] || jenisKelamin;
+    },
+    
+    formatUmur(umur) {
+      if (!umur) return 'Tidak ada data';
+      
+      const ageMap = {
+        '<20': 'Kurang dari 20 tahun',
+        '20-40': '20 - 40 tahun',
+        '40<': 'Lebih dari 40 tahun'
+      };
+      
+      return ageMap[umur] || umur;
     },
     
     getCategoryName(categoryId) {
@@ -481,16 +672,20 @@ export default {
       return [];
     },
 
+    // Updated getImageUrlForPath method
     getImageUrlForPath(path) {
-      if (!path) return '';
-      
-      if (path.startsWith('http')) {
-        return path;
-      }
-      
-      const cleanPath = path.replace(/['"]/g, '');
-      
-      return `${this.baseUrl}/public/storage/laporankekerasan/${cleanPath}`;
+        if (!path) return '';
+        
+        // Check if path is already a full URL
+        if (path.startsWith('http')) {
+          return path;
+        }
+        
+        // Clean up the path (remove quotes)
+        const cleanPath = path.replace(/['"]/g, '');
+        
+        // Construct the correct URL - make sure to use the exact format from the console logs
+        return `${this.baseUrl}/public/storage/laporankekerasan/${cleanPath}`;
     },
 
     handleImageError(event, index) {
@@ -520,12 +715,44 @@ export default {
       img.src = newUrl;
     },
     
+    // Handle errors for fullscreen image
+    handleFullImageError(event) {
+      const img = event.target;
+      const originalSrc = img.src;
+      const path = this.imagePaths[this.currentImageIndex];
+      
+      if (originalSrc.includes('fallback=4')) {
+        img.src = 'https://via.placeholder.com/800x600?text=Gambar+Tidak+Tersedia';
+        return;
+      }
+      
+      const baseDomain = this.baseUrl;
+      let newUrl;
+      
+      if (!originalSrc.includes('fallback=')) {
+        newUrl = `${baseDomain}/Backend-Port/backend/engine/public/storage/laporankekerasan/${path}?fallback=2`;
+      } else if (originalSrc.includes('fallback=2')) {
+        newUrl = `${baseDomain}/api/storage/laporankekerasan/${path}?fallback=3`;
+      } else if (originalSrc.includes('fallback=3')) {
+        newUrl = `${baseDomain}/storage/laporankekerasan/${path}?fallback=4`;
+      } else {
+        newUrl = 'https://via.placeholder.com/800x600?text=Gambar+Tidak+Tersedia';
+      }
+      
+      img.src = newUrl;
+    },
+    
+    // Updated openFullImage method
     openFullImage(index) {
       this.currentImageIndex = index;
       this.currentFullImageUrl = this.getImageUrlForPath(this.imagePaths[index]);
       this.showFullImage = true;
+      
+      // Prevent body scrolling when modal is open
+      document.body.style.overflow = 'hidden';
     },
 
+    // Updated navigateImages method
     navigateImages(direction) {
       if (direction === 'prev' && this.currentImageIndex > 0) {
         this.currentImageIndex--;
@@ -534,6 +761,71 @@ export default {
       }
       
       this.currentFullImageUrl = this.getImageUrlForPath(this.imagePaths[this.currentImageIndex]);
+    },
+    
+    // Updated method to close the modal
+    closeFullImage() {
+      this.showFullImage = false;
+      
+      // Re-enable body scrolling when modal is closed
+      document.body.style.overflow = 'auto';
+    },
+    
+    startChat() {
+      // Get the phone number from the laporan data
+      let phoneNumber = this.laporan.nomor_telepon;
+      
+      // Validate and format the phone number
+      if (phoneNumber) {
+        // Remove any non-digit characters
+        phoneNumber = phoneNumber.replace(/\D/g, '');
+        
+        // Add country code if not present (assuming Indonesia +62)
+        if (phoneNumber.startsWith('0')) {
+          phoneNumber = '62' + phoneNumber.substring(1);
+        } else if (!phoneNumber.startsWith('62')) {
+          phoneNumber = '62' + phoneNumber;
+        }
+        
+        // Create WhatsApp URL
+        const whatsappUrl = `https://wa.me/${phoneNumber}`;
+        
+        // Open WhatsApp in a new tab
+        window.open(whatsappUrl, '_blank');
+      } else {
+        this.$notify({
+          type: 'error',
+          text: 'Nomor telepon tidak tersedia'
+        });
+      }
+    },
+    
+    startChatWithPerson(phoneNumber) {
+      // Validate and format the phone number
+      if (phoneNumber) {
+        // Remove any non-digit characters
+        phoneNumber = phoneNumber.replace(/\D/g, '');
+        
+        // Add country code if not present (assuming Indonesia +62)
+        if (phoneNumber.startsWith('0')) {
+          phoneNumber = '62' + phoneNumber.substring(1);
+        } else if (!phoneNumber.startsWith('62') && !phoneNumber.startsWith('+')) {
+          phoneNumber = '62' + phoneNumber;
+        } else if (phoneNumber.startsWith('+')) {
+          phoneNumber = phoneNumber.substring(1); // Remove the + sign
+        }
+        
+        // Create WhatsApp URL
+        const whatsappUrl = `https://wa.me/${phoneNumber}`;
+        
+        // Open WhatsApp in a new tab
+        window.open(whatsappUrl, '_blank');
+      } else {
+        this.$notify({
+          type: 'error',
+          text: 'Nomor telepon tidak tersedia'
+        });
+      }
     },
     
     async updateStatus(newStatus) {
@@ -636,40 +928,572 @@ export default {
       } finally {
         this.loading = false;
       }
-    },
-    
-    startChat() {
-      // Get the phone number from the laporan data
-      let phoneNumber = this.laporan.nomor_telepon;
-      
-      // Validate and format the phone number
-      if (phoneNumber) {
-        // Remove any non-digit characters
-        phoneNumber = phoneNumber.replace(/\D/g, '');
-        
-        // Add country code if not present (assuming Indonesia +62)
-        if (phoneNumber.startsWith('0')) {
-          phoneNumber = '62' + phoneNumber.substring(1);
-        } else if (!phoneNumber.startsWith('62')) {
-          phoneNumber = '62' + phoneNumber;
-        }
-        
-        // Create WhatsApp URL
-        const whatsappUrl = `https://wa.me/${phoneNumber}`;
-        
-        // Open WhatsApp in a new tab
-        window.open(whatsappUrl, '_blank');
-      } else {
-        this.$notify({
-          type: 'error',
-          text: 'Nomor telepon tidak tersedia'
-        });
-      }
     }
   }
 };
 </script>
 
 <style scoped>
-/* Your existing CSS remains unchanged */
+.detail-ks-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  color: #4b5563;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: #f3f4f6;
+  margin-right: 16px;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #e5e7eb;
+}
+
+.back-button i {
+  margin-right: 8px;
+}
+
+.page-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #111827;
+  flex: 1;
+}
+
+/* Loading and Error States */
+.loading-container, .error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border-radius: 8px;
+  padding: 48px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin: 24px 0;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top: 4px solid #3b82f6;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-container {
+  color: #b91c1c;
+}
+
+.error-container i {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.retry-button {
+  margin-top: 16px;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.retry-button:hover {
+  background-color: #dc2626;
+}
+
+/* Main Content Styles */
+.detail-content {
+  margin-top: 24px;
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.laporan-number {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #4b5563;
+  background-color: #f3f4f6;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.detail-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+}
+
+.main-info {
+  position: relative;
+}
+
+.detail-card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+.category-badge {
+  display: inline-block;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.category-badge i {
+  margin-right: 4px;
+}
+
+.date-info {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-bottom: 16px;
+}
+
+.date-info i {
+  margin-right: 4px;
+}
+
+.description {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #374151;
+  margin-bottom: 20px;
+  white-space: pre-line;
+}
+
+/* Image Container Styles */
+.image-container {
+  margin-top: 24px;
+  width: 100%;
+}
+
+.image-section-title {
+  font-weight: 500;
+  margin-bottom: 12px;
+  font-size: 1rem;
+  color: #374151;
+}
+
+/* Image grid */
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.image-item {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  overflow: hidden;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+  cursor: pointer;
+}
+
+.kejadian-image-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.kejadian-image-thumbnail:hover {
+  transform: scale(1.05);
+}
+
+.image-caption {
+  font-size: 0.875rem;
+  color: #6b7280;
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* Fullscreen Modal */
+.fullscreen-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+.modal-content {
+  position: relative;
+  z-index: 10002;
+  max-width: 95%;
+  max-height: 95%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.fullscreen-image {
+  max-width: 100%;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.close-modal {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 40px;
+  height: 40px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 10003;
+}
+
+.image-navigation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 16px;
+  width: 100%;
+  padding: 10px;
+}
+
+.nav-button {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 0 8px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.nav-button:not(:disabled):hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.nav-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.image-counter {
+  color: white;
+  font-size: 14px;
+  margin: 0 16px;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+
+/* Detail Cards */
+.detail-cards-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.detail-section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.detail-section-title i {
+  margin-right: 8px;
+  color: #4b5563;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 12px;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.info-value {
+  color: #111827;
+}
+
+/* Bukti Pelanggaran Styles */
+.bukti-list ul {
+  padding-left: 20px;
+  margin-top: 0;
+}
+
+.bukti-list li {
+  margin-bottom: 8px;
+  color: #374151;
+}
+
+/* Terlapor & Saksi Styles */
+.terlapor-item, .saksi-item {
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.terlapor-item:last-child, .saksi-item:last-child {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.terlapor-item h4, .saksi-item h4 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #111827;
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+/* Tanggapan Styles */
+.tanggapan-text {
+  white-space: pre-line;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Tanggapan Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-container {
+  background-color: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.tanggapan-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  resize: vertical;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-cancel, .btn-save {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background-color: #f3f4f6;
+  color: #4b5563;
+  border: 1px solid #d1d5db;
+}
+
+.btn-cancel:hover {
+  background-color: #e5e7eb;
+}
+
+.btn-save {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+}
+
+.btn-save:hover {
+  background-color: #1d4ed8;
+}
+
+/* Status Colors */
+.unverified {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.verified {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.processed {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.completed {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.rejected {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* Chat Button */
+.chat-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #4B5563;
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 8px;
+  transition: background-color 0.2s;
+}
+
+.chat-icon-button:hover {
+  background-color: #374151;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .detail-cards-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .info-grid {
+    grid-template-columns: 100px 1fr;
+  }
+  
+  .close-modal {
+    top: -20px;
+    right: -10px;
+  }
+  
+  .image-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .image-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  }
+  
+  .nav-button {
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+  
+  .image-counter {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+}
 </style>
