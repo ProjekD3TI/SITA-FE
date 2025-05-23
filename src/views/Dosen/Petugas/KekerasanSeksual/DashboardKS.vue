@@ -768,23 +768,78 @@ export default {
         // Tampilkan dulu elemen
         element.style.display = 'block';
         
-        // Opsi untuk html2pdf
+        // Menambahkan gaya khusus untuk export PDF untuk memastikan konten tidak terpotong
+        const tempStyle = document.createElement('style');
+        tempStyle.innerHTML = `
+          #pdf-content table {
+            page-break-inside: auto;
+          }
+          #pdf-content tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+          }
+          #pdf-content table td, #pdf-content table th {
+            overflow: visible !important;
+            white-space: normal !important;
+          }
+        `;
+        document.head.appendChild(tempStyle);
+        
+        // Opsi untuk html2pdf dengan margin yang ditingkatkan dan paging
         const options = {
-          margin: 10,
+          margin: [25, 15, 25, 15], // [top, right, bottom, left] in mm - margin lebih besar
           filename: `Laporan_Kekerasan_Seksual_${this.formatDate(new Date()).replace(/-/g, '')}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+          image: { type: 'jpeg', quality: 1 }, // Kualitas maksimal
+          html2canvas: { 
+            scale: 2, 
+            useCORS: true,
+            logging: true,
+            letterRendering: true,
+            scrollY: 0,
+            windowWidth: element.scrollWidth + 30, // Menambahkan padding untuk menghindari pemotongan
+            windowHeight: element.scrollHeight + 30
+          },
+          jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'landscape',
+            compress: true,
+            hotfixes: ["px_scaling"]
+          },
+          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
         };
         
         // Generate PDF
         await html2pdf()
           .from(element)
           .set(options)
-          .save();
-          
+          .toPdf() // Convert to PDF object first
+          .get('pdf')
+          .then(pdf => {
+            // Auto-calculate page count based on content
+            const totalPages = pdf.internal.getNumberOfPages();
+            // Ensure enough space at bottom of each page
+            for (let i = 1; i <= totalPages; i++) {
+              pdf.setPage(i);
+              pdf.setFontSize(8);
+              pdf.setTextColor(150);
+              pdf.text(
+                `Halaman ${i} dari ${totalPages} - Diekspor oleh: ${this.currentUser} - ${this.formatDate(new Date())}`,
+                pdf.internal.pageSize.getWidth() / 2,
+                pdf.internal.pageSize.getHeight() - 10,
+                { align: 'center' }
+              );
+            }
+          })
+          .save(); // Save the PDF
+        
+        // Hapus style sementara
+        document.head.removeChild(tempStyle);
+        
         // Sembunyikan kembali elemen setelah diproses
         element.style.display = 'none';
+        
+        console.log('PDF berhasil dibuat dengan tanggal:', this.formatDate(new Date()));
       } catch (error) {
         console.error('Error exporting to PDF:', error);
         alert('Terjadi kesalahan saat export PDF. Silakan coba lagi.');
