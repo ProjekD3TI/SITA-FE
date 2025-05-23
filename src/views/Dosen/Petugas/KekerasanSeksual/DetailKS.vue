@@ -555,19 +555,24 @@ export default {
       if (!dateString) return '-';
       
       try {
-        let date = new Date(dateString.replace(' ', 'T') + 'Z'); // Menambahkan 'Z' untuk menunjukkan UTC
+        // Parse the date string
+        const date = new Date(dateString);
         
-        // Format tanggal dalam gaya Indonesia dengan timezone UTC
+        // Add 7 hours for GMT+7 (Indonesia timezone)
+        // This is a simple way to adjust for Indonesia's timezone
+        const indonesiaDate = new Date(date.getTime() + (7 * 60 * 60 * 1000));
+        
+        // Format tanggal dalam gaya Indonesia
         const options = { 
           day: 'numeric', 
           month: 'long', 
           year: 'numeric',
           hour: '2-digit',
           minute: '2-digit',
-          timeZone: 'UTC'
+          hour12: false // 24-hour format which is common in Indonesia
         };
         
-        return date.toLocaleDateString('id-ID', options);
+        return indonesiaDate.toLocaleDateString('id-ID', options);
       } catch (e) {
         console.error('Error formatting date:', e);
         return dateString || '-';
