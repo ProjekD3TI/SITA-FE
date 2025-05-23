@@ -64,17 +64,103 @@
       </div>
       
       <div v-else>
-        <!-- Jumlah Total Laporan -->
-        <div class="bg-gray-100 p-4 rounded-lg mb-6">
-          <h3 class="text-lg font-medium text-gray-800 mb-2">Total Laporan Kejadian</h3>
-          <p class="text-3xl font-bold text-blue-600">{{ totalLaporan }}</p>
+        <!-- Statistik Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="bg-blue-50 p-4 rounded-lg">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Total Laporan</h3>
+            <p class="text-3xl font-bold text-blue-600">{{ totalLaporan }}</p>
+          </div>
+          
+          <div class="bg-green-50 p-4 rounded-lg">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Selesai Ditangani</h3>
+            <p class="text-3xl font-bold text-green-600">{{ statusCounts.selesai }}</p>
+            <p class="text-sm text-gray-500">
+              {{ totalLaporan > 0 ? Math.round((statusCounts.selesai / totalLaporan) * 100) : 0 }}% dari total
+            </p>
+          </div>
+          
+          <div class="bg-yellow-50 p-4 rounded-lg">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Sedang Diproses</h3>
+            <p class="text-3xl font-bold text-yellow-600">{{ statusCounts.proses }}</p>
+            <p class="text-sm text-gray-500">
+              {{ totalLaporan > 0 ? Math.round((statusCounts.proses / totalLaporan) * 100) : 0 }}% dari total
+            </p>
+          </div>
+          
+          <div class="bg-red-50 p-4 rounded-lg">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Belum Ditangani</h3>
+            <p class="text-3xl font-bold text-red-600">{{ statusCounts.belum }}</p>
+            <p class="text-sm text-gray-500">
+              {{ totalLaporan > 0 ? Math.round((statusCounts.belum / totalLaporan) * 100) : 0 }}% dari total
+            </p>
+          </div>
         </div>
         
         <!-- Grafik Laporan per Periode -->
-        <div class="mb-6">
-          <h3 class="text-lg font-medium text-gray-800 mb-2">Tren Laporan Kejadian</h3>
-          <div class="h-64 bg-gray-50 rounded-lg p-4">
-            <canvas ref="trendChartRef"></canvas>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div>
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Tren Laporan Kejadian</h3>
+            <div class="h-64 bg-gray-50 rounded-lg p-4">
+              <canvas ref="trendChartRef"></canvas>
+            </div>
+          </div>
+          
+          <div>
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Distribusi Status Laporan</h3>
+            <div class="h-64 bg-gray-50 rounded-lg p-4">
+              <canvas ref="statusChartRef"></canvas>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Distribusi Kategori Laporan -->
+        <div class="mb-6" v-if="hasCategoryData">
+          <h3 class="text-lg font-medium text-gray-800 mb-2">Distribusi Kategori Laporan</h3>
+          <div class="h-80 bg-gray-50 rounded-lg p-4">
+            <canvas ref="categoryChartRef"></canvas>
+          </div>
+        </div>
+        
+        <!-- Recent Reports -->
+        <div class="bg-gray-50 rounded-lg p-4">
+          <h3 class="text-lg font-medium text-gray-800 mb-4">Laporan Terbaru</h3>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr v-if="recentReports.length === 0">
+                  <td colspan="5" class="px-4 py-4 text-center text-gray-500">Tidak ada data</td>
+                </tr>
+                <tr v-for="report in recentReports" :key="report.id" class="hover:bg-gray-50">
+                  <td class="px-4 py-2 whitespace-nowrap">{{ report.id }}</td>
+                  <td class="px-4 py-2 whitespace-nowrap">{{ formatDate(report.created_at) }}</td>
+                  <td class="px-4 py-2 whitespace-nowrap">{{ report.lokasi || 'Tidak disebutkan' }}</td>
+                  <td class="px-4 py-2 whitespace-nowrap">
+                    <span 
+                      :class="[
+                        'px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full',
+                        report.status === 'Selesai' ? 'bg-green-100 text-green-800' : 
+                        report.status === 'Diproses' ? 'bg-yellow-100 text-yellow-800' : 
+                        'bg-red-100 text-red-800'
+                      ]"
+                    >
+                      {{ report.status || 'Belum ditangani' }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-2">
+                    {{ truncateText(report.deskripsi || 'Tidak ada deskripsi', 50) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -83,7 +169,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, watch, nextTick, onBeforeUnmount } from "vue";
 import { decryptData } from "../../../services/encrypt";
 import VueCookies from "vue-cookies";
 import axios from "axios";
@@ -93,9 +179,22 @@ const userData = ref(null);
 const isLoading = ref(true);
 const totalLaporan = ref(0);
 const laporanData = ref([]);
+const categories = ref([]);
+const categoryCounts = ref([]);
 const selectedPeriod = ref("week");
 const trendChartRef = ref(null);
+const statusChartRef = ref(null);
+const categoryChartRef = ref(null);
 const selectedYear = ref(new Date().getFullYear());
+const statusCounts = ref({
+  selesai: 0,
+  proses: 0,
+  belum: 0
+});
+const recentReports = ref([]);
+
+// Computed property untuk mengecek apakah ada data kategori
+const hasCategoryData = computed(() => categoryCounts.value.length > 0);
 
 // Buat array tahun, dari tahun sekarang hingga 5 tahun sebelumnya
 const currentYear = new Date().getFullYear();
@@ -108,25 +207,92 @@ const periods = [
 ];
 
 let trendChart = null;
+let statusChart = null;
+let categoryChart = null;
 
 // Data dummy untuk memastikan selalu ada data untuk ditampilkan
 const dummyLaporan = [
-  { id: 1, created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 2).toISOString() },
-  { id: 2, created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 3).toISOString() },
-  { id: 3, created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 4).toISOString() },
-  { id: 4, created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 10).toISOString() },
-  { id: 5, created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 15).toISOString() },
-  { id: 6, created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 20).toISOString() },
-  { id: 7, created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 25).toISOString() },
+  { 
+    id: 1, 
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 2).toISOString(),
+    status: "Selesai",
+    lokasi: "Ruang Lab Komputer",
+    category_id: 1,
+    deskripsi: "Kerusakan komputer lab nomor 5"
+  },
+  { 
+    id: 2, 
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 3).toISOString(),
+    status: "Diproses",
+    lokasi: "Ruang Server",
+    category_id: 2,
+    deskripsi: "AC ruang server tidak berfungsi optimal"
+  },
+  { 
+    id: 3, 
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 4).toISOString(),
+    status: "Belum ditangani",
+    lokasi: "Ruang Lab Fisika",
+    category_id: 3,
+    deskripsi: "Alat praktikum rusak"
+  },
+  { 
+    id: 4, 
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 10).toISOString(),
+    status: "Selesai",
+    lokasi: "Ruang Kuliah 101",
+    category_id: 4,
+    deskripsi: "Proyektor tidak bisa menyala"
+  },
+  { 
+    id: 5, 
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 15).toISOString(),
+    status: "Diproses",
+    lokasi: "Ruang Lab Kimia",
+    category_id: 1,
+    deskripsi: "Kebocoran pipa air"
+  },
+  { 
+    id: 6, 
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 20).toISOString(),
+    status: "Selesai",
+    lokasi: "Perpustakaan Lantai 2",
+    category_id: 2,
+    deskripsi: "Masalah koneksi internet"
+  },
+  { 
+    id: 7, 
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 25).toISOString(),
+    status: "Belum ditangani",
+    lokasi: "Aula Utama",
+    category_id: 3,
+    deskripsi: "Sound system bermasalah saat digunakan"
+  },
   // Tambahkan data untuk tahun sebelumnya
-  { id: 8, created_at: new Date(currentYear-1, 2, 15).toISOString() },
-  { id: 9, created_at: new Date(currentYear-1, 5, 22).toISOString() },
-  { id: 10, created_at: new Date(currentYear-1, 8, 7).toISOString() },
-  { id: 11, created_at: new Date(currentYear-1, 11, 30).toISOString() },
-  // Tambahkan data untuk tahun sebelumnya lagi
-  { id: 12, created_at: new Date(currentYear-2, 1, 10).toISOString() },
-  { id: 13, created_at: new Date(currentYear-2, 6, 18).toISOString() },
-  { id: 14, created_at: new Date(currentYear-2, 9, 25).toISOString() },
+  { 
+    id: 8, 
+    created_at: new Date(currentYear-1, 2, 15).toISOString(),
+    status: "Selesai",
+    lokasi: "Ruang Lab Komputer",
+    category_id: 1,
+    deskripsi: "Upgrade software komputer lab"
+  },
+  { 
+    id: 9, 
+    created_at: new Date(currentYear-1, 5, 22).toISOString(),
+    status: "Selesai",
+    lokasi: "Ruang Lab Bahasa",
+    category_id: 4,
+    deskripsi: "Headset rusak 10 unit"
+  }
+];
+
+// Data dummy untuk kategori
+const dummyCategories = [
+  { id: 1, name: "Kerusakan Alat" },
+  { id: 2, name: "Masalah Infrastruktur" },
+  { id: 3, name: "Kerusakan Fasilitas" },
+  { id: 4, name: "Lain-lain" }
 ];
 
 onMounted(async () => {
@@ -135,6 +301,9 @@ onMounted(async () => {
   if (encryptedUserData) {
     userData.value = decryptData(encryptedUserData);
   }
+  
+  // Fetch kategori
+  await fetchCategories();
   
   // Fetch laporan dan proses data
   await fetchLaporan();
@@ -149,6 +318,14 @@ onBeforeUnmount(() => {
     trendChart.destroy();
   }
   
+  if (statusChart) {
+    statusChart.destroy();
+  }
+  
+  if (categoryChart) {
+    categoryChart.destroy();
+  }
+  
   window.removeEventListener("resize", handleResize);
 });
 
@@ -158,7 +335,34 @@ const handleResize = () => {
     if (trendChart) {
       trendChart.resize();
     }
+    
+    if (statusChart) {
+      statusChart.resize();
+    }
+    
+    if (categoryChart) {
+      categoryChart.resize();
+    }
   });
+};
+
+const fetchCategories = async () => {
+  try {
+    const response = await axios.get("https://v3422040.mhs.d3tiuns.com/api/category", {
+      timeout: 5000
+    });
+    
+    if (response.data && Array.isArray(response.data)) {
+      categories.value = response.data;
+      console.log("Categories loaded:", categories.value.length);
+    } else {
+      throw new Error("Invalid category data format");
+    }
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    console.warn("Using dummy categories");
+    categories.value = dummyCategories;
+  }
 };
 
 const fetchLaporan = async () => {
@@ -199,6 +403,11 @@ const processData = async () => {
     laporanData.value = dummyLaporan;
   }
   
+  if (!categories.value.length) {
+    console.warn("No categories available, using dummy data");
+    categories.value = dummyCategories;
+  }
+  
   // Tanggal untuk filter data
   const now = new Date();
   let startDate = new Date();
@@ -232,17 +441,71 @@ const processData = async () => {
   totalLaporan.value = filteredData.length;
   console.log("Filtered laporan count:", totalLaporan.value);
   
+  // Count by status
+  statusCounts.value = {
+    selesai: filteredData.filter(item => item.status === "Selesai").length,
+    proses: filteredData.filter(item => item.status === "Diproses").length,
+    belum: filteredData.filter(item => !item.status || item.status === "Belum ditangani").length
+  };
+  
+  // Process category counts
+  processCategoryCounts(filteredData);
+  
+  // Get recent reports
+  recentReports.value = [...filteredData]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 5);
+  
   // Tunggu sampai DOM dirender
   await nextTick();
   
   // Update chart setelah data diproses
-  await updateTrendChart(filteredData, startDate, endDate);
+  await updateCharts(filteredData, startDate, endDate);
 };
 
-const updateTrendChart = async (filteredData, startDate, endDate) => {
-  // Siapkan data untuk grafik tren
-  const trenData = prepareTrendData(filteredData, startDate, endDate);
+const processCategoryCounts = (filteredData) => {
+  const categoryMap = new Map();
   
+  // Initialize all categories with zero count
+  categories.value.forEach(category => {
+    if (category && category.id !== undefined) {
+      categoryMap.set(category.id, { 
+        id: category.id,
+        name: category.name || `Kategori ${category.id}`, 
+        count: 0 
+      });
+    }
+  });
+  
+  // Count laporan for each category
+  filteredData.forEach(laporan => {
+    if (laporan && laporan.category_id !== undefined && categoryMap.has(laporan.category_id)) {
+      const category = categoryMap.get(laporan.category_id);
+      category.count++;
+    }
+  });
+  
+  // Convert to array and sort
+  categoryCounts.value = Array.from(categoryMap.values())
+    .filter(cat => cat && cat.name)
+    .sort((a, b) => b.count - a.count);
+};
+
+const updateCharts = async (filteredData, startDate, endDate) => {
+  // Update trend chart
+  const trenData = prepareTrendData(filteredData, startDate, endDate);
+  await updateTrendChart(trenData);
+  
+  // Update status chart
+  await updateStatusChart();
+  
+  // Update category chart if categories are available
+  if (categoryCounts.value.length > 0) {
+    await updateCategoryChart();
+  }
+};
+
+const updateTrendChart = async (trenData) => {
   await nextTick();
   
   try {
@@ -305,6 +568,167 @@ const updateTrendChart = async (filteredData, startDate, endDate) => {
     console.log("Trend chart created successfully");
   } catch (error) {
     console.error('Error updating trend chart:', error);
+  }
+};
+
+const updateStatusChart = async () => {
+  await nextTick();
+  
+  try {
+    if (!statusChartRef.value) {
+      console.warn('Status chart ref is not available');
+      return;
+    }
+    
+    const ctx = statusChartRef.value.getContext('2d');
+    if (!ctx) {
+      console.warn('Could not get canvas context for status chart');
+      return;
+    }
+    
+    if (statusChart) {
+      statusChart.destroy();
+    }
+    
+    statusChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Selesai', 'Diproses', 'Belum Ditangani'],
+        datasets: [{
+          data: [statusCounts.value.selesai, statusCounts.value.proses, statusCounts.value.belum],
+          backgroundColor: [
+            'rgba(34, 197, 94, 0.7)', // green
+            'rgba(234, 179, 8, 0.7)',  // yellow
+            'rgba(239, 68, 68, 0.7)',   // red
+          ],
+          borderColor: [
+            'rgb(34, 197, 94)',
+            'rgb(234, 179, 8)',
+            'rgb(239, 68, 68)',
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const value = context.raw;
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = total > 0 ? Math.round((value * 100) / total) : 0;
+                return `${context.label}: ${value} (${percentage}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    console.log("Status chart created successfully");
+  } catch (error) {
+    console.error('Error updating status chart:', error);
+  }
+};
+
+const updateCategoryChart = async () => {
+  await nextTick();
+  
+  try {
+    if (!categoryChartRef.value) {
+      console.warn('Category chart ref is not available');
+      return;
+    }
+    
+    const ctx = categoryChartRef.value.getContext('2d');
+    if (!ctx) {
+      console.warn('Could not get canvas context for category chart');
+      return;
+    }
+    
+    if (categoryChart) {
+      categoryChart.destroy();
+    }
+    
+    // Limit ke 10 kategori teratas jika terlalu banyak
+    const topCategories = categoryCounts.value
+      .filter(c => c.count > 0)
+      .slice(0, 10);
+    
+    if (topCategories.length === 0) {
+      console.warn('No categories with count > 0');
+      return;
+    }
+    
+    // Mempersiapkan data untuk diagram batang
+    const labels = topCategories.map(c => c.name);
+    const counts = topCategories.map(c => c.count);
+    
+    // Warna untuk batang
+    const backgroundColors = [
+      'rgba(54, 162, 235, 0.7)', 
+      'rgba(255, 99, 132, 0.7)',
+      'rgba(255, 206, 86, 0.7)',
+      'rgba(75, 192, 192, 0.7)',
+      'rgba(153, 102, 255, 0.7)',
+      'rgba(255, 159, 64, 0.7)',
+      'rgba(199, 199, 199, 0.7)',
+      'rgba(83, 102, 255, 0.7)',
+      'rgba(255, 99, 255, 0.7)',
+      'rgba(159, 159, 64, 0.7)'
+    ];
+    
+    const borderColors = backgroundColors.map(color => color.replace('0.7', '1'));
+    
+    categoryChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Jumlah Laporan',
+          data: counts,
+          backgroundColor: backgroundColors.slice(0, counts.length),
+          borderColor: borderColors.slice(0, counts.length),
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const value = context.raw;
+                const total = totalLaporan.value;
+                const percentage = total > 0 ? Math.round((value * 100) / total) : 0;
+                return `${context.label}: ${value} (${percentage}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    console.log("Category bar chart created successfully");
+  } catch (error) {
+    console.error('Error updating category chart:', error);
   }
 };
 
@@ -379,6 +803,26 @@ const prepareTrendData = (data, startDate, endDate) => {
   }
   
   return { labels, counts };
+};
+
+// Helper functions
+const formatDate = (dateString) => {
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  } catch (e) {
+    console.error("Error formatting date:", e);
+    return "Invalid Date";
+  }
+};
+
+const truncateText = (text, maxLength) => {
+  if (!text) return '';
+  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
 };
 
 // Watch perubahan periode dan tahun untuk memperbarui data
