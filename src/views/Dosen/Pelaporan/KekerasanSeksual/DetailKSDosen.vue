@@ -25,7 +25,7 @@
       <div v-else class="detail-content">
         <!-- Status Header -->
         <div class="status-header">
-          <div class="laporan-number">{{ laporan.nomor_laporan }}</div>
+          <div class="laporan-number">{{ laporan.nomor_laporan_kekerasan }}</div>
           <div :class="['status-badge', laporan.status]">
             {{ formatStatus(laporan.status) }}
           </div>
@@ -38,7 +38,7 @@
             <i class="fas fa-tag"></i> {{ getCategoryName(laporan.category_id) }}
           </div>
           <div class="date-info">
-            <i class="fas fa-calendar-alt"></i> Tanggal Kejadian: {{ formatDate(laporan.tanggal_kejadian) }}
+            <i class="fas fa-calendar-alt"></i> Tanggal Kejadian: {{ formatedDate(laporan.tanggal_kejadian) }}
           </div>
           <p class="description">{{ laporan.deskripsi }}</p>
           
@@ -97,12 +97,6 @@
           <div class="detail-card">
             <h3 class="detail-section-title"><i class="fas fa-clipboard-check"></i> Status Laporan</h3>
             <div class="info-grid">
-              <div class="info-label">Status:</div>
-              <div class="info-value">
-                <span :class="['status-badge', laporan.status]">
-                  {{ formatStatus(laporan.status) }}
-                </span>
-              </div>
               
               <div class="info-label">Tanggal Laporan:</div>
               <div class="info-value">{{ formatDate(laporan.created_at) }}</div>
@@ -200,6 +194,8 @@
           </div>
         </div>
       </div>
+
+      
   
       <!-- Modal for full image view -->
       <div class="fullscreen-modal" v-if="showFullImage" @click="showFullImage = false">
@@ -225,6 +221,16 @@
               Next &gt;
             </button>
           </div>
+        </div>
+      </div>
+
+      <!-- Link Lampiran section -->
+      <div class="detail-card" v-if="laporan.lampiran_link">
+        <h3 class="detail-section-title"><i class="fas fa-link"></i> Link Lampiran</h3>
+        <div class="link-container">
+          <a :href="laporan.lampiran_link" target="_blank" class="external-link">
+            <i class="fas fa-external-link-alt"></i> {{ laporan.lampiran_link }}
+          </a>
         </div>
       </div>
     </div>
@@ -462,6 +468,34 @@ export default {
     
     goBack() {
       this.$router.go(-1);
+    },
+
+    formatedDate(dateString) {
+      if (!dateString) return '-';
+      
+      try {
+        // Parse the date string
+        const date = new Date(dateString);
+        
+        // Add 7 hours for GMT+7 (Indonesia timezone)
+        // This is a simple way to adjust for Indonesia's timezone
+        const indonesiaDate = new Date(date.getTime() + (7 * 60 * 60 * 1000));
+        
+        // Format tanggal dalam gaya Indonesia
+        const options = { 
+          day: 'numeric', 
+          month: 'long', 
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false // 24-hour format which is common in Indonesia
+        };
+        
+        return indonesiaDate.toLocaleDateString('id-ID', options);
+      } catch (e) {
+        console.error('Error formatting date:', e);
+        return dateString || '-';
+      }
     },
     
     formatDate(dateString) {
@@ -1206,4 +1240,25 @@ export default {
       right: 0;
     }
   }
+
+/* Link container styling */
+.link-container {
+  margin-top: 10px;
+}
+
+.external-link {
+  display: inline-block;
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.external-link:hover {
+  text-decoration: underline;
+}
+
+.external-link i {
+  margin-right: 6px;
+}
   </style>
