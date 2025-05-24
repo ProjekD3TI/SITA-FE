@@ -347,7 +347,6 @@ onMounted(() => {
   if (userData) {
     username.value = userData.name || userData.email?.split("@")[0] || "Dosen";
     userRole.value = userData.role || "Dosen";
-    console.log("Username set from getUserData:", username.value);
   } else {
     // Fallback: coba ambil dari localStorage langsung
     try {

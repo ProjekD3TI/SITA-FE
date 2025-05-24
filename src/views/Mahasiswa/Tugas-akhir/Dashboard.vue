@@ -17,7 +17,7 @@ import {
   statuses,
   STATUS,
   useDashboard
-} from "@/services/TugasAkhir/Mhs/Dashboard.js";
+} from "@/services/TugasAkhir/Mhs/dashboard.js";
 
 const { loading, error } = useDashboard();
 

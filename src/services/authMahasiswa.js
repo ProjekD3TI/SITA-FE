@@ -105,7 +105,7 @@ export function authMahasiswa() {
       } else {
         toast.error(
           error.response?.data?.message ||
-            "Gagal melakukan login. Silakan coba lagi."
+          "Gagal melakukan login. Silakan coba lagi."
         );
       }
       // console.error("Login error:", error.response?.data);
@@ -170,14 +170,14 @@ export function authMahasiswa() {
 
   const getAuthUser = () => {
     console.log('getAuthUser called');
-    
+
     // Cek localStorage - tampilkan semua kunci yang ada
     console.log('All localStorage keys:', Object.keys(localStorage));
-    
+
     // Coba ambil data user dari localStorage
     const storedUser = localStorage.getItem('user');
     console.log('Raw data from localStorage:', storedUser);
-    
+
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser);
@@ -228,3 +228,4 @@ export function getUserData() {
   }
   return null;
 }
+

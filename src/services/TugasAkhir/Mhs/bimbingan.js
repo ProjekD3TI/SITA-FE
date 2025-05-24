@@ -314,6 +314,7 @@ export const categories = computed(() => {
     label: kategori.name // Gunakan name sebagai label
   }));
 });
+export const selectedPembimbing = ref('');
 
 export const selectedDosenData = computed(() => {
   if (!selectedPembimbing.value || !dosens.value.length) return null;

@@ -247,7 +247,9 @@ onMounted(() => {
 
   if (userData) {
     username.value = userData.name || userData.email?.split('@')[0] || 'User';
-    console.log('Username set from getUserData:', username.value);
+    email.value = userData.email || '';
+    nim.value = userData.nim || '';
+    console.log('Username set from getUserData:', nim.value);
   } else {
     // Fallback: coba ambil dari localStorage langsung
     try {
@@ -354,6 +356,8 @@ const { logout } = authMahasiswa();
 
 // Referensi untuk nama user
 const username = ref('');
+const email = ref('');
+const nim = ref('');
 
 // Computed property yang lebih sederhana
 const user = computed(() => {

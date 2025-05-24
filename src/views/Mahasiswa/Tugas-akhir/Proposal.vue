@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import Button from '@/components/Tugas-akhir/Button.vue';
 import InputText from '@/components/Tugas-akhir/Forms/InputText.vue';
 import InputFile from '@/components/Tugas-akhir/Forms/InputFile.vue';
@@ -10,13 +10,28 @@ import ErrorMsg from '@/components/ErrorMsg.vue';
 import Tooltip from '@/components/Tugas-akhir/Tooltip.vue';
 import Breadcrumb from '@/components/Tugas-akhir/Breadcrumb.vue';
 import DefaultModal from '@/components/Tugas-akhir/Modals/DefaultModal.vue';
+import {
+  useProposal,
+  hasPembimbing,
+  dinilai,
+  naskahProposalTA,
+  naskahProposalTAStatus,
+  fileNaskahProposalTA,
+  transkripNilaiMahasiswa,
+  transkripNilaiMahasiswaStatus,
+  fileTranskripNilaiMahasiswa,
+  nilaiProposalTA,
+  catatanProposalTA,
+  userDataConfig,
+  formConfig,
+  STATUS,
+  judulProposalTA,
 
-// Demo PDF link for development
-const filePDF = "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf";
+} from '@/services/TugasAkhir/Mhs/proposal.js';
+
+const { loadingProposal, errorProposal } = useProposal();
 
 // App State
-const loading = ref(false);
-const error = ref(null);
 const modalRef = ref(false);
 
 // User form inputs
@@ -24,144 +39,6 @@ const judulProposal = ref('');
 const fileProposal = ref(null);
 const fileTranskrip = ref(null);
 
-// Student state
-const hasPembimbing = ref(true); // true jika sudah memiliki pembimbing, false jika belum
-const dinilai = ref(true); // true jika sudah terjadwal, false jika belum
-
-// Status constants for better readability
-const STATUS = {
-  WAITING: 0,
-  ACCEPTED: 1,
-  REJECTED: 2,
-  NULL: null
-};
-
-const dataProposal = ref({
-  tugas_akhir: {
-    dosen_pembimbing: {
-      id: 1,
-      nama: "Prof. Dr. Budi Santoso, M.Kom",
-    },
-    kategori_ta: {
-      id: 1,
-      nama: "Internet of Things",
-    },
-    tahun_ajaran: {
-      id: 1,
-      nama: "2023/2024",
-    },
-    proposal_id: 1,
-    nilai_proposal: 80,
-    catatan_proposal: "Proposal sudah sesuai dengan pedoman",
-  },
-  proposal: {
-    id: 1,
-    judul_proposal: "Pengembangan El Pikir Satu Dua Tiga",
-    status_valid: 1,
-    berkas: [
-      {
-        id: 1,
-        nama_berkas: "Naskah Proposal Tugas Akhir",
-        file_proposal: filePDF,
-        status_valid: 1,
-      },
-      {
-        id: 2,
-        nama_berkas: "Transkrip Nilai Mahasiswa",
-        file_proposal: filePDF,
-        status_valid: 1,
-      },
-    ]
-  }
-});
-
-// Demo data for proposal
-const proposalData = {
-  id: 1,
-  judul_proposal: "Pengembangan El Pikir Satu Dua Tiga",
-  file_proposal: "naskah-proposal-ta.pdf",
-  file_proposal_url: filePDF,
-  file_proposal_status_valid: 1,
-  file_transkrip: "transkrip-nilai-mahasiswa.pdf",
-  file_transkrip_url: filePDF,
-  file_transkrip_status_valid: 1,
-};
-const overallStatus = computed(() => {
-  // Jika salah satu status 2 (Ditolak), maka Ditolak
-  if (
-    proposalData.file_proposal_status_valid === STATUS.REJECTED ||
-    proposalData.file_transkrip_status_valid === STATUS.REJECTED
-  ) {
-    return STATUS.REJECTED;
-  }
-  // Jika semua 1 (Diterima), maka Diterima
-  if (
-    proposalData.file_proposal_status_valid === STATUS.ACCEPTED &&
-    proposalData.file_transkrip_status_valid === STATUS.ACCEPTED
-  ) {
-    return STATUS.ACCEPTED;
-  }
-  // Jika ada yang 0 (Menunggu), maka Menunggu
-  if (
-    proposalData.file_proposal_status_valid === STATUS.WAITING ||
-    proposalData.file_transkrip_status_valid === STATUS.WAITING
-  ) {
-    return STATUS.WAITING;
-  }
-  // Default
-  return STATUS.NULL;
-});
-
-// Demo data for tugas akhir results
-const tugas_akhir = {
-  nilai_proposal: 80,
-  catatan_proposal: "Proposal sudah sesuai dengan pedoman",
-};
-
-const userDataConfig = computed(() => {
-  const config = {
-    headText: "Dosen Pembimbing",
-    bodyText: "Prof. Dr. Budi Santoso, M.Kom",
-    headText2: "Kategori TA",
-    bodyText2: "Internet of Things",
-    tahunAjaran: "2023/2024",
-    showStatus: proposalData.file_proposal && proposalData.file_transkrip_status_valid !== null
-  };
-
-  if (config.showStatus) {
-    switch (overallStatus.value) {
-      case STATUS.WAITING:
-        config.status = "warning";
-        config.statusLabel = "Menunggu";
-        break;
-      case STATUS.ACCEPTED:
-        config.status = "success";
-        config.statusLabel = "Diterima";
-        break;
-      case STATUS.REJECTED:
-        config.status = "danger";
-        config.statusLabel = "Ditolak";
-        break;
-    }
-  }
-
-  return config;
-});
-
-const formConfig = computed(() => {
-  const isDisabled =
-    proposalData.file_proposal &&
-    (overallStatus.value === STATUS.WAITING || overallStatus.value === STATUS.ACCEPTED);
-  const isOpacity = isDisabled;
-
-  return {
-    isDisabled,
-    wrapperClass: isOpacity ? 'opacity-50' : '',
-    showSubmitButton:
-      proposalData.file_proposal &&
-      (overallStatus.value === STATUS.NULL || overallStatus.value === STATUS.REJECTED)
-  };
-});
 // Methods
 const showModal = () => {
   modalRef.value = true;
@@ -171,14 +48,27 @@ const handleSubmit = () => {
   // Implement form submission logic here
   console.log('Form submitted');
 };
+
+// Disabled logic
+const isNaskahDisabled = computed(() =>
+  Number(naskahProposalTAStatus.value) === STATUS.WAITING ||
+  Number(naskahProposalTAStatus.value) === STATUS.ACCEPTED
+);
+
+const isTranskripDisabled = computed(() =>
+  Number(transkripNilaiMahasiswaStatus.value) === STATUS.WAITING ||
+  Number(transkripNilaiMahasiswaStatus.value) === STATUS.ACCEPTED
+);
 </script>
 
 <template>
-  <!-- Loading State -->
-  <Loading v-if="loading" />
+  <div v-if="loadingProposal" class="flex items-center justify-center min-h-[80dvh]">
+    <Loading />
+  </div>
 
-  <!-- Error State -->
-  <ErrorMsg v-else-if="error" :msg="error" />
+  <div v-else-if="errorProposal" class="p-4">
+    <ErrorMsg :msg="errorProposal" />
+  </div>
 
   <template v-else>
     <!-- No Pembimbing State -->
@@ -210,19 +100,18 @@ const handleSubmit = () => {
 
         <!-- Form Section -->
         <form @submit.prevent="handleSubmit" class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
-          <div :class="formConfig.wrapperClass" class="flex flex-col gap-4">
-            <InputText id="judul-proposal-ta" label="Judul Proposal Tugas Akhir"
-              placeholder="Masukkan judul proposal tugas akhir" v-model="judulProposal"
-              :value="proposalData.judul_proposal !== null ? proposalData.judul_proposal : ''"
+          <div class="flex flex-col gap-4">
+            <InputText :class="formConfig.wrapperClass" id="judul-proposal-ta" label="Judul Proposal Tugas Akhir"
+              placeholder="Masukkan judul proposal tugas akhir" v-model="judulProposal" :value="judulProposalTA"
               :disabled="formConfig.isDisabled" />
-            <InputFile id="naskah-proposal-ta" label="Naskah Proposal Tugas Akhir" v-model="fileProposal"
-              :existingFileName="proposalData.file_proposal ? proposalData.file_proposal : ''"
-              :existingFileUrl="proposalData.file_proposal_url ? proposalData.file_proposal_url : ''"
-              :disabled="formConfig.isDisabled" />
-            <InputFile id="transkrip-nilai-mahasiswa" label="Transkrip Nilai Mahasiswa" v-model="fileTranskrip"
-              :existingFileName="proposalData.file_transkrip ? proposalData.file_transkrip : ''"
-              :existingFileUrl="proposalData.file_transkrip_url ? proposalData.file_transkrip_url : ''"
-              :disabled="formConfig.isDisabled" />
+            <InputFile :class="`${formConfig.wrapperClass} ${isNaskahDisabled ? 'opacity-50' : ''}`"
+              id="naskah-proposal-ta" label="Naskah Proposal Tugas Akhir" v-model="fileProposal"
+              :existingFileName="naskahProposalTA" :existingFileUrl="fileNaskahProposalTA"
+              :disabled="isNaskahDisabled" />
+            <InputFile :class="`${formConfig.wrapperClass} ${isTranskripDisabled ? 'opacity-50' : ''}`"
+              id="transkrip-nilai-mahasiswa" label="Transkrip Nilai Mahasiswa" v-model="fileTranskrip"
+              :existingFileName="transkripNilaiMahasiswa" :existingFileUrl="fileTranskripNilaiMahasiswa"
+              :disabled="isTranskripDisabled" />
           </div>
 
           <!-- Action Buttons -->
@@ -239,7 +128,7 @@ const handleSubmit = () => {
 
             <!-- Nilai Button - show for accepted proposal -->
             <template
-              v-if="proposalData.file_proposal_status_valid === STATUS.ACCEPTED && proposalData.file_transkrip_status_valid === STATUS.ACCEPTED">
+              v-if="naskahProposalTAStatus === STATUS.ACCEPTED && transkripNilaiMahasiswaStatus === STATUS.ACCEPTED">
               <Tooltip v-if="!dinilai" text="Menunggu Dinilai" size="md" position="left">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
                   stroke="currentColor" class="w-6 h-6">
@@ -266,10 +155,10 @@ const handleSubmit = () => {
       <DefaultModal v-if="modalRef" @close="modalRef = false" headText="Nilai Seminar Proposal"
         bodyText="Nama Mahasiswa | V3423999 | Judul Tugas Akhir">
         <div class="flex flex-col gap-4 mt-4">
-          <InputText id="nilai-proposal-ta" label="Nilai Proposal Tugas Akhir" v-model="tugas_akhir.nilai_proposal"
-            :value="tugas_akhir.nilai_proposal" :disabled="true" />
-          <InputTextarea id="catatan-proposal-ta" label="Catatan" v-model="tugas_akhir.catatan_proposal"
-            :value="tugas_akhir.catatan_proposal" :disabled="true" />
+          <InputText id="nilai-proposal-ta" label="Nilai Proposal Tugas Akhir" v-model="nilaiProposalTA"
+            :value="nilaiProposalTA" :disabled="true" />
+          <InputTextarea id="catatan-proposal-ta" label="Catatan" v-model="catatanProposalTA" :value="catatanProposalTA"
+            :disabled="true" />
         </div>
       </DefaultModal>
     </template>

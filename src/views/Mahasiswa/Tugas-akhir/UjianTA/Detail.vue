@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watchEffect } from 'vue';
 import Breadcrumb from '@/components/Tugas-akhir/Breadcrumb.vue';
 import JadwalUjian from '@/components/Tugas-akhir/JadwalUjian.vue';
 import Button from '@/components/Tugas-akhir/Button.vue';
@@ -7,37 +7,53 @@ import Tooltip from '@/components/Tugas-akhir/Tooltip.vue';
 import DefaultModal from '@/components/Tugas-akhir/Modals/DefaultModal.vue';
 import InputText from '@/components/Tugas-akhir/Forms/InputText.vue';
 import InputTextarea from '@/components/Tugas-akhir/Forms/InputTextarea.vue';
+import Loading from '@/components/Loading.vue';
+import ErrorMsg from '@/components/ErrorMsg.vue';
+import {
+  useTugasAkhir,
+  useJadwalUjianTA,
+  useNilaiUjianTA,
+  dosenPembimbing,
+  kategoriTA,
+  tahunAjaranTA,
+  judulTugasAkhir,
+  daftarPenguji,
+  jadwalUjianTA,
+  kualitas_tata_laporan,
+  kemampuan_teknis,
+  kualitas_produk,
+  presentasi,
+  rerata_ujian,
+  dataTugasAkhir,
+  dataNilaiUjianTA,
+  rataRataNilaiUjianTA,
+} from '@/services/TugasAkhir/Mhs/ujianTA.js';
+import { getUserData } from '@/services/authMahasiswa'
 
-// App State
-const dinilai = ref(false);
+const userData = getUserData();
+const username = userData?.name || userData?.email?.split('@')[0] || 'User';
+const nim = userData?.nim || '';
+
+const { loadingTugasAkhir, errorTugasAkhir } = useTugasAkhir();
+const { loadingJadwalUjianTA, errorJadwalUjianTA } = useJadwalUjianTA();
+const { loadingNilaiUjianTA, errorNilaiUjianTA } = useNilaiUjianTA();
+
+const dinilai = computed(() => {
+  // Cek apakah ada penguji dan semua nilai > 0
+  const penguji = dataNilaiUjianTA.value?.dosen_penguji || [];
+  const nilai = rataRataNilaiUjianTA.value;
+  return (
+    penguji.length > 0 &&
+    nilai.kualitas_tata_laporan > 0 &&
+    nilai.kemampuan_teknis > 0 &&
+    nilai.kualitas_produk > 0 &&
+    nilai.presentasi > 0
+  );
+});
 const showNilaiModal = ref(false);
 
 // PDF handling
-const pdfUrl = "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf";
-
-// Data untuk komponen penguji
-const examiners = [
-  { name: 'John Batubara, A. Xioo, M. Si, A. Cer', role: 'Ketua' },
-  { name: 'Dr. Sinta Wijaya, M.Kom', role: 'Anggota' },
-  { name: 'Prof. Ahmad Rizal, Ph.D', role: 'Anggota' }
-];
-
-// Jadwal ujian
-const schedule = {
-  date: 'Rabu, 32 Maret 2025',
-  time: '09:00 - 10:00',
-  room: 'Lab. Jaringan'
-};
-
-// TA details
-const tugasAkhirDetails = {
-  judul: "Pengembangan El Pikir Satu Dua Tiga",
-  kategori: "Internet Of Things",
-  dosenPembimbing: "Agus Kotak S.Ht",
-  tahunAjaran: "2023/2024",
-  nilai: 90,
-  catatan: "Tugas akhir sangat baik, presentasi lancar, dan mahasiswa dapat menjawab semua pertanyaan dengan tepat."
-};
+const fileNaskahTA = computed(() => dataTugasAkhir.value?.berkas?.find(berkas => berkas.nama_berkas === "Naskah Tugas Akhir")?.file_path || '');
 
 // Methods
 const openNilaiModal = () => {
@@ -55,125 +71,106 @@ const buttonClasses = computed(() => {
 </script>
 
 <template>
-  <Breadcrumb :items="breadcrumbItems" />
-
-  <!-- Jadwal Section -->
-  <div class="card-rounded bg-white p-6 lg:p-8">
-    <div class="max-w-screen-2xl mx-auto">
-      <JadwalUjian :examiners="examiners" :jadwal="schedule" />
-    </div>
+  <div v-if="loadingTugasAkhir || loadingNilaiUjianTA || loadingJadwalUjianTA"
+    class="flex items-center justify-center min-h-[80dvh]">
+    <Loading />
   </div>
-  
-  <!-- Tugas Akhir Details Section -->
-  <div class="card-rounded bg-white p-6 lg:p-8 mt-6">
-    <div class="max-w-screen-2xl mx-auto">
-      <div class="flex flex-col md:flex-row">
-        <!-- PDF Preview (Left Side) -->
-        <div class="basis-7/12 md:pe-8 order-last md:order-first">
-          <object
-            :data="pdfUrl"
-            type="application/pdf"
-            class="w-full h-[750px] mt-6 md:mt-0"
-          >
-            <p class="p-4 text-center">
-              Browser Anda tidak mendukung tampilan PDF.
-              <a :href="pdfUrl" target="_blank" class="text-primary">Klik di sini</a> untuk membuka PDF.
-            </p>
-          </object>
-        </div>
-        
-        <!-- Details (Right Side) -->
-        <div class="basis-5/12 flex flex-col gap-4">
-          <!-- Detail items -->
-          <div class="flex flex-col gap-2">
-            <div>
-              <h5 class="body1-bold">Judul Tugas Akhir</h5>
-              <p class="body1 text-primary">{{ tugasAkhirDetails.judul }}</p>
-            </div>
-            
-            <div>
-              <h5 class="body1-bold">Kategori</h5>
-              <p class="body1 text-primary">{{ tugasAkhirDetails.kategori }}</p>
-            </div>
-            
-            <div>
-              <h5 class="body1-bold">Dosen Pembimbing</h5>
-              <p class="body1 text-primary">{{ tugasAkhirDetails.dosenPembimbing }}</p>
-            </div>
-            
-            <div>
-              <h5 class="body1-bold">Tahun Ajaran</h5>
-              <p class="body1 text-secondary">{{ tugasAkhirDetails.tahunAjaran }}</p>
-            </div>
-          </div>
-          
-          <!-- Action Buttons -->
-          <div class="flex self-end gap-4 items-center">
-            <Tooltip v-if="!dinilai" text="Menunggu Dinilai" size="md" position="left">
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke-width="2" 
-                stroke="currentColor" 
-                class="w-6 h-6"
-              >
-                <path 
-                  stroke-linecap="round" 
-                  stroke-linejoin="round" 
-                  d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" 
-                />
-              </svg>
-            </Tooltip>
-            
-            <Button
-              variant="success"
-              size="lg"
-              class="w-fit sm:flex hidden"
-              :class="buttonClasses"
-              :disabled="!dinilai"
-              @click="openNilaiModal"
-            >
-              Lihat Nilai
-            </Button>
 
-            <Button
-              variant="success"
-              size="md"
-              class="w-fit sm:hidden"
-              :class="buttonClasses"
-              :disabled="!dinilai"
-              @click="openNilaiModal"
-            >
-              Lihat Nilai
-            </Button>
+  <div v-else-if="errorTugasAkhir || errorNilaiUjianTA || errorJadwalUjianTA" class="p-4">
+    <ErrorMsg :msg="errorTugasAkhir || errorNilaiUjianTA || errorJadwalUjianTA" />
+  </div>
+
+  <div v-else>
+    <Breadcrumb />
+
+    <!-- Jadwal Section -->
+    <div class="p-6 bg-white card-rounded lg:p-8">
+      <div class="mx-auto max-w-screen-2xl">
+        <JadwalUjian :examiners="daftarPenguji" :jadwal="jadwalUjianTA" />
+      </div>
+    </div>
+
+    <!-- Tugas Akhir Details Section -->
+    <div class="p-6 mt-6 bg-white card-rounded lg:p-8">
+      <div class="mx-auto max-w-screen-2xl">
+        <div class="flex flex-col md:flex-row">
+          <!-- PDF Preview (Left Side) -->
+          <div class="order-last basis-7/12 md:pe-8 md:order-first">
+            <object :data="fileNaskahTA" type="application/pdf" class="w-full h-[750px] mt-6 md:mt-0">
+              <p class="p-4 text-center">
+                Browser Anda tidak mendukung tampilan PDF.
+                <a :href="fileNaskahTA" target="_blank" class="text-primary">Klik di sini</a> untuk membuka PDF.
+              </p>
+            </object>
+          </div>
+
+          <!-- Details (Right Side) -->
+          <div class="flex flex-col gap-4 basis-5/12">
+            <!-- Detail items -->
+            <div class="flex flex-col gap-2">
+              <div>
+                <h5 class="body1-bold">Judul Tugas Akhir</h5>
+                <p class="body1 text-primary">{{ judulTugasAkhir }}</p>
+              </div>
+
+              <div>
+                <h5 class="body1-bold">Kategori</h5>
+                <p class="body1 text-primary">{{ kategoriTA }}</p>
+              </div>
+
+              <div>
+                <h5 class="body1-bold">Dosen Pembimbing</h5>
+                <p class="body1 text-primary">{{ dosenPembimbing }}</p>
+              </div>
+
+              <div>
+                <h5 class="body1-bold">Tahun Ajaran</h5>
+                <p class="body1 text-secondary">{{ tahunAjaranTA }}</p>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center self-end gap-4">
+              <Tooltip v-if="!dinilai" text="Menunggu Dinilai" size="md" position="left">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                  stroke="currentColor" class="w-6 h-6">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
+                </svg>
+              </Tooltip>
+
+              <Button variant="success" size="lg" class="hidden w-fit sm:flex" :class="buttonClasses"
+                :disabled="!dinilai" @click="openNilaiModal">
+                Lihat Nilai
+              </Button>
+
+              <Button variant="success" size="md" class="w-fit sm:hidden" :class="buttonClasses" :disabled="!dinilai"
+                @click="openNilaiModal">
+                Lihat Nilai
+              </Button>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Modal Nilai -->
+    <DefaultModal v-if="showNilaiModal" @close="closeNilaiModal" headText="Nilai Ujian Tugas Akhir"
+      :bodyText="`${username} | ${nim} | ${judulTugasAkhir}`">
+      <div class="flex flex-col gap-4 mt-4">
+        <h5 class="body1-bold text-primary">Status Kelulusan</h5>
+
+        <h5 class="body1-bold text-primary">Nilai Ujian</h5>
+        <InputText id="kualitas_tata_laporan" label="Kualitas Tata Laporan (15%)" :value="kualitas_tata_laporan"
+          disabled />
+        <InputText id="kemampuan_teknis" label="Kemampuan Teknis (35%)" :value="kemampuan_teknis" disabled />
+        <InputText id="kualitas_produk" label="Kualitas Produk yang Dihasilkan(25%)" :value="kualitas_produk"
+          disabled />
+        <InputText id="presentasi" label="Presentasi dan Question Handling(25%)" :value="presentasi" disabled />
+        <h5 class="body1-bold text-primary">Nilai Akhir Ujian</h5>
+        <InputText id="rerata_ujian" label="Nilai Rata-rata" :value="rerata_ujian" disabled />
+      </div>
+    </DefaultModal>
   </div>
 
-  <!-- Modal Nilai -->
-  <DefaultModal
-    v-if="showNilaiModal"
-    @close="closeNilaiModal"
-    headText="Nilai Ujian Tugas Akhir"
-    bodyText="Nama Mahasiswa | V3423999 | Judul Tugas Akhir"
-  >
-    <div class="flex flex-col gap-4 mt-4">
-      <InputText
-        id="nilai-ujian-ta"
-        label="Nilai Ujian Tugas Akhir"
-        :modelValue="tugasAkhirDetails.nilai"
-        disabled
-      />
-      
-      <InputTextarea
-        id="catatan-ujian-ta"
-        label="Catatan"
-        :modelValue="tugasAkhirDetails.catatan"
-        disabled
-      />
-    </div>
-  </DefaultModal>
 </template>
