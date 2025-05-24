@@ -95,12 +95,12 @@
           <div class="flex items-center">
             <span class="hidden mr-2 text-sm font-medium sm:inline">{{
               user.name
-              }}</span>
+            }}</span>
             <button id="user-button" @click="toggleUser"
               class="flex items-center justify-center w-8 h-8 duration-150 bg-gray-200 rounded-full active:scale-90">
               <span class="text-sm font-medium text-gray-600">{{
                 user.name.charAt(0)
-                }}</span>
+              }}</span>
             </button>
           </div>
         </div>
@@ -155,7 +155,7 @@
 
       <!-- Dashboard Content -->
       <main v-bind:class="{ 'lg:ml-64': showNavbar, 'lg:ml-20': !showNavbar }"
-        class="p-4 mt-16 ml-0 duration-200 bg-gray-100 sm:p-8">
+        class="p-4 mt-16 ml-0 duration-200 bg-gray-100 sm:p-6">
         <router-view />
       </main>
     </div>

@@ -19,10 +19,7 @@ import {
   useDashboard
 } from "@/services/TugasAkhir/Mhs/Dashboard.js";
 
-const { loading, error, fetchData } = useDashboard();
-// Student progress state
-// const loading = ref(false);
-// const error = ref(null);
+const { loading, error } = useDashboard();
 
 // statusCard titles
 const cardTitles = {

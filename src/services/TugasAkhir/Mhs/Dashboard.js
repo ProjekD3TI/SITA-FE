@@ -1,19 +1,20 @@
-import { ref, watch, computed,onMounted,onUnmounted } from "vue";
+import { ref, watch, computed, onMounted, onUnmounted } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 import VueCookies from "vue-cookies";
 
 // --- STATE GLOBAL ---
-export const loading = ref(false);
-export const error = ref(null);
-export const dataDashboard = ref(null);
 const router = useRouter();
 const toast = useToast();
+const dataDashboard = ref(null);
+
 
 // --- API SIMULASI ---
 export function useDashboard() {
     let abortController = null;
+    const loading = ref(false);
+    const error = ref(null);
     const fetchData = async () => {
         loading.value = true;
         try {

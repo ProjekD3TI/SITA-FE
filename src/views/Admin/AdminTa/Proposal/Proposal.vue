@@ -73,7 +73,7 @@ const proposalMhs = ref([
       {
         naskah_proposal: "naskah-proposal-ta.pdf",
         naskah_proposal_url: filePDF,
-        naskah_proposal_status_valid: 1, 
+        naskah_proposal_status_valid: 1,
         file_transkrip: "transkrip-nilai-mahasiswa.pdf",
         file_transkrip_url: filePDF,
         file_transkrip_status_valid: 1,
@@ -92,7 +92,7 @@ const proposalMhs = ref([
       {
         naskah_proposal: "naskah-proposal-ta.pdf",
         naskah_proposal_url: filePDF,
-        naskah_proposal_status_valid: 0, 
+        naskah_proposal_status_valid: 0,
         file_transkrip: "transkrip-nilai-mahasiswa.pdf",
         file_transkrip_url: filePDF,
         file_transkrip_status_valid: 0,
@@ -111,7 +111,7 @@ const proposalMhs = ref([
       {
         naskah_proposal: "naskah-proposal-ta.pdf",
         naskah_proposal_url: filePDF,
-        naskah_proposal_status_valid: 1, 
+        naskah_proposal_status_valid: 1,
         file_transkrip: "transkrip-nilai-mahasiswa.pdf",
         file_transkrip_url: filePDF,
         file_transkrip_status_valid: 2,
@@ -250,16 +250,16 @@ const handleRowClickPengajuan = (item) => {
     // Siapkan data file dan status validasi
     fileNaskahProposal.value = item.berkas[0]
       ? {
-          name: item.berkas[0].naskah_proposal,
-          url: item.berkas[0].naskah_proposal_url
-        }
+        name: item.berkas[0].naskah_proposal,
+        url: item.berkas[0].naskah_proposal_url
+      }
       : null;
 
     fileTranskrip.value = item.berkas[0]
       ? {
-          name: item.berkas[0].file_transkrip,
-          url: item.berkas[0].file_transkrip_url
-        }
+        name: item.berkas[0].file_transkrip,
+        url: item.berkas[0].file_transkrip_url
+      }
       : null;
     tempValidasi.value = {
       naskah_proposal_status_valid: item.berkas[0]?.naskah_proposal_status_valid ?? null,
@@ -309,104 +309,61 @@ const modalTimerBodyText = computed(() => {
   <router-view v-else-if="$route.path.includes('detail-proposal')"></router-view>
   <div v-else>
     <Breadcrumb />
-    <TabDiv
-      :tabs="tabs"
-      :use-named-slots="true"
-      @tab-changed="handleTabChange"
-    >
+    <TabDiv :tabs="tabs" :use-named-slots="true" @tab-changed="handleTabChange">
       <template #1>
-        <div class="flex gap-2 lg:gap-4 justify-between items-center mb-4">
-          <ModalFilter
-            title="Status"
-            :items="statuses"
-            filterType="status"
-            @apply="handleFilterPengajuan"
-            triggerText="Status"
-            :preselectedValues="selectedStatusesPengajuan"
-          />
-          <SearchBar
-            v-model="searchQueryPengajuan"
-          />
-          <Slider :modelValue="statusForm" @update:modelValue="handleSliderChange"/>
+        <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
+          <ModalFilter title="Status" :items="statuses" filterType="status" @apply="handleFilterPengajuan"
+            triggerText="Status" :preselectedValues="selectedStatusesPengajuan" />
+          <SearchBar v-model="searchQueryPengajuan" />
+          <Slider :modelValue="statusForm" @update:modelValue="handleSliderChange" />
         </div>
-        <Table
-          :headers="['NIM', 'Nama','Judul Proposal Tugas Akhir', 'Status']"
-          :items="filteredProposalPengajuan"
-          @rowClick="handleRowClickPengajuan"
-        >
+        <Table :headers="['NIM', 'Nama', 'Judul Proposal Tugas Akhir', 'Status']" :items="filteredProposalPengajuan"
+          @rowClick="handleRowClickPengajuan">
           <template #row="{ item }">
-            <td class="sm:py-3 py-3 sm:px-6 px-3 rounded-l-lg border-r border-white">
+            <td class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6">
               {{ item.nim }}
             </td>
-            <td class="sm:py-3 py-3 sm:px-6 px-3 border-r border-white">
+            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               <div class="flex items-center gap-2 ">
-                <img
-                  v-if="item.img"
-                  :src="item.img"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                />
+                <img v-if="item.img" :src="item.img" alt="Profile Image" class="w-8 h-8 rounded-full" />
                 {{ item.nama }}
               </div>
             </td>
-            <td class="sm:py-3 py-3 sm:px-6 px-3 border-r border-white">
+            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               {{ item.judul_proposal_ta }}
             </td>
-            <td class="sm:py-3 py-3 sm:px-6 px-3 rounded-r-lg border-r border-white">
-              <StatusLabel
-                class="w-fit hidden lg:block"
-                :status="getStatusClass(item.status)"
-                size="md"
-                :label="getStatusLabel(item.status)"
-              />
-              <StatusLabel
-                class="w-fit lg:hidden block"
-                :status="getStatusClass(item.status)"
-                size="sm"
-                :label="getStatusLabel(item.status)"
-              />
+            <td class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6">
+              <StatusLabel class="hidden w-fit lg:block" :status="getStatusClass(item.status)" size="md"
+                :label="getStatusLabel(item.status)" />
+              <StatusLabel class="block w-fit lg:hidden" :status="getStatusClass(item.status)" size="sm"
+                :label="getStatusLabel(item.status)" />
             </td>
           </template>
         </Table>
       </template>
       <template #2>
-        <div class="flex gap-2 lg:gap-4 justify-between items-center mb-4">
-          <ModalFilter
-            title="Status"
-            :items="statuses"
-            filterType="status"
-            @apply="handleFilterSeminar"
-            triggerText="Status"
-            :preselectedValues="selectedStatusesSeminar"
-          />
-          <SearchBar
-            v-model="searchQuerySeminar"
-          />
+        <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
+          <ModalFilter title="Status" :items="statuses" filterType="status" @apply="handleFilterSeminar"
+            triggerText="Status" :preselectedValues="selectedStatusesSeminar" />
+          <SearchBar v-model="searchQuerySeminar" />
         </div>
-        <Table
-          :headers="['NIM', 'Nama','Judul Proposal Tugas Akhir', 'Nilai']"
-          :items="filteredProposalSeminar"
-          @rowClick="handleRowClickSeminar"
-        >
+        <Table :headers="['NIM', 'Nama', 'Judul Proposal Tugas Akhir', 'Nilai']" :items="filteredProposalSeminar"
+          @rowClick="handleRowClickSeminar">
           <template #row="{ item }">
-            <td class="sm:py-3 py-3 sm:px-6 px-3 rounded-l-lg border-r border-white">
+            <td class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6">
               {{ item.nim }}
             </td>
-            <td class="sm:py-3 py-3 sm:px-6 px-3 border-r border-white">
+            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               <div class="flex items-center gap-2">
-                <img
-                  v-if="item.img"
-                  :src="item.img"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                />
+                <img v-if="item.img" :src="item.img" alt="Profile Image" class="w-8 h-8 rounded-full" />
                 {{ item.nama }}
               </div>
             </td>
-            <td class="sm:py-3 py-3 sm:px-6 px-3 border-r border-white">
+            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               {{ item.judul_proposal_ta }}
             </td>
-            <td class="sm:py-3 py-3 sm:px-6 px-3 border-r border-white rounded-r-lg" :class="item.nilai == null ? 'text-secondary' : ''">
+            <td class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
+              :class="item.nilai == null ? 'text-secondary' : ''">
               {{ item.nilai || 'Belum Dinilai' }}
             </td>
           </template>
@@ -414,45 +371,18 @@ const modalTimerBodyText = computed(() => {
       </template>
     </TabDiv>
   </div>
-  <DefaultModal
-    v-if="modalRef"
-    @close="modalRef = false"
-    :headText="modalHeadText"
-    :bodyText="modalBodyText"
-  >
-  <div class="flex flex-col gap-4 mt-4">
-      <ValidationFile
-        id="naskah-ta"
-        label="Naskah Tugas Akhir"
-        :fileFromDatabase="fileNaskahProposal"
+  <DefaultModal v-if="modalRef" @close="modalRef = false" :headText="modalHeadText" :bodyText="modalBodyText">
+    <div class="flex flex-col gap-4 mt-4">
+      <ValidationFile id="naskah-ta" label="Naskah Tugas Akhir" :fileFromDatabase="fileNaskahProposal"
         :statusValid="tempValidasi.naskah_proposal_status_valid"
-        @update:statusValid="tempValidasi.naskah_proposal_status_valid = $event"
-      />
-      <ValidationFile
-        id="transkrip-nilai-mahasiswa"
-        label="Transkrip Nilai Mahasiswa"
-        :fileFromDatabase="fileTranskrip"
+        @update:statusValid="tempValidasi.naskah_proposal_status_valid = $event" />
+      <ValidationFile id="transkrip-nilai-mahasiswa" label="Transkrip Nilai Mahasiswa" :fileFromDatabase="fileTranskrip"
         :statusValid="tempValidasi.file_transkrip_status_valid"
-        @update:statusValid="tempValidasi.file_transkrip_status_valid = $event"
-      />
-      <InputTextarea
-        id="catatan"
-        label="Catatan"
-        placeholder="Masukkan catatan"
-        v-model="catatan"     
-      />
-  </div>
+        @update:statusValid="tempValidasi.file_transkrip_status_valid = $event" />
+      <InputTextarea id="catatan" label="Catatan" placeholder="Masukkan catatan" v-model="catatan" />
+    </div>
   </DefaultModal>
-  <ModalTimer
-    v-if="modalTimerVisible"
-    @close="handleModalCancel"
-    :headText="modalTimerHeadText"
-    :bodyText="modalTimerBodyText"
-    submitText="Yakin"
-    :showCancel="false"
-    :showSubmit="true"
-    :enableTimer="true"
-    :timerDuration="5"
-    @submit="handleModalSubmit"
-  />
+  <ModalTimer v-if="modalTimerVisible" @close="handleModalCancel" :headText="modalTimerHeadText"
+    :bodyText="modalTimerBodyText" submitText="Yakin" :showCancel="false" :showSubmit="true" :enableTimer="true"
+    :timerDuration="5" @submit="handleModalSubmit" />
 </template>
