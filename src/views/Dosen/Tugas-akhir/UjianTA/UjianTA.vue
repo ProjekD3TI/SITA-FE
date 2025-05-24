@@ -5,20 +5,15 @@ import { RouterLink, useRouter } from "vue-router";
 import Table from "@/components/Tugas-akhir/Table.vue";
 import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
 import ModalFilter from "@/components/Tugas-akhir/Modals/ModalFilter.vue";
+import Button from "@/components/Tugas-akhir/Button.vue";
 
 const searchQuery = ref("");
-// Add filter categories and selected filters
-const filterCategories = ref([
-  "Internet of Things",
-  "Mobile Development",
-  "Cyber Security",
-  "Big Data",
-  "Artificial Intelligence",
-  "Web Development",
-  "Multimedia",
-  "Blockchain",
-  "Geographic Information System",
-  "Network Security",
+// Change filter categories to filter sessions
+const filterSessions = ref([
+  "09:00 - 10:00",
+  "10:00 - 11:00",
+  "11:00 - 12:00",
+  "13:00 - 14:00",
 ]);
 const selectedFilters = ref([]);
 
@@ -28,7 +23,6 @@ const mentorships = ref([
     name: "Andrew Parker",
     avatar: "/api/placeholder/40/40",
     title: "Implementasi IoT untuk Smart Home",
-    category: "Internet of Things",
     date: "15 Mei 2024",
     session: "09:00 - 10:00",
     room: "Lab. Jaringan",
@@ -38,7 +32,6 @@ const mentorships = ref([
     name: "Sarah Johnson",
     avatar: "/api/placeholder/40/40",
     title: "Pengembangan Aplikasi Mobile",
-    category: "Mobile Development",
     date: "16 Mei 2024",
     session: "10:00 - 11:00",
     room: "Lab. Mobile",
@@ -48,7 +41,6 @@ const mentorships = ref([
     name: "Michael Brown",
     avatar: "/api/placeholder/40/40",
     title: "Sistem Keamanan Berbasis IoT",
-    category: "Cyber Security",
     date: "17 Mei 2024",
     session: "11:00 - 12:00",
     room: "Lab. Keamanan",
@@ -58,7 +50,6 @@ const mentorships = ref([
     name: "Jessica Smith",
     avatar: "/api/placeholder/40/40",
     title: "Analisis Data Besar untuk Kesehatan",
-    category: "Big Data",
     date: "18 Mei 2024",
     session: "13:00 - 14:00",
     room: "Lab. Data Besar",
@@ -68,7 +59,6 @@ const mentorships = ref([
     name: "David Lee",
     avatar: "/api/placeholder/40/40",
     title: "Optimasi Algoritma Machine Learning",
-    category: "Artificial Intelligence",
     date: "19 Mei 2024",
     session: "09:00 - 10:00",
     room: "Lab. AI",
@@ -78,7 +68,6 @@ const mentorships = ref([
     name: "Emily Clark",
     avatar: "/api/placeholder/40/40",
     title: "Aplikasi Web untuk E-Commerce",
-    category: "Web Development",
     date: "20 Mei 2024",
     session: "10:00 - 11:00",
     room: "Lab. Web",
@@ -88,7 +77,6 @@ const mentorships = ref([
     name: "Daniel Kim",
     avatar: "/api/placeholder/40/40",
     title: "Pengolahan Citra Digital",
-    category: "Multimedia",
     date: "21 Mei 2024",
     session: "11:00 - 12:00",
     room: "Lab. Multimedia",
@@ -98,7 +86,6 @@ const mentorships = ref([
     name: "Sophia Turner",
     avatar: "/api/placeholder/40/40",
     title: "Blockchain untuk Keamanan Data",
-    category: "Blockchain",
     date: "22 Mei 2024",
     session: "13:00 - 14:00",
     room: "Lab. Blockchain",
@@ -108,7 +95,6 @@ const mentorships = ref([
     name: "William Harris",
     avatar: "/api/placeholder/40/40",
     title: "Sistem Pakar Diagnosa Penyakit",
-    category: "Artificial Intelligence",
     date: "23 Mei 2024",
     session: "09:00 - 10:00",
     room: "Lab. AI",
@@ -118,7 +104,6 @@ const mentorships = ref([
     name: "Olivia Martinez",
     avatar: "/api/placeholder/40/40",
     title: "Aplikasi Chatbot untuk Layanan Publik",
-    category: "Web Development",
     date: "24 Mei 2024",
     session: "10:00 - 11:00",
     room: "Lab. Web",
@@ -128,7 +113,6 @@ const mentorships = ref([
     name: "James Wilson",
     avatar: "/api/placeholder/40/40",
     title: "Pengembangan Game Edukasi",
-    category: "Multimedia",
     date: "25 Mei 2024",
     session: "11:00 - 12:00",
     room: "Lab. Multimedia",
@@ -138,7 +122,6 @@ const mentorships = ref([
     name: "Mia Anderson",
     avatar: "/api/placeholder/40/40",
     title: "Sistem Informasi Geografis",
-    category: "Geographic Information System",
     date: "26 Mei 2024",
     session: "13:00 - 14:00",
     room: "Lab. GIS",
@@ -148,7 +131,6 @@ const mentorships = ref([
     name: "Benjamin Thomas",
     avatar: "/api/placeholder/40/40",
     title: "Analisis Sentimen Media Sosial",
-    category: "Big Data",
     date: "27 Mei 2024",
     session: "09:00 - 10:00",
     room: "Lab. Data Besar",
@@ -158,7 +140,6 @@ const mentorships = ref([
     name: "Charlotte White",
     avatar: "/api/placeholder/40/40",
     title: "Aplikasi Monitoring Kesehatan",
-    category: "Mobile Development",
     date: "28 Mei 2024",
     session: "10:00 - 11:00",
     room: "Lab. Mobile",
@@ -168,7 +149,6 @@ const mentorships = ref([
     name: "Lucas Martin",
     avatar: "/api/placeholder/40/40",
     title: "Sistem Rekomendasi Film",
-    category: "Artificial Intelligence",
     date: "29 Mei 2024",
     session: "11:00 - 12:00",
     room: "Lab. AI",
@@ -178,7 +158,6 @@ const mentorships = ref([
     name: "Amelia Walker",
     avatar: "/api/placeholder/40/40",
     title: "Pengembangan Sistem E-Voting",
-    category: "Cyber Security",
     date: "30 Mei 2024",
     session: "13:00 - 14:00",
     room: "Lab. Keamanan",
@@ -188,7 +167,6 @@ const mentorships = ref([
     name: "Henry Young",
     avatar: "/api/placeholder/40/40",
     title: "Aplikasi Manajemen Inventaris",
-    category: "Web Development",
     date: "31 Mei 2024",
     session: "09:00 - 10:00",
     room: "Lab. Web",
@@ -198,7 +176,6 @@ const mentorships = ref([
     name: "Ella King",
     avatar: "/api/placeholder/40/40",
     title: "Sistem Deteksi Intrusi Jaringan",
-    category: "Network Security",
     date: "1 Juni 2024",
     session: "10:00 - 11:00",
     room: "Lab. Jaringan",
@@ -208,7 +185,6 @@ const mentorships = ref([
     name: "Alexander Scott",
     avatar: "/api/placeholder/40/40",
     title: "Pengembangan Aplikasi AR",
-    category: "Multimedia",
     date: "2 Juni 2024",
     session: "11:00 - 12:00",
     room: "Lab. Multimedia",
@@ -218,7 +194,6 @@ const mentorships = ref([
     name: "Grace Green",
     avatar: "/api/placeholder/40/40",
     title: "Sistem Penjadwalan Otomatis",
-    category: "Big Data",
     date: "3 Juni 2024",
     session: "13:00 - 14:00",
     room: "Lab. Data Besar",
@@ -232,6 +207,7 @@ const tableHeaders = [
   "Tanggal",
   "Sesi",
   "Ruang",
+  "Aksi",
 ];
 
 const items = computed(() => {
@@ -241,7 +217,7 @@ const items = computed(() => {
 // Handler for filter application
 const applyFilter = (filterData) => {
   selectedFilters.value = filterData.values;
-  // You could add additional filtering logic here if needed
+  console.log("Filters applied:", selectedFilters.value);
 };
 
 const filteredItems = computed(() => {
@@ -254,17 +230,18 @@ const filteredItems = computed(() => {
       return (
         item.name.toLowerCase().includes(query) ||
         item.nim.toLowerCase().includes(query) ||
-        item.category.toLowerCase().includes(query) ||
-        (item.title && item.title.toLowerCase().includes(query)) ||
-        (item.date && item.date.toLowerCase().includes(query))
+        item.title.toLowerCase().includes(query) ||
+        item.date.toLowerCase().includes(query) ||
+        item.session.toLowerCase().includes(query) ||
+        item.room.toLowerCase().includes(query)
       );
     });
   }
 
-  // Apply category filter if any selected
+  // Apply session filter if any selected
   if (selectedFilters.value.length > 0) {
     filtered = filtered.filter((item) =>
-      selectedFilters.value.includes(item.category)
+      selectedFilters.value.includes(item.session)
     );
   }
 
@@ -272,47 +249,26 @@ const filteredItems = computed(() => {
 });
 
 const router = useRouter();
-
-const handleRowClick = (item) => {
-  console.log("Navigating to detail for:", item);
-
-  // Gunakan path untuk navigasi lebih aman
-  router
-    .push({
-      path: "/dosen/tugas-akhir/ujian-ta/detail-ujian-ta",
-      query: {
-        nim: item.nim || "",
-        name: item.name || "",
-        category: item.category || "",
-        title: item.title || "Judul Tidak Tersedia",
-        date: item.date || "",
-        session: item.session || "",
-        room: item.room || "",
-        _t: Date.now(),
-      },
-    })
-    .catch((err) => {
-      console.error("Navigation error:", err);
-    });
-};
 </script>
 <template>
   <Breadcrumb :items="breadcrumbItems" />
   <div
     v-if="!$route.path.includes('detail-ujian-ta')"
-    class="bg-white rounded-lg shadow-md p-2 sm:p-4"
+    class="bg-white rounded-lg shadow-md p-8"
   >
     <!-- Search and Filter - Stack on mobile -->
     <div class="flex flex-row mb-2 gap-2">
       <div class="w-auto sm:w-auto sm:mr-2">
         <ModalFilter
-          title="Kategori"
-          :items="filterCategories"
+          title="Sesi"
+          :items="filterSessions"
           :preselectedValues="selectedFilters"
-          triggerText="Kategori"
+          triggerText="Sesi"
           @apply="applyFilter"
           triggerVariant="outlined-black"
           modalPosition="bottom"
+          filterType="session"
+          hint="*Pilih sesi ujian"
         />
       </div>
       <div class="flex-grow w-full">
@@ -325,11 +281,7 @@ const handleRowClick = (item) => {
     </div>
 
     <!-- Table view for all screen sizes -->
-    <Table
-      :headers="tableHeaders"
-      :items="filteredItems"
-      @rowClick="handleRowClick"
-    >
+    <Table :headers="tableHeaders" :items="filteredItems">
       <template #row="{ item }">
         <td class="px-6 py-4">
           <div class="flex items-center gap-2">
@@ -352,6 +304,24 @@ const handleRowClick = (item) => {
         </td>
         <td class="px-6 py-4">
           {{ item.room }}
+        </td>
+        <td class="px-6 py-4">
+          <router-link
+            :to="{
+              path: '/dosen/tugas-akhir/ujian-ta/detail-ujian-ta',
+              query: {
+                nim: item.nim || '',
+                name: item.name || '',
+                title: item.title || 'Judul Tidak Tersedia',
+                date: item.date || '',
+                session: item.session || '',
+                room: item.room || '',
+                _t: Date.now(),
+              },
+            }"
+          >
+            <Button variant="primary" size="md">Detail</Button>
+          </router-link>
         </td>
       </template>
     </Table>

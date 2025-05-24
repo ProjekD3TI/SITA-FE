@@ -7,9 +7,31 @@ import Table from "@/components/Tugas-akhir/Table.vue";
 import ModalResponBimbingan from "@/components/Tugas-akhir/Modals/ModalResponBimbingan.vue";
 import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
 import ModalFilter from "@/components/Tugas-akhir/Modals/ModalFilter.vue";
+import Button from "@/components/Tugas-akhir/Button.vue";
 
 const activeTab = ref("permintaan");
 const searchQuery = ref("");
+
+// Update filter categories to only 10 items
+const filterCategories = ref([
+  "Internet of Things",
+  "Mobile Development",
+  "Cyber Security",
+  "Big Data",
+  "Artificial Intelligence",
+  "Web Development",
+  "Multimedia",
+  "Blockchain",
+  "Geographic Information System",
+  "Network Security",
+]);
+const selectedFilters = ref([]);
+
+// Handle filter application
+const applyFilter = (filterData) => {
+  selectedFilters.value = filterData.values;
+  console.log("Filters applied:", selectedFilters.value);
+};
 
 const modalRef = ref(null);
 const selectedItem = ref(null);
@@ -21,21 +43,21 @@ const requests = ref([
     nim: "V3420101",
     name: "Christine Brooks",
     avatar: "/api/placeholder/40/40",
-    category: "Internet Of Things",
+    category: "Internet of Things",
     date: "04 Sep 2023",
   },
   {
     nim: "V3420102",
     name: "David Johnson",
     avatar: "/api/placeholder/40/40",
-    category: "Machine Learning",
+    category: "Artificial Intelligence",
     date: "15 Oct 2023",
   },
   {
     nim: "V3420103",
     name: "Emily Wilson",
     avatar: "/api/placeholder/40/40",
-    category: "Data Science",
+    category: "Big Data",
     date: "22 Nov 2023",
   },
   {
@@ -49,7 +71,7 @@ const requests = ref([
     nim: "V3420105",
     name: "Sarah Thompson",
     avatar: "/api/placeholder/40/40",
-    category: "Cybersecurity",
+    category: "Cyber Security",
     date: "05 Jan 2024",
   },
   {
@@ -63,7 +85,7 @@ const requests = ref([
     nim: "V3420107",
     name: "Laura Martinez",
     avatar: "/api/placeholder/40/40",
-    category: "Cloud Computing",
+    category: "Network Security",
     date: "02 Feb 2024",
   },
   {
@@ -77,7 +99,7 @@ const requests = ref([
     nim: "V3420109",
     name: "Jennifer Davis",
     avatar: "/api/placeholder/40/40",
-    category: "Data Mining",
+    category: "Big Data",
     date: "07 Mar 2024",
   },
   {
@@ -98,21 +120,21 @@ const requests = ref([
     nim: "V3420112",
     name: "Thomas Clark",
     avatar: "/api/placeholder/40/40",
-    category: "Software Engineering",
+    category: "Blockchain",
     date: "27 Apr 2024",
   },
   {
     nim: "V3420113",
     name: "Olivia White",
     avatar: "/api/placeholder/40/40",
-    category: "Database Systems",
+    category: "Geographic Information System",
     date: "15 May 2024",
   },
   {
     nim: "V3420114",
     name: "Daniel Lewis",
     avatar: "/api/placeholder/40/40",
-    category: "Computer Vision",
+    category: "Multimedia",
     date: "01 Jun 2024",
   },
   {
@@ -126,35 +148,35 @@ const requests = ref([
     nim: "V3420116",
     name: "Brandon Taylor",
     avatar: "/api/placeholder/40/40",
-    category: "Human-Computer Interaction",
+    category: "Web Development",
     date: "05 Jul 2024",
   },
   {
     nim: "V3420117",
     name: "Sophia Martin",
     avatar: "/api/placeholder/40/40",
-    category: "Natural Language Processing",
+    category: "Artificial Intelligence",
     date: "22 Jul 2024",
   },
   {
     nim: "V3420118",
     name: "Lucas Moore",
     avatar: "/api/placeholder/40/40",
-    category: "Embedded Systems",
+    category: "Internet of Things",
     date: "10 Aug 2024",
   },
   {
     nim: "V3420119",
     name: "Victoria Jackson",
     avatar: "/api/placeholder/40/40",
-    category: "Game Development",
+    category: "Multimedia",
     date: "28 Aug 2024",
   },
   {
     nim: "V3420120",
     name: "Ryan Adams",
     avatar: "/api/placeholder/40/40",
-    category: "Quantum Computing",
+    category: "Mobile Development",
     date: "15 Sep 2024",
   },
 ]);
@@ -165,21 +187,21 @@ const mentorships = ref([
     name: "Andrew Parker",
     avatar: "/api/placeholder/40/40",
     title: "Implementasi IoT untuk Smart Home",
-    category: "Internet Of Things",
+    category: "Internet of Things",
   },
   {
     nim: "V3420002",
     name: "Michelle Williams",
     avatar: "/api/placeholder/40/40",
-    title: "Sistem Prediksi Cuaca dengan Machine Learning",
-    category: "Machine Learning",
+    title: "Sistem Prediksi menggunakan AI",
+    category: "Artificial Intelligence",
   },
   {
     nim: "V3420003",
     name: "Christopher Allen",
     avatar: "/api/placeholder/40/40",
     title: "Analisis Sentimen pada Data Media Sosial",
-    category: "Data Science",
+    category: "Big Data",
   },
   {
     nim: "V3420004",
@@ -193,7 +215,7 @@ const mentorships = ref([
     name: "Jonathan Hill",
     avatar: "/api/placeholder/40/40",
     title: "Sistem Deteksi Intrusi Berbasis AI",
-    category: "Cybersecurity",
+    category: "Cyber Security",
   },
   {
     nim: "V3420006",
@@ -206,8 +228,8 @@ const mentorships = ref([
     nim: "V3420007",
     name: "Brian Green",
     avatar: "/api/placeholder/40/40",
-    title: "Arsitektur Microservices pada Cloud",
-    category: "Cloud Computing",
+    title: "Arsitektur Jaringan Aman",
+    category: "Network Security",
   },
   {
     nim: "V3420008",
@@ -221,7 +243,7 @@ const mentorships = ref([
     name: "Steven Baker",
     avatar: "/api/placeholder/40/40",
     title: "Clustering Data Pelanggan E-commerce",
-    category: "Data Mining",
+    category: "Big Data",
   },
   {
     nim: "V3420010",
@@ -241,22 +263,22 @@ const mentorships = ref([
     nim: "V3420012",
     name: "Catherine Phillips",
     avatar: "/api/placeholder/40/40",
-    title: "Penerapan Metode Agile pada Proyek Skala Besar",
-    category: "Software Engineering",
+    title: "Sistem Transaksi Berbasis Blockchain",
+    category: "Blockchain",
   },
   {
     nim: "V3420013",
     name: "Peter Henderson",
     avatar: "/api/placeholder/40/40",
-    title: "Optimasi Query NoSQL Database",
-    category: "Database Systems",
+    title: "Sistem Informasi Geografis untuk Pemetaan Bencana",
+    category: "Geographic Information System",
   },
   {
     nim: "V3420014",
     name: "Nancy Ross",
     avatar: "/api/placeholder/40/40",
     title: "Sistem Pengenalan Objek pada Video Streaming",
-    category: "Computer Vision",
+    category: "Multimedia",
   },
   {
     nim: "V3420015",
@@ -269,36 +291,36 @@ const mentorships = ref([
     nim: "V3420016",
     name: "Diana Watson",
     avatar: "/api/placeholder/40/40",
-    title: "Desain Antarmuka Adaptif untuk Aksesibilitas",
-    category: "Human-Computer Interaction",
+    title: "Aplikasi Web Interaktif untuk E-Learning",
+    category: "Web Development",
   },
   {
     nim: "V3420017",
     name: "Timothy Butler",
     avatar: "/api/placeholder/40/40",
-    title: "Sistem Terjemahan Bahasa Daerah Otomatis",
-    category: "Natural Language Processing",
+    title: "Sistem Terjemahan Bahasa Otomatis",
+    category: "Artificial Intelligence",
   },
   {
     nim: "V3420018",
     name: "Rachel Morgan",
     avatar: "/api/placeholder/40/40",
     title: "Sistem Kendali Smart Factory",
-    category: "Embedded Systems",
+    category: "Internet of Things",
   },
   {
     nim: "V3420019",
     name: "Kyle Russell",
     avatar: "/api/placeholder/40/40",
     title: "Pengembangan Game Edukasi Interaktif",
-    category: "Game Development",
+    category: "Multimedia",
   },
   {
     nim: "V3420020",
     name: "Elizabeth Price",
     avatar: "/api/placeholder/40/40",
-    title: "Simulasi Algoritma Kuantum",
-    category: "Quantum Computing",
+    title: "Aplikasi Mobile Edukasi Anak",
+    category: "Mobile Development",
   },
 ]);
 
@@ -307,55 +329,39 @@ const items = computed(() => {
 });
 
 const filteredItems = computed(() => {
-  if (!searchQuery.value) return items.value;
+  let filtered = items.value;
 
-  const query = searchQuery.value.toLowerCase();
-  return items.value.filter((item) => {
-    return (
-      item.name.toLowerCase().includes(query) ||
-      item.nim.toLowerCase().includes(query) ||
-      item.category.toLowerCase().includes(query) ||
-      (item.title && item.title.toLowerCase().includes(query)) ||
-      (item.date && item.date.toLowerCase().includes(query))
+  // Apply text search filter
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    filtered = filtered.filter((item) => {
+      return (
+        item.name.toLowerCase().includes(query) ||
+        item.nim.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query) ||
+        (item.title && item.title.toLowerCase().includes(query)) ||
+        (item.date && item.date.toLowerCase().includes(query))
+      );
+    });
+  }
+
+  // Apply category filter if any selected
+  if (selectedFilters.value.length > 0) {
+    filtered = filtered.filter((item) =>
+      selectedFilters.value.includes(item.category)
     );
-  });
+  }
+
+  return filtered;
 });
 
 const router = useRouter();
 
-const handleRowClick = (item) => {
-  if (activeTab.value === "dibimbing") {
-    if (item.nim) {
-      console.log("Navigating to detail for:", item);
-
-      // Cek apakah rute tersedia
-      console.log(
-        "Available routes:",
-        router.getRoutes().map((route) => route.name)
-      );
-
-      // Gunakan path untuk navigasi lebih aman
-      router
-        .push({
-          path: "/dosen/tugas-akhir/bimbingan/detail-bimbingan",
-          query: {
-            nim: item.nim || "",
-            name: item.name || "",
-            category: item.category || "",
-            title: item.title || "Judul Tidak Tersedia",
-            _t: Date.now(),
-          },
-        })
-        .catch((err) => {
-          console.error("Navigation error:", err);
-        });
-    }
-  } else if (activeTab.value === "permintaan") {
-    // Show the modal for responding to the request
-    selectedItem.value = item;
-    modalContent.value = `Respon permintaan ${item.name} sebagai mahasiswa bimbingan anda.`;
-    modalRef.value.open();
-  }
+// New function to show response modal
+const showResponModal = (item) => {
+  selectedItem.value = item;
+  modalContent.value = `Respon permintaan ${item.name} sebagai mahasiswa bimbingan anda.`;
+  modalRef.value.open();
 };
 
 // Handle accept and reject actions from modal
@@ -399,19 +405,14 @@ const handleRejectRequest = () => {
         <div class="w-auto sm:w-auto sm:mr-2">
           <ModalFilter
             title="Kategori"
-            :items="[
-              'Internet Of Things',
-              'Machine Learning',
-              'Data Science',
-              'Web Development',
-              'Cybersecurity',
-              'Artificial Intelligence',
-            ]"
+            :items="filterCategories"
+            :preselectedValues="selectedFilters"
             filterType="category"
             triggerText="Kategori"
             triggerVariant="outlined-black"
             hint="*Pilih kategori tugas akhir"
-            @apply="(filter) => console.log('Filter applied:', filter)"
+            modalPosition="bottom"
+            @apply="applyFilter"
           />
         </div>
         <div class="flex-grow w-full">
@@ -429,11 +430,10 @@ const handleRejectRequest = () => {
         <Table
           :headers="
             activeTab === 'permintaan'
-              ? ['NIM', 'Nama', 'Kategori', 'Tanggal']
-              : ['NIM', 'Nama', 'Kategori', 'Judul']
+              ? ['NIM', 'Nama', 'Kategori', 'Tanggal', 'Aksi']
+              : ['NIM', 'Nama', 'Kategori', 'Judul', 'Aksi']
           "
           :items="filteredItems"
-          @rowClick="handleRowClick"
         >
           <template #row="{ item }">
             <td
@@ -454,14 +454,40 @@ const handleRejectRequest = () => {
             <td class="px-6 py-4">
               {{ item.category }}
             </td>
-            <td
-              v-if="activeTab === 'permintaan'"
-              class="px-6 py-4 rounded-r-lg"
-            >
+            <td v-if="activeTab === 'permintaan'" class="px-6 py-4">
               {{ item.date }}
             </td>
-            <td v-if="activeTab === 'dibimbing'" class="px-6 py-4 rounded-r-lg">
+            <td v-if="activeTab === 'dibimbing'" class="px-6 py-4">
               {{ item.title }}
+            </td>
+            <!-- Kolom Aksi -->
+            <td class="px-6 py-4 rounded-r-lg">
+              <!-- Button for permintaan tab -->
+              <Button
+                v-if="activeTab === 'permintaan'"
+                variant="secondary"
+                size="md"
+                @click="showResponModal(item)"
+              >
+                Respon
+              </Button>
+
+              <!-- Button for dibimbing tab -->
+              <router-link
+                v-if="activeTab === 'dibimbing'"
+                :to="{
+                  path: '/dosen/tugas-akhir/bimbingan/detail-bimbingan',
+                  query: {
+                    nim: item.nim || '',
+                    name: item.name || '',
+                    category: item.category || '',
+                    title: item.title || 'Judul Tidak Tersedia',
+                    _t: Date.now(),
+                  },
+                }"
+              >
+                <Button variant="primary" size="md"> Detail </Button>
+              </router-link>
             </td>
           </template>
         </Table>

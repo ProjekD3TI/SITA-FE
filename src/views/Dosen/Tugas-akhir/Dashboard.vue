@@ -239,9 +239,5 @@ const doughnutColors = ["#62B2FD", "#9BDFC4", "#F99BAB", "#FFB44F", "#9F97F7"];
         </table>
       </div>
     </div>
-
-    <div class="card-style lg:col-span-3">
-      <LineChart :chartValue="lineChartValue" />
-    </div>
   </div>
 </template>

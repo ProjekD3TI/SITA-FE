@@ -11,6 +11,8 @@ import ModalDetailBimbingan from "@/components/Tugas-akhir/Modals/ModalDetailBim
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
+import Loading from "@/components/Loading.vue";
+import ErrorMsg from "@/components/ErrorMsg.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -126,11 +128,6 @@ const highestChapter = computed(() => {
   return Math.max(...accChapters, 0);
 });
 
-// Handler untuk klik baris tabel (modal verifikasi bimbingan)
-const handleRowClick = (item) => {
-  console.log("Row clicked:", item);
-};
-
 // Fungsi untuk mengupdate data dari query parameters
 const updateStudentInfo = () => {
   const nim = route.query.nim;
@@ -237,14 +234,39 @@ const openNilaiModal = () => {
   console.log("Nilai modal opened");
 };
 
-const closeModal = () => {
+const closeNilaiModal = () => {
   console.log("Modal closed");
   nilaiModal.value = false;
   // Any cleanup logic here
 };
+
+// Handler for action buttons
+const handleActionClick = (item, action) => {
+  console.log(`Action ${action} clicked for item:`, item);
+
+  // Set data for modals
+  id.value = item.id;
+  tanggal.value = item.tanggal;
+  bab.value = item.bab;
+  catatan.value = item.catatan;
+  status.value = getStatusClass(item.status);
+  statusLabel.value = getStatusLabel(item.status);
+
+  // Open appropriate modal based on action
+  if (action === "verifikasi") {
+    verifikasiModal.value.open();
+  } else if (action === "detail") {
+    detailModal.value.open();
+  }
+
+  // Prevent event propagation to avoid triggering row click
+  event.stopPropagation();
+};
 </script>
 
 <template>
+  <Loading v-if="loading" />
+  <ErrorMsg v-else-if="error" :message="errorMessage" />
   <div v-if="!$route.path.includes('input-nilai-bimbingan')">
     <!-- Header: Info Dosen & Progress BAB -->
     <div class="card-rounded bg-white p-6 lg:p-8">
@@ -340,9 +362,8 @@ const closeModal = () => {
     <!-- Tabel Riwayat Bimbingan -->
     <div class="card-rounded bg-white p-4 lg:p-8 mt-4">
       <Table
-        :headers="['No', 'Tanggal', 'BAB', 'Catatan', 'Status']"
+        :headers="['No', 'Tanggal', 'BAB', 'Catatan', 'Status', 'Aksi']"
         :items="formattedBimbinganData"
-        @rowClick="handleRowClick"
       >
         <template #row="{ item }">
           <!-- Kolom No -->
@@ -380,7 +401,7 @@ const closeModal = () => {
           </td>
 
           <!-- Kolom Status -->
-          <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-r-lg">
+          <td class="sm:py-3 py-3 sm:px-4 px-1">
             <!-- Desktop Status -->
             <StatusLabel
               class="w-fit hidden lg:block mx-auto"
@@ -396,6 +417,31 @@ const closeModal = () => {
               size="sm"
               :label="getStatusLabel(item.status)"
             />
+          </td>
+
+          <!-- Kolom Aksi -->
+          <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-r-lg">
+            <!-- Button for Menunggu status -->
+            <Button
+              v-if="item.status === 'Menunggu'"
+              variant="secondary"
+              size="md"
+              @click.stop="handleActionClick(item, 'verifikasi')"
+              class="w-full sm:w-auto"
+            >
+              Verifikasi
+            </Button>
+
+            <!-- Button for Diterima or Ditolak status -->
+            <Button
+              v-else
+              variant="primary"
+              size="md"
+              @click.stop="handleActionClick(item, 'detail')"
+              class="w-full sm:w-auto"
+            >
+              Detail
+            </Button>
           </td>
         </template>
       </Table>
@@ -430,7 +476,7 @@ const closeModal = () => {
   <!-- Modal Lihat Nilai -->
   <DefaultModal
     v-if="nilaiModal"
-    @close="closeModal"
+    @close="closeNilaiModal"
     headText="Nilai Bimbingan"
     :bodyText="`${studentInfo.name} | ${studentInfo.nim} | ${studentInfo.title}`"
   >

@@ -1,11 +1,12 @@
 <script setup>
-import { ref, computed } from 'vue';
-import TabDiv from '@/components/Tugas-akhir/TabDiv.vue';
-import Modal from '@/components/Tugas-akhir/Modals/ModalRuang&sesi.vue'; 
-import SearchBar from '@/components/Tugas-akhir/Forms/SearchBar.vue';
-import Button from '@/components/Tugas-akhir/Button.vue';
-import ModalDeleteRuangSesi from '@/components/Tugas-akhir/Modals/ModalDeleteRuang&sesi.vue';
-import Breadcrumb from '@/components/Tugas-akhir/Breadcrumb.vue';
+import { ref, computed } from "vue";
+import TabDiv from "@/components/Tugas-akhir/TabDiv.vue";
+import Modal from "@/components/Tugas-akhir/Modals/ModalRuang&sesi.vue";
+import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
+import Button from "@/components/Tugas-akhir/Button.vue";
+import ModalDeleteRuangSesi from "@/components/Tugas-akhir/Modals/ModalDeleteRuang&sesi.vue";
+import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
+import Table from "@/components/Tugas-akhir/Table.vue";
 
 // Data tab
 const tabs = [
@@ -69,6 +70,12 @@ const isEditingSesi = ref(false);
 const isModalOpenSesi = ref(false);
 const isDeleteModalOpenSesi = ref(false);
 const sesiToDelete = ref(null);
+
+// Table headers for ruang
+const tableHeadersRuang = ["Nama Ruang", "Aksi"];
+
+// Table headers for sesi
+const tableHeadersSesi = ["Nama Sesi", "Waktu", "Aksi"];
 
 // Fungsi untuk ruang
 const openAddModalRuang = () => {
@@ -171,6 +178,7 @@ const confirmDeleteSesi = (sesi) => {
         <!-- Tombol tambah ruang -->
         <Button
           variant="primary"
+          size="lg"
           @click="openAddModalRuang"
           leftIconPath="M12 4v16m8-8H4"
         >
@@ -178,31 +186,35 @@ const confirmDeleteSesi = (sesi) => {
         </Button>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div
-          v-for="ruang in filteredRuangs"
-          :key="ruang.id"
-          class="p-4 border rounded shadow bg-white"
-        >
-          <p class="font-semibold">{{ ruang.name }}</p>
-          <div class="mt-2 flex gap-2">
-            <Button
-              variant="danger"
-              @click="confirmDeleteRuang(ruang)"
-              leftIconPath="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-            >
-              Hapus
-            </Button>
-            <Button
-              variant="primary"
-              @click="openEditModalRuang(ruang)"
-              leftIconPath="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-            >
-              Edit
-            </Button>
-          </div>
-        </div>
-      </div>
+      <Table
+        :headers="tableHeadersRuang"
+        :items="filteredRuangs"
+        min-width="min-w-full"
+      >
+        <template #row="{ item }">
+          <td class="py-3 px-6">{{ item.name }}</td>
+          <td class="py-3 px-6 text-right">
+            <div class="flex gap-2 justify-end">
+              <Button
+                variant="danger"
+                size="md"
+                @click.stop="confirmDeleteRuang(item)"
+                leftIconPath="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+              >
+                Hapus
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                @click.stop="openEditModalRuang(item)"
+                leftIconPath="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+              >
+                Edit
+              </Button>
+            </div>
+          </td>
+        </template>
+      </Table>
 
       <!-- Modal Tambah/Edit Ruang -->
       <Modal
@@ -245,6 +257,7 @@ const confirmDeleteSesi = (sesi) => {
         <!-- Tombol tambah sesi -->
         <Button
           variant="primary"
+          size="lg"
           @click="openAddModalSesi"
           leftIconPath="M12 4v16m8-8H4"
         >
@@ -252,49 +265,54 @@ const confirmDeleteSesi = (sesi) => {
         </Button>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div
-          v-for="sesi in filteredSesis"
-          :key="sesi.id"
-          class="p-4 border rounded shadow bg-white"
-        >
-          <p class="font-semibold">{{ sesi.name }}</p>
-          <!-- Menampilkan waktu mulai dan waktu selesai -->
-          <p class="text-sm text-gray-600 mt-1">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="inline-block w-4 h-4 mr-1"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-              />
-            </svg>
-            {{ sesi.waktu_mulai }} - {{ sesi.waktu_selesai }}
-          </p>
-          <div class="mt-2 flex gap-2">
-            <Button
-              variant="danger"
-              @click="confirmDeleteSesi(sesi)"
-              leftIconPath="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-            >
-              Hapus
-            </Button>
-            <Button
-              variant="primary"
-              @click="openEditModalSesi(sesi)"
-              leftIconPath="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-            >
-              Edit
-            </Button>
-          </div>
-        </div>
-      </div>
+      <Table
+        :headers="tableHeadersSesi"
+        :items="filteredSesis"
+        min-width="min-w-full"
+      >
+        <template #row="{ item }">
+          <td class="py-3 px-6">{{ item.name }}</td>
+          <td class="py-3 px-6">
+            <div class="flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-4 h-4 mr-1"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                />
+              </svg>
+              {{ item.waktu_mulai }} - {{ item.waktu_selesai }}
+            </div>
+          </td>
+          <td class="py-3 px-6 text-right">
+            <div class="flex gap-2 justify-end">
+              <Button
+                variant="danger"
+                size="md"
+                @click.stop="confirmDeleteSesi(item)"
+                leftIconPath="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+              >
+                Hapus
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                @click.stop="openEditModalSesi(item)"
+                leftIconPath="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+              >
+                Edit
+              </Button>
+            </div>
+          </td>
+        </template>
+      </Table>
 
       <!-- Modal Tambah/Edit Sesi dengan 3 input field -->
       <Modal
