@@ -106,19 +106,19 @@ onMounted(async () => {
 
 <template>
   <!-- Navigation Breadcrumb -->
-  <Breadcrumb :items="breadcrumbItems" />
+  <Breadcrumb />
   
   <!-- Card Form Tambah Bimbingan -->
-  <div class="card-rounded bg-white p-4 lg:p-8">
-    <div class="flex flex-col gap-4 max-w-screen-2xl mx-auto">
+  <div class="p-4 bg-white card-rounded lg:p-8">
+    <div class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
       <!-- Judul Form -->
-      <h5 class="body2-bold font-bold sm:font-bold sm:body1-bold lg:heading5 xl:heading4">
+      <h5 class="font-bold body2-bold sm:font-bold sm:body1-bold lg:heading5 xl:heading4">
         Tambah Bimbingan
       </h5>
       
       <!-- Form Bimbingan -->
       <form @submit.prevent="handleSubmit" class="flex flex-col gap-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <!-- Input Tanggal Bimbingan -->
           <InputDate
             id="date-input"

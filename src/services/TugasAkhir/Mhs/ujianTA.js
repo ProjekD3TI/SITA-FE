@@ -3,12 +3,9 @@ import axios from "axios";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 import VueCookies from "vue-cookies";
-import { data } from "autoprefixer";
 import filePDF from "@/assets/SV-Undangan Sosialisasi Teknis dan Informasi Lomba OLIVIA Tahun 2025.pdf"
 
 // --- STATE GLOBAL ---
-const router = useRouter();
-const toast = useToast();
 export const dataTugasAkhir = ref(null);
 const dataBerkasTA = ref(null);
 export const dataNilaiUjianTA = ref(null);
@@ -18,6 +15,8 @@ const dataJadwalUjianTA = ref(null);
 
 export function useTugasAkhir() {
     let abortController = null;
+    const router = useRouter();
+    const toast = useToast();
     const loadingTugasAkhir = ref(false);
     const errorTugasAkhir = ref(null);
     const fetchData = async () => {
@@ -35,7 +34,7 @@ export function useTugasAkhir() {
             dataTugasAkhir.value = {
                 tugas_akhir: {
                     id: 1,
-                    judul_tugas_akhir: "Pengembangan El Pikir Satu Dua Tiga",
+                    judul_tugas_akhir: null,//"Pengembangan El Pikir Satu Dua Tiga",
                     dosen_pembimbing: {
                         id: 1,
                         nama: "Prof. Dr. Budi Santoso, M.Kom",
@@ -96,6 +95,8 @@ export function useTugasAkhir() {
 
 export function useBerkasTA() {
     let abortController = null;
+    const router = useRouter();
+    const toast = useToast();
     const loadingBerkasTA = ref(false);
     const errorBerkasTA = ref(null);
     const fetchData = async () => {
@@ -197,6 +198,8 @@ export function useBerkasTA() {
 
 export function useNilaiUjianTA() {
     let abortController = null;
+    const router = useRouter();
+    const toast = useToast();
     const loadingNilaiUjianTA = ref(false);
     const errorNilaiUjianTA = ref(null);
     const fetchData = async () => {
@@ -286,6 +289,8 @@ export function useNilaiUjianTA() {
 
 export function useJadwalUjianTA() {
     let abortController = null;
+    const router = useRouter();
+    const toast = useToast();
     const loadingJadwalUjianTA = ref(false);
     const errorJadwalUjianTA = ref(null);
     const fetchData = async () => {

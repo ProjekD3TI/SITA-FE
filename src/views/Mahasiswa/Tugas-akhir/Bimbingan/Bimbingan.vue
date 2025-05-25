@@ -75,11 +75,8 @@ const handleRowClick = (item) => { console.log('Baris yang diklik:', item); };
     <!-- Breadcrumb untuk navigasi -->
     <Breadcrumb />
 
-    <!-- Error State -->
-    <ErrorMsg v-if="error" :msg="error" />
-
     <!-- STATE 1: BELUM ADA TA AKTIF - FORM REQUEST PEMBIMBING -->
-    <div v-else-if="!hasActiveTA && !hasPembimbing" class="p-4 bg-white card-rounded lg:p-8">
+    <div v-if="!hasActiveTA && !hasPembimbing" class="p-4 bg-white card-rounded lg:p-8">
       <div class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
         <h5 class="body3-bold sm:body2-bold lg:body1-bold">
           Anda belum memiliki pembimbing, silahkan pilih dosen untuk diminta menjadi pembimbing terlebih dahulu!

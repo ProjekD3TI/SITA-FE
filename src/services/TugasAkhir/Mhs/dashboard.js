@@ -5,14 +5,13 @@ import { useToast } from "vue-toastification";
 import VueCookies from "vue-cookies";
 
 // --- STATE GLOBAL ---
-const router = useRouter();
-const toast = useToast();
 const dataDashboard = ref(null);
-
 
 // --- API SIMULASI ---
 export function useDashboard() {
     let abortController = null;
+    const router = useRouter();
+    const toast = useToast();
     const loading = ref(false);
     const error = ref(null);
     const fetchData = async () => {

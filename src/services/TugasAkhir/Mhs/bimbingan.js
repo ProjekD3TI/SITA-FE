@@ -5,14 +5,14 @@ import { useToast } from "vue-toastification";
 import VueCookies from "vue-cookies";
 
 // --- STATE GLOBAL ---
-const router = useRouter();
-const toast = useToast();
 const dataRequestPembimbing = ref(null);
 const dataBimbingan = ref(null);
 
 // --- API SIMULASI ---
 export function useBimbingan() {
   let abortController = null;
+  const router = useRouter();
+  const toast = useToast();
   const loadingBimbingan = ref(false);
   const errorBimbingan = ref(null);
   const fetchData = async () => {
@@ -155,6 +155,8 @@ export function useBimbingan() {
 // --- API SIMULASI UNTUK REQUEST PEMBIMBING ---
 export function useRequestPembimbing() {
   let abortController = null;
+  const router = useRouter();
+  const toast = useToast();
   const loadingRequest = ref(false);
   const errorRequest = ref(null);
 

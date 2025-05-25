@@ -7,13 +7,13 @@ import filePDF from "@/assets/SV-Undangan Sosialisasi Teknis dan Informasi Lomba
 
 
 // --- STATE GLOBAL ---
-const router = useRouter();
-const toast = useToast();
 const dataProposal = ref(null);
 
 // --- API SIMULASI ---
 export function useProposal() {
     let abortController = null;
+    const router = useRouter();
+    const toast = useToast();
     const loadingProposal = ref(false);
     const errorProposal = ref(null);
     const fetchData = async () => {
@@ -178,10 +178,10 @@ export const overallStatus = computed(() => {
 export const userDataConfig = computed(() => {
     const config = {
         headText: "Dosen Pembimbing",
-        bodyText: namaPembimbing,
+        bodyText: namaPembimbing.value,
         headText2: "Kategori TA",
-        bodyText2: kategoriTA,
-        tahunAjaran: tahunAjaranTA,
+        bodyText2: kategoriTA.value,
+        tahunAjaran: tahunAjaranTA.value,
         showStatus: statusProposalTA.value !== null,
     };
 

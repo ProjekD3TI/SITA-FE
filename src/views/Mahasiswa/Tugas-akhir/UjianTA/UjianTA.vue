@@ -70,12 +70,15 @@ const STATUS = {
 const modalRef = ref(false);
 
 // Form file inputs
-const filePersetujuanPembimbing = ref(null);
-const fileTranskrip = ref(null);
-const fileSertifikat = ref(null);
-const fileTOEIC = ref(null);
-const fileBeritaAcara = ref(null);
-const filePerpanjanganMasaStudi = ref(null);
+const filePersetujuanPembimbingUpload = ref(null);
+const fileTranskripUpload = ref(null);
+const fileSertifikatUpload = ref(null);
+const fileTOEICUpload = ref(null);
+const fileBeritaAcaraUpload = ref(null);
+const filePerpanjanganMasaStudiUpload = ref(null);
+const fileNaskahTAUpload = ref(null);
+const fileKRSUpload = ref(null);
+const judulTugasAkhirUpload = ref('');
 
 // Computed Properties
 const minimalBimbingan = computed(() => {
@@ -255,38 +258,38 @@ const handleSubmit = () => {
             <div class="flex flex-col gap-4">
               <!-- Common form fields -->
               <InputText :class="formConfig.wrapperClass" id="judul-ta" label="Judul Tugas Akhir" placeholder="Masukkan judul tugas akhir"
-                v-model="judulTugasAkhir" :value="judulTugasAkhir" :disabled="formConfig.isDisabled" />
+                v-model="judulTugasAkhirUpload" :value="judulTugasAkhir ?? ''" :disabled="formConfig.isDisabled"  />
 
               <!-- All the file uploads -->
-              <InputFile :class="`${formConfig.wrapperClass} ${isNaskahDisabled ? 'opacity-50' : ''}`" id="naskah-ta" label="Naskah Tugas Akhir" v-model="fileNaskahTA" :existingFileName="naskahTA"
+              <InputFile :class="`${formConfig.wrapperClass} ${isNaskahDisabled ? 'opacity-50' : ''}`" id="naskah-ta" label="Naskah Tugas Akhir" v-model="fileNaskahTAUpload" :existingFileName="naskahTA"
                 :existingFileUrl="fileNaskahTA" :disabled="isNaskahDisabled" />
 
-              <InputFile :class="`${formConfig.wrapperClass} ${isKRSDisabled ? 'opacity-50' : ''}`" id="krs-semester-terakhir" label="Scan KRS Semester Terakhir" v-model="fileKRS"
+              <InputFile :class="`${formConfig.wrapperClass} ${isKRSDisabled ? 'opacity-50' : ''}`" id="krs-semester-terakhir" label="Scan KRS Semester Terakhir" v-model="fileKRSUpload"
                 :existingFileName="krs" :existingFileUrl="fileKRS" :disabled="isKRSDisabled" />
 
               <InputFile :class="`${formConfig.wrapperClass} ${isBuktiPersetujuanPembimbingDisabled ? 'opacity-50' : ''}`" id="bukti-persetujuan-pembimbing" label="Bukti Persetujuan Pembimbing"
-                v-model="filePersetujuanPembimbing" :existingFileName="buktiPersetujuanPembimbing"
-                :existingFileUrl="fileBuktiPersetujuanPembimbing" :disabled="isBuktiPersetujuanPembimbingDisabled" />
+                v-model="filePersetujuanPembimbingUpload" :existingFileName="buktiPersetujuanPembimbing"
+                :existingFileUrl="fileBuktiPersetujuanPembimbing" :disabled="isBuktiPersetujuanPembimbingDisabled"  />
 
-              <InputFile :class="`${formConfig.wrapperClass} ${isTranskripDisabled ? 'opacity-50' : ''}`" id="transkrip-nilai-mahasiswa" label="Transkrip Nilai Mahasiswa" v-model="fileTranskrip"
+              <InputFile :class="`${formConfig.wrapperClass} ${isTranskripDisabled ? 'opacity-50' : ''}`" id="transkrip-nilai-mahasiswa" label="Transkrip Nilai Mahasiswa" v-model="fileTranskripUpload"
                 :existingFileName="transkripNilai" :existingFileUrl="fileTranskripNilai"
-                :disabled="isTranskripDisabled" />
+                :disabled="isTranskripDisabled"  />
 
-              <InputFile :class="`${formConfig.wrapperClass} ${isBuktiSertifikatKompetensiDisabled ? 'opacity-50' : ''}`" id="bukti-sertifikat-kompetensi" label="Bukti Sertifikat Kompetensi" v-model="fileSertifikat"
+              <InputFile :class="`${formConfig.wrapperClass} ${isBuktiSertifikatKompetensiDisabled ? 'opacity-50' : ''}`" id="bukti-sertifikat-kompetensi" label="Bukti Sertifikat Kompetensi" v-model="fileSertifikatUpload"
                 :existingFileName="buktiSertifikatKompetensi" :existingFileUrl="fileBuktiSertifikatKompetensi"
                 :disabled="isBuktiSertifikatKompetensiDisabled" />
 
-              <InputFile :class="`${formConfig.wrapperClass} ${isSertifikatTOEICDisabled ? 'opacity-50' : ''}`" id="sertifikat-toeic" label="Sertifikat TOEIC" v-model="fileTOEIC"
+              <InputFile :class="`${formConfig.wrapperClass} ${isSertifikatTOEICDisabled ? 'opacity-50' : ''}`" id="sertifikat-toeic" label="Sertifikat TOEIC" v-model="fileTOEICUpload"
                 :existingFileName="sertifikatTOEIC" :existingFileUrl="fileSertifikatTOEIC"
                 :disabled="isSertifikatTOEICDisabled" />
 
-              <InputFile :class="`${formConfig.wrapperClass} ${isBeritaAcaraSeminarHasilDisabled ? 'opacity-50' : ''}`" id="berita-acara-seminar-hasil" label="Berita Acara Seminar Hasil" v-model="fileBeritaAcara"
+              <InputFile :class="`${formConfig.wrapperClass} ${isBeritaAcaraSeminarHasilDisabled ? 'opacity-50' : ''}`" id="berita-acara-seminar-hasil" label="Berita Acara Seminar Hasil" v-model="fileBeritaAcaraUpload"
                 :existingFileName="beritaAcaraSeminarHasil" :existingFileUrl="fileBeritaAcaraSeminarHasil"
                 :disabled="isBeritaAcaraSeminarHasilDisabled" />
 
               <!-- Optional field -->
               <InputFile :class="`${formConfig.wrapperClass} ${isSuratPerpanjanganMasaStudiDisabled ? 'opacity-50' : ''}`" id="surat-perpanjangan-masa-studi" label="Surat Perpanjangan Masa Studi"
-                v-model="filePerpanjanganMasaStudi" :existingFileName="suratPerpanjanganMasaStudi"
+                v-model="filePerpanjanganMasaStudiUpload" :existingFileName="suratPerpanjanganMasaStudi"
                 :existingFileUrl="fileSuratPerpanjanganMasaStudi" :disabled="isSuratPerpanjanganMasaStudiDisabled" />
             </div>
 
