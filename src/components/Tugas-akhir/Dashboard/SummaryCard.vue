@@ -36,7 +36,8 @@ const getBgClass = (color) => {
 <template>
   <div class="flex flex-col items-center justify-center gap-8 px-6 py-6 lg:px-6">
     <div :class="[getBgClass(iconColor), 'rounded-full p-3 w-fit']">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+        class="w-6 h-6">
         <path stroke-linecap="round" stroke-linejoin="round" :d="icon" />
       </svg>
     </div>

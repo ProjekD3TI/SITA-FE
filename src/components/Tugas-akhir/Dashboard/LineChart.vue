@@ -1,12 +1,7 @@
 <template>
   <h1 class="body1">Bimbingan</h1>
   <div class="min-h-[30dvh]">
-    <Line
-      class="w-full"
-      id="my-chart-id"
-      :options="chartOptions"
-      :data="chartData"
-    />
+    <Line class="w-full" id="my-chart-id" :options="chartOptions" :data="chartData" />
   </div>
 </template>
 <script setup>

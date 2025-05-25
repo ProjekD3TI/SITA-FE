@@ -1,5 +1,4 @@
 <script setup>
-import { defineProps } from 'vue';
 defineProps({
   msg: {
     type: String,
@@ -8,7 +7,7 @@ defineProps({
 });
 </script>
 <template>
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-      {{ msg }}
-    </div>
+  <div class="relative px-4 py-3 mb-4 text-red-700 bg-red-100 border border-red-400 rounded">
+    {{ msg }}
+  </div>
 </template>

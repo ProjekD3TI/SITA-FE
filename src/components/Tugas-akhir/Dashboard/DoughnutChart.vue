@@ -1,11 +1,9 @@
 <template>
   <div class="relative mx-auto">
     <Doughnut :data="chartData" :options="chartOptions" />
-    <div
-      v-if="showCenterText"
-      class="absolute top-1/2 left-1/2 w-24 h-24 flex items-center justify-center -translate-x-1/2 -translate-y-1/2"
-    >
-      <div class="text-center w-full truncate body2-bold sm:body1-bold">
+    <div v-if="showCenterText"
+      class="absolute flex items-center justify-center w-24 h-24 -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
+      <div class="w-full text-center truncate body2-bold sm:body1-bold">
         <span v-if="showCenterTextValue">
           <span class="text-primary">{{ centerText[0] }}</span>/<span class="text-secondary">{{ centerText[1] }}</span>
         </span>
@@ -17,7 +15,7 @@
 </template>
 
 <script setup>
-import { computed, defineProps } from 'vue'
+import { computed } from 'vue'
 import { Doughnut } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement } from 'chart.js'
 

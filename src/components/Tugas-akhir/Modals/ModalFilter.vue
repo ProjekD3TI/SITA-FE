@@ -1,15 +1,9 @@
 <template>
   <div class="relative">
     <!-- Tombol untuk menampilkan modal -->
-    <ButtonPrimary 
-      class="w-full py-3 font-normal"
-      ref="triggerRef"
-      v-if="showTrigger"
-      @click="toggleModal" 
-      :variant="triggerVariant"
-      :leftIconPath="computedTriggerLeftIconPath"
-      :rightIconPath="computedTriggerRightIconPath"
-    >
+    <ButtonPrimary class="w-full py-3 font-normal" ref="triggerRef" v-if="showTrigger" @click="toggleModal"
+      :variant="triggerVariant" :leftIconPath="computedTriggerLeftIconPath"
+      :rightIconPath="computedTriggerRightIconPath">
       {{ triggerText }}
       <span v-if="preselectedValues.length > 0" class="ml-2 bg-secondary text-white rounded-full px-2 py-0.5 text-xs">
         {{ preselectedValues.length }}
@@ -20,47 +14,34 @@
     <teleport to="body">
       <div v-if="showModal">
         <!-- Overlay untuk menangkap klik di luar modal -->
-        <div 
-          class="fixed inset-0 z-40"
-          @click="closeModal"
-        ></div>
+        <div class="fixed inset-0 z-40" @click="closeModal"></div>
         <!-- Modal content -->
-        <div 
-          ref="modalRef"
+        <div ref="modalRef"
           class="fixed z-50 bg-white border shadow-lg p-6 card-rounded w-[85vw] sm:w-[50vw] md:w-[40vw] lg:w-[30vw] xl:w-[25vw] max-h-[80vh] overflow-y-auto"
-          :style="modalPositionStyle"
-          @click.stop
-        >
+          :style="modalPositionStyle" @click.stop>
           <!-- Header dengan judul dan tombol tutup -->
-          <div class="flex justify-between items-center mb-4 w-full">
+          <div class="flex items-center justify-between w-full mb-4">
             <span class="body3-bold">Pilih {{ title }}</span>
           </div>
 
           <!-- Konten filter -->
           <div class="flex flex-wrap gap-2 mt-4 max-h-[40vh] overflow-y-auto">
-            <div 
-              v-for="(item, index) in items" 
-              :key="index"
-              class="border rounded-full px-4 py-2 text-center body5 flex-grow cursor-pointer active:scale-90 duration-200"
-              :class="isSelected(item.value || item) ? 
-                'border-secondary bg-secondary text-white hover:opacity-90' : 
+            <div v-for="(item, index) in items" :key="index"
+              class="flex-grow px-4 py-2 text-center duration-200 border rounded-full cursor-pointer body5 active:scale-90"
+              :class="isSelected(item.value || item) ?
+                'border-secondary bg-secondary text-white hover:opacity-90' :
                 'border-placeholder hover:bg-secondary hover:text-white hover:border-secondary'"
-              @click="toggleSelection(item.value || item)"
-            >
+              @click="toggleSelection(item.value || item)">
               <span>{{ item.label || item }}</span>
             </div>
           </div>
 
           <!-- Footer dengan hint dan tombol terapkan -->
           <div class="absolute bottom-[72px] left-0 w-full border-t border-placeholder opacity-20"></div>
-          <div class="flex justify-between items-center mt-6">
+          <div class="flex items-center justify-between mt-6">
             <span class="body5 text-placeholder">{{ hint }}</span>
             <div class="flex gap-2">
-              <ButtonPrimary
-                variant="primary"
-                size="md"
-                @click="applyAndClose"
-              >
+              <ButtonPrimary variant="primary" size="md" @click="applyAndClose">
                 {{ buttonText }}
               </ButtonPrimary>
             </div>
@@ -72,7 +53,7 @@
 </template>
 
 <script setup>
-import { ref, defineEmits, onMounted, onBeforeUnmount, watch, nextTick, computed } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from 'vue';
 import ButtonPrimary from '@/components/Tugas-akhir/Button.vue';
 
 const props = defineProps({
@@ -241,9 +222,9 @@ const updateModalPosition = () => {
 
   const triggerRect = triggerEl.getBoundingClientRect();
   const modalRect = modalEl.getBoundingClientRect();
-  
+
   let top, left;
-  
+
   switch (props.modalPosition) {
     case 'top':
       top = triggerRect.top - modalRect.height - 8;
@@ -263,11 +244,11 @@ const updateModalPosition = () => {
       left = triggerRect.left;
       break;
   }
-  
+
   // Ensure modal is fully visible within viewport
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
-  
+
   // Adjust horizontal position if needed
   if (left + modalRect.width > viewportWidth - 16) {
     left = viewportWidth - modalRect.width - 16;
@@ -275,7 +256,7 @@ const updateModalPosition = () => {
   if (left < 16) {
     left = 16;
   }
-  
+
   // Adjust vertical position if needed
   if (top + modalRect.height > viewportHeight - 16) {
     // If modal doesn't fit below, try to place it above
@@ -289,7 +270,7 @@ const updateModalPosition = () => {
   if (top < 16) {
     top = 16;
   }
-  
+
   modalPositionStyle.value = {
     top: `${top}px`,
     left: `${left}px`,
@@ -330,7 +311,7 @@ watch(showModal, (value) => {
   } else {
     // Reset selection saat modal ditutup tanpa mengklik Apply
     syncInternalValues();
-    
+
     // Hapus event listener saat modal ditutup
     window.removeEventListener('resize', updateModalPosition);
     window.removeEventListener('scroll', updateModalPosition, true);
@@ -341,7 +322,7 @@ watch(showModal, (value) => {
 // Initialize on mount
 onMounted(() => {
   syncInternalValues();
-  
+
   if (showModal.value) {
     nextTick(updateModalPosition);
   }

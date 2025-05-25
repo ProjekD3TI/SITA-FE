@@ -1,56 +1,32 @@
 <template>
-  <button
-    :class="[
-      'button-rounded focus:outline-none transition-all flex items-center justify-center gap-2 active:scale-90 duration-200 ',
-      variantClass,
-      sizeClass,
-      { 'opacity-50 cursor-not-allowed': disabled }
-    ]"
-    :disabled="disabled"
-    @click="handleClick"
-  >
+  <button :class="[
+    'button-rounded focus:outline-none transition-all flex items-center justify-center gap-2 active:scale-90 duration-200 ',
+    variantClass,
+    sizeClass,
+    { 'opacity-50 cursor-not-allowed': disabled }
+  ]" :disabled="disabled" @click="handleClick">
     <!-- Icon di sebelah kiri (jika ada) -->
     <span v-if="leftIconPath" class="flex-shrink-0">
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        fill="none" 
-        viewBox="0 0 24 24" 
-        stroke="currentColor" 
-        stroke-width="2"
-        class="w-5 h-5"
-      >
-        <path 
-          stroke-linecap="round" 
-          stroke-linejoin="round" 
-          :d="leftIconPath" 
-        />
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+        class="w-5 h-5">
+        <path stroke-linecap="round" stroke-linejoin="round" :d="leftIconPath" />
       </svg>
     </span>
-    
+
     <slot />
-    
+
     <!-- Icon di sebelah kanan (jika ada) -->
     <span v-if="rightIconPath" class="flex-shrink-0">
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        fill="none" 
-        viewBox="0 0 24 24" 
-        stroke="currentColor" 
-        stroke-width="2"
-        class="w-5 h-5"
-      >
-        <path 
-          stroke-linecap="round" 
-          stroke-linejoin="round" 
-          :d="rightIconPath" 
-        />
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+        class="w-5 h-5">
+        <path stroke-linecap="round" stroke-linejoin="round" :d="rightIconPath" />
       </svg>
     </span>
   </button>
 </template>
 
 <script setup>
-import { defineProps, defineEmits, computed } from 'vue';
+import { computed } from 'vue';
 
 // Props untuk fleksibilitas tombol
 const props = defineProps({

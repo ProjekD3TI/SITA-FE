@@ -46,7 +46,7 @@ const summaryCards = [
   {
     icon: iconPaths.graduation,
     iconColor: "warning",
-    title: TotalBimbingan.value ,
+    title: TotalBimbingan.value,
     subtitle: "Mahasiswa Terdaftar",
   },
 ];
@@ -76,7 +76,7 @@ const tugas_akhirMhs = ref([
     nama: 'Alice Johnson',
     img: DefaultAvatar,
     judul_ta: 'Analisis Data Big Data',
-    kategori: 'Data Science', 
+    kategori: 'Data Science',
     dosen_pembimbing: 'Dr. Clara Susanti',
     status: '0',
   },
@@ -109,7 +109,7 @@ const proposalMhs = ref([
     nama: 'Alice Johnson',
     img: DefaultAvatar,
     judul_proposal_ta: 'Analisis Data Big Data',
-    kategori: 'Data Science', 
+    kategori: 'Data Science',
     dosen_pembimbing: 'Dr. Clara Susanti',
     nilai: null,
     catatan: null,
@@ -124,14 +124,14 @@ const filteredPlottingProposal = computed(() => {
   return proposalMhs.value.filter((item) => item.status === '0');
 });
 const handleRowClickProposal = (item) => {
-    router.push({
+  router.push({
     name: 'DetailPengajuanForAdmin',
     params: { nim: item.nim },
   });
   console.log('Row clicked:', item);
 };
 const handleRowClickUjianTA = (item) => {
-    router.push({
+  router.push({
     name: 'DetailPendaftarForAdmin',
     params: { nim: item.nim },
   });
@@ -163,161 +163,120 @@ const BarChartData = ref(
 )
 </script>
 <template>
-<Breadcrumb />
-    <!-- Status card & Summary Cards -->
-    <div class="flex flex-col sm:flex-row sm:flex-wrap gap-4">
-      <!-- Doughnut Card -->
-      <div class="card-rounded bg-white p-4 pb-8 lg:p-8 flex-1 sm:min-w-[400px]">
-          <h5 class="body2-bold sm:body1-bold mb-4">Validasi Berkas</h5>
-          <Carousel v-bind="carouselConfig">
-            <Slide>
-              <div>
-                <DoughnutChart
-                  class="w-48 h-48 sm:w-52 sm:h-52"
-                  :labels="['Proposal Diterima', 'Proposal Menunggu']"
-                  :dataValues="[10, 20]"
-                  insideText="Proposal"
-                />
-              </div>
+  <Breadcrumb />
+  <!-- Status card & Summary Cards -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+    <!-- Doughnut Card -->
+    <div class="card-rounded bg-white p-4 pb-8 lg:p-8 flex-1 sm:min-w-[400px]">
+      <h5 class="mb-4 body2-bold sm:body1-bold">Validasi Berkas</h5>
+      <Carousel v-bind="carouselConfig">
+        <Slide>
+          <div>
+            <DoughnutChart class="w-48 h-48 sm:w-52 sm:h-52" :labels="['Proposal Diterima', 'Proposal Menunggu']"
+              :dataValues="[10, 20]" insideText="Proposal" />
+          </div>
 
-            </Slide>
-            <Slide>
-              <div>
-                <DoughnutChart
-                  class="w-48 h-48 sm:w-52 sm:h-52"
-                  :labels="['Ujian TA Diterima', 'Ujian TA Menunggu']"
-                  :dataValues="[5, 3]"
-                  insideText="Ujian TA"
-              />
-              </div>
-            </Slide>
-            <template #addons>
-              <!-- <CarouselNavigation>
+        </Slide>
+        <Slide>
+          <div>
+            <DoughnutChart class="w-48 h-48 sm:w-52 sm:h-52" :labels="['Ujian TA Diterima', 'Ujian TA Menunggu']"
+              :dataValues="[5, 3]" insideText="Ujian TA" />
+          </div>
+        </Slide>
+        <template #addons>
+          <!-- <CarouselNavigation>
                 <template #prev>
                   <span>←</span>
                 </template>
-                <template #next>
+<template #next>
                   <span>→</span>
                 </template>
-              </CarouselNavigation> -->
-              <CarouselPagination />
-            </template>
-          </Carousel>
-      </div>
-
-      <!-- Summary Cards -->
-      <div
-        class="card-rounded bg-white p-4 lg:p-8 flex sm:flex-row flex-col justify-evenly flex-grow"
-      >
-        <template v-for="(card, index) in summaryCards" :key="index">
-          <!-- Card -->
-          <SummaryCard
-            :icon="card.icon"
-            :iconColor="card.iconColor"
-            :title="card.title || '-'"
-            :subtitle="card.subtitle"
-          />
-
-          <!-- Divider (except after last card) -->
-          <template v-if="index < summaryCards.length - 1">
-            <div
-              class="hidden sm:flex h-auto w-px my-14 bg-placeholder mx-4 self-stretch"
-            ></div>
-            <div
-              class="sm:hidden max-w-[240px] w-10/12 h-px bg-placeholder mx-auto my-4"
-            ></div>
-          </template>
+</CarouselNavigation> -->
+          <CarouselPagination />
         </template>
-      </div>
-    </div>
-    <div class="flex flex-wrap gap-4">
-      <div class="card-rounded bg-white p-4 lg:p-8 mt-4 flex-grow">
-        <div class="flex justify-between items-center mb-4">
-          <h5 class="body2-bold sm:body1-bold">Validasi Berkas Seminar Proposal </h5>
-          <router-link class="text-secondary" to="tugas-akhir/proposal">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-            </svg>
-          </router-link>
-        </div>  
-        <Table
-          minWidth="min-w-[300px]"
-          :headers="['NIM', 'Nama', 'Judul Proposal Tugas Akhir']"
-          :items="filteredPlottingProposal"
-          :showPagination="false"
-          @rowClick="handleRowClickProposal"
-        >
-          <template #row="{ item }">
-            <td class="sm:py-3 py-3 sm:px-6 px-1 rounded-l-lg border-r border-white">
-              {{ item.nim }}
-            </td>
-            <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white">
-              <div class="flex items-center gap-2">
-                <img
-                  v-if="item.img"
-                  :src="item.img"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                />
-                {{ item.nama }}
-              </div>
-            </td>
-            <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white">
-              {{ item.judul_proposal_ta }}
-            </td>
-          </template>
-        </Table>
-      </div>
-      <div class="card-rounded bg-white p-4 lg:p-8 mt-4 flex-grow">
-        <div class="flex justify-between items-center mb-4">
-          <h5 class="body2-bold sm:body1-bold">Validasi Berkas Ujian Tugas Akhir</h5>
-          <router-link
-            class="text-secondary"
-            :to="{ name: 'UjianTAforAdmin', query: { tab: 'tab2' } }"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-            </svg>
-          </router-link>
-        </div> 
-        <Table
-          minWidth="min-w-[300px]"
-          :headers="['NIM', 'Nama', 'Judul Tugas Akhir']"
-          :items="filteredTugasAkhir"
-          :showPagination="false"
-          @rowClick="handleRowClickUjianTA"
-        >
-          <template #row="{ item }">
-            <td class="sm:py-3 py-3 sm:px-6 px-1 rounded-l-lg border-r border-white">
-              {{ item.nim }}
-            </td>
-            <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white">
-              <div class="flex items-center gap-2">
-                <img
-                  v-if="item.img"
-                  :src="item.img"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                />
-                {{ item.nama }}
-              </div>
-            </td>
-            <td class="sm:py-3 py-3 sm:px-6 px-1 border-r border-white">
-              {{ item.judul_ta }}
-            </td>
-          </template>
-        </Table>
-      </div>
+      </Carousel>
     </div>
 
-    <div class="card-rounded bg-white p-4 lg:p-8 mt-4 h-96">
-        <BarChart
-          :labels="BarChartData.labels"
-          :datasets-label="BarChartData.datasetsLabel"
-          :datasets-bg-color="BarChartData.datasetsBgColor"
-          :datasets-data="BarChartData.datasetsData"
-        />
+    <!-- Summary Cards -->
+    <div class="flex flex-col flex-grow p-4 bg-white card-rounded lg:p-8 sm:flex-row justify-evenly">
+      <template v-for="(card, index) in summaryCards" :key="index">
+        <!-- Card -->
+        <SummaryCard :icon="card.icon" :iconColor="card.iconColor" :title="card.title || '-'"
+          :subtitle="card.subtitle" />
+
+        <!-- Divider (except after last card) -->
+        <template v-if="index < summaryCards.length - 1">
+          <div class="self-stretch hidden w-px h-auto mx-4 sm:flex my-14 bg-placeholder"></div>
+          <div class="sm:hidden max-w-[240px] w-10/12 h-px bg-placeholder mx-auto my-4"></div>
+        </template>
+      </template>
     </div>
+  </div>
+  <div class="flex flex-wrap gap-4">
+    <div class="flex-grow p-4 mt-4 bg-white card-rounded lg:p-8">
+      <div class="flex items-center justify-between mb-4">
+        <h5 class="body2-bold sm:body1-bold">Validasi Berkas Seminar Proposal </h5>
+        <router-link class="text-secondary" to="tugas-akhir/proposal">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+            class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+          </svg>
+        </router-link>
+      </div>
+      <Table minWidth="min-w-[300px]" :headers="['NIM', 'Nama', 'Judul Proposal Tugas Akhir']"
+        :items="filteredPlottingProposal" :showPagination="false" @rowClick="handleRowClickProposal">
+        <template #row="{ item }">
+          <td class="px-1 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6">
+            {{ item.nim }}
+          </td>
+          <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
+            <div class="flex items-center gap-2">
+              <img v-if="item.img" :src="item.img" alt="Profile Image" class="w-8 h-8 rounded-full" />
+              {{ item.nama }}
+            </div>
+          </td>
+          <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
+            {{ item.judul_proposal_ta }}
+          </td>
+        </template>
+      </Table>
+    </div>
+    <div class="flex-grow p-4 mt-4 bg-white card-rounded lg:p-8">
+      <div class="flex items-center justify-between mb-4">
+        <h5 class="body2-bold sm:body1-bold">Validasi Berkas Ujian Tugas Akhir</h5>
+        <router-link class="text-secondary" :to="{ name: 'UjianTAforAdmin', query: { tab: 'tab2' } }">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+            class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+          </svg>
+        </router-link>
+      </div>
+      <Table minWidth="min-w-[300px]" :headers="['NIM', 'Nama', 'Judul Tugas Akhir']" :items="filteredTugasAkhir"
+        :showPagination="false" @rowClick="handleRowClickUjianTA">
+        <template #row="{ item }">
+          <td class="px-1 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6">
+            {{ item.nim }}
+          </td>
+          <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
+            <div class="flex items-center gap-2">
+              <img v-if="item.img" :src="item.img" alt="Profile Image" class="w-8 h-8 rounded-full" />
+              {{ item.nama }}
+            </div>
+          </td>
+          <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
+            {{ item.judul_ta }}
+          </td>
+        </template>
+      </Table>
+    </div>
+  </div>
+
+  <div class="p-4 mt-4 bg-white card-rounded lg:p-8 h-96">
+    <BarChart :labels="BarChartData.labels" :datasets-label="BarChartData.datasetsLabel"
+      :datasets-bg-color="BarChartData.datasetsBgColor" :datasets-data="BarChartData.datasetsData" />
+  </div>
 </template>
 <style scoped>
 .carousel {
@@ -327,4 +286,3 @@ const BarChartData = ref(
   --vc-png-bottom: -15px;
 }
 </style>
-

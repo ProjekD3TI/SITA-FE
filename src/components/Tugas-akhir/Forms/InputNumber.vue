@@ -1,19 +1,11 @@
 <template>
   <div class="relative w-full">
-    <label
-      :for="id"
-      class="absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold"
-      >{{ label }}</label
-    >
-    <input
-      :id="id"
-      type="number"
-      class="no-spinner border border-placeholder input-rounded px-4 sm:px-6 py-3 body5 sm:body4 w-full bg-white"
-      :placeholder="placeholder"
-      :value="modelValue"
-      @input="$emit('update:modelValue', Number($event.target.value))"
-      :disabled="disabled"
-    />
+    <label :for="id" class="absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold">{{ label
+      }}</label>
+    <input :id="id" type="number"
+      class="w-full px-4 py-3 bg-white border no-spinner border-placeholder input-rounded sm:px-6 body5 sm:body4"
+      :placeholder="placeholder" :value="modelValue" @input="$emit('update:modelValue', Number($event.target.value))"
+      :disabled="disabled" />
   </div>
 </template>
 

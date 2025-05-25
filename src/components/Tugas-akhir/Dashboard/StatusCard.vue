@@ -44,12 +44,12 @@ const getBgClass = (color) => {
   if (bgColorMap[color]) {
     return bgColorMap[color];
   }
-  
+
   // Handle custom colors (like purple-500, blue-400, etc.)
   if (color.includes('-')) {
     return `bg-${color}/20 text-${color}`;
   }
-  
+
   // Default fallback
   return bgColorMap.success;
 };
@@ -58,18 +58,14 @@ const getBgClass = (color) => {
 <template>
   <div class="flex flex-col h-full gap-4 min-w-[240px]">
     <h5 class="body2-bold sm:body1-bold">{{ title }}</h5>
-    <div class="flex-grow flex items-center justify-center">
+    <div class="flex items-center justify-center flex-grow">
       <div :class="[getBgClass(iconColor), 'rounded-full p-4 w-fit']">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="w-10 h-10">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor"
+          class="w-10 h-10">
           <path stroke-linecap="round" stroke-linejoin="round" :d="icon" />
         </svg>
       </div>
     </div>
-    <StatusLabel
-      class="self-center"
-      :status="statusType"
-      :label="statusLabel"
-      :size="labelSize"
-    />
+    <StatusLabel class="self-center" :status="statusType" :label="statusLabel" :size="labelSize" />
   </div>
 </template>
