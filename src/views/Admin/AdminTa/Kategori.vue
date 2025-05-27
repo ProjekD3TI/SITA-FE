@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed,onMounted } from "vue";
 import ModalDelete from "@/components/Tugas-akhir/Modals/ModalDeleteRuang&sesi.vue";
 import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
@@ -7,24 +7,35 @@ import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import Table from "@/components/Tugas-akhir/Table.vue";
+import { useKategori } from "@/services/TugasAkhir/Admin/kategori.js";
+import { useToast } from "vue-toastification";
+const toast = useToast();
+// Ambil data kategori dari service
+
+const { data, loading, error, fetchData,addKategori,editKategori } = useKategori();
 
 // Search
 const searchQuery = ref("");
 const handleSearch = () => {};
-
 // Data kategori
-const categories = ref([
-  { id: 1, name: "Internet of Things" },
-  { id: 2, name: "Mobile Development" },
-  { id: 3, name: "Web Development" },
-  { id: 4, name: "Artificial Intelligence" },
-  { id: 5, name: "Big Data" },
-]);
+const categories = ref([]);
+onMounted(async () => {
+  await fetchData();
+  // Mapping: dari { id, nama_kategori } menjadi { id, name }
+  categories.value = (data.value || []).map(item => ({
+    id: item.id,
+    name: item.nama_kategori
+  }));
+  console.log("Kategori data:", categories.value);
+});
+
 
 // Filter pencarian kategori
 const filteredCategories = computed(() =>
-  categories.value.filter((category) =>
-    category.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  categories.value.filter(
+    (category) =>
+      typeof category.name === "string" &&
+      category.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 );
 
@@ -48,21 +59,36 @@ const openEditModalKategori = (category) => {
   isModalOpen.value = true;
 };
 
-const saveKategori = () => {
+const saveKategori = async () => {
   if (isEditing.value) {
-    const index = categories.value.findIndex(
-      (c) => c.id === selectedCategory.value.id
-    );
-    categories.value[index] = { ...selectedCategory.value };
+    try {
+      const result = await editKategori(selectedCategory.value.id, {
+        nama_kategori: selectedCategory.value.name,
+      });
+      // Update data di list
+      const idx = categories.value.findIndex(c => c.id === selectedCategory.value.id);
+      if (idx !== -1) {
+        categories.value[idx].name = result.data.nama_kategori;
+      }
+      isModalOpen.value = false;
+      toast.success("Kategori berhasil diubah!");
+    } catch (e) {
+      toast.error("Gagal mengubah kategori: " + (error.value || e.message));
+    }
   } else {
-    categories.value.push({
-      ...selectedCategory.value,
-      id: Date.now(),
-    });
+    try {
+      const result = await addKategori({ nama_kategori: selectedCategory.value.name });
+      categories.value.push({
+        id: result.data.id,
+        name: result.data.nama_kategori,
+      });
+      isModalOpen.value = false;
+      toast.success("Kategori berhasil ditambahkan!");
+    } catch (e) {
+      toast.error("Gagal menambahkan kategori: " + (error.value || e.message));
+    }
   }
-  isModalOpen.value = false;
 };
-
 const deleteKategori = () => {
   if (categoryToDelete.value) {
     categories.value = categories.value.filter(
