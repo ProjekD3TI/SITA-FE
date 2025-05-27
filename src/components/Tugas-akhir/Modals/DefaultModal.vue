@@ -38,8 +38,8 @@ const handleBackdropClick = () => {
         <div class="w-11/12 max-w-screen-md p-8 bg-white card-rounded">
             <div class="flex items-center justify-between mb-2">
                 <div>
-                    <h5 class="heading5">{{ headText }}</h5>
-                    <p class="body4">{{ bodyText }}</p>
+                    <h5 class="body1-bold lg:heading5">{{ headText }}</h5>
+                    <p class="body5 lg:body4">{{ bodyText }}</p>
                 </div>
                 <button @click="closeModal" class="p-2 rounded-full hover:bg-placeholder/20">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"

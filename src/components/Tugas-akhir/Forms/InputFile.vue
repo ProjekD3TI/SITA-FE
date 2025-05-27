@@ -1,14 +1,14 @@
 <template>
   <div class="relative w-full">
-    <label :for="id" :class="`absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold`">
+    <label :for="id"
+      :class="`absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold max-w-[250px] sm:max-w-none truncate`">
       {{ label }}
     </label>
     <div class="flex w-full">
       <div :id="id"
         :class="`border-y border-l border-placeholder rounded-l-[12px] px-4 sm:px-6 py-3 body5 sm:body4 flex-1 min-w-0 flex items-center overflow-hidden ${!hasFile ? 'text-placeholder' : 'text-black'}`">
         <div class="flex items-center w-full min-w-0 gap-2 overflow-hidden"
-          :class="hasFile ? 'cursor-pointer active:scale-95 duration-200' : ''"
-          @click="hasFile ? downloadFile() : null">
+          :class="hasFile ? 'cursor-pointer active:scale-95 duration-200' : ''" @click="hasFile ? viewFile() : null">
           <svg v-show="hasFile" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
             stroke="currentColor" class="flex-shrink-0 w-5 h-5">
             <path stroke-linecap="round" stroke-linejoin="round"
@@ -19,7 +19,6 @@
           </span>
         </div>
       </div>
-      <!-- PERBAIKAN DISINI: Gunakan div saat disabled dan label saat enabled -->
       <template v-if="disabled">
         <div
           class="bg-secondary text-white rounded-r-[12px] px-2 sm:px-4 body5 sm:body4 flex items-center justify-center whitespace-nowrap flex-shrink-0 cursor-not-allowed">
@@ -39,7 +38,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { secureFilePreview } from '@/services/TugasAkhir/Mhs/proposal.js';
 
 const props = defineProps({
   id: { type: String, required: true },
@@ -52,78 +52,59 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue']);
 
-// Simpan file yang diupload user
 const uploadedFile = ref(null);
 const uploadedFileUrl = ref(null);
 
-// Computed untuk menentukan apakah ada file (baru atau existing)
+// Jika parent mengubah modelValue, sinkronkan uploadedFile
+watch(() => props.modelValue, (val) => {
+  if (!val) {
+    uploadedFile.value = null;
+    if (uploadedFileUrl.value) {
+      URL.revokeObjectURL(uploadedFileUrl.value);
+      uploadedFileUrl.value = null;
+    }
+  }
+});
+
+// Ada file jika ada file baru atau file existing dari backend
 const hasFile = computed(() => {
   return !!uploadedFile.value || !!props.existingFileUrl;
 });
 
-// Computed untuk menentukan nama file yang ditampilkan
+// Nama file: file baru jika ada, jika tidak nama file existing dari backend
 const currentFileName = computed(() => {
-  return uploadedFile.value ? uploadedFile.value.name : props.existingFileName;
+  return uploadedFile.value
+    ? uploadedFile.value.name
+    : props.existingFileName;
 });
 
-// Handler saat file berubah
 const handleFileChange = (event) => {
   if (props.disabled) return;
-
   const file = event.target.files[0];
   if (file) {
-    // Jika ada file yang dipilih, simpan file dan buat URL-nya
     uploadedFile.value = file;
-
-    // Revoke URL lama jika ada untuk mencegah memory leak
     if (uploadedFileUrl.value) {
       URL.revokeObjectURL(uploadedFileUrl.value);
     }
-
     uploadedFileUrl.value = URL.createObjectURL(file);
     emit('update:modelValue', file);
-
-    console.log('File baru diupload:', file.name);
   } else {
-    // Jika tidak ada file yang dipilih, reset ke default
     if (uploadedFileUrl.value) {
       URL.revokeObjectURL(uploadedFileUrl.value);
     }
-
     uploadedFile.value = null;
     uploadedFileUrl.value = null;
     emit('update:modelValue', null);
   }
 };
 
-// Fungsi download/view file
-const downloadFile = () => {
-  // Prioritas ke file yang diupload user
+// Buka file: file baru jika ada, jika tidak file existing dari backend
+const viewFile = () => {
   if (uploadedFile.value && uploadedFileUrl.value) {
-    console.log('Downloading uploaded file:', uploadedFile.value.name);
-
-    try {
-      // Gunakan FileReader untuk file yang diupload user
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const link = document.createElement('a');
-        link.href = e.target.result;
-        link.download = uploadedFile.value.name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      };
-      reader.readAsDataURL(uploadedFile.value);
-    } catch (error) {
-      console.error('Error downloading file:', error);
-      // Fallback: Gunakan window.open dengan URL objek
-      window.open(uploadedFileUrl.value, '_blank');
-    }
-  }
-  // Fallback ke file existing jika tidak ada file yang diupload
-  else if (props.existingFileUrl) {
-    console.log('Opening existing file:', props.existingFileName);
-    window.open(props.existingFileUrl, '_blank');
+    window.open(uploadedFileUrl.value, '_blank');
+  } else if (props.existingFileUrl) {
+    // Buka file di tab baru TANPA download otomatis
+    secureFilePreview(props.existingFileUrl, props.existingFileName || 'file.pdf');
   }
 };
 </script>

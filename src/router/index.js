@@ -203,7 +203,7 @@ const routes = [
             path: "ujian-ta",
             component: TugasAkhirforMhs,
             meta: {
-              breadcrumb: "Tugas Akhir",
+              breadcrumb: "Ujian TA",
             },
             children: [
               {

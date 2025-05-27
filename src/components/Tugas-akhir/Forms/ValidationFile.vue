@@ -109,11 +109,13 @@ watch(
 watch(
   () => props.fileFromDatabase,
   (newFile) => {
-    // Jika newFile adalah ref/computed, ambil .value
     const file = newFile && typeof newFile === 'object' && 'value' in newFile ? newFile.value : newFile;
     if (file) {
       fileName.value = file.name;
-      fileUrl.value = file.url;
+      // Pastikan URL lengkap
+      fileUrl.value = file.url && !file.url.startsWith('/storage/') && !file.url.startsWith('http') 
+        ? `/storage/${file.url}` 
+        : file.url;
     } else {
       fileName.value = '';
       fileUrl.value = null;

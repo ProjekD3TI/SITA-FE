@@ -3,7 +3,6 @@ import axios from "axios";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 import VueCookies from "vue-cookies";
-import filePDF from "@/assets/SV-Undangan Sosialisasi Teknis dan Informasi Lomba OLIVIA Tahun 2025.pdf"
 
 
 // --- STATE GLOBAL ---
@@ -19,54 +18,15 @@ export function useProposal() {
     const fetchData = async () => {
         loadingProposal.value = true;
         try {
-            // const authToken = VueCookies.get("auth_token");
-            // const headers = {
-            //     'Authorization': `Bearer ${authToken}`,
-            //     'Content-Type': 'application/json',
-            //     'Accept': 'application/json'
-            // };
+            const authToken = VueCookies.get("auth_token");
+            const headers = {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            };
 
-            // const response = await axios.get("/api/mahasiswa/tugas-akhir/proposal", { headers });
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            dataProposal.value = {
-                tugas_akhir: {
-                    id: 1,
-                    dosen_pembimbing: {
-                        id: 1,
-                        nama: "Prof. Dr. Budi Santoso, M.Kom",
-                    },
-                    kategori_ta: {
-                        id: 1,
-                        nama: "Internet of Things",
-                    },
-                    tahun_ajaran: {
-                        id: 1,
-                        nama: "2024/2025",
-                    },
-                    proposal_id: 1,
-                    nilai_proposal: null,
-                    catatan_proposal: null //"Proposal sudah sesuai dengan pedoman",
-                },
-                proposal: {
-                    id: 1,
-                    judul_proposal: "Pengembangan El Pikir Satu Dua Tiga",
-                    status_valid: 1,
-                    berkas: [
-                        {
-                            id: 1,
-                            nama_berkas: "Naskah Proposal Tugas Akhir",
-                            file_path: filePDF,
-                            status_valid: 1,
-                        },
-                        {
-                            id: 2,
-                            nama_berkas: "Transkrip Nilai Mahasiswa",
-                            file_path: filePDF,
-                            status_valid: 1,
-                        },
-                    ]
-                }
-            }
+            const response = await axios.get("/api/mahasiswa/proposal", { headers });
+            dataProposal.value = response.data.data;
         } catch (err) {
             handleError(err);
         } finally {
@@ -84,6 +44,57 @@ export function useProposal() {
         }
     };
 
+    // --- SUBMIT PROPOSAL ---
+    const submitProposal = async ({ judul_proposal, file_proposal, file_transkrip }) => {
+        loadingProposal.value = true;
+        try {
+            const authToken = VueCookies.get("auth_token");
+            const headers = {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'multipart/form-data',
+                'Accept': 'application/json'
+            };
+            const formData = new FormData();
+            formData.append('judul_proposal', judul_proposal);
+            if (file_proposal) formData.append('file_proposal', file_proposal);
+            if (file_transkrip) formData.append('file_transkrip', file_transkrip);
+
+            await axios.post('/api/mahasiswa/proposal', formData, { headers });
+            toast.success("Proposal berhasil dikirim!");
+            return true;
+        } catch (err) {
+            handleError(err);
+            return false;
+        } finally {
+            loadingProposal.value = false;
+        }
+    };
+
+    const updateProposal = async ({ id, judul_proposal, file_proposal, file_transkrip }) => {
+        loadingProposal.value = true;
+        try {
+            const authToken = VueCookies.get("auth_token");
+            const headers = {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'multipart/form-data',
+                'Accept': 'application/json'
+            };
+            const formData = new FormData();
+            formData.append('judul_proposal', judul_proposal);
+            if (file_proposal) formData.append('file_proposal', file_proposal);
+            if (file_transkrip) formData.append('file_transkrip', file_transkrip);
+
+            await axios.post(`/api/mahasiswa/proposal/${id}`, formData, { headers });
+            toast.success("Proposal berhasil diupdate!");
+            return true;
+        } catch (err) {
+            handleError(err);
+            return false;
+        } finally {
+            loadingProposal.value = false;
+        }
+    }
+
     onMounted(() => {
         fetchData();
     });
@@ -96,6 +107,8 @@ export function useProposal() {
         loadingProposal,
         errorProposal,
         dataProposal,
+        submitProposal,
+        updateProposal,
         fetchData,
     };
 }
@@ -121,9 +134,19 @@ export const transkripNilaiMahasiswa = computed(() => {
     )?.file_path;
     return getFileName(filePath);
 });
-export const statusProposalTA = computed(() => dataProposal.value?.proposal?.status_valid);
-export const fileNaskahProposalTA = computed(() => dataProposal.value?.proposal?.berkas?.find(berkas => berkas.nama_berkas === "Naskah Proposal Tugas Akhir")?.file_path || '');
-export const fileTranskripNilaiMahasiswa = computed(() => dataProposal.value?.proposal?.berkas?.find(berkas => berkas.nama_berkas === "Transkrip Nilai Mahasiswa")?.file_path || '');
+export const statusProposalTA = computed(() => dataProposal.value?.proposal?.status_valid ?? null);
+
+export const fileNaskahProposalTA = computed(() => {
+    return dataProposal.value?.proposal?.berkas?.find(
+        berkas => berkas.nama_berkas === "Naskah Proposal Tugas Akhir"
+    )?.download_url || '';
+});
+
+export const fileTranskripNilaiMahasiswa = computed(() => {
+    return dataProposal.value?.proposal?.berkas?.find(
+        berkas => berkas.nama_berkas === "Transkrip Nilai Mahasiswa"
+    )?.download_url || '';
+});
 export const nilaiProposalTA = computed(() => dataProposal.value?.tugas_akhir?.nilai_proposal || null);
 export const catatanProposalTA = computed(() => dataProposal.value?.tugas_akhir?.catatan_proposal || 'Tidak ada catatan');
 export const naskahProposalTAStatus = computed(() => {
@@ -219,3 +242,45 @@ export const formConfig = computed(() => {
             (overallStatus.value === STATUS.NULL || overallStatus.value === STATUS.REJECTED)
     };
 });
+
+// --- FILE DOWNLOAD ---
+export async function secureFileDownload(url, filename = "file.pdf") {
+    const authToken = VueCookies.get("auth_token");
+    try {
+        const response = await fetch(url, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${authToken}`,
+                Accept: "application/pdf"
+            }
+        });
+        if (!response.ok) throw new Error("Gagal mengunduh file");
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        window.open(blobUrl, "_blank");
+    } catch (err) {
+        toast.error("Gagal mengunduh file: " + err.message); // Ganti alert dengan toast
+    }
+}
+
+export async function secureFilePreview(url, filename = "file.pdf") {
+    const authToken = VueCookies.get("auth_token");
+    try {
+        const response = await fetch(url, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${authToken}`,
+                Accept: "application/pdf"
+            }
+        });
+        if (!response.ok) throw new Error("Gagal mengakses file");
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        window.open(blobUrl, "_blank");
+    } catch (err) {
+        toast.error("Gagal membuka file: " + err.message); // Ganti alert dengan toast
+    }
+}
+

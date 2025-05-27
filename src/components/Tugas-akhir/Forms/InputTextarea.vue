@@ -20,7 +20,8 @@ const updateValue = (event) => {
 
 <template>
     <div class="relative w-full">
-        <label :for="id" class="absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold">
+        <label :for="id"
+            class="absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold max-w-[250px] sm:max-w-none truncate">
             {{ label }}
         </label>
         <textarea :id="id"

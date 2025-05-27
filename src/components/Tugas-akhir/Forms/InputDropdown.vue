@@ -1,11 +1,11 @@
 <template>
   <div class="relative w-full">
     <label :for="id" class="absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold">{{ label
-      }}</label>
+    }}</label>
     <div
       class="flex items-center w-full px-4 py-3 bg-white border border-placeholder input-rounded sm:px-6 body5 sm:body4">
       <input :id="id" type="text" class="w-full outline-none" :placeholder="placeholder" v-model="searchQuery"
-        ref="inputRef" @focus="isDropdownOpen = true" @blur="handleBlur" />
+        ref="inputRef" @focus="isDropdownOpen = true" @blur="handleBlur" autocomplete="off" />
       <svg xmlns="http://www.w3.org/2000/svg"
         class="w-5 h-5 text-black transition-transform duration-300 cursor-pointer"
         :class="isDropdownOpen ? 'rotate-180' : 'rotate-0'" fill="none" viewBox="0 0 24 24" stroke="currentColor"

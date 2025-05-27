@@ -3,7 +3,6 @@ import axios from "axios";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 import VueCookies from "vue-cookies";
-import filePDF from "@/assets/SV-Undangan Sosialisasi Teknis dan Informasi Lomba OLIVIA Tahun 2025.pdf"
 
 // --- STATE GLOBAL ---
 export const dataTugasAkhir = ref(null);
@@ -22,46 +21,103 @@ export function useTugasAkhir() {
     const fetchData = async () => {
         loadingTugasAkhir.value = true;
         try {
-            // const authToken = VueCookies.get("auth_token");
-            // const headers = {
-            //     'Authorization': `Bearer ${authToken}`,
-            //     'Content-Type': 'application/json',
-            //     'Accept': 'application/json'
-            // };
+            const authToken = VueCookies.get("auth_token");
+            const headers = {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            };
 
-            // const response = await axios.get("/api/mahasiswa/tugas-akhir/proposal", { headers });
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            dataTugasAkhir.value = {
-                tugas_akhir: {
-                    id: 1,
-                    judul_tugas_akhir: null,//"Pengembangan El Pikir Satu Dua Tiga",
-                    dosen_pembimbing: {
-                        id: 1,
-                        nama: "Prof. Dr. Budi Santoso, M.Kom",
-                    },
-                    kategori_ta: {
-                        id: 1,
-                        nama: "Internet of Things",
-                    },
-                    tahun_ajaran: {
-                        id: 1,
-                        nama: "2024/2025",
-                    },
-                    status_valid: null,
-                },
-                bimbingan: {
-                    total_bimbingan: 9,
-                },
-                berkas: [
-                    {
-                        id: 1,
-                        nama_berkas: "Naskah Tugas Akhir",
-                        file_path: filePDF,
-                    },
-                ]
-            }
+            const response = await axios.get("/api/mahasiswa/ujian-ta", { headers });
+            dataTugasAkhir.value = response.data.data;
         } catch (err) {
             handleError(err);
+        } finally {
+            loadingTugasAkhir.value = false;
+        }
+    };
+
+    const submitUjianTA = async ({
+        judul_ta,
+        file_naskah,
+        file_transkrip,
+        file_krs,
+        file_persetujuan_pembimbing,
+        file_sertifikat_kompetensi,
+        file_toeic,
+        file_berita_acara,
+        file_perpanjangan_masa_studi,
+    }) => {
+        loadingTugasAkhir.value = true;
+        errorTugasAkhir.value = null;
+        try {
+            const authToken = VueCookies.get("auth_token");
+            const headers = {
+                Authorization: `Bearer ${authToken}`,
+                "Content-Type": "multipart/form-data",
+                Accept: "application/json",
+            };
+            const formData = new FormData();
+            formData.append("judul_tugas_akhir", judul_ta); // <-- SAMA dengan backend
+            if (file_naskah) formData.append("naskah_ta", file_naskah);
+            if (file_krs) formData.append("krs", file_krs);
+            if (file_persetujuan_pembimbing) formData.append("persetujuan_pembimbing", file_persetujuan_pembimbing);
+            if (file_transkrip) formData.append("transkrip_nilai", file_transkrip);
+            if (file_sertifikat_kompetensi) formData.append("sertifikat_kompetensi", file_sertifikat_kompetensi);
+            if (file_toeic) formData.append("toeic", file_toeic);
+            if (file_berita_acara) formData.append("berita_acara_semhas", file_berita_acara);
+            if (file_perpanjangan_masa_studi) formData.append("surat_perpanjangan_studi", file_perpanjangan_masa_studi);
+
+            await axios.post("/api/mahasiswa/tugas-akhir/daftar", formData, { headers });
+            toast.success("Ujian TA berhasil dikirim!");
+            return true;
+        } catch (err) {
+            handleError(err, router, toast);
+            return false;
+        } finally {
+            loadingTugasAkhir.value = false;
+        }
+    };
+
+    // --- UPDATE UJIAN TA ---
+    const updateUjianTA = async ({
+        id,
+        judul_ta,
+        file_naskah,
+        file_transkrip,
+        file_krs,
+        file_persetujuan_pembimbing,
+        file_sertifikat_kompetensi,
+        file_toeic,
+        file_berita_acara,
+        file_perpanjangan_masa_studi,
+    }) => {
+        loadingTugasAkhir.value = true;
+        errorTugasAkhir.value = null;
+        try {
+            const authToken = VueCookies.get("auth_token");
+            const headers = {
+                Authorization: `Bearer ${authToken}`,
+                "Content-Type": "multipart/form-data",
+                Accept: "application/json",
+            };
+            const formData = new FormData();
+            formData.append("judul_tugas_akhir", judul_ta);
+            if (file_naskah) formData.append("naskah_ta", file_naskah);
+            if (file_krs) formData.append("krs", file_krs);
+            if (file_persetujuan_pembimbing) formData.append("persetujuan_pembimbing", file_persetujuan_pembimbing);
+            if (file_transkrip) formData.append("transkrip_nilai", file_transkrip);
+            if (file_sertifikat_kompetensi) formData.append("sertifikat_kompetensi", file_sertifikat_kompetensi);
+            if (file_toeic) formData.append("toeic", file_toeic);
+            if (file_berita_acara) formData.append("berita_acara_semhas", file_berita_acara);
+            if (file_perpanjangan_masa_studi) formData.append("surat_perpanjangan_studi", file_perpanjangan_masa_studi);
+
+            await axios.post(`/api/mahasiswa/tugas-akhir/${id}/update`, formData, { headers });
+            toast.success("Ujian TA berhasil diupdate!");
+            return true;
+        } catch (err) {
+            handleError(err, router, toast);
+            return false;
         } finally {
             loadingTugasAkhir.value = false;
         }
@@ -90,6 +146,8 @@ export function useTugasAkhir() {
         errorTugasAkhir,
         dataTugasAkhir,
         fetchData,
+        submitUjianTA,
+        updateUjianTA,
     };
 }
 
@@ -99,70 +157,71 @@ export function useBerkasTA() {
     const toast = useToast();
     const loadingBerkasTA = ref(false);
     const errorBerkasTA = ref(null);
-    const fetchData = async () => {
+    const fetchDataBerkas = async () => {
         loadingBerkasTA.value = true;
         try {
-            // const authToken = VueCookies.get("auth_token");
-            // const headers = {
-            //     'Authorization': `Bearer ${authToken}`,
-            //     'Content-Type': 'application/json',
-            //     'Accept': 'application/json'
-            // };
+            const authToken = VueCookies.get("auth_token");
+            const headers = {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            };
 
-            // const response = await axios.get("/api/mahasiswa/tugas-akhir/ujian-ta", { headers });
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            dataBerkasTA.value = {
-                berkas: [
-                    {
-                        id: null,//1,
-                        nama_berkas: null,//"Naskah Tugas Akhir",
-                        file_path: null,//filePDF,
-                        status_valid: null,//1,
-                    },
-                    {
-                        id: null,//2,
-                        nama_berkas: null,//"Transkrip Nilai Mahasiswa",
-                        file_path: null,//filePDF,
-                        status_valid: null,//1,
-                    },
-                    {
-                        id: null,//3,
-                        nama_berkas: null,//"Scan KRS Semester Akhir",
-                        file_path: null,//filePDF,
-                        status_valid: null,//1,
-                    },
-                    {
-                        id: null,//4,
-                        nama_berkas: null,//"Bukti Persetujuan Pembimbing",
-                        file_path: null,//filePDF,
-                        status_valid: null,//1,
-                    },
-                    {
-                        id: null,//5,
-                        nama_berkas: null,//"Bukti Sertifikat Kompetensi",
-                        file_path: null,//filePDF,
-                        status_valid: null,//1,
-                    },
-                    {
-                        id: null,//6,
-                        nama_berkas: null,//"Sertifikat TOEIC",
-                        file_path: null,//filePDF,
-                        status_valid: null,//1,
-                    },
-                    {
-                        id: null,//7,
-                        nama_berkas: null,//"Berita Acara Seminar Hasil",
-                        file_path: null,//filePDF,
-                        status_valid: null,//1,
-                    },
-                    {
-                        id: null,//8,
-                        nama_berkas: null,//"Surat Perpanjangan Masa Studi",
-                        file_path: null,//filePDF,
-                        status_valid: null,//1,
-                    }
-                ]
-            }
+            const response = await axios.get("/api/mahasiswa/berkas/ujian-ta", { headers });
+            dataBerkasTA.value = response.data.data;
+            // await new Promise(resolve => setTimeout(resolve, 1000));
+            // dataBerkasTA.value = {
+            //     berkas: [
+            //         {
+            //             id: null,//1,
+            //             nama_berkas: null,//"Naskah Tugas Akhir",
+            //             file_path: null,//filePDF,
+            //             status_valid: null,//1,
+            //         },
+            //         {
+            //             id: null,//2,
+            //             nama_berkas: null,//"Transkrip Nilai Mahasiswa",
+            //             file_path: null,//filePDF,
+            //             status_valid: null,//1,
+            //         },
+            //         {
+            //             id: null,//3,
+            //             nama_berkas: null,//"Scan KRS Semester Akhir",
+            //             file_path: null,//filePDF,
+            //             status_valid: null,//1,
+            //         },
+            //         {
+            //             id: null,//4,
+            //             nama_berkas: null,//"Bukti Persetujuan Pembimbing",
+            //             file_path: null,//filePDF,
+            //             status_valid: null,//1,
+            //         },
+            //         {
+            //             id: null,//5,
+            //             nama_berkas: null,//"Bukti Sertifikat Kompetensi",
+            //             file_path: null,//filePDF,
+            //             status_valid: null,//1,
+            //         },
+            //         {
+            //             id: null,//6,
+            //             nama_berkas: null,//"Sertifikat TOEIC",
+            //             file_path: null,//filePDF,
+            //             status_valid: null,//1,
+            //         },
+            //         {
+            //             id: null,//7,
+            //             nama_berkas: null,//"Berita Acara Seminar Hasil",
+            //             file_path: null,//filePDF,
+            //             status_valid: null,//1,
+            //         },
+            //         {
+            //             id: null,//8,
+            //             nama_berkas: null,//"Surat Perpanjangan Masa Studi",
+            //             file_path: null,//filePDF,
+            //             status_valid: null,//1,
+            //         }
+            //     ]
+            // }
         } catch (err) {
             handleError(err);
         } finally {
@@ -181,7 +240,7 @@ export function useBerkasTA() {
     };
 
     onMounted(() => {
-        fetchData();
+        fetchDataBerkas();
     });
 
     onUnmounted(() => {
@@ -192,7 +251,7 @@ export function useBerkasTA() {
         loadingBerkasTA,
         errorBerkasTA,
         dataBerkasTA,
-        fetchData,
+        fetchDataBerkas,
     };
 }
 
@@ -205,55 +264,56 @@ export function useNilaiUjianTA() {
     const fetchData = async () => {
         loadingNilaiUjianTA.value = true;
         try {
-            // const authToken = VueCookies.get("auth_token");
-            // const headers = {
-            //     'Authorization': `Bearer ${authToken}`,
-            //     'Content-Type': 'application/json',
-            //     'Accept': 'application/json'
-            // };
+            const authToken = VueCookies.get("auth_token");
+            const headers = {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            };
 
-            // const response = await axios.get("/api/mahasiswa/tugas-akhir/ujian-ta", { headers });
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            dataNilaiUjianTA.value = {
-                dosen_penguji: [
-                    {
-                        id: null,//1,
-                        nama: null,//"Prof. Dr. Budi Santoso, M.Kom",
-                        nilai_ujian_ta: {
-                            id: null,//1,
-                            kualitas_tata_laporan: null,//80,
-                            kemampuan_teknis: null,//85,
-                            kualitas_produk: null,//90,
-                            presentasi: null,//90,
-                            rerata_ujian: null,//85,
-                        }
-                    },
-                    {
-                        id: null,//2,
-                        nama: null,//"Dr. Siti Aminah, M.T.",
-                        nilai_ujian_ta: {
-                            id: null,//2,
-                            kualitas_tata_laporan: null,//80,
-                            kemampuan_teknis: null,//85,
-                            kualitas_produk: null,//90,
-                            presentasi: null,//90,
-                            rerata_ujian: null,//85,
-                        }
-                    },
-                    {
-                        id: null,//3,
-                        nama: null,//"Dr. Ahmad Fauzi, M.Kom",
-                        nilai_ujian_ta: {
-                            id: null,//3,
-                            kualitas_tata_laporan: null,//80,
-                            kemampuan_teknis: null,//85,
-                            kualitas_produk: null,//90,
-                            presentasi: null,//90,
-                            rerata_ujian: null,//85,
-                        }
-                    }
-                ]
-            }
+            const response = await axios.get("/api/mahasiswa/ujian-ta/nilai-ujian", { headers });
+            dataNilaiUjianTA.value = response.data.data;
+            // await new Promise(resolve => setTimeout(resolve, 1000));
+            // dataNilaiUjianTA.value = {
+            //     dosen_penguji: [
+            //         {
+            //             id: null,//1,
+            //             nama: null,//"Prof. Dr. Budi Santoso, M.Kom",
+            //             nilai_ujian_ta: {
+            //                 id: null,//1,
+            //                 kualitas_tata_laporan: null,//80,
+            //                 kemampuan_teknis: null,//85,
+            //                 kualitas_produk: null,//90,
+            //                 presentasi: null,//90,
+            //                 rerata_ujian: null,//85,
+            //             }
+            //         },
+            //         {
+            //             id: null,//2,
+            //             nama: null,//"Dr. Siti Aminah, M.T.",
+            //             nilai_ujian_ta: {
+            //                 id: null,//2,
+            //                 kualitas_tata_laporan: null,//80,
+            //                 kemampuan_teknis: null,//85,
+            //                 kualitas_produk: null,//90,
+            //                 presentasi: null,//90,
+            //                 rerata_ujian: null,//85,
+            //             }
+            //         },
+            //         {
+            //             id: null,//3,
+            //             nama: null,//"Dr. Ahmad Fauzi, M.Kom",
+            //             nilai_ujian_ta: {
+            //                 id: null,//3,
+            //                 kualitas_tata_laporan: null,//80,
+            //                 kemampuan_teknis: null,//85,
+            //                 kualitas_produk: null,//90,
+            //                 presentasi: null,//90,
+            //                 rerata_ujian: null,//85,
+            //             }
+            //         }
+            //     ]
+            // }
         } catch (err) {
             handleError(err);
         } finally {
@@ -296,55 +356,15 @@ export function useJadwalUjianTA() {
     const fetchData = async () => {
         loadingJadwalUjianTA.value = true;
         try {
-            // const authToken = VueCookies.get("auth_token");
-            // const headers = {
-            //     'Authorization': `Bearer ${authToken}`,
-            //     'Content-Type': 'application/json',
-            //     'Accept': 'application/json'
-            // };
+            const authToken = VueCookies.get("auth_token");
+            const headers = {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            };
 
-            // const response = await axios.get("/api/mahasiswa/tugas-akhir/ujian-ta", { headers });
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            dataJadwalUjianTA.value = {
-                ujian_ta: {
-                    tugas_akhir: 1,
-                    id: 1,
-                    ruang: {
-                        id: 1,
-                        nama: "Lab. Jaringan",
-                    },
-                    tanggal: "2024-05-01",
-                    sesi: {
-                        id: 1,
-                        nama: "Pagi",
-                        waktu_mulai: "08:00",
-                        waktu_selesai: "10:00",
-                    },
-                },
-                dosen_penguji: [
-                    {
-                        dosen: {
-                            id: 1,
-                            nama: "Prof. Dr. Budi Santoso, M.Kom",
-                        },
-                        jabatan: "Sekretaris"
-                    },
-                    {
-                        dosen: {
-                            id: 2,
-                            nama: "Dr. Siti Aminah, M.T.",
-                        },
-                        jabatan: "Ketua"
-                    },
-                    {
-                        dosen: {
-                            id: 3,
-                            nama: "Dr. Ahmad Fauzi, M.Kom",
-                        },
-                        jabatan: "Penguji"
-                    }
-                ]
-            }
+            const response = await axios.get("/api/mahasiswa/ujian-ta/jadwal-ujian", { headers });
+            dataJadwalUjianTA.value = response.data.data;
         } catch (err) {
             handleError(err);
         } finally {
@@ -454,17 +474,32 @@ export const suratPerpanjanganMasaStudi = computed(() => {
     return getFileName(filePath);
 });
 
+// download url berkas
 
-// file berkas
-export const fileNaskahTA = computed(() => dataBerkasTA.value?.berkas?.find(berkas => berkas.nama_berkas === "Naskah Tugas Akhir")?.file_path || '');
-export const fileTranskripNilai = computed(() => dataBerkasTA.value?.berkas?.find(berkas => berkas.nama_berkas === "Transkrip Nilai Mahasiswa")?.file_path || '');
-export const fileKRS = computed(() => dataBerkasTA.value?.berkas?.find(berkas => berkas.nama_berkas === "Scan KRS Semester Akhir")?.file_path || '');
-export const fileBuktiPersetujuanPembimbing = computed(() => dataBerkasTA.value?.berkas?.find(berkas => berkas.nama_berkas === "Bukti Persetujuan Pembimbing")?.file_path || '');
-export const fileBuktiSertifikatKompetensi = computed(() => dataBerkasTA.value?.berkas?.find(berkas => berkas.nama_berkas === "Bukti Sertifikat Kompetensi")?.file_path || '');
-export const fileSertifikatTOEIC = computed(() => dataBerkasTA.value?.berkas?.find(berkas => berkas.nama_berkas === "Sertifikat TOEIC")?.file_path || '');
-export const fileBeritaAcaraSeminarHasil = computed(() => dataBerkasTA.value?.berkas?.find(berkas => berkas.nama_berkas === "Berita Acara Seminar Hasil")?.file_path || '');
-export const fileSuratPerpanjanganMasaStudi = computed(() => dataBerkasTA.value?.berkas?.find(berkas => berkas.nama_berkas === "Surat Perpanjangan Masa Studi")?.file_path || '');
-
+export const fileNaskahTA = computed(() => {
+    return dataBerkasTA.value?.berkas?.find(berkas => berkas.nama_berkas === "Naskah Tugas Akhir")?.download_url || '';
+});
+export const fileTranskripNilai = computed(() => {
+    return dataBerkasTA.value?.berkas?.find(berkas => berkas.nama_berkas === "Transkrip Nilai Mahasiswa")?.download_url || '';
+});
+export const fileKRS = computed(() => {
+    return dataBerkasTA.value?.berkas?.find(berkas => berkas.nama_berkas === "Scan KRS Semester Akhir")?.download_url || '';
+});
+export const fileBuktiPersetujuanPembimbing = computed(() => {
+    return dataBerkasTA.value?.berkas?.find(berkas => berkas.nama_berkas === "Bukti Persetujuan Pembimbing")?.download_url || '';
+});
+export const fileBuktiSertifikatKompetensi = computed(() => {
+    return dataBerkasTA.value?.berkas?.find(berkas => berkas.nama_berkas === "Bukti Sertifikat Kompetensi")?.download_url || '';
+});
+export const fileSertifikatTOEIC = computed(() => {
+    return dataBerkasTA.value?.berkas?.find(berkas => berkas.nama_berkas === "Sertifikat TOEIC")?.download_url || '';
+});
+export const fileBeritaAcaraSeminarHasil = computed(() => {
+    return dataBerkasTA.value?.berkas?.find(berkas => berkas.nama_berkas === "Berita Acara Seminar Hasil")?.download_url || '';
+});
+export const fileSuratPerpanjanganMasaStudi = computed(() => {
+    return dataBerkasTA.value?.berkas?.find(berkas => berkas.nama_berkas === "Surat Perpanjangan Masa Studi")?.download_url || '';
+});
 // status berkas
 export const statusBerkasNaskahTA = computed(() => {
     const found = dataBerkasTA.value?.berkas?.find(berkas => berkas.nama_berkas === "Naskah Tugas Akhir");
@@ -519,6 +554,14 @@ export const daftarPenguji = computed(() => {
 });
 
 // --- Nilai Ujian TA ---
+export const catatanRevisi = computed(() => {
+    const penguji = dataNilaiUjianTA.value?.dosen_penguji || [];
+    // Return array of { nama, revisi }
+    return penguji.map(d => ({
+        nama: d.nama || '',
+        revisi: d.revisi || ''
+    }));
+});
 export const rataRataNilaiUjianTA = computed(() => {
     const penguji = dataNilaiUjianTA.value?.dosen_penguji || [];
     if (penguji.length === 0) return {
@@ -571,4 +614,18 @@ export const presentasi = computed(() => {
 export const rerata_ujian = computed(() => {
     return rataRataNilaiUjianTA.value.rerata_ujian;
 });
+
+// --- FILE PDF ---
+export async function getFileBlobUrl(downloadUrl) {
+    const authToken = VueCookies.get("auth_token");
+    const response = await fetch(downloadUrl, {
+        headers: {
+            Authorization: `Bearer ${authToken}`,
+            Accept: "application/pdf"
+        }
+    });
+    if (!response.ok) throw new Error("Gagal mengambil file");
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+}
 

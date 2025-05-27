@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import Button from '@/components/Tugas-akhir/Button.vue';
 import InputText from '@/components/Tugas-akhir/Forms/InputText.vue';
 import InputFile from '@/components/Tugas-akhir/Forms/InputFile.vue';
@@ -26,10 +26,16 @@ import {
   formConfig,
   STATUS,
   judulProposalTA,
-
 } from '@/services/TugasAkhir/Mhs/proposal.js';
+import { getUserData } from '@/services/authMahasiswa.js';
+import { useToast } from 'vue-toastification'; // Tambahkan ini
 
-const { loadingProposal, errorProposal } = useProposal();
+const userData = getUserData();
+const username = userData?.name || userData?.email?.split('@')[0] || 'User';
+const nim = userData?.nim || '';
+
+const { loadingProposal, errorProposal, fetchData, submitProposal, updateProposal, dataProposal } = useProposal();
+const toast = useToast(); // Tambahkan ini
 
 // App State
 const modalRef = ref(false);
@@ -44,20 +50,64 @@ const showModal = () => {
   modalRef.value = true;
 };
 
-const handleSubmit = () => {
-  // Implement form submission logic here
-  console.log('Form submitted');
+const handleSubmit = async () => {
+  if (!judulProposal.value || !fileProposal.value || !fileTranskrip.value) {
+    toast.error('Semua field harus diisi!');
+    return;
+  }
+  const payload = {
+    judul_proposal: judulProposal.value,
+    file_proposal: fileProposal.value,
+    file_transkrip: fileTranskrip.value,
+  };
+  const success = await submitProposal(payload);
+  if (success) {
+    fetchData();
+    // Optional: reset form jika ingin
+    // judulProposal.value = '';
+    // fileProposal.value = null;
+    // fileTranskrip.value = null;
+  }
+};
+
+const handleUpdate = async () => {
+  if (!judulProposal.value || !fileProposal.value || !fileTranskrip.value) {
+    toast.error('Semua field harus diisi!');
+    return;
+  }
+  const payload = {
+    id: dataProposal.value?.proposal?.id,
+    judul_proposal: judulProposal.value,
+    file_proposal: fileProposal.value,
+    file_transkrip: fileTranskrip.value,
+  };
+  const success = await updateProposal(payload);
+  if (success) {
+    fetchData();
+    // Optional: reset form jika ingin
+  }
+  console.log('judulProposal:', judulProposal.value)
 };
 
 // Disabled logic
-const isNaskahDisabled = computed(() =>
-  Number(naskahProposalTAStatus.value) === STATUS.WAITING ||
-  Number(naskahProposalTAStatus.value) === STATUS.ACCEPTED
-);
-
-const isTranskripDisabled = computed(() =>
-  Number(transkripNilaiMahasiswaStatus.value) === STATUS.WAITING ||
-  Number(transkripNilaiMahasiswaStatus.value) === STATUS.ACCEPTED
+const isNaskahDisabled = computed(() => {
+  const status = Number(naskahProposalTAStatus.value);
+  if (naskahProposalTAStatus.value == null) return false;
+  return status === STATUS.WAITING || status === STATUS.ACCEPTED;
+});
+const isTranskripDisabled = computed(() => {
+  if (transkripNilaiMahasiswaStatus.value === null || transkripNilaiMahasiswaStatus.value === undefined) return false;
+  const status = Number(transkripNilaiMahasiswaStatus.value);
+  return status === STATUS.WAITING || status === STATUS.ACCEPTED;
+});
+watch(
+  () => judulProposalTA.value,
+  (val) => {
+    if (!judulProposal.value || judulProposal.value === '' || judulProposal.value === undefined) {
+      judulProposal.value = val || '';
+    }
+  },
+  { immediate: true }
 );
 </script>
 
@@ -99,10 +149,10 @@ const isTranskripDisabled = computed(() =>
         </div>
 
         <!-- Form Section -->
-        <form @submit.prevent="handleSubmit" class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
+        <form class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
           <div class="flex flex-col gap-4">
             <InputText :class="formConfig.wrapperClass" id="judul-proposal-ta" label="Judul Proposal Tugas Akhir"
-              placeholder="Masukkan judul proposal tugas akhir" v-model="judulProposal" :value="judulProposalTA"
+              placeholder="Masukkan judul proposal tugas akhir" v-model="judulProposal"
               :disabled="formConfig.isDisabled" />
             <InputFile :class="`${formConfig.wrapperClass} ${isNaskahDisabled ? 'opacity-50' : ''}`"
               id="naskah-proposal-ta" label="Naskah Proposal Tugas Akhir" v-model="fileProposal"
@@ -117,12 +167,25 @@ const isTranskripDisabled = computed(() =>
           <!-- Action Buttons -->
           <div class="flex items-center self-end gap-4">
             <!-- Submit Button - show for new proposal or rejected proposal -->
-            <template v-if="formConfig.showSubmitButton">
-              <Button variant="primary" size="lg" type="submit" class="self-end hidden w-fit sm:flex">
+            <template
+              v-if="formConfig.showSubmitButton && (naskahProposalTAStatus === null && transkripNilaiMahasiswaStatus === null)">
+              <Button variant="primary" size="lg" type="button" class="self-end hidden w-fit sm:flex"
+                @click="handleSubmit">
                 Kirim
               </Button>
-              <Button variant="primary" size="md" type="submit" class="self-end w-fit sm:hidden">
+              <Button variant="primary" size="md" type="button" class="self-end w-fit sm:hidden" @click="handleSubmit">
                 Kirim
+              </Button>
+            </template>
+
+            <template
+              v-if="formConfig.showSubmitButton && (naskahProposalTAStatus === STATUS.REJECTED || transkripNilaiMahasiswaStatus === STATUS.REJECTED)">
+              <Button variant="primary" size="lg" type="button" class="self-end hidden w-fit sm:flex"
+                @click="handleUpdate">
+                Kirim Ulang
+              </Button>
+              <Button variant="primary" size="md" type="button" class="self-end w-fit sm:hidden" @click="handleUpdate">
+                Kirim Ulang
               </Button>
             </template>
 
@@ -136,12 +199,10 @@ const isTranskripDisabled = computed(() =>
                     d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
                 </svg>
               </Tooltip>
-
               <Button variant="success" @click="showModal" type="button" size="lg"
                 :class="`w-fit sm:flex hidden ${!dinilai ? 'opacity-50' : 'opacity-100'}`" :disabled="!dinilai">
                 Lihat Nilai
               </Button>
-
               <Button variant="success" @click="showModal" type="button" size="md"
                 :class="`w-fit sm:hidden ${!dinilai ? 'opacity-50' : 'opacity-100'}`" :disabled="!dinilai">
                 Lihat Nilai
@@ -153,7 +214,7 @@ const isTranskripDisabled = computed(() =>
 
       <!-- Modal for viewing proposal score -->
       <DefaultModal v-if="modalRef" @close="modalRef = false" headText="Nilai Seminar Proposal"
-        bodyText="Nama Mahasiswa | V3423999 | Judul Tugas Akhir">
+        :bodyText="`${username} | ${nim} | ${judulProposalTA}`">
         <div class="flex flex-col gap-4 mt-4">
           <InputText id="nilai-proposal-ta" label="Nilai Proposal Tugas Akhir" v-model="nilaiProposalTA"
             :value="nilaiProposalTA" :disabled="true" />

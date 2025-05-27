@@ -18,88 +18,15 @@ export function useBimbingan() {
   const fetchData = async () => {
     loadingBimbingan.value = true;
     try {
-      // const authToken = VueCookies.get("auth_token");
-      // const headers = {
-      //     'Authorization': `Bearer ${authToken}`,
-      //     'Content-Type': 'application/json',
-      //     'Accept': 'application/json'
-      // };
+      const authToken = VueCookies.get("auth_token");
+      const headers = {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+      };
 
-      // const response = await axios.get("/api/mahasiswa/tugas-akhir/bimbingan", { headers });
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      dataBimbingan.value = [
-        {
-          id: 1,
-          tanggal_bimbingan: '2024-05-01',
-          bab: 1,
-          catatan: 'Revisi BAB I',
-          status_verifikasi: 1
-        },
-        {
-          id: 2,
-          tanggal_bimbingan: '2024-05-10',
-          bab: 2,
-          catatan: 'Lanjutkan ke BAB II',
-          status_verifikasi: 2
-        },
-        {
-          id: 3,
-          tanggal_bimbingan: '2024-05-15',
-          bab: 3,
-          catatan: 'Revisi BAB III',
-          status_verifikasi: 1
-        },
-        {
-          id: 4,
-          tanggal_bimbingan: '2024-05-20',
-          bab: 4,
-          catatan: 'Lanjutkan ke BAB IV',
-          status_verifikasi: 1
-        },
-        {
-          id: 5,
-          tanggal_bimbingan: '2024-05-25',
-          bab: 5,
-          catatan: 'Revisi BAB V',
-          status_verifikasi: 1
-        },
-        {
-          id: 6,
-          tanggal_bimbingan: '2024-05-30',
-          bab: 5,
-          catatan: 'Lanjutkan ke BAB V',
-          status_verifikasi: 2
-        },
-        {
-          id: 7,
-          tanggal_bimbingan: '2024-06-05',
-          bab: 5,
-          catatan: 'Revisi BAB V',
-          status_verifikasi: 1
-        },
-        {
-          id: 8,
-          tanggal_bimbingan: '2024-06-10',
-          bab: 5,
-          catatan: 'Lanjutkan ke BAB V',
-          status_verifikasi: 2
-        },
-        {
-          id: 9,
-          tanggal_bimbingan: '2024-06-15',
-          bab: 4,
-          catatan: 'Revisi BAB IV',
-          status_verifikasi: 1
-        },
-        {
-          id: 10,
-          tanggal_bimbingan: '2024-06-20',
-          bab: 4,
-          catatan: 'Lanjutkan ke BAB V',
-          status_verifikasi: 0
-        }
-      ]
-        ;
+      const response = await axios.get("/api/mahasiswa/bimbingan/list-bimbingan", { headers });
+      dataBimbingan.value = response.data.data;
     } catch (err) {
       handleError(err);
     } finally {
@@ -113,7 +40,33 @@ export function useBimbingan() {
       router.push("/mahasiswa/login");
     } else {
       errorBimbingan.value = err.response?.data?.message || "Terjadi kesalahan";
-      toast.error(error.value);
+      toast.error(errorBimbingan.value);
+    }
+  };
+
+  const submitBimbingan = async ({ tanggal_bimbingan, bab, catatan }) => {
+    loadingBimbingan.value = true;
+    try {
+      const authToken = VueCookies.get("auth_token");
+      const headers = {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+      const formData = {
+        tanggal_bimbingan,
+        bab,
+        catatan
+      };
+      await axios.post('/api/mahasiswa/bimbingan', formData, { headers });
+      toast.success('Bimbingan berhasil ditambahkan, Silahkan tunggu verifikasi dari dosen pembimbing Anda.');
+      await fetchData(); 
+      return true;
+    } catch (error) {
+      toast.error('Gagal menambah bimbingan: ' + (error.response?.data?.message || error.message));
+      return false;
+    } finally {
+      loadingBimbingan.value = false;
     }
   };
 
@@ -149,6 +102,7 @@ export function useBimbingan() {
     errorBimbingan,
     dataBimbingan,
     fetchData,
+    submitBimbingan,
   };
 }
 
@@ -163,77 +117,15 @@ export function useRequestPembimbing() {
   const fetchRequestData = async () => {
     loadingRequest.value = true;
     try {
-      // const authToken = VueCookies.get("auth_token");
-      // const headers = {
-      //     'Authorization': `Bearer ${authToken}`,
-      //     'Content-Type': 'application/json',
-      //     'Accept': 'application/json'
-      // };
-
-      // const response = await axios.get("/api/mahasiswa/tugas-akhir/request-pembimbing", { headers });
-
-      // Simulasi delay network
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Data dummy untuk request pembimbing
-      dataRequestPembimbing.value = {
-        tugas_akhir: {
-          id: 1,
-          status_active: 1,
-          dosen_pembimbing: {
-            id: 1,
-            nama: 'Dr. Budi Santoso',
-          },
-          kategori: {
-            id: 1,
-            nama: 'Internet of Things',
-          },
-          request_pembimbing: {
-            id: 1,
-            status_request: 1,
-            dosen: {
-              id: 1,
-              nama: 'Dr. Budi Santoso',
-              nik: '123456',
-            }
-          },
-          tahun_ajaran: {
-            id: 1,
-            tahun_ajaran: '2024/2025',
-          },
-        },
-        list_kategori: [
-          {
-            id: 1,
-            name: 'Internet of Things',
-          },
-          {
-            id: 2,
-            name: 'Virtual Reality',
-          },
-        ],
-        list_dosen: [
-          {
-            id: 1,
-            name: 'Dr. Budi Santoso',
-            nik: '123456',
-          },
-          {
-            id: 2,
-            name: 'Prof. John Batubara',
-            nik: '654321',
-          },
-          {
-            id: 3,
-            name: 'Dr. Jane Doe',
-            nik: '789012',
-          }
-        ],
-        default_tahun_ajaran: {
-          id: 1,
-          tahun_ajaran: '2024/2025',
-        },
+      const authToken = VueCookies.get("auth_token");
+      const headers = {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
       };
+
+      const response = await axios.get("/api/mahasiswa/bimbingan/request-pembimbing", { headers });
+      dataRequestPembimbing.value = response.data.data;
     } catch (err) {
       handleRequestError(err);
     } finally {
@@ -255,11 +147,15 @@ export function useRequestPembimbing() {
   const submitRequestPembimbing = async (data) => {
     loadingRequest.value = true;
     try {
-      // Simulasi network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Simulasi respon sukses
-      toast.success("Permintaan pembimbing berhasil dikirim");
+      const authToken = VueCookies.get("auth_token");
+      const headers = {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+      // POST ke endpoint API request pembimbing
+      const response = await axios.post("/api/mahasiswa/request-pembimbing/", data, { headers });
+      toast.success("Permintaan pembimbing berhasil dikirim, Silahkan tunggu respon dari dosen pembimbing Anda.");
       return true;
     } catch (err) {
       handleRequestError(err);
@@ -268,6 +164,8 @@ export function useRequestPembimbing() {
       loadingRequest.value = false;
     }
   };
+
+  
 
   onMounted(() => {
     fetchRequestData();
@@ -282,7 +180,7 @@ export function useRequestPembimbing() {
     errorRequest,
     dataRequestPembimbing,
     fetchRequestData,
-    submitRequestPembimbing
+    submitRequestPembimbing,
   };
 }
 
@@ -356,7 +254,7 @@ export const waitingResponse = computed(() => dataRequestPembimbing.value?.tugas
 export const declined = computed(() => dataRequestPembimbing.value?.tugas_akhir?.request_pembimbing?.status_request === 2);
 
 export const formattedBimbinganData = computed(() => {
-  if (!dataBimbingan.value.length) return [];
+  if (!dataBimbingan.value || !dataBimbingan.value.length) return [];
   return dataBimbingan.value.map((item, index) => ({
     no: (index + 1).toString(),
     tanggal: formatDate(item.tanggal_bimbingan),

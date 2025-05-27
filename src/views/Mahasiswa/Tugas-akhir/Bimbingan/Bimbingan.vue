@@ -11,6 +11,7 @@ import Table from '@/components/Tugas-akhir/Table.vue';
 import Loading from '@/components/Loading.vue';
 import ErrorMsg from '@/components/ErrorMsg.vue';
 import ModalTimer from '@/components/Tugas-akhir/Modals/ModalTimer.vue';
+import DefaultAvatar from '@/assets/images/Profile Avatar.svg';
 import {
   useBimbingan,
   useRequestPembimbing,
@@ -31,12 +32,14 @@ import {
   selectedPembimbing,
   namaPembimbing
 } from '@/services/TugasAkhir/Mhs/bimbingan.js';
+import { useToast } from 'vue-toastification'; // Tambahkan ini
 
 const { loadingBimbingan, errorBimbingan, highestBAB } = useBimbingan();
 
 const { loadingRequest,
   errorRequest,
-  submitRequestPembimbing }
+  submitRequestPembimbing,
+  fetchRequestData }
   = useRequestPembimbing();
 
 // Dummy dosen
@@ -50,12 +53,33 @@ const selectedCategory = ref('');
 const showModal = ref(false);
 
 // ============================================
+// COMPUTED PROPERTIES
+// ============================================
+
+const isSubmitDisabled = computed(() => !selectedDosenData.value || !selectedCategory.value || loadingRequest.value);
+
+// ============================================
 // METHODS & HANDLERS
 // ============================================
 
 const openModal = () => { showModal.value = true; };
 const closeModal = () => { showModal.value = false; };
-const handleSubmit = () => { console.log('Form submitted'); };
+const toast = useToast(); // Tambahkan ini
+const handleSubmit = async () => {
+  if (!selectedCategory.value || !selectedPembimbing.value) return;
+  const payload = {
+    kategori_id: selectedCategory.value,
+    dosen_id: selectedPembimbing.value,
+  };
+  const success = await submitRequestPembimbing(payload);
+  if (success) {
+    closeModal();
+    // Refresh data request pembimbing agar UI update
+    await fetchRequestData();
+  } else {
+    toast.error('Gagal mengirim permintaan pembimbing.');
+  }
+};
 const handleRowClick = (item) => { console.log('Baris yang diklik:', item); };
 
 </script>
@@ -90,8 +114,8 @@ const handleRowClick = (item) => { console.log('Baris yang diklik:', item); };
               placeholder="Pilih kategori tugas akhir" v-model="selectedCategory" />
 
             <!-- Input Tahun Ajaran (Disabled) -->
-            <InputText id="tahun-ajaran" label="Tahun Ajaran" placeholder="Tahun Ajaran" :value="defaultTahunAjaran"
-              :disabled="true" />
+            <InputText id="tahun-ajaran" label="Tahun Ajaran" placeholder="Tahun Ajaran"
+              :modelValue="defaultTahunAjaran" :disabled="true" />
 
             <!-- Input Dosen Pembimbing -->
             <InputDropdown class="sm:col-span-2" id="dosen-dropdown" label="Dosen Pembimbing" :options="pembimbings"
@@ -102,11 +126,7 @@ const handleRowClick = (item) => { console.log('Baris yang diklik:', item); };
           <div class="flex gap-2 sm:gap-4">
             <div v-if="selectedDosenData" class="flex gap-2 sm:gap-4">
               <!-- Icon Dosen -->
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                stroke="currentColor" class="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-              </svg>
+              <img :src="DefaultAvatar" alt="" class="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16">
 
               <!-- Informasi Dosen -->
               <div class="self-center">
@@ -118,7 +138,7 @@ const handleRowClick = (item) => { console.log('Baris yang diklik:', item); };
 
           <!-- Tombol Submit -->
           <Button class="self-end w-fit" type="button" variant="primary" size="lg" @click="openModal"
-            :disabled="!selectedDosenData || !selectedCategory">
+            :disabled="isSubmitDisabled">
             Kirim
           </Button>
         </form>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, reactive } from 'vue';
+import { ref, computed, reactive, watch } from 'vue';
 import Button from '@/components/Tugas-akhir/Button.vue';
 import InputText from '@/components/Tugas-akhir/Forms/InputText.vue';
 import InputFile from '@/components/Tugas-akhir/Forms/InputFile.vue';
@@ -48,16 +48,18 @@ import {
   daftarPenguji
 } from '@/services/TugasAkhir/Mhs/ujianTA.js';
 import { getUserData } from '@/services/authMahasiswa'
+import { useToast } from 'vue-toastification';
 
 const userData = getUserData();
 const username = userData?.name || userData?.email?.split('@')[0] || 'User';
 const nim = userData?.nim || '';
 
-const { loadingTugasAkhir, errorTugasAkhir } = useTugasAkhir();
-const { loadingBerkasTA, errorBerkasTA } = useBerkasTA();
-const { loadingJadwalUjianTA, errorJadwalUjianTA } = useJadwalUjianTA();
+const { loadingTugasAkhir, errorTugasAkhir, submitUjianTA, updateUjianTA, fetchData, dataTugasAkhir } = useTugasAkhir();
+const { loadingBerkasTA, errorBerkasTA, fetchDataBerkas } = useBerkasTA();
+const { loadingJadwalUjianTA, errorJadwalUjianTA, dataJadwalUjianTA } = useJadwalUjianTA();
+const toast = useToast();
 
-const terjadwal= computed(() => jadwalUjianTA.value?.ujian_ta?.id !== null && jadwalUjianTA.value?.ujian_ta?.id !== undefined);
+const terjadwal = computed(() => dataJadwalUjianTA.value?.ujian_ta?.id !== null && dataJadwalUjianTA.value?.ujian_ta?.id !== undefined);
 
 const STATUS = {
   NULL: null,
@@ -70,15 +72,15 @@ const STATUS = {
 const modalRef = ref(false);
 
 // Form file inputs
-const filePersetujuanPembimbingUpload = ref(null);
-const fileTranskripUpload = ref(null);
-const fileSertifikatUpload = ref(null);
-const fileTOEICUpload = ref(null);
-const fileBeritaAcaraUpload = ref(null);
-const filePerpanjanganMasaStudiUpload = ref(null);
-const fileNaskahTAUpload = ref(null);
-const fileKRSUpload = ref(null);
-const judulTugasAkhirUpload = ref('');
+const judulTA = ref('');
+const fileNaskah = ref(null);
+const fileTranskrip = ref(null);
+const fileKRSLocal = ref(null);
+const filePersetujuanPembimbing = ref(null);
+const fileSertifikatKompetensi = ref(null);
+const fileTOEIC = ref(null);
+const fileBeritaAcara = ref(null);
+const filePerpanjanganMasaStudi = ref(null);
 
 // Computed Properties
 const minimalBimbingan = computed(() => {
@@ -159,57 +161,97 @@ const userDataConfig = computed(() => {
   return config;
 });
 
-// Disabled logic
-const isNaskahDisabled = computed(() => {
-  if (statusBerkasNaskahTA.value === null || statusBerkasNaskahTA.value === undefined) return false;
-  const status = Number(statusBerkasNaskahTA.value);
-  return status === STATUS.WAITING || status === STATUS.ACCEPTED;
-});
-const isTranskripDisabled = computed(() => {
-  if (statusBerkasTranskripNilai.value === null || statusBerkasTranskripNilai.value === undefined) return false;
-  const status = Number(statusBerkasTranskripNilai.value);
-  return status === STATUS.WAITING || status === STATUS.ACCEPTED;
-});
-const isKRSDisabled = computed(() => {
-  if (statusBerkasKRS.value === null || statusBerkasKRS.value === undefined) return false;
-  const status = Number(statusBerkasKRS.value);
-  return status === STATUS.WAITING || status === STATUS.ACCEPTED;
-});
-const isBuktiPersetujuanPembimbingDisabled = computed(() => {
-  if (statusBerkasBuktiPersetujuanPembimbing.value === null || statusBerkasBuktiPersetujuanPembimbing.value === undefined) return false;
-  const status = Number(statusBerkasBuktiPersetujuanPembimbing.value);
-  return status === STATUS.WAITING || status === STATUS.ACCEPTED;
-});
-const isBuktiSertifikatKompetensiDisabled = computed(() => {
-  if (statusBerkasBuktiSertifikatKompetensi.value === null || statusBerkasBuktiSertifikatKompetensi.value === undefined) return false;
-  const status = Number(statusBerkasBuktiSertifikatKompetensi.value);
-  return status === STATUS.WAITING || status === STATUS.ACCEPTED;
-});
-const isSertifikatTOEICDisabled = computed(() => {
-  if (statusBerkasSertifikatTOEIC.value === null || statusBerkasSertifikatTOEIC.value === undefined) return false;
-  const status = Number(statusBerkasSertifikatTOEIC.value);
-  return status === STATUS.WAITING || status === STATUS.ACCEPTED;
-});
-const isBeritaAcaraSeminarHasilDisabled = computed(() => {
-  if (statusBerkasBeritaAcaraSeminarHasil.value === null || statusBerkasBeritaAcaraSeminarHasil.value === undefined) return false;
-  const status = Number(statusBerkasBeritaAcaraSeminarHasil.value);
-  return status === STATUS.WAITING || status === STATUS.ACCEPTED;
-});
-const isSuratPerpanjanganMasaStudiDisabled = computed(() => {
-  if (statusBerkasSuratPerpanjanganMasaStudi.value === null || statusBerkasSuratPerpanjanganMasaStudi.value === undefined) return false;
-  const status = Number(statusBerkasSuratPerpanjanganMasaStudi.value);
-  return status === STATUS.WAITING || status === STATUS.ACCEPTED;
-});
+// Helper modular untuk disabled file input
+function isFileDisabled(status) {
+  if (status === null || status === undefined) return false;
+  const s = Number(status);
+  return s === STATUS.WAITING || s === STATUS.ACCEPTED;
+}
+
+// Modular computed untuk setiap file
+const isNaskahDisabled = computed(() => isFileDisabled(statusBerkasNaskahTA.value));
+const isTranskripDisabled = computed(() => isFileDisabled(statusBerkasTranskripNilai.value));
+const isKRSDisabled = computed(() => isFileDisabled(statusBerkasKRS.value));
+const isBuktiPersetujuanPembimbingDisabled = computed(() => isFileDisabled(statusBerkasBuktiPersetujuanPembimbing.value));
+const isBuktiSertifikatKompetensiDisabled = computed(() => isFileDisabled(statusBerkasBuktiSertifikatKompetensi.value));
+const isSertifikatTOEICDisabled = computed(() => isFileDisabled(statusBerkasSertifikatTOEIC.value));
+const isBeritaAcaraSeminarHasilDisabled = computed(() => isFileDisabled(statusBerkasBeritaAcaraSeminarHasil.value));
+const isSuratPerpanjanganMasaStudiDisabled = computed(() => isFileDisabled(statusBerkasSuratPerpanjanganMasaStudi.value));
 
 // Methods
 const showModal = () => {
   modalRef.value = true;
 };
 
-const handleSubmit = () => {
-  console.log('Form submitted');
-  // Add form submission logic here
+const handleSubmit = async () => {
+  // Validasi field wajib
+  if (!judulTA.value || !fileNaskah.value || !fileTranskrip.value) {
+    toast.error('Judul, Naskah, dan Transkrip wajib diisi!');
+    return;
+  }
+  const payload = {
+    judul_ta: judulTA.value,
+    file_naskah: fileNaskah.value,
+    file_transkrip: fileTranskrip.value,
+    file_krs: fileKRSLocal.value,
+    file_persetujuan_pembimbing: filePersetujuanPembimbing.value,
+    file_sertifikat_kompetensi: fileSertifikatKompetensi.value,
+    file_toeic: fileTOEIC.value,
+    file_berita_acara: fileBeritaAcara.value,
+    file_perpanjangan_masa_studi: filePerpanjanganMasaStudi.value,
+  };
+  const success = await submitUjianTA(payload);
+  if (success) {
+    fetchData();
+    fetchDataBerkas();
+    toast.success('Pengajuan Ujian TA berhasil dikirim!');
+  } else {
+    toast.error('Gagal mengirim pengajuan Ujian TA.');
+  }
 };
+
+const handleUpdate = async () => {
+  const id = dataTugasAkhir.value?.tugas_akhir?.id;
+  if (!id) {
+    toast.error('ID Tugas Akhir tidak ditemukan!');
+    return;
+  }
+  if (!judulTA.value || !fileNaskah.value || !fileTranskrip.value) {
+    toast.error('Judul, Naskah, dan Transkrip wajib diisi!');
+    return;
+  }
+  const payload = {
+    id,
+    judul_ta: judulTA.value,
+    file_naskah: fileNaskah.value,
+    file_transkrip: fileTranskrip.value,
+    file_krs: fileKRSLocal.value,
+    file_persetujuan_pembimbing: filePersetujuanPembimbing.value,
+    file_sertifikat_kompetensi: fileSertifikatKompetensi.value,
+    file_toeic: fileTOEIC.value,
+    file_berita_acara: fileBeritaAcara.value,
+    file_perpanjangan_masa_studi: filePerpanjanganMasaStudi.value,
+  };
+  const success = await updateUjianTA(payload);
+  if (success) {
+    fetchData();
+    fetchDataBerkas();
+    toast.success('Pengajuan Ujian TA berhasil diupdate!');
+  } else {
+    toast.error('Gagal mengupdate pengajuan Ujian TA.');
+  }
+};
+
+watch(
+  () => judulTugasAkhir.value,
+  (val) => {
+    // Selalu update judulTA jika belum pernah diubah user
+    if (!judulTA.value) {
+      judulTA.value = val || '';
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
@@ -257,51 +299,77 @@ const handleSubmit = () => {
           <form @submit.prevent="handleSubmit" class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
             <div class="flex flex-col gap-4">
               <!-- Common form fields -->
-              <InputText :class="formConfig.wrapperClass" id="judul-ta" label="Judul Tugas Akhir" placeholder="Masukkan judul tugas akhir"
-                v-model="judulTugasAkhirUpload" :value="judulTugasAkhir ?? ''" :disabled="formConfig.isDisabled"  />
+              <InputText :class="formConfig.wrapperClass" id="judul-ta" label="Judul Tugas Akhir"
+                placeholder="Masukkan judul tugas akhir" v-model="judulTA" :disabled="formConfig.isDisabled" />
 
               <!-- All the file uploads -->
-              <InputFile :class="`${formConfig.wrapperClass} ${isNaskahDisabled ? 'opacity-50' : ''}`" id="naskah-ta" label="Naskah Tugas Akhir" v-model="fileNaskahTAUpload" :existingFileName="naskahTA"
+              <InputFile :class="`${formConfig.wrapperClass} ${isNaskahDisabled ? 'opacity-50' : ''}`" id="naskah-ta"
+                label="Naskah Tugas Akhir" v-model="fileNaskah" :existingFileName="naskahTA"
                 :existingFileUrl="fileNaskahTA" :disabled="isNaskahDisabled" />
 
-              <InputFile :class="`${formConfig.wrapperClass} ${isKRSDisabled ? 'opacity-50' : ''}`" id="krs-semester-terakhir" label="Scan KRS Semester Terakhir" v-model="fileKRSUpload"
+              <InputFile :class="`${formConfig.wrapperClass} ${isKRSDisabled ? 'opacity-50' : ''}`"
+                id="krs-semester-terakhir" label="Scan KRS Semester Terakhir" v-model="fileKRSLocal"
                 :existingFileName="krs" :existingFileUrl="fileKRS" :disabled="isKRSDisabled" />
 
-              <InputFile :class="`${formConfig.wrapperClass} ${isBuktiPersetujuanPembimbingDisabled ? 'opacity-50' : ''}`" id="bukti-persetujuan-pembimbing" label="Bukti Persetujuan Pembimbing"
-                v-model="filePersetujuanPembimbingUpload" :existingFileName="buktiPersetujuanPembimbing"
-                :existingFileUrl="fileBuktiPersetujuanPembimbing" :disabled="isBuktiPersetujuanPembimbingDisabled"  />
+              <InputFile
+                :class="`${formConfig.wrapperClass} ${isBuktiPersetujuanPembimbingDisabled ? 'opacity-50' : ''}`"
+                id="bukti-persetujuan-pembimbing" label="Bukti Persetujuan Pembimbing"
+                v-model="filePersetujuanPembimbing" :existingFileName="buktiPersetujuanPembimbing"
+                :existingFileUrl="fileBuktiPersetujuanPembimbing" :disabled="isBuktiPersetujuanPembimbingDisabled" />
 
-              <InputFile :class="`${formConfig.wrapperClass} ${isTranskripDisabled ? 'opacity-50' : ''}`" id="transkrip-nilai-mahasiswa" label="Transkrip Nilai Mahasiswa" v-model="fileTranskripUpload"
+              <InputFile :class="`${formConfig.wrapperClass} ${isTranskripDisabled ? 'opacity-50' : ''}`"
+                id="transkrip-nilai-mahasiswa" label="Transkrip Nilai Mahasiswa" v-model="fileTranskrip"
                 :existingFileName="transkripNilai" :existingFileUrl="fileTranskripNilai"
-                :disabled="isTranskripDisabled"  />
+                :disabled="isTranskripDisabled" />
 
-              <InputFile :class="`${formConfig.wrapperClass} ${isBuktiSertifikatKompetensiDisabled ? 'opacity-50' : ''}`" id="bukti-sertifikat-kompetensi" label="Bukti Sertifikat Kompetensi" v-model="fileSertifikatUpload"
+              <InputFile
+                :class="`${formConfig.wrapperClass} ${isBuktiSertifikatKompetensiDisabled ? 'opacity-50' : ''}`"
+                id="bukti-sertifikat-kompetensi" label="Bukti Sertifikat Kompetensi" v-model="fileSertifikatKompetensi"
                 :existingFileName="buktiSertifikatKompetensi" :existingFileUrl="fileBuktiSertifikatKompetensi"
                 :disabled="isBuktiSertifikatKompetensiDisabled" />
 
-              <InputFile :class="`${formConfig.wrapperClass} ${isSertifikatTOEICDisabled ? 'opacity-50' : ''}`" id="sertifikat-toeic" label="Sertifikat TOEIC" v-model="fileTOEICUpload"
-                :existingFileName="sertifikatTOEIC" :existingFileUrl="fileSertifikatTOEIC"
-                :disabled="isSertifikatTOEICDisabled" />
+              <InputFile :class="`${formConfig.wrapperClass} ${isSertifikatTOEICDisabled ? 'opacity-50' : ''}`"
+                id="sertifikat-toeic" label="Sertifikat TOEIC" v-model="fileTOEIC" :existingFileName="sertifikatTOEIC"
+                :existingFileUrl="fileSertifikatTOEIC" :disabled="isSertifikatTOEICDisabled" />
 
-              <InputFile :class="`${formConfig.wrapperClass} ${isBeritaAcaraSeminarHasilDisabled ? 'opacity-50' : ''}`" id="berita-acara-seminar-hasil" label="Berita Acara Seminar Hasil" v-model="fileBeritaAcaraUpload"
+              <InputFile :class="`${formConfig.wrapperClass} ${isBeritaAcaraSeminarHasilDisabled ? 'opacity-50' : ''}`"
+                id="berita-acara-seminar-hasil" label="Berita Acara Seminar Hasil" v-model="fileBeritaAcara"
                 :existingFileName="beritaAcaraSeminarHasil" :existingFileUrl="fileBeritaAcaraSeminarHasil"
                 :disabled="isBeritaAcaraSeminarHasilDisabled" />
 
               <!-- Optional field -->
-              <InputFile :class="`${formConfig.wrapperClass} ${isSuratPerpanjanganMasaStudiDisabled ? 'opacity-50' : ''}`" id="surat-perpanjangan-masa-studi" label="Surat Perpanjangan Masa Studi"
-                v-model="filePerpanjanganMasaStudiUpload" :existingFileName="suratPerpanjanganMasaStudi"
+              <InputFile
+                :class="`${formConfig.wrapperClass} ${isSuratPerpanjanganMasaStudiDisabled ? 'opacity-50' : ''}`"
+                id="surat-perpanjangan-masa-studi" label="Surat Perpanjangan Masa Studi"
+                v-model="filePerpanjanganMasaStudi" :existingFileName="suratPerpanjanganMasaStudi"
                 :existingFileUrl="fileSuratPerpanjanganMasaStudi" :disabled="isSuratPerpanjanganMasaStudiDisabled" />
             </div>
 
             <!-- Action Buttons -->
             <div class="flex items-center self-end gap-4">
               <!-- Submit Button - show for new or rejected application -->
-              <template v-if="formConfig.showSubmitButton">
-                <Button variant="primary" size="lg" type="submit" class="self-end hidden w-fit sm:flex">
+              <template
+                v-if="formConfig.showSubmitButton && statusBerkasNaskahTA === null && statusBerkasTranskripNilai === null">
+                <Button variant="primary" size="lg" type="button" class="self-end hidden w-fit sm:flex"
+                  @click="handleSubmit">
                   Kirim
                 </Button>
-                <Button variant="primary" size="md" type="submit" class="self-end w-fit sm:hidden">
+                <Button variant="primary" size="md" type="button" class="self-end w-fit sm:hidden"
+                  @click="handleSubmit">
                   Kirim
+                </Button>
+              </template>
+
+              <!-- Tombol Update untuk pengajuan ditolak -->
+              <template
+                v-if="formConfig.showSubmitButton && (statusBerkasNaskahTA === 2 || statusBerkasTranskripNilai === 2)">
+                <Button variant="primary" size="lg" type="button" class="self-end hidden w-fit sm:flex"
+                  @click="handleUpdate">
+                  Kirim Ulang
+                </Button>
+                <Button variant="primary" size="md" type="button" class="self-end w-fit sm:hidden"
+                  @click="handleUpdate">
+                  Kirim Ulang
                 </Button>
               </template>
 
@@ -342,7 +410,7 @@ const handleSubmit = () => {
 
           <!-- Schedule Modal -->
           <DefaultModal v-if="modalRef" @close="modalRef = false" headText="Jadwal Ujian Tugas Akhir"
-          :bodyText="`${username} | ${nim} | ${judulTugasAkhir}`">
+            :bodyText="`${username} | ${nim} | ${judulTugasAkhir}`">
             <JadwalUjian :examiners="daftarPenguji" :jadwal="jadwalUjianTA" />
           </DefaultModal>
         </div>
@@ -350,4 +418,3 @@ const handleSubmit = () => {
     </div>
   </div>
 </template>
-

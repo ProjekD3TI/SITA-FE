@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watchEffect } from 'vue';
+import { ref, computed, watchEffect, onMounted } from 'vue';
 import Breadcrumb from '@/components/Tugas-akhir/Breadcrumb.vue';
 import JadwalUjian from '@/components/Tugas-akhir/JadwalUjian.vue';
 import Button from '@/components/Tugas-akhir/Button.vue';
@@ -27,6 +27,9 @@ import {
   dataTugasAkhir,
   dataNilaiUjianTA,
   rataRataNilaiUjianTA,
+  catatanRevisi,
+  fileNaskahTA,
+  getFileBlobUrl,
 } from '@/services/TugasAkhir/Mhs/ujianTA.js';
 import { getUserData } from '@/services/authMahasiswa'
 
@@ -35,7 +38,7 @@ const username = userData?.name || userData?.email?.split('@')[0] || 'User';
 const nim = userData?.nim || '';
 
 const { loadingTugasAkhir, errorTugasAkhir } = useTugasAkhir();
-const { loadingJadwalUjianTA, errorJadwalUjianTA } = useJadwalUjianTA();
+const { loadingJadwalUjianTA, errorJadwalUjianTA, dataJadwalUjianTA } = useJadwalUjianTA();
 const { loadingNilaiUjianTA, errorNilaiUjianTA } = useNilaiUjianTA();
 
 const dinilai = computed(() => {
@@ -52,8 +55,9 @@ const dinilai = computed(() => {
 });
 const showNilaiModal = ref(false);
 
-// PDF handling
-const fileNaskahTA = computed(() => dataTugasAkhir.value?.berkas?.find(berkas => berkas.nama_berkas === "Naskah Tugas Akhir")?.file_path || '');
+const pdfBlobUrl = ref(null);
+const loadingPdf = ref(false);
+const errorPdf = ref(null);
 
 // Methods
 const openNilaiModal = () => {
@@ -64,9 +68,34 @@ const closeNilaiModal = () => {
   showNilaiModal.value = false;
 };
 
+async function loadPdfPreview() {
+  loadingPdf.value = true;
+  errorPdf.value = null;
+  try {
+    if (fileNaskahTA.value) {
+      pdfBlobUrl.value = await getFileBlobUrl(fileNaskahTA.value);
+    }
+  } catch (err) {
+    errorPdf.value = "Gagal memuat file PDF";
+  } finally {
+    loadingPdf.value = false;
+  }
+}
+
+// Muat ulang jika fileNaskahTA berubah
+watchEffect(() => {
+  if (fileNaskahTA.value) {
+    loadPdfPreview();
+  }
+});
+
 // Computed properties
 const buttonClasses = computed(() => {
   return dinilai.value ? 'opacity-100' : 'opacity-50';
+});
+watchEffect(() => {
+  console.log('dataNilaiUjianTA', dataNilaiUjianTA.value);
+  console.log('rataRataNilaiUjianTA', rataRataNilaiUjianTA.value);
 });
 </script>
 
@@ -84,7 +113,7 @@ const buttonClasses = computed(() => {
     <Breadcrumb />
 
     <!-- Jadwal Section -->
-    <div class="p-6 bg-white card-rounded lg:p-8">
+    <div v-if="dataJadwalUjianTA?.ujian_ta?.id" class="p-6 bg-white card-rounded lg:p-8">
       <div class="mx-auto max-w-screen-2xl">
         <JadwalUjian :examiners="daftarPenguji" :jadwal="jadwalUjianTA" />
       </div>
@@ -96,12 +125,16 @@ const buttonClasses = computed(() => {
         <div class="flex flex-col md:flex-row">
           <!-- PDF Preview (Left Side) -->
           <div class="order-last basis-7/12 md:pe-8 md:order-first">
-            <object :data="fileNaskahTA" type="application/pdf" class="w-full h-[750px] mt-6 md:mt-0">
+            <div v-if="loadingPdf" class="py-8 text-center">Memuat file...</div>
+            <div v-else-if="errorPdf" class="py-8 text-center text-red-500">{{ errorPdf }}</div>
+            <object v-else-if="pdfBlobUrl" :data="pdfBlobUrl" type="application/pdf"
+              class="w-full h-[750px] mt-6 md:mt-0">
               <p class="p-4 text-center">
                 Browser Anda tidak mendukung tampilan PDF.
-                <a :href="fileNaskahTA" target="_blank" class="text-primary">Klik di sini</a> untuk membuka PDF.
+                <a :href="pdfBlobUrl" target="_blank" class="text-primary">Klik di sini</a> untuk membuka PDF.
               </p>
             </object>
+            <div v-else class="py-8 text-center">Tidak ada file untuk ditampilkan.</div>
           </div>
 
           <!-- Details (Right Side) -->
@@ -158,17 +191,29 @@ const buttonClasses = computed(() => {
     <DefaultModal v-if="showNilaiModal" @close="closeNilaiModal" headText="Nilai Ujian Tugas Akhir"
       :bodyText="`${username} | ${nim} | ${judulTugasAkhir}`">
       <div class="flex flex-col gap-4 mt-4">
-        <h5 class="body1-bold text-primary">Status Kelulusan</h5>
+        <h5 class="body3-bold lg:body1-bold text-primary">Status Kelulusan</h5>
 
-        <h5 class="body1-bold text-primary">Nilai Ujian</h5>
-        <InputText id="kualitas_tata_laporan" label="Kualitas Tata Laporan (15%)" :value="kualitas_tata_laporan"
-          disabled />
-        <InputText id="kemampuan_teknis" label="Kemampuan Teknis (35%)" :value="kemampuan_teknis" disabled />
-        <InputText id="kualitas_produk" label="Kualitas Produk yang Dihasilkan(25%)" :value="kualitas_produk"
-          disabled />
-        <InputText id="presentasi" label="Presentasi dan Question Handling(25%)" :value="presentasi" disabled />
-        <h5 class="body1-bold text-primary">Nilai Akhir Ujian</h5>
-        <InputText id="rerata_ujian" label="Nilai Rata-rata" :value="rerata_ujian" disabled />
+        <h5 class="body3-bold lg:body1-bold text-primary">Nilai Ujian</h5>
+        <div class="flex flex-wrap gap-2">
+          <InputText class="flex-grow mb-2" id="kualitas_tata_laporan" label="Kualitas Tata Laporan (15%)"
+            :modelValue="kualitas_tata_laporan" disabled />
+          <InputText class="flex-grow mb-2" id="kemampuan_teknis" label="Kemampuan Teknis (35%)"
+            :modelValue="kemampuan_teknis" disabled />
+          <InputText class="flex-grow mb-2" id="kualitas_produk" label="Kualitas Produk yang Dihasilkan(25%)"
+            :modelValue="kualitas_produk" disabled />
+          <InputText class="flex-grow mb-2" id="presentasi" label="Presentasi dan Question Handling(25%)"
+            :modelValue="presentasi" disabled />
+        </div>
+        <InputText id="rerata_ujian" label="Nilai Rata-rata" :modelValue="rerata_ujian" disabled />
+        <h5 class="body3-bold lg:body1-bold text-primary">Catatan Revisi</h5>
+        <div class="flex flex-col gap-2">
+          <template v-for="(item, idx) in catatanRevisi" :key="idx">
+            <InputTextarea :id="`catatan_revisi_${idx + 1}`" :label="`${item.nama}`" :modelValue="item.revisi"
+              disabled />
+          </template>
+
+        </div>
+
       </div>
     </DefaultModal>
   </div>

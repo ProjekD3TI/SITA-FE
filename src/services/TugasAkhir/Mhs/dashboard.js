@@ -6,6 +6,11 @@ import VueCookies from "vue-cookies";
 
 // --- STATE GLOBAL ---
 const dataDashboard = ref(null);
+export const dataStatusCard = ref([
+    { status_request: null },
+    { status_proposal: null },
+    { status_valid: null }
+]);
 
 // --- API SIMULASI ---
 export function useDashboard() {
@@ -71,56 +76,34 @@ export const STATUS = {
 export const StatusCardIdentifier = ref(0);
 export const statuses = {
     reqBimbingan: ref(STATUS.PLACEHOLDER),
-    proposal: ref(STATUS.WAITING),
-    ujianTA: ref(STATUS.WAITING),
+    proposal: ref(STATUS.PLACEHOLDER),
+    ujianTA: ref(STATUS.PLACEHOLDER),
 };
 
-export const dataStatusCard = ref([
-    {
-        request_pembimbing_id: null,
-        dosen_pembimbing: null,
-        status_request: null,
-    },
-    {
-        proposal_id: null,
-        status_proposal: null,
-    },
-    {
-        tugas_akhir_id: null,
-        status_valid: null,
-    },
-]);
-
+// Refactored updateStatusCard for better readability
 export function updateStatusCard() {
     const [req, prop, ujian] = dataStatusCard.value;
-    if (req.status_request === 0 && prop.status_proposal == null && ujian.status_valid == null) {
-        statuses.reqBimbingan.value = STATUS.WAITING;
+
+    if (req.status_request !== null && prop.status_proposal == null && ujian.status_valid == null) {
+        statuses.reqBimbingan.value = req.status_request;
         StatusCardIdentifier.value = 0;
-    } else if (req.status_request === 1 && prop.status_proposal == null && ujian.status_valid == null) {
-        statuses.reqBimbingan.value = STATUS.ACCEPTED;
-        StatusCardIdentifier.value = 0;
-    } else if (req.status_request === 2 && prop.status_proposal == null && ujian.status_valid == null) {
-        statuses.reqBimbingan.value = STATUS.REJECTED;
-        StatusCardIdentifier.value = 0;
-    } else if (prop.status_proposal === 0 && ujian.status_valid == null) {
-        statuses.proposal.value = STATUS.WAITING;
-        StatusCardIdentifier.value = 1;
-    } else if (prop.status_proposal === 1 && ujian.status_valid == null) {
-        statuses.proposal.value = STATUS.ACCEPTED;
-        StatusCardIdentifier.value = 1;
-    } else if (prop.status_proposal === 2 && ujian.status_valid == null) {
-        statuses.proposal.value = STATUS.REJECTED;
-        StatusCardIdentifier.value = 1;
-    } else if (ujian.status_valid === 0) {
-        statuses.ujianTA.value = STATUS.WAITING;
-        StatusCardIdentifier.value = 2;
-    } else if (ujian.status_valid === 1) {
-        statuses.ujianTA.value = STATUS.ACCEPTED;
-        StatusCardIdentifier.value = 2;
-    } else if (ujian.status_valid === 2) {
-        statuses.ujianTA.value = STATUS.REJECTED;
-        StatusCardIdentifier.value = 2;
+        return;
     }
+    if (prop.status_proposal !== null && ujian.status_valid == null) {
+        statuses.proposal.value = prop.status_proposal;
+        StatusCardIdentifier.value = 1;
+        return;
+    }
+    if (ujian.status_valid !== null) {
+        statuses.ujianTA.value = ujian.status_valid;
+        StatusCardIdentifier.value = 2;
+        return;
+    }
+    // Default fallback
+    statuses.reqBimbingan.value = STATUS.PLACEHOLDER;
+    statuses.proposal.value = STATUS.PLACEHOLDER;
+    statuses.ujianTA.value = STATUS.PLACEHOLDER;
+    StatusCardIdentifier.value = 0;
 }
 
 watch(dataStatusCard, updateStatusCard, { immediate: true });
@@ -156,7 +139,7 @@ watch(dataDashboard, (val) => {
             {
                 request_pembimbing_id: val.request_pembimbing?.id ?? null,
                 dosen_pembimbing: val.dosen_pembimbing?.id ?? null,
-                status_request: val.request_pembimbing?.stattus ?? null,
+                status_request: val.request_pembimbing?.status ?? null, // typo fixed
             },
             {
                 proposal_id: val.proposal?.id ?? null,
@@ -196,12 +179,26 @@ export const TanggalUjian = computed(() => formatTanggal(dataDashboard.value?.ta
 export const currentFlowStep = computed(() => {
     const data = dataDashboard.value;
     if (!data) return -1;
-    if (data.nilai_akhir !== null) return 5;
-    if (data.status_valid === 1) return 4;
-    if (data.bimbingan?.total_bimbingan >= 9) return 3;
-    if (data.proposal?.proposal !== null) return 2;
-    if (data.proposal?.id !== null) return 1;
-    if (data.dosen_pembimbing !== null) return 0;
-    return -1;
+
+    // Step 0: Sudah punya dosen pembimbing
+    if (data.dosen_pembimbing == null) return -1;
+
+    // Step 1: Sudah punya proposal
+    if (data.proposal?.id == null) return 0;
+
+    // Step 2: Proposal sudah dinilai (ada catatan)
+    if (data.proposal?.catatan == null) return 1;
+
+    // Step 3: Bimbingan minimal 9
+    if (!data.bimbingan || data.bimbingan.total_bimbingan < 9) return 2;
+
+    // Step 4: Ujian TA sudah valid
+    if (data.status_valid !== 1) return 3;
+
+    // Step 5: Sudah ada nilai akhir
+    if (data.nilai_akhir == null) return 4;
+
+    // Selesai semua step
+    return 5;
 });
 
