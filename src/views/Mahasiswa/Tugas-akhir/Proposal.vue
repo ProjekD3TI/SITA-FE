@@ -71,8 +71,17 @@ const handleSubmit = async () => {
 };
 
 const handleUpdate = async () => {
-  if (!judulProposal.value || !fileProposal.value || !fileTranskrip.value) {
-    toast.error('Semua field harus diisi!');
+  // Cek field yang tidak disable harus diisi
+  if (!isNaskahDisabled.value && !fileProposal.value) {
+    toast.error('File Naskah Proposal Tugas Akhir harus diisi/diperbarui!');
+    return;
+  }
+  if (!isTranskripDisabled.value && !fileTranskrip.value) {
+    toast.error('File Transkrip Nilai Mahasiswa harus diisi/diperbarui!');
+    return;
+  }
+  if (!judulProposal.value) {
+    toast.error('Judul Proposal harus diisi/diperbarui!');
     return;
   }
   const payload = {

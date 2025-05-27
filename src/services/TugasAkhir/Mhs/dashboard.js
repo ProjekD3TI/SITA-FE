@@ -184,7 +184,7 @@ export const currentFlowStep = computed(() => {
     if (data.dosen_pembimbing == null) return -1;
 
     // Step 1: Sudah punya proposal
-    if (data.proposal?.id == null) return 0;
+    if (data.proposal?.status !== 1) return 0;
 
     // Step 2: Proposal sudah dinilai (ada catatan)
     if (data.proposal?.catatan == null) return 1;

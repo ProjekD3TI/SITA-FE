@@ -34,7 +34,7 @@ const props = defineProps({
           <img :src="DefaultAvatar" alt="" class="w-14 h-14">
           <div class="">
             <p class="body3 sm:body2">{{ examiner.name }}</p>
-            <p class="body3-bold sm:body2-bold text-primary">{{ examiner.role }}</p>
+            <p class="capitalize body3-bold sm:body2-bold text-primary">{{ examiner.role }}</p>
           </div>
         </div>
       </div>

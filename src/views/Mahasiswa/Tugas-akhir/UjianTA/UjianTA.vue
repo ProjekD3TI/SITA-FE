@@ -185,8 +185,8 @@ const showModal = () => {
 
 const handleSubmit = async () => {
   // Validasi field wajib
-  if (!judulTA.value || !fileNaskah.value || !fileTranskrip.value) {
-    toast.error('Judul, Naskah, dan Transkrip wajib diisi!');
+  if (!judulTA.value || !fileNaskah.value || !fileTranskrip.value || !fileKRSLocal.value || !filePersetujuanPembimbing.value || !fileSertifikatKompetensi.value || !fileTOEIC.value || !fileBeritaAcara.value) {
+    toast.error('Semua field wajib harus diisi!');
     return;
   }
   const payload = {
@@ -204,7 +204,7 @@ const handleSubmit = async () => {
   if (success) {
     fetchData();
     fetchDataBerkas();
-    toast.success('Pengajuan Ujian TA berhasil dikirim!');
+    // toast.success('Pengajuan Ujian TA berhasil dikirim!');
   } else {
     toast.error('Gagal mengirim pengajuan Ujian TA.');
   }
@@ -216,10 +216,39 @@ const handleUpdate = async () => {
     toast.error('ID Tugas Akhir tidak ditemukan!');
     return;
   }
-  if (!judulTA.value || !fileNaskah.value || !fileTranskrip.value) {
-    toast.error('Judul, Naskah, dan Transkrip wajib diisi!');
+  if (!judulTA.value) {
+    toast.error('Judul Tugas Akhir harus diisi/diperbarui!');
     return;
   }
+  if (!isNaskahDisabled.value && !fileNaskah.value) {
+    toast.error('File Naskah Tugas Akhir harus diisi/diperbarui!');
+    return;
+  }
+  if (!isTranskripDisabled.value && !fileTranskrip.value) {
+    toast.error('File Transkrip Nilai Mahasiswa harus diisi/diperbarui!');
+    return;
+  }
+  if (!isKRSDisabled.value && !fileKRSLocal.value) {
+    toast.error('File Scan KRS Semester Terakhir harus diisi/diperbarui!');
+    return;
+  }
+  if (!isBuktiPersetujuanPembimbingDisabled.value && !filePersetujuanPembimbing.value) {
+    toast.error('File Bukti Persetujuan Pembimbing harus diisi/diperbarui!');
+    return;
+  }
+  if (!isBuktiSertifikatKompetensiDisabled.value && !fileSertifikatKompetensi.value) {
+    toast.error('File Bukti Sertifikat Kompetensi harus diisi/diperbarui!');
+    return;
+  }
+  if (!isSertifikatTOEICDisabled.value && !fileTOEIC.value) {
+    toast.error('File Sertifikat TOEIC harus diisi/diperbarui!');
+    return;
+  }
+  if (!isBeritaAcaraSeminarHasilDisabled.value && !fileBeritaAcara.value) {
+    toast.error('File Berita Acara Seminar Hasil harus diisi/diperbarui!');
+    return;
+  }
+
   const payload = {
     id,
     judul_ta: judulTA.value,
@@ -236,7 +265,7 @@ const handleUpdate = async () => {
   if (success) {
     fetchData();
     fetchDataBerkas();
-    toast.success('Pengajuan Ujian TA berhasil diupdate!');
+    // toast.success('Pengajuan Ujian TA berhasil diupdate!');
   } else {
     toast.error('Gagal mengupdate pengajuan Ujian TA.');
   }
@@ -340,7 +369,7 @@ watch(
               <!-- Optional field -->
               <InputFile
                 :class="`${formConfig.wrapperClass} ${isSuratPerpanjanganMasaStudiDisabled ? 'opacity-50' : ''}`"
-                id="surat-perpanjangan-masa-studi" label="Surat Perpanjangan Masa Studi"
+                id="surat-perpanjangan-masa-studi" label="Surat Perpanjangan Masa Studi (Opsional)"
                 v-model="filePerpanjanganMasaStudi" :existingFileName="suratPerpanjanganMasaStudi"
                 :existingFileUrl="fileSuratPerpanjanganMasaStudi" :disabled="isSuratPerpanjanganMasaStudiDisabled" />
             </div>

@@ -69,7 +69,7 @@ export function useTugasAkhir() {
             if (file_perpanjangan_masa_studi) formData.append("surat_perpanjangan_studi", file_perpanjangan_masa_studi);
 
             await axios.post("/api/mahasiswa/tugas-akhir/daftar", formData, { headers });
-            toast.success("Ujian TA berhasil dikirim!");
+            toast.success("Pendaftaran Ujian TA berhasil dikirim!");
             return true;
         } catch (err) {
             handleError(err, router, toast);
@@ -113,7 +113,7 @@ export function useTugasAkhir() {
             if (file_perpanjangan_masa_studi) formData.append("surat_perpanjangan_studi", file_perpanjangan_masa_studi);
 
             await axios.post(`/api/mahasiswa/tugas-akhir/${id}/update`, formData, { headers });
-            toast.success("Ujian TA berhasil diupdate!");
+            toast.success("Pengajuan Ujian TA berhasil diupdate!");
             return true;
         } catch (err) {
             handleError(err, router, toast);
@@ -549,7 +549,7 @@ export const daftarPenguji = computed(() => {
     const pengujiArr = dataJadwalUjianTA.value?.dosen_penguji || [];
     return pengujiArr.map(dosen => ({
         name: dosen.dosen?.nama || '',
-        role: dosen.jabatan || ''
+        role: dosen.dosen?.jabatan || ''
     }));
 });
 
