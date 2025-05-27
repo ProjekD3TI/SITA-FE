@@ -7,6 +7,9 @@ import Button from "@/components/Tugas-akhir/Button.vue";
 import ModalDeleteRuangSesi from "@/components/Tugas-akhir/Modals/ModalDeleteRuang&sesi.vue";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import Table from "@/components/Tugas-akhir/Table.vue";
+import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
+import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
+import InputTime from "@/components/Tugas-akhir/Forms/InputTime.vue";
 
 // Data tab
 const tabs = [
@@ -217,19 +220,30 @@ const confirmDeleteSesi = (sesi) => {
       </Table>
 
       <!-- Modal Tambah/Edit Ruang -->
-      <Modal
-        :show="isModalOpen"
-        :title="isEditing ? 'Edit Ruang' : 'Tambah Ruang'"
+      <DefaultModal
+        v-if="isModalOpen"
+        :headText="isEditing ? 'Edit Ruang' : 'Tambah Ruang'"
+        bodyText=""
         @close="isModalOpen = false"
-        @submit="saveRuang"
       >
-        <input
-          v-model="selectedRuang.name"
-          type="text"
-          class="w-full p-2 border rounded"
-          placeholder="Masukkan Nama ruang"
-        />
-      </Modal>
+        <div class="mt-4">
+          <InputText
+            id="room-name"
+            label="Nama Ruang"
+            placeholder="Masukkan Nama ruang"
+            :value="selectedRuang.name"
+            @update:value="(value) => (selectedRuang.name = value)"
+          />
+          <div class="flex justify-end mt-4 gap-2">
+            <Button variant="danger" @click="isModalOpen = false">
+              Batal
+            </Button>
+            <Button variant="primary" @click="saveRuang">
+              {{ isEditing ? "Simpan" : "Tambah" }}
+            </Button>
+          </div>
+        </div>
+      </DefaultModal>
 
       <!-- Modal Konfirmasi Hapus Ruang -->
       <ModalDeleteRuangSesi
@@ -315,65 +329,45 @@ const confirmDeleteSesi = (sesi) => {
       </Table>
 
       <!-- Modal Tambah/Edit Sesi dengan 3 input field -->
-      <Modal
-        :show="isModalOpenSesi"
-        :title="isEditingSesi ? 'Edit Sesi' : 'Tambah Sesi'"
+      <DefaultModal
+        v-if="isModalOpenSesi"
+        :headText="isEditingSesi ? 'Edit Sesi' : 'Tambah Sesi'"
+        bodyText=""
         @close="isModalOpenSesi = false"
-        @submit="saveSesi"
       >
-        <div class="space-y-4">
-          <!-- Input Nama Sesi -->
-          <div>
-            <label
-              for="nama_sesi"
-              class="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Nama Sesi
-            </label>
-            <input
-              id="nama_sesi"
-              v-model="selectedSesi.name"
-              type="text"
-              class="w-full p-2 border rounded"
-              placeholder="Masukkan nama sesi"
-            />
-          </div>
+        <div class="mt-4">
+          <InputText
+            id="session-name"
+            label="Nama Sesi"
+            placeholder="Masukkan nama sesi"
+            :value="selectedSesi.name"
+            @update:value="(value) => (selectedSesi.name = value)"
+          />
 
-          <!-- Input Waktu Mulai -->
-          <div>
-            <label
-              for="waktu_mulai"
-              class="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Waktu Mulai
-            </label>
-            <input
-              id="waktu_mulai"
-              v-model="selectedSesi.waktu_mulai"
-              type="time"
-              class="w-full p-2 border rounded"
-              placeholder="08:00"
-            />
-          </div>
+          <InputTime
+            id="waktu_mulai"
+            label="Waktu Mulai"
+            :value="selectedSesi.waktu_mulai"
+            @update:value="(value) => (selectedSesi.waktu_mulai = value)"
+          />
 
-          <!-- Input Waktu Selesai -->
-          <div>
-            <label
-              for="waktu_selesai"
-              class="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Waktu Selesai
-            </label>
-            <input
-              id="waktu_selesai"
-              v-model="selectedSesi.waktu_selesai"
-              type="time"
-              class="w-full p-2 border rounded"
-              placeholder="10:00"
-            />
+          <InputTime
+            id="waktu_selesai"
+            label="Waktu Selesai"
+            :value="selectedSesi.waktu_selesai"
+            @update:value="(value) => (selectedSesi.waktu_selesai = value)"
+          />
+
+          <div class="flex justify-end mt-4 gap-2">
+            <Button variant="danger" @click="isModalOpenSesi = false">
+              Batal
+            </Button>
+            <Button variant="primary" @click="saveSesi">
+              {{ isEditingSesi ? "Simpan" : "Tambah" }}
+            </Button>
           </div>
         </div>
-      </Modal>
+      </DefaultModal>
 
       <!-- Modal Konfirmasi Hapus Sesi -->
       <ModalDeleteRuangSesi
