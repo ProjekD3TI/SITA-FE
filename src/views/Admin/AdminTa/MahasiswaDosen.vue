@@ -257,7 +257,7 @@ const tableHeadersDosen = ["Nama Lengkap", "NIP", "Email", "Status", "Aksi"];
           <td class="py-3 px-6 text-right">
             <div class="flex gap-2 justify-end">
               <Button
-                :variant="item.status === 'success' ? 'primary' : 'danger'"
+                :variant="item.status === 'success' ? 'danger' : 'primary'"
                 size="md"
                 @click.stop="toggleStudentStatus(item)"
                 :leftIconPath="
@@ -313,7 +313,7 @@ const tableHeadersDosen = ["Nama Lengkap", "NIP", "Email", "Status", "Aksi"];
           <td class="py-3 px-6 text-right">
             <div class="flex gap-2 justify-end">
               <Button
-                :variant="item.status === 'success' ? 'primary' : 'danger'"
+                :variant="item.status === 'success' ? 'danger' : 'primary'"
                 size="md"
                 @click.stop="toggleLecturerStatus(item)"
                 :leftIconPath="
