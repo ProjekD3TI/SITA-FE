@@ -1,6 +1,6 @@
 <template>
   <button :class="[
-    'button-rounded focus:outline-none transition-all flex items-center justify-center gap-2 active:scale-90 duration-200 ',
+    'button-rounded focus:outline-none transition-all flex items-center justify-center gap-2 active:scale-90 duration-200',
     variantClass,
     sizeClass,
     { 'opacity-50 cursor-not-allowed': disabled }
@@ -108,6 +108,8 @@ const variantClass = computed(() => {
       return 'border border-danger text-danger hover:bg-danger hover:text-white';
     case 'outlined-black':
       return 'border border-placeholder text-black ';
+    case 'transparent':
+      return 'text-secondary ';
     default:
       return 'bg-primary text-white hover:opacity-90';
   }
