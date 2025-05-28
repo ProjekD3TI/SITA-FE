@@ -418,13 +418,14 @@ const routes = [
       },
       {
         path: "bimbingan",
+        name: "BimbinganforAdmin",
         component: BimbinganforAdmin,
         meta: {
           breadcrumb: "Bimbingan",
         },
         children: [
           {
-            path: "plot-pembimbing/:nim",
+            path: "plot-pembimbing/:tugas_akhir_id",
             name: "PlotPembimbingForAdmin",
             component: PlotPembimbingForAdmin,
             meta: {
@@ -432,7 +433,7 @@ const routes = [
             },
           },
           {
-            path: "detail-bimbingan/:nim",
+            path: "detail-bimbingan/:tugas_akhir_id",
             name: "DetailBimbinganForAdmin",
             component: DetailBimbinganForAdmin,
             meta: {
