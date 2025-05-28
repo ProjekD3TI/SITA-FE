@@ -7,12 +7,18 @@ import DefaultAvatar from '@/assets/images/Profile Avatar.svg';
 import router from '@/router';
 import DoughnutChart from '@/components/Tugas-akhir/Dashboard/DoughnutChart.vue'
 import BarChart from '@/components/Tugas-akhir/Dashboard/BarChart.vue'
+import { useDashboard } from '@/services/TugasAkhir/Admin/dashboard.js';
+const { data, loading, error } = useDashboard();
 
-const ActiveTA = ref(2);
-const ScheduledUjian = ref(1);
-const TotalBimbingan = ref(8);
-const loading = ref(false);
-const error = ref(null);
+
+const proposalValid = computed(() => data.value?.validasi_berkas?.proposal?.valid ?? 0);
+const proposalMenunggu = computed(() => data.value?.validasi_berkas?.proposal?.menunggu ?? 0);
+const ujianValid = computed(() => data.value?.validasi_berkas?.ujian_tugas_akhir?.valid ?? 0);
+const ujianMenunggu = computed(() => data.value?.validasi_berkas?.ujian_tugas_akhir?.menunggu ?? 0);
+
+const ActiveTA = computed(() => data.value?.summary_card?.tugas_akhir_aktif ?? 0);
+const ScheduledUjian = computed(() => data.value?.summary_card?.ujian_terjadwal ?? 0);
+const TotalBimbingan = computed(() => data.value?.summary_card?.mahasiswa_tugas_akhir ?? 0);
 
 
 // Icon paths
@@ -34,95 +40,27 @@ const summaryCards = [
   {
     icon: iconPaths.book,
     iconColor: "danger",
-    title: ActiveTA.value,
+    title: ActiveTA,
     subtitle: "Tugas Akhir Aktif",
   },
   {
     icon: iconPaths.calendar,
     iconColor: "success",
-    title: ScheduledUjian.value,
+    title: ScheduledUjian,
     subtitle: "Ujian Terjadwal",
   },
   {
     icon: iconPaths.graduation,
     iconColor: "warning",
-    title: TotalBimbingan.value,
+    title: TotalBimbingan,
     subtitle: "Mahasiswa Terdaftar",
   },
 ];
 
 // Data dummy
-const tugas_akhirMhs = ref([
-  {
-    nim: '12345678',
-    nama: 'John Doe',
-    img: DefaultAvatar,
-    judul_ta: 'Sistem Informasi Akademik',
-    kategori: 'Sistem Informasi',
-    dosen_pembimbing: 'Dr. Budi Santoso',
-    status: '1',
-  },
-  {
-    nim: '87654321',
-    nama: 'Jane Smith',
-    img: DefaultAvatar,
-    judul_ta: 'Pengembangan Aplikasi Mobile',
-    kategori: 'Aplikasi Mobile',
-    dosen_pembimbing: 'Prof. Andi Wijaya',
-    status: '1',
-  },
-  {
-    nim: '11223344',
-    nama: 'Alice Johnson',
-    img: DefaultAvatar,
-    judul_ta: 'Analisis Data Big Data',
-    kategori: 'Data Science',
-    dosen_pembimbing: 'Dr. Clara Susanti',
-    status: '0',
-  },
-]);
-const proposalMhs = ref([
-  {
-    nim: '12345678',
-    nama: 'John Doe',
-    img: DefaultAvatar,
-    judul_proposal_ta: 'Sistem Informasi Akademik',
-    kategori: 'Sistem Informasi',
-    dosen_pembimbing: 'Dr. Budi Santoso',
-    nilai: 90,
-    catatan: 'Sangat Baik',
-    status: '1',
-  },
-  {
-    nim: '87654321',
-    nama: 'Jane Smith',
-    img: DefaultAvatar,
-    judul_proposal_ta: 'Pengembangan Aplikasi Mobile',
-    kategori: 'Aplikasi Mobile',
-    dosen_pembimbing: 'Prof. Andi Wijaya',
-    nilai: 85,
-    catatan: 'Baik',
-    status: '0',
-  },
-  {
-    nim: '11223344',
-    nama: 'Alice Johnson',
-    img: DefaultAvatar,
-    judul_proposal_ta: 'Analisis Data Big Data',
-    kategori: 'Data Science',
-    dosen_pembimbing: 'Dr. Clara Susanti',
-    nilai: null,
-    catatan: null,
-    status: '2',
-  },
-]);
 
-const filteredTugasAkhir = computed(() => {
-  return tugas_akhirMhs.value.filter((item) => item.status === '0');
-});
-const filteredPlottingProposal = computed(() => {
-  return proposalMhs.value.filter((item) => item.status === '0');
-});
+const filteredTugasAkhir = computed(() => data.value?.tabel_validasi_berkas_ujian ?? []);
+const filteredPlottingProposal = computed(() => data.value?.tabel_validasi_berkas_sempro ?? []);
 const handleRowClickProposal = (item) => {
   router.push({
     name: 'DetailPengajuanForAdmin',
@@ -161,6 +99,10 @@ const BarChartData = ref(
     ]
   }
 )
+
+watch(data, (val) => {
+  console.log('API dashboard:', val);
+});
 </script>
 <template>
   <Breadcrumb />
@@ -173,14 +115,14 @@ const BarChartData = ref(
         <Slide>
           <div>
             <DoughnutChart class="w-48 h-48 sm:w-52 sm:h-52" :labels="['Proposal Diterima', 'Proposal Menunggu']"
-              :dataValues="[10, 20]" insideText="Proposal" />
+              :dataValues="[proposalValid, proposalMenunggu]" insideText="Proposal" />
           </div>
 
         </Slide>
         <Slide>
           <div>
             <DoughnutChart class="w-48 h-48 sm:w-52 sm:h-52" :labels="['Ujian TA Diterima', 'Ujian TA Menunggu']"
-              :dataValues="[5, 3]" insideText="Ujian TA" />
+              :dataValues="[ujianValid, ujianMenunggu]" insideText="Ujian TA" />
           </div>
         </Slide>
         <template #addons>
@@ -233,11 +175,11 @@ const BarChartData = ref(
           <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
             <div class="flex items-center gap-2">
               <img v-if="item.img" :src="item.img" alt="Profile Image" class="w-8 h-8 rounded-full" />
-              {{ item.nama }}
+              {{ item.mahasiswa }}
             </div>
           </td>
           <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
-            {{ item.judul_proposal_ta }}
+            {{ item.judul }}
           </td>
         </template>
       </Table>
@@ -262,11 +204,11 @@ const BarChartData = ref(
           <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
             <div class="flex items-center gap-2">
               <img v-if="item.img" :src="item.img" alt="Profile Image" class="w-8 h-8 rounded-full" />
-              {{ item.nama }}
+              {{ item.mahasiswa }}
             </div>
           </td>
           <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
-            {{ item.judul_ta }}
+            {{ item.judul }}
           </td>
         </template>
       </Table>

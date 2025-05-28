@@ -5,7 +5,7 @@
       class="absolute flex items-center justify-center w-24 h-24 -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
       <div class="w-full text-center truncate body2-bold sm:body1-bold">
         <span v-if="showCenterTextValue">
-          <span class="text-primary">{{ centerText[0] }}</span>/<span class="text-secondary">{{ centerText[1] }}</span>
+          <span class="text-secondary">{{ centerText[0] }}</span>/<span class="text-primary">{{ centerText[1] }}</span>
         </span>
         <br v-if="showInsideText && showCenterTextValue" />
         <span v-if="showInsideText" class="body5">{{ insideText }}</span>
@@ -40,7 +40,7 @@ const props = defineProps({
   },
   backgroundColor: {
     type: Array,
-    default: () => ['#F78052', '#00A2EA']
+    default: () => ['#00A2EA', '#F78052']
   },
   showCenterText: {
     type: Boolean,
