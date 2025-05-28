@@ -114,7 +114,7 @@ watch(data, (val) => {
       <Carousel v-bind="carouselConfig">
         <Slide>
           <div>
-            <DoughnutChart class="w-48 h-48 sm:w-52 sm:h-52" :labels="['Tidak Valid', 'Valid']"
+            <DoughnutChart class="w-48 h-48 sm:w-52 sm:h-52" :labels="['Menunggu', 'Diterima']"
               :dataValues="[proposalMenunggu, proposalValid]"
               :centerTextValue="[proposalValid, proposalValid + proposalMenunggu]" insideText="Proposal" />
           </div>
@@ -122,7 +122,7 @@ watch(data, (val) => {
         </Slide>
         <Slide>
           <div>
-            <DoughnutChart class="w-48 h-48 sm:w-52 sm:h-52" :labels="['Ujian TA Menunggu', 'Ujian TA Diterima']"
+            <DoughnutChart class="w-48 h-48 sm:w-52 sm:h-52" :labels="['Menunggu', 'Diterima']"
               :dataValues="[ujianMenunggu, ujianValid]" :centerTextValue="[ujianValid, ujianMenunggu + ujianValid]"
               insideText="Ujian TA" />
           </div>
