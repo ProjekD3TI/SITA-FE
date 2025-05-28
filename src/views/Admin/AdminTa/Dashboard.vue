@@ -114,15 +114,17 @@ watch(data, (val) => {
       <Carousel v-bind="carouselConfig">
         <Slide>
           <div>
-            <DoughnutChart class="w-48 h-48 sm:w-52 sm:h-52" :labels="['Proposal Diterima', 'Proposal Menunggu']"
-              :dataValues="[proposalValid, proposalMenunggu]" insideText="Proposal" />
+            <DoughnutChart class="w-48 h-48 sm:w-52 sm:h-52" :labels="['Tidak Valid', 'Valid']"
+              :dataValues="[proposalMenunggu, proposalValid]"
+              :centerTextValue="[proposalValid, proposalValid + proposalMenunggu]" insideText="Proposal" />
           </div>
 
         </Slide>
         <Slide>
           <div>
-            <DoughnutChart class="w-48 h-48 sm:w-52 sm:h-52" :labels="['Ujian TA Diterima', 'Ujian TA Menunggu']"
-              :dataValues="[ujianValid, ujianMenunggu]" insideText="Ujian TA" />
+            <DoughnutChart class="w-48 h-48 sm:w-52 sm:h-52" :labels="['Ujian TA Menunggu', 'Ujian TA Diterima']"
+              :dataValues="[ujianMenunggu, ujianValid]" :centerTextValue="[ujianValid, ujianMenunggu + ujianValid]"
+              insideText="Ujian TA" />
           </div>
         </Slide>
         <template #addons>
@@ -182,6 +184,9 @@ watch(data, (val) => {
             {{ item.judul }}
           </td>
         </template>
+        <template #empty>
+
+        </template>
       </Table>
     </div>
     <div class="flex-grow p-4 mt-4 bg-white card-rounded lg:p-8">
@@ -210,6 +215,9 @@ watch(data, (val) => {
           <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
             {{ item.judul }}
           </td>
+        </template>
+        <template #empty>
+
         </template>
       </Table>
     </div>

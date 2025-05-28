@@ -11,11 +11,22 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(item, index) in paginatedItems" :key="index"
-            class="even:bg-even odd:bg-odd hover:bg-gray-200 text-left body5 sm:body4 rounded-lg active:scale-[0.99] duration-200 cursor-pointer"
-            @click="handleRowClick(item)">
-            <slot name="row" :item="item" />
-          </tr>
+          <template v-if="paginatedItems.length">
+            <tr v-for="(item, index) in paginatedItems" :key="index"
+              class="even:bg-even odd:bg-odd hover:bg-gray-200 text-left body5 sm:body4 rounded-lg active:scale-[0.99] duration-200 cursor-pointer"
+              @click="handleRowClick(item)">
+              <slot name="row" :item="item" />
+            </tr>
+          </template>
+          <template v-else>
+            <slot name="empty">
+              <tr>
+                <td :colspan="headers.length">
+                  <div class="text-center text-placeholder py-8">Tidak ada data</div>
+                </td>
+              </tr>
+            </slot>
+          </template>
         </tbody>
       </table>
 
