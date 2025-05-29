@@ -1,7 +1,6 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import TabDiv from "@/components/Tugas-akhir/TabDiv.vue";
-import Modal from "@/components/Tugas-akhir/Modals/ModalRuang&sesi.vue";
 import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import ModalDeleteRuangSesi from "@/components/Tugas-akhir/Modals/ModalDeleteRuang&sesi.vue";
@@ -10,6 +9,12 @@ import Table from "@/components/Tugas-akhir/Table.vue";
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputTime from "@/components/Tugas-akhir/Forms/InputTime.vue";
+import { useToast } from "vue-toastification";
+import { useRuang } from "@/services/TugasAkhir/Admin/ruang";
+import { useSesi } from "@/services/TugasAkhir/Admin/sesi";
+
+// Toast notifications
+const toast = useToast();
 
 // Data tab
 const tabs = [
@@ -29,60 +34,65 @@ const tabs = [
 const searchQuery = ref("");
 const handleSearch = () => {};
 
-// Data ruang
-const ruangs = ref([
-  { id: 1, name: "Lab. Mixed Reality" },
-  { id: 2, name: "Lab. Pemrograman" },
-  { id: 3, name: "Lab. Jaringan" },
-  { id: 4, name: "Lab. Rekayasa Perangkat Lunak" },
-  { id: 5, name: "Teaching Factory" },
-]);
+// === RUANG API ===
+const { 
+  data: ruangsData, 
+  loading: ruangLoading, 
+  error: ruangError, 
+  fetchData: fetchRuangs, 
+  addRuang, 
+  editRuang, 
+  deleteRuang 
+} = useRuang();
 
-// Data sesi - menambahkan properti waktu_mulai dan waktu_selesai
-const sesis = ref([
-  { id: 1, name: "Sesi Pagi", waktu_mulai: "08:00", waktu_selesai: "10:00" },
-  { id: 2, name: "Sesi Siang", waktu_mulai: "10:30", waktu_selesai: "12:30" },
-  { id: 3, name: "Sesi Sore", waktu_mulai: "13:00", waktu_selesai: "15:00" },
-  { id: 4, name: "Sesi Malam", waktu_mulai: "15:30", waktu_selesai: "17:30" },
-]);
+// === SESI API ===
+const { 
+  data: sesisData, 
+  loading: sesiLoading, 
+  error: sesiError, 
+  fetchData: fetchSesis, 
+  addSesi, 
+  editSesi, 
+  deleteSesi 
+} = useSesi();
 
-// Filter pencarian ruang
+// Data transformations
+const ruangs = computed(() => ruangsData.value || []);
+const sesis = computed(() => sesisData.value || []);
+
+// Filtered data for search
 const filteredRuangs = computed(() =>
   ruangs.value.filter((ruang) =>
-    ruang.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    ruang.nama_ruang?.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 );
 
-// Filter pencarian sesi
 const filteredSesis = computed(() =>
   sesis.value.filter((sesi) =>
-    sesi.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    sesi.nama_sesi?.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 );
 
-// Modal & aksi ruang
+// Modal states
 const selectedRuang = ref(null);
 const isEditing = ref(false);
 const isModalOpen = ref(false);
 const isDeleteModalOpen = ref(false);
 const ruangToDelete = ref(null);
 
-// Modal & aksi sesi
 const selectedSesi = ref(null);
 const isEditingSesi = ref(false);
 const isModalOpenSesi = ref(false);
 const isDeleteModalOpenSesi = ref(false);
 const sesiToDelete = ref(null);
 
-// Table headers for ruang
+// Table headers
 const tableHeadersRuang = ["Nama Ruang", "Aksi"];
-
-// Table headers for sesi
 const tableHeadersSesi = ["Nama Sesi", "Waktu", "Aksi"];
 
-// Fungsi untuk ruang
+// === FUNGSI UNTUK RUANG ===
 const openAddModalRuang = () => {
-  selectedRuang.value = { name: "" };
+  selectedRuang.value = { nama_ruang: "" };
   isEditing.value = false;
   isModalOpen.value = true;
 };
@@ -93,39 +103,63 @@ const openEditModalRuang = (ruang) => {
   isModalOpen.value = true;
 };
 
-const saveRuang = () => {
-  if (isEditing.value) {
-    const index = ruangs.value.findIndex(
-      (r) => r.id === selectedRuang.value.id
-    );
-    ruangs.value[index] = { ...selectedRuang.value };
-  } else {
-    ruangs.value.push({
-      ...selectedRuang.value,
-      id: Date.now(),
-    });
+const saveRuang = async () => {
+  // Validasi
+  if (!selectedRuang.value?.nama_ruang?.trim()) {
+    toast.error("Nama ruang tidak boleh kosong");
+    return;
   }
-  isModalOpen.value = false;
-};
+  
+  selectedRuang.value.nama_ruang = selectedRuang.value.nama_ruang.trim();
 
-const deleteRuang = () => {
-  if (ruangToDelete.value) {
-    ruangs.value = ruangs.value.filter(
-      (ruang) => ruang.id !== ruangToDelete.value.id
-    );
-    ruangToDelete.value = null;
+  try {
+    if (isEditing.value) {
+      await editRuang(selectedRuang.value.id, selectedRuang.value);
+      toast.success("Ruang berhasil diperbarui");
+    } else {
+      await addRuang(selectedRuang.value);
+      toast.success("Ruang berhasil ditambahkan");
+    }
+    
+    isModalOpen.value = false;
+    await fetchRuangs();
+  } catch (err) {
+    toast.error("Gagal menyimpan ruang: " + (ruangError.value || err.message));
   }
-  isDeleteModalOpen.value = false;
 };
 
 const confirmDeleteRuang = (ruang) => {
   ruangToDelete.value = ruang;
-  isDeleteModalOpen.value = true; // Tampilkan modal dengan mengubah state
+  isDeleteModalOpen.value = true;
 };
 
-// Fungsi untuk sesi - dimodifikasi untuk menangani 3 input
+const deleteRuangHandler = async () => {
+  if (ruangToDelete.value) {
+    try {
+      await deleteRuang(ruangToDelete.value.id);
+      toast.success("Ruang berhasil dihapus");
+      await fetchRuangs();
+      
+      ruangToDelete.value = null;
+      isDeleteModalOpen.value = false;
+    } catch (err) {
+      toast.error("Gagal menghapus ruang: " + (ruangError.value || err.message));
+    }
+  }
+};
+
+// === FUNGSI UNTUK SESI ===
 const openAddModalSesi = () => {
-  selectedSesi.value = { name: "", waktu_mulai: "", waktu_selesai: "" };
+  const now = new Date();
+  const currentHour = now.getHours().toString().padStart(2, '0');
+  const currentMinute = now.getMinutes().toString().padStart(2, '0');
+  const nextHour = (now.getHours() + 1).toString().padStart(2, '0');
+  
+  selectedSesi.value = { 
+    nama_sesi: "", 
+    waktu_mulai: `${currentHour}:${currentMinute}`, 
+    waktu_selesai: `${nextHour}:${currentMinute}` 
+  };
   isEditingSesi.value = false;
   isModalOpenSesi.value = true;
 };
@@ -136,100 +170,153 @@ const openEditModalSesi = (sesi) => {
   isModalOpenSesi.value = true;
 };
 
-const saveSesi = () => {
-  if (isEditingSesi.value) {
-    const index = sesis.value.findIndex((s) => s.id === selectedSesi.value.id);
-    sesis.value[index] = { ...selectedSesi.value };
-  } else {
-    sesis.value.push({
-      ...selectedSesi.value,
-      id: Date.now(),
-    });
+const saveSesi = async () => {
+  // Validasi
+  if (!selectedSesi.value?.nama_sesi?.trim()) {
+    toast.error("Nama sesi tidak boleh kosong");
+    return;
   }
-  isModalOpenSesi.value = false;
-};
+  
+  if (!selectedSesi.value.waktu_mulai) {
+    toast.error("Waktu mulai harus diisi");
+    return;
+  }
+  
+  if (!selectedSesi.value.waktu_selesai) {
+    toast.error("Waktu selesai harus diisi");
+    return;
+  }
+  
+  if (selectedSesi.value.waktu_mulai >= selectedSesi.value.waktu_selesai) {
+    toast.error("Waktu selesai harus setelah waktu mulai");
+    return;
+  }
 
-const deleteSesi = () => {
-  if (sesiToDelete.value) {
-    sesis.value = sesis.value.filter(
-      (sesi) => sesi.id !== sesiToDelete.value.id
-    );
-    sesiToDelete.value = null;
+  try {
+    const payload = {
+      nama_sesi: selectedSesi.value.nama_sesi.trim(),
+      waktu_mulai: selectedSesi.value.waktu_mulai,
+      waktu_selesai: selectedSesi.value.waktu_selesai
+    };
+    
+    if (isEditingSesi.value) {
+      await editSesi(selectedSesi.value.id, payload);
+      toast.success("Sesi berhasil diperbarui");
+    } else {
+      await addSesi(payload);
+      toast.success("Sesi berhasil ditambahkan");
+    }
+    
+    await fetchSesis();
+    isModalOpenSesi.value = false;
+  } catch (err) {
+    toast.error("Gagal menyimpan sesi: " + (sesiError.value || err.message));
   }
-  isDeleteModalOpenSesi.value = false;
 };
 
 const confirmDeleteSesi = (sesi) => {
   sesiToDelete.value = sesi;
-  isDeleteModalOpenSesi.value = true; // Tampilkan modal dengan mengubah state
+  isDeleteModalOpenSesi.value = true;
 };
+
+const deleteSesiHandler = async () => {
+  if (sesiToDelete.value) {
+    try {
+      await deleteSesi(sesiToDelete.value.id);
+      toast.success("Sesi berhasil dihapus");
+      await fetchSesis();
+      
+      sesiToDelete.value = null;
+      isDeleteModalOpenSesi.value = false;
+    } catch (err) {
+      toast.error("Gagal menghapus sesi: " + (sesiError.value || err.message));
+    }
+  }
+};
+
+// Load data on mount
+onMounted(() => {
+  fetchRuangs();
+  fetchSesis();
+});
 </script>
 
 <template>
-  <Breadcrumb />
+  <Breadcrumb :items="breadcrumbItems" />
   <TabDiv :tabs="tabs" :use-named-slots="true">
     <!-- === TAB 1: RUANG === -->
     <template #tab1>
-    <div class="flex justify-between items-center mb-4 space-x-4">
-      <div class="w-4/5">  
-        <SearchBar
-          v-model="searchQuery"
-          @search="handleSearch"
-          filterKey="ruang"
-        />
+      <!-- Loading state -->
+      <div v-if="ruangLoading" class="flex justify-center items-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
-      <!-- Tombol tambah ruang -->
-      <div class="w-1/5">
-        <Button
-          variant="primary"
-          size="lg"
-          @click="openAddModalRuang"
-          leftIconPath="M12 4v16m8-8H4"
-          class="w-full"
-        >
-          Tambah Ruang
-        </Button>
+      
+      <!-- Error state -->
+      <div v-else-if="ruangError" class="py-8 text-center text-red-500">
+        <p>{{ ruangError }}</p>
+        <Button variant="primary" class="mt-4" @click="fetchRuangs">Coba Lagi</Button>
       </div>
-    </div>
+      
+      <!-- Data state -->
+      <div v-else>
+        <div class="flex justify-between items-center mb-4 space-x-4">
+          <div class="w-4/5">  
+            <SearchBar
+              v-model="searchQuery"
+              @search="handleSearch"
+              filterKey="ruang"
+            />
+          </div>
+          <div class="w-1/5">
+            <Button
+              variant="primary"
+              size="lg"
+              @click="openAddModalRuang"
+              leftIconPath="M12 4v16m8-8H4"
+              class="w-full"
+            >
+              Tambah Ruang
+            </Button>
+          </div>
+        </div>
 
-      <Table
-        :headers="tableHeadersRuang"
-        :items="filteredRuangs"
-        min-width="min-w-full"
-      >
-        <!-- Tambahkan template header untuk mengatur lebar kolom -->
-        <template #header>
-          <tr>
-            <th class="py-3 px-6 text-left w-4/5">Nama Ruang</th>
-            <th class="py-3 px-6 text-center w-1/5">Aksi</th>
-          </tr>
-        </template>
-        
-        <template #row="{ item }">
-          <td class="py-3 px-6 w-4/5">{{ item.name }}</td>
-          <td class="py-3 px-6 text-center w-1/5">
-            <div class="flex gap-2 justify-center">
-              <!-- button delete ruang -->
-              <Button
-                variant="danger"
-                size="md"
-                @click.stop="confirmDeleteRuang(item)"
-                leftIconPath="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-                class="!inline-flex !p-2 !min-h-0 !min-w-0"
-              >
-              </Button>
-              <Button
-                variant="primary"
-                size="md"
-                @click.stop="openEditModalRuang(item)"
-                leftIconPath="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                class="!inline-flex !p-2 !min-h-0 !min-w-0"
-              >
-              </Button>
-            </div>
-          </td>
-        </template>
-      </Table>
+        <Table
+          :headers="tableHeadersRuang"
+          :items="filteredRuangs"
+          min-width="min-w-full"
+        >
+          <template #header>
+            <tr>
+              <th class="py-3 px-6 text-left w-4/5">Nama Ruang</th>
+              <th class="py-3 px-6 text-center w-1/5">Aksi</th>
+            </tr>
+          </template>
+          
+          <template #row="{ item }">
+            <td class="py-3 px-6 w-4/5">{{ item.nama_ruang }}</td>
+            <td class="py-3 px-6 text-center w-1/5">
+              <div class="flex gap-2 justify-center">
+                <Button
+                  variant="danger"
+                  size="md"
+                  @click.stop="confirmDeleteRuang(item)"
+                  leftIconPath="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                  class="!inline-flex !p-2 !min-h-0 !min-w-0"
+                >
+                </Button>
+                <Button
+                  variant="primary"
+                  size="md"
+                  @click.stop="openEditModalRuang(item)"
+                  leftIconPath="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+                  class="!inline-flex !p-2 !min-h-0 !min-w-0"
+                >
+                </Button>
+              </div>
+            </td>
+          </template>
+        </Table>
+      </div>
 
       <!-- Modal Tambah/Edit Ruang -->
       <DefaultModal
@@ -243,15 +330,19 @@ const confirmDeleteSesi = (sesi) => {
             id="room-name"
             label="Nama Ruang"
             placeholder="Masukkan Nama ruang"
-            :value="selectedRuang.name"
-            @update:value="(value) => (selectedRuang.name = value)"
+            v-model="selectedRuang.nama_ruang"
           />
           <div class="flex justify-end mt-4 gap-2">
             <Button variant="danger" @click="isModalOpen = false">
               Batal
             </Button>
-            <Button variant="primary" @click="saveRuang">
-              {{ isEditing ? "Simpan" : "Tambah" }}
+            <Button 
+              variant="primary" 
+              @click="saveRuang"
+              :disabled="ruangLoading"
+            >
+              <span v-if="ruangLoading">Memproses...</span>
+              <span v-else>{{ isEditing ? "Simpan" : "Tambah" }}</span>
             </Button>
           </div>
         </div>
@@ -262,16 +353,29 @@ const confirmDeleteSesi = (sesi) => {
         :show="isDeleteModalOpen"
         title="Konfirmasi Hapus Ruang"
         :description="`Apakah anda yakin akan menghapus ruang '${
-          ruangToDelete?.name || 'ini'
+          ruangToDelete?.nama_ruang || 'ini'
         }'? Anda tidak dapat mengembalikan ruangan yang telah dihapus.`"
         confirmText="Hapus"
         @close="isDeleteModalOpen = false"
-        @confirm="deleteRuang"
+        @confirm="deleteRuangHandler"
       />
     </template>
 
     <!-- === TAB 2: SESI === -->
     <template #tab2>
+      <!-- Loading state -->
+      <div v-if="sesiLoading" class="flex justify-center items-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+      
+      <!-- Error state -->
+      <div v-else-if="sesiError" class="py-8 text-center text-red-500">
+        <p>{{ sesiError }}</p>
+        <Button variant="primary" class="mt-4" @click="fetchSesis">Coba Lagi</Button>
+      </div>
+      
+      <!-- Data state -->
+      <div v-else>
         <div class="flex justify-between items-center mb-4 space-x-4">
           <div class="w-4/5">  
             <SearchBar
@@ -280,7 +384,6 @@ const confirmDeleteSesi = (sesi) => {
               filterKey="sesi"
             />
           </div>
-          <!-- Tombol tambah sesi -->
           <div class="w-1/5">
             <Button
               variant="primary"
@@ -299,7 +402,6 @@ const confirmDeleteSesi = (sesi) => {
           :items="filteredSesis"
           min-width="min-w-full"
         >
-          <!-- Tambahkan template header untuk mengatur lebar kolom -->
           <template #header>
             <tr>
               <th class="py-3 px-6 text-left w-2/5">Nama Sesi</th>
@@ -309,7 +411,7 @@ const confirmDeleteSesi = (sesi) => {
           </template>
           
           <template #row="{ item }">
-            <td class="py-3 px-6 w-2/5">{{ item.name }}</td>
+            <td class="py-3 px-6 w-2/5">{{ item.nama_sesi }}</td>
             <td class="py-3 px-6 w-2/5">
               <div class="flex items-center">
                 <svg
@@ -351,8 +453,9 @@ const confirmDeleteSesi = (sesi) => {
             </td>
           </template>
         </Table>
+      </div>
 
-      <!-- Modal Tambah/Edit Sesi dengan 3 input field -->
+      <!-- Modal Tambah/Edit Sesi -->
       <DefaultModal
         v-if="isModalOpenSesi"
         :headText="isEditingSesi ? 'Edit Sesi' : 'Tambah Sesi'"
@@ -361,32 +464,30 @@ const confirmDeleteSesi = (sesi) => {
       >
         <div class="mt-4">
           <InputText
-            id="session-name"
+            id="nama_sesi"
             label="Nama Sesi"
             placeholder="Masukkan nama sesi"
-            :value="selectedSesi.name"
-            @update:value="(value) => (selectedSesi.name = value)"
+            v-model="selectedSesi.nama_sesi"
           />
-
           <InputTime
             id="waktu_mulai"
             label="Waktu Mulai"
             :value="selectedSesi.waktu_mulai"
-            @update:value="(value) => (selectedSesi.waktu_mulai = value)"
+            @update:value="(val) => selectedSesi.waktu_mulai = val"
           />
 
           <InputTime
             id="waktu_selesai"
             label="Waktu Selesai"
             :value="selectedSesi.waktu_selesai"
-            @update:value="(value) => (selectedSesi.waktu_selesai = value)"
+            @update:value="(val) => selectedSesi.waktu_selesai = val"
           />
 
           <div class="flex justify-end mt-4 gap-2">
-            <Button variant="danger" @click="isModalOpenSesi = false">
+            <Button variant="danger" @click="isModalOpenSesi = false" :disabled="sesiLoading">
               Batal
             </Button>
-            <Button variant="primary" @click="saveSesi">
+            <Button variant="primary" @click="saveSesi" :disabled="sesiLoading">
               {{ isEditingSesi ? "Simpan" : "Tambah" }}
             </Button>
           </div>
@@ -398,32 +499,26 @@ const confirmDeleteSesi = (sesi) => {
         :show="isDeleteModalOpenSesi"
         title="Konfirmasi Hapus Sesi"
         :description="`Apakah anda yakin akan menghapus sesi '${
-          sesiToDelete?.name || 'ini'
+          sesiToDelete?.nama_sesi || 'ini'
         }'? Anda tidak dapat mengembalikan sesi yang telah dihapus.`"
         confirmText="Hapus"
         @close="isDeleteModalOpenSesi = false"
-        @confirm="deleteSesi"
+        @confirm="deleteSesiHandler"
       />
     </template>
   </TabDiv>
 </template>
-<style scoped>
-/* Styling untuk header kolom terakhir (Aksi) di semua tabel */
-:deep(table th:last-child) {
-  text-align: center !important;
-}
 
-/* Memastikan sel data juga terpusat */
+<style scoped>
+:deep(table th:last-child),
 :deep(table td:last-child) {
   text-align: center !important;
 }
 
-/* Untuk tab Sesi, kolom ketiga (Aksi) */
 :deep(table th:nth-child(3)) {
   text-align: center !important;
 }
 
-/* Juga pastikan div container dari button terpusat */
 :deep(table td:last-child > div) {
   justify-content: center !important;
 }
