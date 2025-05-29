@@ -151,31 +151,36 @@ const PermintaanBimbingan =computed(() => {
             </tr>
           </thead>
           <tbody class="body5">
-            <tr
-              v-for="(item, index) in JadwalHariIni"
-              :key="index"
-              class="bg-white border-b rounded-l-lg hover:bg-gray-50 cursor-pointer transition-colors"
-              @click="handleRowClick(item)"
-              role="button"
-              tabindex="0"
-            >
-              <td class="px-3 py-2">
-                <div class="flex items-center gap-2">
-                  <img
-                    class="h-6 w-6 sm:h-8 sm:w-8 rounded-full"
-                    :src="item.avatar"
-                    alt=""
-                  />
-                  <span>{{ item.nama }}</span>
-                </div>
-              </td>
-              <td class="px-3 py-2">
-                {{ item.waktu }}
-              </td>
-              <td class="px-3 py-2">
-                {{ item.ruang }}
-              </td>
-            </tr>
+            <template v-if="JadwalHariIni.length">
+              <tr
+                v-for="(item, index) in JadwalHariIni"
+                :key="index"
+                class="bg-white border-b rounded-l-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                @click="handleRowClick(item)"
+                role="button"
+                tabindex="0"
+              >
+                <td class="px-3 py-2">
+                  <div class="flex items-center gap-2">
+                    <img class="h-6 w-6 sm:h-8 sm:w-8 rounded-full" :src="item.avatar" alt="" />
+                    <span>{{ item.nama }}</span>
+                  </div>
+                </td>
+                <td class="px-3 py-2">
+                  {{ item.waktu }}
+                </td>
+                <td class="px-3 py-2">
+                  {{ item.ruang }}
+                </td>
+              </tr>
+            </template>
+            <template v-else>
+              <tr>
+                <td colspan="3">
+                  <div class="text-center text-placeholder py-8">tidak ada data</div>
+                </td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>
@@ -212,31 +217,36 @@ const PermintaanBimbingan =computed(() => {
             </tr>
           </thead>
           <tbody class="body5">
-            <tr
-              v-for="(item, index) in PermintaanBimbingan"
-              :key="index"
-              class="bg-white border-b rounded-l-lg hover:bg-gray-50 cursor-pointer transition-colors"
-              @click="handleRowClick(item)"
-              role="button"
-              tabindex="0"
-            >
-              <td class="px-3 py-2">
-                {{ item.nim }}
-              </td>
-              <td class="px-3 py-2 w-fit">
-                <div class="flex items-center gap-2">
-                  <img
-                    class="h-6 w-6 sm:h-8 sm:w-8 rounded-full"
-                    :src="item.avatar"
-                    alt=""
-                  />
-                  <span>{{ item.nama }}</span>
-                </div>
-              </td>
-              <td class="px-3 py-2">
-                {{ item.kategori }}
-              </td>
-            </tr>
+            <template v-if="PermintaanBimbingan.length">
+              <tr
+                v-for="(item, index) in PermintaanBimbingan"
+                :key="index"
+                class="bg-white border-b rounded-l-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                @click="handleRowClick(item)"
+                role="button"
+                tabindex="0"
+              >
+                <td class="px-3 py-2">
+                  {{ item.nim }}
+                </td>
+                <td class="px-3 py-2 w-fit">
+                  <div class="flex items-center gap-2">
+                    <img class="h-6 w-6 sm:h-8 sm:w-8 rounded-full" :src="item.avatar" alt="" />
+                    <span>{{ item.nama }}</span>
+                  </div>
+                </td>
+                <td class="px-3 py-2">
+                  {{ item.kategori }}
+                </td>
+              </tr>
+            </template>
+            <template v-else>
+              <tr>
+                <td colspan="3">
+                  <div class="text-center text-placeholder py-8">tidak ada data</div>
+                </td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>
