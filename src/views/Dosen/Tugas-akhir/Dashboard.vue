@@ -4,17 +4,9 @@ import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import LineChart from "@/components/Tugas-akhir/Dashboard/LineChart.vue";
 import DoughnutChart from "@/components/Tugas-akhir/Dashboard/DoughnutChart.vue";
 import SummaryCard from "@/components/Tugas-akhir/Dashboard/SummaryCard.vue";
+import {useDashboard} from "@/services/TugasAkhir/Dosen/dashboard.js";
+const { data, loading, error } = useDashboard();
 
-import { getDoughnutData } from "@/services/TugasAkhir/Dosen/Dashboard/DoughnutChartAPI.js";
-const doughnutChartValue = getDoughnutData();
-import { useJadwalUjian } from "@/services/TugasAkhir/Dosen/Dashboard/JadwalUjianAPI.js";
-
-import { getLineChartData } from "@/services/TugasAkhir/Dosen/Dashboard/LineChartAPI.js";
-const lineChartValue = getLineChartData();
-const { JadwalHariIni } = useJadwalUjian();
-
-import { usePermintaanBimbingan } from "@/services/TugasAkhir/Dosen/Dashboard/PermintaanBimbinganAPI.js";
-const { permintaanBimbingan } = usePermintaanBimbingan();
 
 function handleRowClick(item) {
   // aksi saat klik baris
@@ -37,9 +29,9 @@ const iconPaths = {
 };
 
 // Summary cards configuration
-const TAdibimbing = ref("36");
-const UjianTerjadwal = ref("45");
-const RequestPembimbing = ref("23");
+const TAdibimbing = computed(()=> data.value?.summary_card?.ta_yang_dibimbing ?? "0");
+const UjianTerjadwal = computed(()=> data.value?.summary_card?.ujian_terjadwal ?? "0");
+const RequestPembimbing = computed(() => data.value?.summary_card?.permintaan_bimbingan ?? "0");
 const summaryCards = [
   {
     icon: iconPaths.book,
@@ -63,8 +55,18 @@ const summaryCards = [
 
 // Data yang sama dengan yang dikirim ke DoughnutChart
 const doughnutLabels = ["BAB I", "BAB II", "BAB III", "BAB IV", "BAB V"];
-const doughnutData = [10, 20, 30, 40, 50];
+const doughnutData = computed(() => {
+  const obj = data.value?.doughnat_chart ?? {};
+  return [1,2,3,4,5].map(key => obj[key]??0);
+});
 const doughnutColors = ["#62B2FD", "#9BDFC4", "#F99BAB", "#FFB44F", "#9F97F7"];
+
+const JadwalHariIni =computed(() => {
+  return data.value?.ujian_hari_ini ?? [];
+});
+const PermintaanBimbingan =computed(() => {
+  return data.value?.permintaan_bimbingan ?? [];
+});
 </script>
 <template>
   <Breadcrumb :items="breadcrumbItems" />
@@ -164,11 +166,11 @@ const doughnutColors = ["#62B2FD", "#9BDFC4", "#F99BAB", "#FFB44F", "#9F97F7"];
                     :src="item.avatar"
                     alt=""
                   />
-                  <span>{{ item.name }}</span>
+                  <span>{{ item.nama }}</span>
                 </div>
               </td>
               <td class="px-3 py-2">
-                {{ item.sesi }}
+                {{ item.waktu }}
               </td>
               <td class="px-3 py-2">
                 {{ item.ruang }}
@@ -211,7 +213,7 @@ const doughnutColors = ["#62B2FD", "#9BDFC4", "#F99BAB", "#FFB44F", "#9F97F7"];
           </thead>
           <tbody class="body5">
             <tr
-              v-for="(item, index) in permintaanBimbingan"
+              v-for="(item, index) in PermintaanBimbingan"
               :key="index"
               class="bg-white border-b rounded-l-lg hover:bg-gray-50 cursor-pointer transition-colors"
               @click="handleRowClick(item)"
