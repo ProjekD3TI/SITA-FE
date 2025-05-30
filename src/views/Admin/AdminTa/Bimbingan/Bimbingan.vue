@@ -45,7 +45,7 @@ const categories = computed(() =>
 
 // Hitung jumlah mahasiswa yang belum ada dosen pembimbing
 const countBelumAdaPembimbing = computed(() =>
-  tabelPlottingPembimbing.value.filter(item => !item.dosen_pembimbing).length
+  tabelPlottingPembimbing.value.filter(item => item.request_pembimbing == 2).length
 );
 
 const tabs = [
@@ -74,7 +74,10 @@ const handleRowClickBimbingan = (item) => {
 
 // Filter pencarian untuk tab Plotting Pembimbing + kategori
 const filteredReqPembibingMhs = computed(() => {
-  let data = tabelPlottingPembimbing.value;
+  // Filter terlebih dahulu untuk hanya menampilkan yang request_pembimbing 1 atau 2
+  let data = tabelPlottingPembimbing.value.filter(item =>
+    item.request_pembimbing === 1 || item.request_pembimbing === 2
+  );
 
   // Filter kategori
   if (selectedCategoriesPlot.value.length > 0) {

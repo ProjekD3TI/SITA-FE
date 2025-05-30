@@ -150,9 +150,14 @@ export function useShowPlottingPembimbing() {
                 tugas_akhir_id,
                 dosen_id
             };
-            await axios.post("/api/admin_ta/request-pembimbing/", formData, { headers });
+            
+            // Gunakan storeForAdmin endpoint yang sudah ada
+            const response = await axios.post("/api/admin_ta/request-pembimbing", formData, { headers });
             toast.success("Plotting pembimbing berhasil!");
-            await fetchData(tugas_akhir_id); // refresh detail
+            
+            // Refresh data setelah berhasil
+            await fetchData(tugas_akhir_id);
+            return response.data;
         } catch (err) {
             handleError(err);
             throw err;
