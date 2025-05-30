@@ -444,13 +444,14 @@ const routes = [
       },
       {
         path: "proposal",
+        name: "ProposalforAdmin",
         component: ProposalforAdmin,
         meta: {
           breadcrumb: "Proposal",
         },
         children: [
           {
-            path: "detail-pengajuan/:nim",
+            path: "detail-pengajuan/:proposal_id",
             name: "DetailPengajuanForAdmin",
             component: DetailPengajuanForAdmin,
             meta: {
@@ -458,7 +459,7 @@ const routes = [
             },
           },
           {
-            path: "detail-proposal/:nim",
+            path: "detail-proposal/:proposal_id",
             name: "DetailProposalForAdmin",
             component: DetailProposalForAdmin,
             meta: {

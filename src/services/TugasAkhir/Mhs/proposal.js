@@ -265,6 +265,7 @@ export async function secureFileDownload(url, filename = "file.pdf") {
 }
 
 export async function secureFilePreview(url, filename = "file.pdf") {
+    const toast = useToast();
     const authToken = VueCookies.get("auth_token");
     try {
         const response = await fetch(url, {

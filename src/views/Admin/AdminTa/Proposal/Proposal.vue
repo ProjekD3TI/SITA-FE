@@ -9,24 +9,43 @@ import Breadcrumb from '@/components/Tugas-akhir/Breadcrumb.vue';
 import ModalTimer from '@/components/Tugas-akhir/Modals/ModalTimer.vue';
 import DefaultModal from '@/components/Tugas-akhir/Modals/DefaultModal.vue';
 import Slider from '@/components/Tugas-akhir/Slider.vue';
-import { ref, computed, watch } from 'vue';
-import router from '@/router';
+import Loading from '@/components/Loading.vue';
+import ErrorMsg from '@/components/ErrorMsg.vue';
+import { ref, computed, watch, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import ValidationFile from '@/components/Tugas-akhir/Forms/ValidationFile.vue';
-import FilePDFDummy from '@/assets/SV-Undangan Sosialisasi Teknis dan Informasi Lomba OLIVIA Tahun 2025.pdf';
 import InputTextarea from '@/components/Tugas-akhir/Forms/InputTextarea.vue';
+import { useToast } from "vue-toastification";
+import {
+  useTabelProposal,
+} from '@/services/TugasAkhir/Admin/proposal.js';
+
+const { dataTabelProposal, loadingTabelProposal, errorTabelProposal, updateStatusForm, fetchData } = useTabelProposal();
+
 
 // Search dan filter state
-const statusForm = ref(0);
+const statusForm = ref(dataTabelProposal.value?.status_form?.is_open ?? 0);
+
+const route = useRoute();
+const router = useRouter();
+watch(
+  () => dataTabelProposal.value?.status_form?.is_open,
+  (val) => {
+    if (typeof val !== 'undefined') statusForm.value = val;
+  },
+  { immediate: true }
+);
+const toast = useToast();
 const searchQueryPengajuan = ref('');
 const searchQuerySeminar = ref('');
 const selectedStatusesPengajuan = ref([]);
-const selectedStatusesSeminar = ref([]);
-
-const filePDF = FilePDFDummy;
+const selectedCategoriesSeminar = ref([]);
 
 const modalRef = ref(false);
 const modalHeadText = ref('');
 const modalBodyText = ref('');
+const dataNaskahProposal = ref({});
+const dataTranskrip = ref({});
 const fileNaskahProposal = ref(null);
 const fileTranskrip = ref(null);
 const tempValidasi = ref({
@@ -35,98 +54,9 @@ const tempValidasi = ref({
 });
 const catatan = ref('');
 
-// debug 
-watch(statusForm, (val) => {
-  if (val == 1) {
-    console.log('Form Dibuka');
-  } else {
-    console.log('Form Ditutup');
-  }
-});
-
-
-// Data dummy
-function getProposalStatus(berkas) {
-  // Ambil semua status valid dari setiap berkas
-  const statusList = berkas.flatMap(b => [
-    b.naskah_proposal_status_valid,
-    b.file_transkrip_status_valid
-  ]);
-  if (statusList.every(s => s === 1)) return '1'; // Semua valid
-  if (statusList.some(s => s === 2)) return '2';  // Ada yang ditolak
-  if (statusList.every(s => s === 0)) return '0'; // Semua menunggu
-  // Jika campuran 0 dan 1, anggap menunggu (atau bisa custom sesuai kebutuhan)
-  return '0';
+function getFileName(filePath) {
+  return filePath ? decodeURIComponent(filePath.split('/').pop()) : '';
 }
-
-// Ganti status di proposalMhs agar dinamis berdasarkan berkas
-const proposalMhs = ref([
-  {
-    nim: '12345678',
-    nama: 'John Doe',
-    img: DefaultAvatar,
-    judul_proposal_ta: 'Sistem Informasi Akademik',
-    dosen_pembimbing: 'Dr. Budi Santoso',
-    nilai: 90,
-    catatan: 'Sangat Baik',
-    berkas: [
-      {
-        naskah_proposal: "naskah-proposal-ta.pdf",
-        naskah_proposal_url: filePDF,
-        naskah_proposal_status_valid: 1,
-        file_transkrip: "transkrip-nilai-mahasiswa.pdf",
-        file_transkrip_url: filePDF,
-        file_transkrip_status_valid: 1,
-      },
-    ],
-  },
-  {
-    nim: '87654321',
-    nama: 'Jane Smith',
-    img: DefaultAvatar,
-    judul_proposal_ta: 'Pengembangan Aplikasi Mobile',
-    dosen_pembimbing: 'Prof. Andi Wijaya',
-    nilai: 85,
-    catatan: 'Baik',
-    berkas: [
-      {
-        naskah_proposal: "naskah-proposal-ta.pdf",
-        naskah_proposal_url: filePDF,
-        naskah_proposal_status_valid: 0,
-        file_transkrip: "transkrip-nilai-mahasiswa.pdf",
-        file_transkrip_url: filePDF,
-        file_transkrip_status_valid: 0,
-      },
-    ],
-  },
-  {
-    nim: '11223344',
-    nama: 'Alice Johnson',
-    img: DefaultAvatar,
-    judul_proposal_ta: 'Analisis Data Big Data',
-    dosen_pembimbing: 'Dr. Clara Susanti',
-    nilai: null,
-    catatan: null,
-    berkas: [
-      {
-        naskah_proposal: "naskah-proposal-ta.pdf",
-        naskah_proposal_url: filePDF,
-        naskah_proposal_status_valid: 1,
-        file_transkrip: "transkrip-nilai-mahasiswa.pdf",
-        file_transkrip_url: filePDF,
-        file_transkrip_status_valid: 2,
-      },
-    ],
-  },
-]);
-
-// Computed untuk menambahkan status dinamis ke setiap proposal
-const proposalMhsWithStatus = computed(() =>
-  proposalMhs.value.map(item => ({
-    ...item,
-    status: getProposalStatus(item.berkas)
-  }))
-);
 
 const statuses = [
   { value: '1', label: 'Disetujui' },
@@ -134,26 +64,35 @@ const statuses = [
   { value: '2', label: 'Ditolak' },
 ];
 
+const categories = computed(() => {
+  return (dataTabelProposal.value?.list_kategori || []).map(cat => ({
+    value: String(cat.id),
+    label: cat.nama_kategori,
+  }));
+});
+
 // Helper untuk status
 const getStatusClass = (status) => {
   switch (status) {
-    case '1': return 'success';
-    case '0': return 'warning';
-    case '2': return 'danger';
+    case 1: return 'success';
+    case 0: return 'warning';
+    case 2: return 'danger';
     default: return 'default';
   }
 };
 const getStatusLabel = (status) => {
   switch (status) {
-    case '1': return 'Disetujui';
-    case '0': return 'Menunggu';
-    case '2': return 'Ditolak';
+    case 1: return 'Disetujui';
+    case 0: return 'Menunggu';
+    case 2: return 'Ditolak';
     default: return 'Tidak Diketahui';
   }
 };
 
 const countStatus0 = computed(() =>
-  proposalMhsWithStatus.value.filter(item => item.status === '0' || null).length
+  (dataTabelProposal.value?.list_proposal || []).filter(
+    item => String(item.status_proposal) === '0'
+  ).length
 );
 
 
@@ -171,12 +110,14 @@ const tabs = [
   }
 ];
 
-// Filter dan search mirip Bimbingan
+const listProposal = computed(() => dataTabelProposal.value?.list_proposal || []);
+
+// Mapping untuk table tab Pengajuan
 const filteredProposalPengajuan = computed(() => {
-  let data = proposalMhsWithStatus.value;
+  let data = listProposal.value;
   if (selectedStatusesPengajuan.value.length > 0) {
     data = data.filter(item =>
-      selectedStatusesPengajuan.value.includes(item.status)
+      selectedStatusesPengajuan.value.includes(String(item.status_proposal))
     );
   }
   const q = typeof searchQueryPengajuan.value === 'string'
@@ -184,29 +125,33 @@ const filteredProposalPengajuan = computed(() => {
     : '';
   if (!q) return data;
   return data.filter(item =>
-    item.nim.toLowerCase().includes(q) ||
-    item.nama.toLowerCase().includes(q) ||
-    (item.judul_proposal_ta && item.judul_proposal_ta.toLowerCase().includes(q)) ||
-    (item.dosen_pembimbing && item.dosen_pembimbing.toLowerCase().includes(q))
+    item.nim?.toLowerCase().includes(q) ||
+    item.mahasiswa?.toLowerCase().includes(q) ||
+    (item.judul_proposal && item.judul_proposal.toLowerCase().includes(q))
   );
 });
 
 const filteredProposalSeminar = computed(() => {
-  let data = proposalMhsWithStatus.value;
-  if (selectedStatusesSeminar.value.length > 0) {
+  // Hanya ambil proposal dengan status_proposal = 1 (Disetujui)
+  let data = listProposal.value.filter(item => item.status_proposal === 1);
+
+  // Filter berdasarkan kategori jika dipilih
+  if (selectedCategoriesSeminar.value.length > 0) {
     data = data.filter(item =>
-      selectedStatusesSeminar.value.includes(item.status)
+      selectedCategoriesSeminar.value.includes(String(item.kategori_ta?.id))
     );
   }
+
+  // Filter berdasarkan search query
   const q = typeof searchQuerySeminar.value === 'string'
     ? searchQuerySeminar.value.toLowerCase()
     : '';
   if (!q) return data;
+
   return data.filter(item =>
-    item.nim.toLowerCase().includes(q) ||
-    item.nama.toLowerCase().includes(q) ||
-    (item.judul_proposal_ta && item.judul_proposal_ta.toLowerCase().includes(q)) ||
-    (item.dosen_pembimbing && item.dosen_pembimbing.toLowerCase().includes(q))
+    item.nim?.toLowerCase().includes(q) ||
+    item.mahasiswa?.toLowerCase().includes(q) ||
+    (item.judul_proposal && item.judul_proposal.toLowerCase().includes(q))
   );
 });
 
@@ -214,8 +159,9 @@ const filteredProposalSeminar = computed(() => {
 function handleFilterPengajuan({ values }) {
   selectedStatusesPengajuan.value = values;
 }
+// Handler filter kategori seminar
 function handleFilterSeminar({ values }) {
-  selectedStatusesSeminar.value = values;
+  selectedCategoriesSeminar.value = values;
 }
 
 // Tab change reset
@@ -225,72 +171,84 @@ function handleTabChange(tabId) {
   searchQueryPengajuan.value = '';
   searchQuerySeminar.value = '';
   selectedStatusesPengajuan.value = [];
-  selectedStatusesSeminar.value = [];
+  selectedCategoriesSeminar.value = [];
 }
 
 // Row click
 const handleRowClickSeminar = (item) => {
   router.push({
     name: 'DetailProposalForAdmin',
-    params: { nim: item.nim },
+    params: { proposal_id: item.id },
   });
 };
 // Handler row click untuk tab Pengajuan
 const handleRowClickPengajuan = (item) => {
-  if (item.status === '0') {
+  if (item.status_proposal === 0) {
     // Status menunggu, redirect ke detail
     router.push({
       name: 'DetailPengajuanForAdmin',
-      params: { nim: item.nim },
+      params: { proposal_id: item.id },
     });
   } else {
     // Status diterima/ditolak, buka modal
-    modalHeadText.value = `Detail Validasi Proposal`;
-    modalBodyText.value = `${item.nim} | ${item.nama} | ${item.judul_proposal_ta}.`;
-    // Siapkan data file dan status validasi
-    fileNaskahProposal.value = item.berkas[0]
+    modalHeadText.value = `Detail Proposal`;
+    modalBodyText.value = `${item.nim} | ${item.mahasiswa} | ${item.judul_proposal}`;
+    // Siapkan data file untuk modal
+    dataNaskahProposal.value = item.berkas.find(b => b.nama_berkas.includes('Naskah Proposal'));
+    dataTranskrip.value = item.berkas.find(b => b.nama_berkas.includes('Transkrip Nilai'));
+    fileNaskahProposal.value = dataNaskahProposal.value
       ? {
-        name: item.berkas[0].naskah_proposal,
-        url: item.berkas[0].naskah_proposal_url
+        name: getFileName(dataNaskahProposal.value?.file_path),
+        url: dataNaskahProposal.value?.download_url,
       }
-      : null;
+      : { name: '', url: '' };
 
-    fileTranskrip.value = item.berkas[0]
+    fileTranskrip.value = dataTranskrip.value
       ? {
-        name: item.berkas[0].file_transkrip,
-        url: item.berkas[0].file_transkrip_url
+        name: getFileName(dataTranskrip.value?.file_path),
+        url: dataTranskrip.value?.download_url,
       }
-      : null;
+      : { name: '', url: '' };
     tempValidasi.value = {
-      naskah_proposal_status_valid: item.berkas[0]?.naskah_proposal_status_valid ?? null,
-      file_transkrip_status_valid: item.berkas[0]?.file_transkrip_status_valid ?? null,
+      naskah_proposal_status_valid: dataNaskahProposal.value?.status_valid ?? null,
+      file_transkrip_status_valid: dataTranskrip.value?.status_valid ?? null,
     };
-    catatan.value = item.catatan || 'Lorem ipsum';
+    catatan.value = item.catatan || '';
     modalRef.value = true;
   }
 };
 
-const pendingStatusForm = ref(0);
-// State untuk modal timer
+const pendingStatusForm = ref(statusForm.value);
 const modalTimerVisible = ref(false);
 
-// Saat slider dicoba diubah
 function handleSliderChange(val) {
   if (val !== statusForm.value) {
     pendingStatusForm.value = val;
     modalTimerVisible.value = true;
   }
 }
+watch(
+  () => route.fullPath,
+  () => {
+    fetchData();
+  }
+);
 
-// Jika konfirmasi
-function handleModalSubmit() {
-  statusForm.value = pendingStatusForm.value;
-  modalTimerVisible.value = false;
+async function handleModalSubmit() {
+  try {
+    await updateStatusForm(pendingStatusForm.value); // hanya kirim 0/1
+    statusForm.value = pendingStatusForm.value;
+    toast.success('Status form berhasil diubah.');
+    await fetchData(); // refresh data setelah update
+    modalTimerVisible.value = false;
+  } catch (e) {
+    toast.error('Gagal mengubah status form.');
+    modalTimerVisible.value = false;
+  }
 }
-
 // Jika batal
 function handleModalCancel() {
-  pendingStatusForm.value = statusForm.value; // reset pending ke value lama
+  pendingStatusForm.value = statusForm.value;
   modalTimerVisible.value = false;
 }
 const modalTimerHeadText = computed(() => {
@@ -307,6 +265,15 @@ const modalTimerBodyText = computed(() => {
 <template>
   <router-view v-if="$route.path.includes('detail-pengajuan')"></router-view>
   <router-view v-else-if="$route.path.includes('detail-proposal')"></router-view>
+
+  <div v-else-if="loadingTabelProposal" class="flex items-center justify-center min-h-[80dvh]">
+    <Loading />
+  </div>
+
+  <div v-else-if="errorTabelProposal" class="p-4">
+    <ErrorMsg :message="errorTabelProposal" />
+  </div>
+
   <div v-else>
     <Breadcrumb />
     <TabDiv :tabs="tabs" :use-named-slots="true" @tab-changed="handleTabChange">
@@ -325,46 +292,49 @@ const modalTimerBodyText = computed(() => {
             </td>
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               <div class="flex items-center gap-2 ">
-                <img v-if="item.img" :src="item.img" alt="Profile Image" class="w-8 h-8 rounded-full" />
-                {{ item.nama }}
+                <img :src="DefaultAvatar" alt="Profile Image" class="w-8 h-8 rounded-full" />
+                {{ item.mahasiswa }}
               </div>
             </td>
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-              {{ item.judul_proposal_ta }}
+              {{ item.judul_proposal }}
             </td>
             <td class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6">
-              <StatusLabel class="hidden w-fit lg:block" :status="getStatusClass(item.status)" size="md"
-                :label="getStatusLabel(item.status)" />
-              <StatusLabel class="block w-fit lg:hidden" :status="getStatusClass(item.status)" size="sm"
-                :label="getStatusLabel(item.status)" />
+              <StatusLabel class="hidden w-fit lg:block" :status="getStatusClass(item.status_proposal)" size="md"
+                :label="getStatusLabel(item.status_proposal)" />
+              <StatusLabel class="block w-fit lg:hidden" :status="getStatusClass(item.status_proposal)" size="sm"
+                :label="getStatusLabel(item.status_proposal)" />
             </td>
           </template>
         </Table>
       </template>
       <template #2>
         <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
-          <ModalFilter title="Status" :items="statuses" filterType="status" @apply="handleFilterSeminar"
-            triggerText="Status" :preselectedValues="selectedStatusesSeminar" />
+          <ModalFilter title="Kategori" :items="categories" filterType="category" @apply="handleFilterSeminar"
+            triggerText="Kategori" :preselectedValues="selectedCategoriesSeminar" />
           <SearchBar v-model="searchQuerySeminar" />
         </div>
-        <Table :headers="['NIM', 'Nama', 'Judul Proposal Tugas Akhir', 'Nilai']" :items="filteredProposalSeminar"
-          @rowClick="handleRowClickSeminar">
+        <Table :headers="['NIM', 'Nama', 'Kategori', 'Judul Proposal Tugas Akhir', 'Nilai']"
+          :items="filteredProposalSeminar" @rowClick="handleRowClickSeminar">
           <template #row="{ item }">
             <td class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6">
               {{ item.nim }}
             </td>
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               <div class="flex items-center gap-2">
-                <img v-if="item.img" :src="item.img" alt="Profile Image" class="w-8 h-8 rounded-full" />
-                {{ item.nama }}
+                <img :src="DefaultAvatar" alt="Profile Image" class="w-8 h-8 rounded-full" />
+                {{ item.mahasiswa }}
               </div>
             </td>
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-              {{ item.judul_proposal_ta }}
+              {{ item.kategori_ta?.nama_kategori }}
+            </td>
+            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+              {{ item.judul_proposal }}
             </td>
             <td class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
-              :class="item.nilai == null ? 'text-secondary' : ''">
-              {{ item.nilai || 'Belum Dinilai' }}
+              :class="item.nilai_proposal == null ? 'text-secondary' : ''">
+              {{ item.nilai_proposal || 'Belum Dinilai' }}
             </td>
           </template>
         </Table>
@@ -374,15 +344,15 @@ const modalTimerBodyText = computed(() => {
   <DefaultModal v-if="modalRef" @close="modalRef = false" :headText="modalHeadText" :bodyText="modalBodyText">
     <div class="flex flex-col gap-4 mt-4">
       <ValidationFile id="naskah-ta" label="Naskah Tugas Akhir" :fileFromDatabase="fileNaskahProposal"
-        :statusValid="tempValidasi.naskah_proposal_status_valid"
+        :isDisabled="true" :statusValid="tempValidasi.naskah_proposal_status_valid"
         @update:statusValid="tempValidasi.naskah_proposal_status_valid = $event" />
       <ValidationFile id="transkrip-nilai-mahasiswa" label="Transkrip Nilai Mahasiswa" :fileFromDatabase="fileTranskrip"
-        :statusValid="tempValidasi.file_transkrip_status_valid"
+        :isDisabled="true" :statusValid="tempValidasi.file_transkrip_status_valid"
         @update:statusValid="tempValidasi.file_transkrip_status_valid = $event" />
       <InputTextarea id="catatan" label="Catatan" placeholder="Masukkan catatan" v-model="catatan" />
     </div>
   </DefaultModal>
   <ModalTimer v-if="modalTimerVisible" @close="handleModalCancel" :headText="modalTimerHeadText"
-    :bodyText="modalTimerBodyText" submitText="Yakin" :showCancel="false" :showSubmit="true" :enableTimer="true"
-    :timerDuration="5" @submit="handleModalSubmit" />
+    :bodyText="modalTimerBodyText" submitText="Yakin" :showCancel="false" :showSubmit="true" :enableTimer="false"
+    @submit="handleModalSubmit" />
 </template>

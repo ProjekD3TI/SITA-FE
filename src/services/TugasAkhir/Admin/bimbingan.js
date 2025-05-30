@@ -38,28 +38,7 @@ export function useTabelPlottingPembimbing() {
             toast.error(errorPlotting.value);
         }
     };
-    const submitPlotting = async ({ tugas_akhir_id, dosen_id }) => {
-        loadingPlotting.value = true;
-        try {
-            const authToken = VueCookies.get("auth_token");
-            const headers = {
-                'Authorization': `Bearer ${authToken}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            };
-            const formData = {
-                tugas_akhir_id,
-                dosen_id
-            };
-            const response = await axios.post("/api/admin/plotting-pembimbing/plot", formData, { headers });
-            toast.success("Plotting pembimbing berhasil dilakukan!");
-            await fetchData();
-        } catch (err) {
-            handleError(err);
-        } finally {
-            loadingPlotting.value = false;
-        }
-    };
+    
     onMounted(() => {
         fetchData();
     });
@@ -73,7 +52,6 @@ export function useTabelPlottingPembimbing() {
         errorPlotting,
         dataPlotting,
         fetchData,
-        submitPlotting
     };
 }
 

@@ -5,118 +5,121 @@ import ValidationFile from '@/components/Tugas-akhir/Forms/ValidationFile.vue';
 import Button from '@/components/Tugas-akhir/Button.vue';
 import UserData from '@/components/Tugas-akhir/UserData.vue';
 import ModalTimer from '@/components/Tugas-akhir/Modals/ModalTimer.vue';
-import FilePDFDummy from '@/assets/SV-Undangan Sosialisasi Teknis dan Informasi Lomba OLIVIA Tahun 2025.pdf';
-import { ref, computed, reactive } from 'vue';
+import Loading from '@/components/Loading.vue';
+import ErrorMsg from '@/components/ErrorMsg.vue';
+import { ref, computed, reactive, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useShowProposal } from '@/services/TugasAkhir/Admin/proposal.js';
+const {
+  loadingProposal,
+  errorProposal,
+  validateProposal,
+  dataProposal,
+  fetchData
+} = useShowProposal();
 
+
+function getFileName(filePath) {
+  return filePath ? decodeURIComponent(filePath.split('/').pop()) : '';
+}
+
+const router = useRouter();
 const modalRef = ref(false);
-const filePDF = FilePDFDummy;
+const route = useRoute();
 
-const proposalData = reactive({
-  id: 1,
-  judul_proposal: "Pengembangan El Pikir Satu Dua Tiga",
-  naskah_proposal: "naskah-proposal-ta.pdf",
-  naskah_proposal_url: filePDF,
-  naskah_proposal_status_valid: 0, 
-  file_transkrip: "transkrip-nilai-mahasiswa.pdf",
-  file_transkrip_url: filePDF,
+onMounted(() => {
+  if (route.params.proposal_id) {
+    fetchData(route.params.proposal_id);
+  }
+});
+
+
+// Reactive untuk status validasi
+const tempValidasi = reactive({
+  naskah_proposal_status_valid: 0,
   file_transkrip_status_valid: 0,
 });
 
-// Variabel sementara untuk validasi (untuk radio)
-const tempValidasi = reactive({
-  naskah_proposal_status_valid: proposalData.naskah_proposal_status_valid,
-  file_transkrip_status_valid: proposalData.file_transkrip_status_valid,
-});
+// File dari API
+const fileNaskahProposal = ref({});
+const fileTranskrip = ref({});
 
-const fileNaskahProposal = {
-  name: proposalData.naskah_proposal,
-  url: proposalData.naskah_proposal_url,
-};
-const fileTranskrip = {
-  name: proposalData.file_transkrip,
-  url: proposalData.file_transkrip_url,
-};
+// Watch dataProposal untuk update fileNaskahProposal & fileTranskrip
+watch(dataProposal, (val) => {
+  if (val && val.berkas) {
+    // Cari berkas sesuai nama_berkas
+    const naskah = val.berkas.find(b => b.nama_berkas === 'Naskah Proposal Tugas Akhir');
+    const transkrip = val.berkas.find(b => b.nama_berkas === 'Transkrip Nilai Mahasiswa');
+    fileNaskahProposal.value = naskah
+      ? { name: getFileName(naskah.file_path), url: naskah.download_url }
+      : {};
+    fileTranskrip.value = transkrip
+      ? { name: getFileName(transkrip.file_path), url: transkrip.download_url }
+      : {};
+
+    // Set status validasi awal
+    tempValidasi.naskah_proposal_status_valid = naskah ? naskah.status_valid : 0;
+    tempValidasi.file_transkrip_status_valid = transkrip ? transkrip.status_valid : 0;
+  }
+}, { immediate: true });
 
 const catatan = ref('');
-const mahasiswa = ref({
-    nim: 'V234567890',
-    name: 'John Doe',
-});
-const tugas_akhir = ref({
-    kategori: 'Internet of Things',
-    judul_proposal_ta: 'Pengembangan Aplikasi Mobile',
-    dosen_pembimbing: {
-        name: 'Dr. Jane Smith',
-        nik: '987654321',
-        program_studi: 'D-3 Teknik Informatika'
-    },
-    tahun_ajaran: '2024/2025',
-})
+
 const naskahRef = ref(null);
 const transkripRef = ref(null);
 
 const handleValidasi = () => {
-  naskahRef.value.submitValidation();
-  transkripRef.value.submitValidation();
-  proposalData.naskah_proposal_status_valid = tempValidasi.naskah_proposal_status_valid;
-  proposalData.file_transkrip_status_valid = tempValidasi.file_transkrip_status_valid;
+  // Hanya buka modal, tidak submit
   modalRef.value = true;
+};
+
+const handleSubmitValidasi = async () => {
+  // Ambil status radio dari ref
+  const naskahStatus = naskahRef.value.localValue;
+  const transkripStatus = transkripRef.value.localValue;
+  const statusValidBerkas = [Number(naskahStatus), Number(transkripStatus)];
+
+  // Submit ke backend
+  await validateProposal(dataProposal.value.id, statusValidBerkas);
+
+  // Tutup modal
+  modalRef.value = false;
+
+  // Redirect ke halaman proposal
+  router.push({ name: 'ProposalforAdmin', });
 };
 </script>
 
 <template>
-  <Breadcrumb />
-  <div class="card-rounded card-rounded bg-white p-4 lg:p-8">
-    <div class="flex flex-col gap-4 max-w-screen-2xl mx-auto">
-      <UserData
-        :headText="mahasiswa.nim"
-        :bodyText="mahasiswa.name"
-        :headText2="tugas_akhir.kategori"
-        :bodyText2="tugas_akhir.judul_proposal_ta"
-        :tahunAjaran="tugas_akhir.tahun_ajaran"
-      />                  
-      <!-- All the file uploads -->
-      <ValidationFile
-        ref="naskahRef"
-        id="naskah-ta"
-        label="Naskah Tugas Akhir"
-        :fileFromDatabase="fileNaskahProposal"
-        :statusValid="tempValidasi.naskah_proposal_status_valid"
-        @update:statusValid="tempValidasi.naskah_proposal_status_valid = $event"
-      />
-      <ValidationFile
-        ref="transkripRef"
-        id="transkrip-nilai-mahasiswa"
-        label="Transkrip Nilai Mahasiswa"
-        :fileFromDatabase="fileTranskrip"
-        :statusValid="tempValidasi.file_transkrip_status_valid"
-        @update:statusValid="tempValidasi.file_transkrip_status_valid = $event"
-      />
-      <InputTextArea
-        id="catatan"
-        label="Catatan"
-        placeholder="Masukkan catatan"
-        v-model="catatan"     
-      />
-      <Button
-        variant="primary"
-        class="w-fit self-end"
-        size="lg"
-        @click="handleValidasi"
-      >
-        Validasi                        
-      </Button>
-    </div>   
+  <div v-if="loadingProposal" class="flex items-center justify-center min-h-[80dvh]">
+    <Loading />
   </div>
-  <ModalTimer
-    v-if="modalRef"
-    @close="modalRef = false"
+
+  <div v-else-if="errorProposal" class="p-4">
+    <ErrorMsg :message="errorProposal" />
+  </div>
+
+  <Breadcrumb />
+  <div class="p-4 bg-white card-rounded lg:p-8">
+    <div class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
+      <UserData :headText="dataProposal?.nim" :bodyText="dataProposal?.mahasiswa"
+        :headText2="dataProposal?.kategori_ta?.nama_kategori" :bodyText2="dataProposal?.judul_proposal"
+        :tahunAjaran="dataProposal?.tahun_ajaran?.tahun_ajaran" />
+      <!-- All the file uploads -->
+      <ValidationFile ref="naskahRef" id="naskah-ta" label="Naskah Tugas Akhir" :fileFromDatabase="fileNaskahProposal"
+        :statusValid="tempValidasi.naskah_proposal_status_valid"
+        @update:statusValid="tempValidasi.naskah_proposal_status_valid = $event" />
+      <ValidationFile ref="transkripRef" id="transkrip-nilai-mahasiswa" label="Transkrip Nilai Mahasiswa"
+        :fileFromDatabase="fileTranskrip" :statusValid="tempValidasi.file_transkrip_status_valid"
+        @update:statusValid="tempValidasi.file_transkrip_status_valid = $event" />
+      <InputTextArea id="catatan" label="Catatan" placeholder="Masukkan catatan" v-model="catatan" />
+      <Button variant="primary" class="self-end w-fit" size="lg" @click="handleValidasi">
+        Validasi
+      </Button>
+    </div>
+  </div>
+  <ModalTimer v-if="modalRef" @close="modalRef = false" @submit="handleSubmitValidasi"
     headText="Pastikan pengecekan berkas sudah benar."
-    bodyText="Anda tidak dapat merubah status validasi yang telah terkirim."
-    submitText="Validasi"
-    :showCancel="false"
-    :showSubmit="true"
-    :enableTimer="true"
-    :timerDuration="5"
-  />
+    bodyText="Anda tidak dapat merubah status validasi yang telah terkirim." submitText="Validasi" :showCancel="false"
+    :showSubmit="true" :enableTimer="false" />
 </template>
