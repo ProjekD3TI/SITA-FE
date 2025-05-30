@@ -256,8 +256,155 @@ const routes = [
         name: "DashboardAdminPengelola",
         component: () => import("../views/Admin/AdminPengelola/Dashboard.vue"),
       },
+
+      // Kelola
+      // Kelas
+      {
+        path: "kelas",
+        name: "ListKelas",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Clases/Kelas/List.vue"),
+      },
+      {
+        path: "kelas/create",
+        name: "CreateKelas",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Clases/Kelas/Create.vue"),
+      },
+      {
+        path: "kelas/edit/:id",
+        name: "EditKelas",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Clases/Kelas/Edit.vue"),
+      },
+      //semester
+      {
+        path: "semester",
+        name: "ListSemester",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Clases/Semester/List.vue"),
+      },
+      {
+        path: "semester/create",
+        name: "CreateSemester",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Clases/Semester/Create.vue"),
+      },
+      {
+        path: "semester/edit/:id",
+        name: "EditSemester",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Clases/Semester/Edit.vue"),
+      },
+      //RFID
+      {
+        path: "rfid",
+        name: "ListRfid",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Rfid/List.vue"),
+      },
+      {
+        path: "rfid/create",
+        name: "CreateRfid",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Rfid/Create.vue"),
+      },
+      {
+        path: "rfid/edit/:id",
+        name: "EditRfid",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Rfid/Edit.vue"),
+      },
+
+
+      // Jadwal
+      //CRUD sesi
+      {
+        path: "sesi",
+        name: "ListSesi",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Jadwal/Sesi/List.vue"),
+      },
+      {
+        path: "sesi/create",
+        name: "CreateSesi",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Jadwal/Sesi/Create.vue"),
+      },
+      {
+        path: "sesi/edit/:id",
+        name: "EditSesi",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Jadwal/Sesi/Edit.vue"),
+      },
+      // RUANG
+      // CRUD Lantai
+      {
+        path: "lantai",
+        name: "ListLantai",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Lantai/List.vue"),
+      },
+      {
+        path: "lantai/create",
+        name: "CreateLantai",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Lantai/Create.vue"),
+      },
+      {
+        path: "lantai/edit/:id",
+        name: "EditLantai",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Lantai/Edit.vue"),
+      },
+      // CRUD Gedung
+      {
+        path: "gedung",
+        name: "ListGedung",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Gedung/List.vue"),
+      },
+      {
+        path: "gedung/create",
+        name: "CreateGedung",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Gedung/Create.vue"),
+      },
+      {
+        path: "gedung/edit/:id",
+        name: "EditGedung",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Gedung/Edit.vue"),
+      },
+      // CRUD Ruang
+      {
+        path: "ruang",
+        name: "ListRuang",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Ruang/List.vue"),
+      },
+      {
+        path: "ruang/create",
+        name: "CreateRuang",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Ruang/Create.vue"),
+      },
+      {
+        path: "ruang/edit/:id",
+        name: "EditRuang",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Ruang/Edit.vue"),
+      },
+      {
+        path: "ruang/detail/:id",
+        name: "DetailRuang",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Ruang/Detail.vue"),
+      },
+
     ],
   },
+
 
   // {
   //   path: "/admin-pengelola/dashboard",

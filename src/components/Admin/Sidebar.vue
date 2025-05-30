@@ -1,97 +1,60 @@
 <template>
   <div>
-    <button
-      class="fixed top-2 left-4 z-50 lg:hidden bg-white p-2 rounded-md shadow-md text-gray-800 focus:outline-none"
-      @click="toggleSidebar"
-      v-if="isCollapsed && isMobile"
-    >
+    <button class="fixed top-2 left-4 z-50 lg:hidden bg-white p-2 rounded-md shadow-md text-gray-800 focus:outline-none"
+      @click="toggleSidebar" v-if="isCollapsed && isMobile">
       <i class="fas fa-bars text-xl"></i>
     </button>
 
-    <aside
-      class="fixed left-0 top-0 h-screen bg-indigo-600 text-white transition-all duration-300 z-40"
-      :class="{
-        'w-64': !isCollapsed,
-        'w-16': isCollapsed && !isMobile,
-        'w-64 -translate-x-full': isCollapsed && isMobile,
-      }"
-    >
-      <div
-        class="flex items-center justify-between h-16 px-4 border-b border-indigo-700"
-      >
-        <router-link
-          to="/admin/dashboard"
-          class="font-bold text-xl truncate"
-          v-if="!isCollapsed || isMobile"
-        >
+    <aside class="fixed left-0 top-0 h-screen bg-indigo-600 text-white transition-all duration-300 z-40" :class="{
+      'w-64': !isCollapsed,
+      'w-16': isCollapsed && !isMobile,
+      'w-64 -translate-x-full': isCollapsed && isMobile,
+    }">
+      <div class="flex items-center justify-between h-16 px-4 border-b border-indigo-700">
+        <router-link to="/admin/dashboard" class="font-bold text-xl truncate" v-if="!isCollapsed || isMobile">
           Admin Panel
         </router-link>
-        <button
-          class="p-1 hover:bg-indigo-700 rounded-md transition-colors"
-          @click="toggleSidebar"
-        >
-          <i
-            :class="[
-              'fas',
-              isCollapsed && !isMobile ? 'fa-chevron-right' : 'fa-chevron-left',
-            ]"
-          ></i>
+        <button class="p-1 hover:bg-indigo-700 rounded-md transition-colors" @click="toggleSidebar">
+          <i :class="[
+            'fas',
+            isCollapsed && !isMobile ? 'fa-chevron-right' : 'fa-chevron-left',
+          ]"></i>
         </button>
       </div>
 
       <nav class="flex flex-col p-2 overflow-y-auto h-[calc(100vh-4rem)]">
-        <router-link
-          :to="getDashboardRoute()"
-          class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-          @click="closeSidebar"
-        >
+        <router-link :to="getDashboardRoute()"
+          class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors" @click="closeSidebar">
           <i class="fas fa-tachometer-alt text-xl"></i>
-          <span class="ml-3" :class="{ hidden: isCollapsed && !isMobile }"
-            >Dashboard</span
-          >
+          <span class="ml-3" :class="{ hidden: isCollapsed && !isMobile }">Dashboard</span>
         </router-link>
 
         <template v-if="userRole === 'superadmin'">
           <div class="mt-2">
             <button
               class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors group"
-              @click="handleDropdownClick('users')"
-            >
+              @click="handleDropdownClick('users')">
               <div class="flex items-center min-w-0 flex-1">
                 <i class="fas fa-users text-xl flex-shrink-0"></i>
-                <span
-                  class="ml-3 truncate"
-                  :class="{ hidden: isCollapsed && !isMobile }"
-                >
+                <span class="ml-3 truncate" :class="{ hidden: isCollapsed && !isMobile }">
                   User Management
                 </span>
               </div>
-              <i
-                class="fas flex-shrink-0 ml-2 transition-transform"
-                :class="[
-                  dropdownStates.users ? 'fa-chevron-up' : 'fa-chevron-down',
-                  { hidden: isCollapsed && !isMobile },
-                ]"
-              ></i>
+              <i class="fas flex-shrink-0 ml-2 transition-transform" :class="[
+                dropdownStates.users ? 'fa-chevron-up' : 'fa-chevron-down',
+                { hidden: isCollapsed && !isMobile },
+              ]"></i>
             </button>
 
-            <div
-              v-if="dropdownStates.users"
-              class="pl-4 mt-1 space-y-1"
-              :class="{ hidden: isCollapsed && !isMobile }"
-            >
-              <router-link
-                to="/superadmin/users"
+            <div v-if="dropdownStates.users" class="pl-4 mt-1 space-y-1" :class="{ hidden: isCollapsed && !isMobile }">
+              <router-link to="/superadmin/users"
                 class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors min-w-0"
-                @click="closeSidebar"
-              >
+                @click="closeSidebar">
                 <span class="truncate">Create Dosen</span>
               </router-link>
-              <router-link
-                to="/superadmin/create-user"
+              <router-link to="/superadmin/create-user"
                 class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-                @click="closeSidebar"
-              >
+                @click="closeSidebar">
                 <span>Create Admin</span>
               </router-link>
             </div>
@@ -102,43 +65,28 @@
           <div class="mt-2">
             <button
               class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors group"
-              @click="handleDropdownClick('test')"
-            >
+              @click="handleDropdownClick('test')">
               <div class="flex items-center min-w-0 flex-1">
                 <i class="fas fa-graduation-cap text-xl flex-shrink-0"></i>
-                <span
-                  class="ml-3 truncate"
-                  :class="{ hidden: isCollapsed && !isMobile }"
-                >
+                <span class="ml-3 truncate" :class="{ hidden: isCollapsed && !isMobile }">
                   test
                 </span>
               </div>
-              <i
-                class="fas flex-shrink-0 ml-2 transition-transform"
-                :class="[
-                  dropdownStates.test ? 'fa-chevron-up' : 'fa-chevron-down',
-                  { hidden: isCollapsed && !isMobile },
-                ]"
-              ></i>
+              <i class="fas flex-shrink-0 ml-2 transition-transform" :class="[
+                dropdownStates.test ? 'fa-chevron-up' : 'fa-chevron-down',
+                { hidden: isCollapsed && !isMobile },
+              ]"></i>
             </button>
 
-            <div
-              v-if="dropdownStates.test"
-              class="pl-4 mt-1 space-y-1"
-              :class="{ hidden: isCollapsed && !isMobile }"
-            >
-              <router-link
-                :to="getRouteByRole('test')"
+            <div v-if="dropdownStates.test" class="pl-4 mt-1 space-y-1" :class="{ hidden: isCollapsed && !isMobile }">
+              <router-link :to="getRouteByRole('test')"
                 class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-                @click="closeSidebar"
-              >
+                @click="closeSidebar">
                 <span>test1</span>
               </router-link>
-              <router-link
-                :to="getRouteByRole('test-schedules')"
+              <router-link :to="getRouteByRole('test-schedules')"
                 class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-                @click="closeSidebar"
-              >
+                @click="closeSidebar">
                 <span>test2</span>
               </router-link>
             </div>
@@ -149,44 +97,195 @@
           <div class="mt-2">
             <button
               class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors group"
-              @click="handleDropdownClick('test2')"
-            >
+              @click="handleDropdownClick('inventaris')">
               <div class="flex items-center min-w-0 flex-1">
-                <i class="fas fa-cogs text-xl flex-shrink-0"></i>
-                <span
-                  class="ml-3 truncate"
-                  :class="{ hidden: isCollapsed && !isMobile }"
-                >
-                  test2
+                <i class="fas fa-wrench text-xl flex-shrink-0"></i>
+                <span class="ml-3 truncate" :class="{ hidden: isCollapsed && !isMobile }">
+                  Inventaris
                 </span>
               </div>
-              <i
-                class="fas flex-shrink-0 ml-2 transition-transform"
-                :class="[
-                  dropdownStates.test2 ? 'fa-chevron-up' : 'fa-chevron-down',
-                  { hidden: isCollapsed && !isMobile },
-                ]"
-              ></i>
+              <i class="fas flex-shrink-0 ml-2 transition-transform" :class="[
+                dropdownStates.inventaris
+                  ? 'fa-chevron-up'
+                  : 'fa-chevron-down',
+                { hidden: isCollapsed && !isMobile },
+              ]"></i>
             </button>
 
-            <div
-              v-if="dropdownStates.test2"
-              class="pl-4 mt-1 space-y-1"
-              :class="{ hidden: isCollapsed && !isMobile }"
-            >
-              <router-link
-                :to="getRouteByRole('inventory')"
+            <div v-if="dropdownStates.inventaris" class="pl-4 mt-1 space-y-1"
+              :class="{ hidden: isCollapsed && !isMobile }">
+              <router-link :to="getRouteByRole('inventaris')"
                 class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-                @click="closeSidebar"
-              >
-                <span>test1</span>
+                @click="closeSidebar">
+                <span> Inventaris</span>
               </router-link>
-              <router-link
-                :to="getRouteByRole('maintenance')"
+              <router-link :to="getRouteByRole('jenis-inventaris')"
                 class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-                @click="closeSidebar"
-              >
-                <span>test2</span>
+                @click="closeSidebar">
+                <span> Jenis Inventaris</span>
+              </router-link>
+              <router-link :to="getRouteByRole('merk')"
+                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                @click="closeSidebar">
+                <span> Merk</span>
+              </router-link>
+              <router-link :to="getRouteByRole('tipe')"
+                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                @click="closeSidebar">
+                <span> Tipe</span>
+              </router-link>
+            </div>
+          </div>
+        </template>
+
+        <template v-if="['superadmin', 'admin_pengelola'].includes(userRole)">
+          <div class="mt-2">
+            <router-link :to="getRouteByRole('bhp')"
+              class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+              @click="closeSidebar">
+              <i class="fas fa-inbox text-xl"></i>
+              <span class="ml-3" :class="{ hidden: isCollapsed && !isMobile }">BHP</span>
+            </router-link>
+          </div>
+        </template>
+
+        <template v-if="['superadmin', 'admin_pengelola'].includes(userRole)">
+          <div class="mt-2">
+            <button
+              class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors group"
+              @click="handleDropdownClick('ruang')">
+              <div class="flex items-center min-w-0 flex-1">
+                <i class="fas fa-house text-xl flex-shrink-0"></i>
+                <span class="ml-3 truncate" :class="{ hidden: isCollapsed && !isMobile }">
+                  Ruang
+                </span>
+              </div>
+              <i class="fas flex-shrink-0 ml-2 transition-transform" :class="[
+                dropdownStates.ruang ? 'fa-chevron-up' : 'fa-chevron-down',
+                { hidden: isCollapsed && !isMobile },
+              ]"></i>
+            </button>
+
+            <div v-if="dropdownStates.ruang" class="pl-4 mt-1 space-y-1" :class="{ hidden: isCollapsed && !isMobile }">
+              <router-link :to="getRouteByRole('lantai')"
+                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                @click="closeSidebar">
+                <span> Lantai</span>
+              </router-link>
+              <router-link :to="getRouteByRole('gedung')"
+                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                @click="closeSidebar">
+                <span> Gedung</span>
+              </router-link>
+              <router-link :to="getRouteByRole('ruang')"
+                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                @click="closeSidebar">
+                <span> Ruang</span>
+              </router-link>
+            </div>
+          </div>
+        </template>
+
+        <template v-if="['superadmin', 'admin_pengelola'].includes(userRole)">
+          <!-- Menu Jadwal -->
+          <div class="mt-2">
+            <button
+              class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors group"
+              @click="handleDropdownClick('jadwal')">
+              <div class="flex items-center min-w-0 flex-1">
+                <i class="fas fa-calendar-days text-xl flex-shrink-0"></i>
+                <span class="ml-3 truncate" :class="{ hidden: isCollapsed && !isMobile }">
+                  Jadwal
+                </span>
+              </div>
+              <i class="fas flex-shrink-0 ml-2 transition-transform" :class="[
+                dropdownStates.jadwal ? 'fa-chevron-up' : 'fa-chevron-down',
+                { hidden: isCollapsed && !isMobile },
+              ]"></i>
+            </button>
+
+            <div v-if="dropdownStates.jadwal" class="pl-4 mt-1 space-y-1" :class="{ hidden: isCollapsed && !isMobile }">
+              <router-link :to="getRouteByRole('sesi')"
+                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                @click="closeSidebar">
+                <span>Sesi</span>
+              </router-link>
+              <router-link :to="getRouteByRole('jadwal')"
+                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                @click="closeSidebar">
+                <span>Jadwal</span>
+              </router-link>
+            </div>
+          </div>
+
+          <!-- Menu Kelola -->
+          <div class="mt-2">
+            <button
+              class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors group"
+              @click="handleDropdownClick('kelola')">
+              <div class="flex items-center min-w-0 flex-1">
+                <i class="fas fa-sliders-h text-xl flex-shrink-0"></i>
+                <span class="ml-3 truncate" :class="{ hidden: isCollapsed && !isMobile }">
+                  Kelola
+                </span>
+              </div>
+              <i class="fas flex-shrink-0 ml-2 transition-transform" :class="[
+                dropdownStates.kelola ? 'fa-chevron-up' : 'fa-chevron-down',
+                { hidden: isCollapsed && !isMobile },
+              ]"></i>
+            </button>
+
+            <div v-if="dropdownStates.kelola" class="pl-4 mt-1 space-y-1" :class="{ hidden: isCollapsed && !isMobile }">
+              <router-link :to="getRouteByRole('RFID')"
+                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                @click="closeSidebar">
+                <span>RFID</span>
+              </router-link>
+              <router-link :to="getRouteByRole('kelas')"
+                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                @click="closeSidebar">
+                <span>Kelas</span>
+              </router-link>
+              <router-link :to="getRouteByRole('semester')"
+                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                @click="closeSidebar">
+                <span>Semester</span>
+              </router-link>
+            </div>
+          </div>
+        </template>
+
+
+        <template v-if="['superadmin', 'admin_pengelola'].includes(userRole)">
+          <div class="mt-2">
+            <button
+              class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors group"
+              @click="handleDropdownClick('peminjaman')">
+              <div class="flex items-center min-w-0 flex-1">
+                <i class="fas fa-shopping-cart text-xl flex-shrink-0"></i>
+                <span class="ml-3 truncate" :class="{ hidden: isCollapsed && !isMobile }">
+                  Peminjaman
+                </span>
+              </div>
+              <i class="fas flex-shrink-0 ml-2 transition-transform" :class="[
+                dropdownStates.peminjaman
+                  ? 'fa-chevron-up'
+                  : 'fa-chevron-down',
+                { hidden: isCollapsed && !isMobile },
+              ]"></i>
+            </button>
+
+            <div v-if="dropdownStates.peminjaman" class="pl-4 mt-1 space-y-1"
+              :class="{ hidden: isCollapsed && !isMobile }">
+              <router-link :to="getRouteByRole('peminjaman-inventaris')"
+                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                @click="closeSidebar">
+                <span> Inventaris</span>
+              </router-link>
+              <router-link :to="getRouteByRole('peminjaman-bhp')"
+                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                @click="closeSidebar">
+                <span> Bhp</span>
               </router-link>
             </div>
           </div>
@@ -194,11 +293,7 @@
       </nav>
     </aside>
 
-    <div
-      v-if="!isCollapsed && isMobile"
-      class="fixed inset-0 bg-black bg-opacity-50 z-30"
-      @click="closeSidebar"
-    ></div>
+    <div v-if="!isCollapsed && isMobile" class="fixed inset-0 bg-black bg-opacity-50 z-30" @click="closeSidebar"></div>
   </div>
 </template>
 
@@ -224,7 +319,10 @@ const isCollapsed = ref(props.isCollapsed);
 const isMobile = ref(props.isMobile);
 const dropdownStates = ref({
   users: false,
-  test: false,
+  inventaris: false,
+  bhp: false,
+  peminjaman: false,
+  ruang: false,
   test2: false,
 });
 const router = useRouter();
