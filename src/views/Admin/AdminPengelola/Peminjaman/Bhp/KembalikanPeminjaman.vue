@@ -12,7 +12,7 @@
 
     <div v-if="loading" class="flex justify-center items-center h-60">
       <div
-        class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"
+        class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"
       ></div>
     </div>
 
@@ -301,7 +301,7 @@ const handleSubmit = async () => {
       keterangan_pengembalian: formData.value.keterangan_pengembalian,
     };
 
-    const response = await axios.post(
+    const response = await axios.put(
       `/api/admin_pengelola/peminjaman_bhp/return/${id.value}`,
       submission
     );

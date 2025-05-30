@@ -17,6 +17,8 @@
             label-key="nama_bhp"
             placeholder="Pilih BHP"
             @update:model-value="updateSelectedBhp"
+            api-endpoint="/api/admin_pengelola/get_bhp"
+            :use-server-search="true"
           />
           <p v-if="selectedBhp" class="text-sm text-gray-600">
             Stok tersedia: {{ selectedBhp.kondisi_bagus }}
@@ -55,6 +57,12 @@
           label-key="name"
           placeholder="Pilih Peminjam"
           :disabled="!formData.tipe_peminjam"
+          :api-endpoint="
+            formData.tipe_peminjam === 'mahasiswa'
+              ? '/api/admin_pengelola/mahasiswa'
+              : '/api/admin_pengelola/dosen'
+          "
+          :use-server-search="true"
         />
       </div>
 
@@ -94,15 +102,22 @@
           type="number"
           class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         />
-        <span></span>
+        <span v-if="showStockError" class="text-sm text-red-600">
+          Jumlah penggunaan melebihi stok tersedia
+        </span>
       </div>
 
       <div class="flex space-x-2">
         <button
           type="submit"
+          :disabled="isSubmitting"
           class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
         >
-          Update
+          <div
+            v-if="isSubmitting"
+            class="mr-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+          ></div>
+          {{ isSubmitting ? "Memproses..." : "Proses Peminjaman" }}
         </button>
         <button
           type="button"
@@ -117,7 +132,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import axios from "axios";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
@@ -128,6 +143,8 @@ const route = useRoute();
 const router = useRouter();
 const toast = useToast();
 const id = route.params.id;
+const loading = ref(true);
+const isSubmitting = ref(false);
 
 const formData = ref({
   id_bhp: "",
@@ -142,10 +159,36 @@ const bhpList = ref([]);
 const mahasiswaList = ref([]);
 const dosenList = ref([]);
 const selectedBhp = ref(null);
-const showStockError = ref(false);
+
+const showStockError = computed(() => {
+  if (!selectedBhp.value || !formData.value.jumlah_penggunaan) return false;
+  return (
+    parseInt(formData.value.jumlah_penggunaan) > selectedBhp.value.kondisi_bagus
+  );
+});
 
 const updateSelectedBhp = (bhpId) => {
   selectedBhp.value = bhpList.value.find((bhp) => bhp.id_bhp === bhpId);
+
+  if (!selectedBhp.value && bhpId) {
+    fetchSpecificBhp(bhpId);
+  }
+};
+
+const fetchSpecificBhp = async (bhpId) => {
+  try {
+    setupAxios();
+    const response = await axios.get(`/api/admin_pengelola/bhp/${bhpId}`);
+    if (response.data?.data) {
+      selectedBhp.value = response.data.data;
+
+      if (!bhpList.value.some((bhp) => bhp.id_bhp === bhpId)) {
+        bhpList.value.push(response.data.data);
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching specific BHP:", error);
+  }
 };
 
 const setupAxios = () => {
@@ -159,57 +202,17 @@ watch(
   () => formData.value.tipe_peminjam,
   (newValue) => {
     formData.value.id_peminjam = "";
-  },
-  () => formData.value.jumlah_penggunaan,
-  (newValue) => {
-    if (selectedBhp.value) {
-      showStockError.value =
-        parseInt(newValue) > selectedBhp.value.kondisi_bagus;
-    }
   }
 );
 
-const fetchBhp = async () => {
-  try {
-    setupAxios();
-    const response = await axios.get("/api/admin_pengelola/bhp");
-    bhpList.value = response.data.data;
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    if (error.response?.status === 401) {
-      toast.error("Sesi anda telah berakhir. Silakan login kembali.");
-      router.push("/login-admin");
-    }
-  }
-};
-
-const fetchMahasiswaAndDosen = async () => {
-  try {
-    setupAxios();
-    const [mahasiswaResponse, dosenResponse] = await Promise.all([
-      axios.get("/api/admin_pengelola/mahasiswa"),
-      axios.get("/api/admin_pengelola/dosen"),
-    ]);
-
-    mahasiswaList.value = mahasiswaResponse.data.data;
-    dosenList.value = dosenResponse.data.data || [];
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    if (error.response?.status === 401) {
-      toast.error("Sesi anda telah berakhir. Silakan login kembali.");
-      router.push("/login-admin");
-    }
-  }
-};
-
-onMounted(async () => {
-  setupAxios();
-  await fetchMahasiswaAndDosen();
-  await fetchBhp();
-});
-
 const handleSubmit = async () => {
+  if (showStockError.value) {
+    toast.error("Jumlah penggunaan melebihi stok tersedia");
+    return;
+  }
+
   try {
+    isSubmitting.value = true;
     setupAxios();
     const response = await axios.post(
       `/api/admin_pengelola/peminjaman_bhp/create`,
@@ -220,11 +223,6 @@ const handleSubmit = async () => {
     router.push("/admin-pengelola/peminjaman-bhp");
   } catch (error) {
     console.error("Error creating peminjaman:", error);
-
-    if (showStockError.value) {
-      toast.error("Jumlah penggunaan melebihi stok tersedia");
-      return;
-    }
     if (error.response?.status === 401) {
       toast.error("Sesi anda telah berakhir. Silakan login kembali.");
       router.push("/login-admin");
@@ -235,6 +233,14 @@ const handleSubmit = async () => {
         error.response?.data?.message || "Gagal membuat peminjaman BHP"
       );
     }
+  } finally {
+    isSubmitting.value = false;
   }
 };
+
+onMounted(() => {
+  setTimeout(() => {
+    loading.value = false;
+  }, 500);
+});
 </script>

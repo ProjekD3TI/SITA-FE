@@ -205,20 +205,20 @@ const handleSubmit = async () => {
     isSubmitting.value = true;
     setupAxios();
 
-    const formDataToSend = new FormData();
+    const form = new FormData();
 
     formData.value.id_inventaris.forEach((item) => {
-      formDataToSend.append("id_inventaris[]", item.id_inventaris);
+      form.append("id_inventaris[]", item.id_inventaris);
     });
 
-    formDataToSend.append("id_peminjam", formData.value.id_peminjam);
-    formDataToSend.append("tipe_peminjam", formData.value.tipe_peminjam);
-    formDataToSend.append("kegunaan", formData.value.kegunaan);
-    formDataToSend.append("tanggal_pinjam", formData.value.tanggal_pinjam);
+    form.append("id_peminjam", formData.value.id_peminjam);
+    form.append("tipe_peminjam", formData.value.tipe_peminjam);
+    form.append("kegunaan", formData.value.kegunaan);
+    form.append("tanggal_pinjam", formData.value.tanggal_pinjam);
 
     const response = await axios.post(
       `/api/admin_pengelola/peminjaman_inventaris/create`,
-      formDataToSend
+      form
     );
 
     toast.success(

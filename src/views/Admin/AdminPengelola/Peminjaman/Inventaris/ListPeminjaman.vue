@@ -67,14 +67,14 @@
       <template #item-actions="item">
         <div class="flex space-x-2">
           <button
-            @click="goToDetail(item.referensi)"
+            @click="goToDetail(item.id_peminjaman_inventaris)"
             class="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition"
           >
             Detail
           </button>
           <button
             v-if="item.status !== 'Sudah Dikembalikan'"
-            @click="goToReturn(item.referensi)"
+            @click="goToReturn(item.id_peminjaman_inventaris)"
             class="inline-flex items-center px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition"
           >
             Kembalikan
@@ -165,7 +165,7 @@ const headers = [
   { text: "No Referensi", value: "referensi" },
   { text: "Nama Peminjam", value: "nama_peminjam" },
   { text: "Tanggal Pinjam", value: "tanggal_pinjam_formatted" },
-  { text: "Jumlah Item", value: "total_items" },
+  { text: "Jumlah Item", value: "total_Peminjaman" },
   { text: "Status", value: "status" },
   { text: "Aksi", value: "actions" },
 ];
@@ -245,7 +245,7 @@ const fetchPeminjamanList = async () => {
     }
 
     const response = await axios.get(
-      "/api/admin_pengelola/peminjaman_inventaris/grouped",
+      "/api/admin_pengelola/peminjaman_inventaris",
       {
         params,
       }
@@ -312,12 +312,12 @@ const goToCreate = () => {
   router.push(`/admin-pengelola/peminjaman-inventaris/create`);
 };
 
-const goToDetail = (referensi) => {
-  router.push(`/admin-pengelola/peminjaman-inventaris/detail/${referensi}`);
+const goToDetail = (id) => {
+  router.push(`/admin-pengelola/peminjaman-inventaris/detail/${id}`);
 };
 
-const goToReturn = (referensi) => {
-  router.push(`/admin-pengelola/peminjaman-inventaris/kembalikan/${referensi}`);
+const goToReturn = (id) => {
+  router.push(`/admin-pengelola/peminjaman-inventaris/kembalikan/${id}`);
 };
 
 onMounted(() => {

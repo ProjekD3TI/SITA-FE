@@ -21,12 +21,18 @@
         type="text"
         v-model="searchQuery"
         @click.stop
+        @input="handleSearch"
         placeholder="Cari..."
         class="w-full px-3 py-2 border-b text-sm focus:outline-none"
       />
-      <div class="py-1">
+      <div v-if="loading" class="flex justify-center py-4">
         <div
-          v-for="option in filteredOptions"
+          class="animate-spin h-5 w-5 border-2 border-primary rounded-full border-t-transparent"
+        ></div>
+      </div>
+      <div v-else class="py-1">
+        <div
+          v-for="option in displayOptions"
           :key="option[valueKey]"
           @click="selectOption(option)"
           class="px-3 py-2 cursor-pointer hover:bg-secondary text-sm"
@@ -34,7 +40,13 @@
           {{ formatOptionLabel(option) }}
         </div>
         <div
-          v-if="filteredOptions.length === 0"
+          v-if="displayOptions.length === 0 && searchQuery.length > 0"
+          class="px-3 py-2 text-sm text-muted-foreground"
+        >
+          Tidak ada data untuk "{{ searchQuery }}"
+        </div>
+        <div
+          v-if="displayOptions.length === 0 && searchQuery.length === 0"
           class="px-3 py-2 text-sm text-muted-foreground"
         >
           Tidak ada data
@@ -46,6 +58,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import axios from "axios";
 
 const props = defineProps({
   modelValue: {
@@ -54,7 +67,7 @@ const props = defineProps({
   },
   options: {
     type: Array,
-    required: true,
+    default: () => [],
   },
   labelKey: {
     type: String,
@@ -72,7 +85,18 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  // Add type property to determine display format
+  apiEndpoint: {
+    type: String,
+    default: "",
+  },
+  useServerSearch: {
+    type: Boolean,
+    default: false,
+  },
+  additionalParams: {
+    type: Object,
+    default: () => ({}),
+  },
   type: {
     type: String,
     default: "",
@@ -84,21 +108,74 @@ const emit = defineEmits(["update:modelValue"]);
 const isOpen = ref(false);
 const searchQuery = ref("");
 const searchInput = ref(null);
+const loading = ref(false);
+const displayOptions = ref([]);
+const selectedOption = ref(null);
+const debounceTimeout = ref(null);
 
-const filteredOptions = computed(() => {
-  if (!props.options) return [];
-  return props.options.filter((option) => {
-    // Check if searching by name, NIM, or NIK
+const handleSearch = () => {
+  if (debounceTimeout.value) {
+    clearTimeout(debounceTimeout.value);
+  }
+
+  debounceTimeout.value = setTimeout(async () => {
+    if (props.apiEndpoint && props.useServerSearch) {
+      await fetchOptions(searchQuery.value);
+    } else {
+      filterOptions();
+    }
+  }, 300);
+};
+
+const filterOptions = () => {
+  if (!props.options) {
+    displayOptions.value = [];
+    return;
+  }
+
+  if (searchQuery.value.trim() === "") {
+    displayOptions.value = props.options;
+    return;
+  }
+
+  displayOptions.value = props.options.filter((option) => {
     const label = formatOptionLabel(option).toLowerCase();
     return label.includes(searchQuery.value.toLowerCase());
   });
-});
+};
 
-// Format the display label based on the option type
+const fetchOptions = async (search = "") => {
+  if (!props.apiEndpoint && !props.useServerSearch) {
+    filterOptions();
+    return;
+  }
+
+  loading.value = true;
+  try {
+    const params = {
+      ...props.additionalParams,
+    };
+
+    params.search = search;
+
+    const response = await axios.get(props.apiEndpoint, { params });
+
+    if (response.data && response.data.data) {
+      displayOptions.value = response.data.data;
+    } else {
+      displayOptions.value = [];
+    }
+  } catch (error) {
+    console.error("Error fetching options:", error);
+    displayOptions.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
+
 const formatOptionLabel = (option) => {
   if (!option) return "";
 
-  // Check if the option has nim (student) or nik (staff)
   if (option.nim) {
     return `${option[props.labelKey]} - ${option.nim}`;
   } else if (option.nik) {
@@ -109,10 +186,29 @@ const formatOptionLabel = (option) => {
 };
 
 const getSelectedLabel = computed(() => {
-  if (!props.options) return "";
-  const selected = props.options.find(
+  if (!props.modelValue) return "";
+
+  if (
+    selectedOption.value &&
+    selectedOption.value[props.valueKey] === props.modelValue
+  ) {
+    return formatOptionLabel(selectedOption.value);
+  }
+
+  let selected = displayOptions.value.find(
     (option) => option[props.valueKey] === props.modelValue
   );
+
+  if (!selected && props.options) {
+    selected = props.options.find(
+      (option) => option[props.valueKey] === props.modelValue
+    );
+  }
+
+  if (selected) {
+    selectedOption.value = selected;
+  }
+
   return selected ? formatOptionLabel(selected) : "";
 });
 
@@ -124,6 +220,14 @@ const handleClick = () => {
 const toggleDropdown = () => {
   isOpen.value = !isOpen.value;
   if (isOpen.value) {
+    searchQuery.value = "";
+
+    if (props.apiEndpoint && props.useServerSearch) {
+      fetchOptions("");
+    } else {
+      displayOptions.value = props.options || [];
+    }
+
     setTimeout(() => {
       searchInput.value?.focus();
     }, 100);
@@ -131,6 +235,7 @@ const toggleDropdown = () => {
 };
 
 const selectOption = (option) => {
+  selectedOption.value = option;
   emit("update:modelValue", option[props.valueKey]);
   isOpen.value = false;
   searchQuery.value = "";
@@ -144,6 +249,28 @@ const closeDropdown = (e) => {
 };
 
 watch(
+  () => props.modelValue,
+  async (newValue) => {
+    if (
+      newValue &&
+      props.useServerSearch &&
+      props.apiEndpoint &&
+      !selectedOption.value
+    ) {
+      try {
+        const response = await axios.get(`${props.apiEndpoint}/${newValue}`);
+        if (response.data && response.data.data) {
+          selectedOption.value = response.data.data;
+        }
+      } catch (error) {
+        console.error("Error fetching selected option:", error);
+      }
+    }
+  },
+  { immediate: true }
+);
+
+watch(
   () => props.disabled,
   (newValue) => {
     if (newValue) {
@@ -155,8 +282,10 @@ watch(
 
 watch(
   () => props.options,
-  () => {
-    searchQuery.value = "";
+  (newOptions) => {
+    if (!props.useServerSearch && isOpen.value) {
+      displayOptions.value = newOptions || [];
+    }
   }
 );
 
@@ -166,5 +295,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener("click", closeDropdown);
+  if (debounceTimeout.value) {
+    clearTimeout(debounceTimeout.value);
+  }
 });
 </script>

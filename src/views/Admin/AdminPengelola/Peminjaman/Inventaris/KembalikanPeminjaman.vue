@@ -36,6 +36,12 @@
             <p class="text-sm text-gray-600">Tanggal Pinjam</p>
             <p class="font-medium">{{ formatDate(infoUmum.tanggal_pinjam) }}</p>
           </div>
+          <div>
+            <p class="text-sm text-gray-600">Status Peminjaman</p>
+            <p class="font-medium capitalize">
+              {{ infoUmum.status_peminjaman }}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -54,6 +60,25 @@
               class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               required
             />
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm font-medium"
+              >Kondisi Akhir Pengembalian</label
+            >
+            <select
+              v-model="formData.kondisi_akhir_pengembalian"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              required
+            >
+              <option value="">Pilih Kondisi</option>
+              <option value="baik">Baik</option>
+              <option value="rusak">Rusak</option>
+              <option value="hilang">Hilang</option>
+            </select>
+            <p class="text-xs text-gray-500">
+              Kondisi ini akan diterapkan untuk semua item yang dipilih
+            </p>
           </div>
 
           <div class="space-y-2">
@@ -81,13 +106,21 @@
             </div>
 
             <div v-else>
-              <div class="flex justify-end mb-2">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-sm text-gray-600">
+                  {{ selectedItems.length }} dari
+                  {{ availableItems.length }} item dipilih
+                </span>
                 <button
                   type="button"
                   @click="selectAllItems"
                   class="text-sm text-blue-600 hover:text-blue-800"
                 >
-                  Pilih Semua
+                  {{
+                    selectedItems.length === availableItems.length
+                      ? "Batal Pilih Semua"
+                      : "Pilih Semua"
+                  }}
                 </button>
               </div>
 
@@ -108,7 +141,12 @@
                       <th
                         class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                       >
-                        Kondisi
+                        Nama Inventaris
+                      </th>
+                      <th
+                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Status
                       </th>
                     </tr>
                   </thead>
@@ -126,20 +164,21 @@
                         />
                       </td>
                       <td class="px-4 py-3 whitespace-nowrap">
-                        {{ item.no_inventaris }}
+                        {{ item.inventaris?.no_inventaris || "-" }}
                       </td>
                       <td class="px-4 py-3 whitespace-nowrap">
-                        <select
-                          v-model="itemConditions[item.id_inventaris]"
-                          class="rounded-md border border-input bg-background px-3 py-1 text-sm"
-                          :disabled="
-                            !selectedItems.includes(item.id_inventaris)
-                          "
+                        {{
+                          item.inventaris?.jenis_inventaris.nama_inventaris ||
+                          "-"
+                        }}
+                      </td>
+
+                      <td class="px-4 py-3 whitespace-nowrap">
+                        <span
+                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
                         >
-                          <option value="baik">Baik</option>
-                          <option value="rusak">Rusak</option>
-                          <option value="hilang">Hilang</option>
-                        </select>
+                          Dipinjam
+                        </span>
                       </td>
                     </tr>
                   </tbody>
@@ -153,14 +192,18 @@
             class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
             role="alert"
           >
-            <span class="block sm:inline"> {{ validationError }}</span>
+            <span class="block sm:inline">{{ validationError }}</span>
           </div>
 
           <div class="flex space-x-2">
             <button
               type="submit"
               class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-              :disabled="isSubmitting || selectedItems.length === 0"
+              :disabled="
+                isSubmitting ||
+                selectedItems.length === 0 ||
+                !formData.kondisi_akhir_pengembalian
+              "
             >
               <span v-if="isSubmitting" class="mr-2">
                 <svg
@@ -184,7 +227,7 @@
                   ></path>
                 </svg>
               </span>
-              Proses Pengembalian
+              {{ isSubmitting ? "Memproses..." : "Proses Pengembalian" }}
             </button>
           </div>
         </div>
@@ -204,7 +247,7 @@ const route = useRoute();
 const router = useRouter();
 const toast = useToast();
 
-const referensi = ref(route.params.referensi);
+const id = ref(route.params.id);
 const infoUmum = ref({});
 const inventoryItems = ref([]);
 const loading = ref(true);
@@ -212,12 +255,11 @@ const isSubmitting = ref(false);
 const validationError = ref("");
 
 const selectedItems = ref([]);
-const itemConditions = ref({});
 
 const formData = ref({
-  referensi: "",
   tanggal_kembali: new Date().toISOString().split("T")[0],
   catatan_pengembalian: "",
+  kondisi_akhir_pengembalian: "",
 });
 
 const formatDate = (dateString) => {
@@ -234,21 +276,8 @@ const setupAxios = () => {
 };
 
 const availableItems = computed(() => {
-  return inventoryItems.value
-    .filter((item) => item.status_peminjaman === 0)
-    .map((item) => ({
-      id_inventaris: item.id_inventaris,
-      no_inventaris: `${item.inventaris?.no_inventaris || "Unknown"} (${
-        item.inventaris?.nama_inventaris || "No Name"
-      })`,
-    }));
+  return inventoryItems.value.filter((item) => item.status === 0);
 });
-
-const initializeItemConditions = () => {
-  availableItems.value.forEach((item) => {
-    itemConditions.value[item.id_inventaris] = "baik";
-  });
-};
 
 const selectAllItems = () => {
   if (selectedItems.value.length === availableItems.value.length) {
@@ -261,12 +290,14 @@ const selectAllItems = () => {
 };
 
 watch(
-  selectedItems,
-  (newVal) => {
+  [selectedItems, () => formData.value.kondisi_akhir_pengembalian],
+  ([newSelectedItems, newKondisi]) => {
     validationError.value = "";
-    if (newVal.length === 0) {
+    if (newSelectedItems.length === 0) {
       validationError.value =
         "Silakan pilih minimal satu item untuk dikembalikan";
+    } else if (!newKondisi) {
+      validationError.value = "Silakan pilih kondisi akhir pengembalian";
     }
   },
   { deep: true }
@@ -277,22 +308,25 @@ const fetchPeminjamanDetail = async () => {
   try {
     setupAxios();
     const response = await axios.get(
-      `/api/admin_pengelola/peminjaman_inventaris/reference/${referensi.value}`
+      `/api/admin_pengelola/peminjaman_inventaris/${id.value}`
     );
-    infoUmum.value = response.data.info_umum;
-    inventoryItems.value = response.data.items;
-    formData.value.referensi = referensi.value;
 
-    initializeItemConditions();
+    if (response.data.status === "success") {
+      infoUmum.value = response.data.data.peminjaman || {};
+      inventoryItems.value = response.data.data.detail || [];
 
-    const borrowedItems = inventoryItems.value.filter(
-      (item) => item.status_peminjaman === 0
-    );
-    if (borrowedItems.length === 0) {
-      toast.info("Semua item dalam peminjaman ini sudah dikembalikan");
-      router.push(
-        `/admin-pengelola/peminjaman-inventaris/detail/${referensi.value}`
+      const borrowedItems = inventoryItems.value.filter(
+        (item) => item.status === 0
       );
+
+      if (borrowedItems.length === 0) {
+        toast.info("Semua item dalam peminjaman ini sudah dikembalikan");
+        router.push(
+          `/admin-pengelola/peminjaman-inventaris/detail/${id.value}`
+        );
+      }
+    } else {
+      toast.error(response.data.message || "Gagal memuat detail peminjaman");
     }
   } catch (error) {
     console.error("Error fetching peminjaman detail:", error);
@@ -317,51 +351,39 @@ const handleSubmit = async () => {
     return;
   }
 
+  if (!formData.value.kondisi_akhir_pengembalian) {
+    validationError.value = "Silakan pilih kondisi akhir pengembalian";
+    return;
+  }
+
   isSubmitting.value = true;
+  validationError.value = "";
+
   try {
     setupAxios();
 
-    const kondisi_baik = [];
-    const kondisi_rusak = [];
-    const kondisi_hilang = [];
-
-    selectedItems.value.forEach((itemId) => {
-      const condition = itemConditions.value[itemId];
-      if (condition === "baik") {
-        kondisi_baik.push(itemId);
-      } else if (condition === "rusak") {
-        kondisi_rusak.push(itemId);
-      } else if (condition === "hilang") {
-        kondisi_hilang.push(itemId);
-      }
-    });
-
-    const submission = {
-      referensi: formData.value.referensi,
+    const payload = {
+      id_inventaris: selectedItems.value,
       tanggal_kembali: formData.value.tanggal_kembali,
       catatan_pengembalian: formData.value.catatan_pengembalian,
-      kondisi_baik,
-      kondisi_rusak,
-      kondisi_hilang,
-      partial_return: true,
+      kondisi_akhir_pengembalian: formData.value.kondisi_akhir_pengembalian,
     };
 
-    const response = await axios.post(
-      "/api/admin_pengelola/peminjaman_inventaris/return",
-      submission
+    const response = await axios.put(
+      `/api/admin_pengelola/peminjaman_inventaris/pengembalian/${id.value}`,
+      payload
     );
 
     if (response.data.status === "success") {
-      toast.success("Pengembalian inventaris berhasil diproses");
+      toast.success(
+        response.data.message || "Pengembalian inventaris berhasil diproses"
+      );
 
-      if (availableItems.value.length > selectedItems.value.length) {
-        fetchPeminjamanDetail();
-        selectedItems.value = [];
-      } else {
-        router.push(
-          `/admin-pengelola/peminjaman-inventaris/detail/${referensi.value}`
-        );
-      }
+      router.push(`/admin-pengelola/peminjaman-inventaris/detail/${id.value}`);
+    } else if (response.data.status === "warning") {
+      toast.warning(response.data.message);
+      await fetchPeminjamanDetail();
+      selectedItems.value = [];
     } else {
       toast.error(response.data.message || "Gagal memproses pengembalian");
     }
@@ -372,8 +394,16 @@ const handleSubmit = async () => {
       router.push("/login-admin");
     } else if (error.response?.status === 400) {
       const errorMsg = error.response.data.message || "Validasi gagal";
+      if (error.response.data.errors) {
+        const errors = Object.values(error.response.data.errors).flat();
+        validationError.value = errors.join(", ");
+      } else {
+        validationError.value = errorMsg;
+      }
       toast.error(errorMsg);
-      validationError.value = errorMsg;
+    } else if (error.response?.status === 404) {
+      toast.error("Data peminjaman tidak ditemukan");
+      router.push("/admin-pengelola/peminjaman-inventaris");
     } else {
       toast.error("Gagal memproses pengembalian inventaris");
     }

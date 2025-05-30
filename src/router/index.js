@@ -512,7 +512,7 @@ const routes = [
           ),
       },
       {
-        path: "peminjaman-inventaris/detail/:referensi",
+        path: "peminjaman-inventaris/detail/:id",
         name: "DetailPeminjamanInventaris",
         component: () =>
           import(
@@ -520,7 +520,7 @@ const routes = [
           ),
       },
       {
-        path: "peminjaman-inventaris/kembalikan/:referensi",
+        path: "peminjaman-inventaris/kembalikan/:id",
         name: "KembalikanPeminjamanInventaris",
         component: () =>
           import(

@@ -112,7 +112,10 @@
                 class="hover:bg-gray-50"
               >
                 <td class="px-6 py-4">
-                  {{ item.inventaris?.nama_inventaris || "Unknown" }}
+                  {{
+                    item.inventaris?.jenis_inventaris.nama_inventaris ||
+                    "Unknown"
+                  }}
                 </td>
                 <td class="px-6 py-4">
                   {{ item.inventaris?.no_inventaris || "-" }}
@@ -124,14 +127,11 @@
                   <span
                     :class="{
                       'px-2 py-1 rounded text-xs font-medium': true,
-                      'bg-blue-100 text-blue-800': item.status_peminjaman === 0,
-                      'bg-green-100 text-green-800':
-                        item.status_peminjaman === 1,
+                      'bg-blue-100 text-blue-800': item.status === 0,
+                      'bg-green-100 text-green-800': item.status === 1,
                     }"
                   >
-                    {{
-                      item.status_peminjaman === 0 ? "Dipinjam" : "Dikembalikan"
-                    }}
+                    {{ item.status === 0 ? "Dipinjam" : "Dikembalikan" }}
                   </span>
                 </td>
                 <td class="px-6 py-4">
@@ -177,7 +177,7 @@ const route = useRoute();
 const router = useRouter();
 const toast = useToast();
 
-const referensi = ref(route.params.referensi);
+const id = ref(route.params.id);
 const infoUmum = ref({});
 const inventoryItems = ref([]);
 const loading = ref(true);
@@ -200,14 +200,15 @@ const fetchPeminjamanDetail = async () => {
   try {
     setupAxios();
     const response = await axios.get(
-      `/api/admin_pengelola/peminjaman_inventaris/reference/${referensi.value}`
+      `/api/admin_pengelola/peminjaman_inventaris/${id.value}`
     );
-    infoUmum.value = response.data.info_umum;
-    inventoryItems.value = response.data.items;
+
+    infoUmum.value = response.data.data.peminjaman;
+    inventoryItems.value = response.data.data.detail;
 
     const totalItems = inventoryItems.value.length;
     const returnedItems = inventoryItems.value.filter(
-      (item) => item.status_peminjaman === 1
+      (item) => item.status === 1
     ).length;
 
     if (returnedItems === 0) {
@@ -234,9 +235,7 @@ const fetchPeminjamanDetail = async () => {
 };
 
 const goToReturn = () => {
-  router.push(
-    `/admin-pengelola/peminjaman-inventaris/kembalikan/${referensi.value}`
-  );
+  router.push(`/admin-pengelola/peminjaman-inventaris/kembalikan/${id.value}`);
 };
 
 const goToList = () => {
@@ -244,10 +243,10 @@ const goToList = () => {
 };
 
 onMounted(() => {
-  if (referensi.value) {
+  if (id.value) {
     fetchPeminjamanDetail();
   } else {
-    toast.error("Referensi peminjaman tidak valid");
+    toast.error("id peminjaman tidak valid");
     router.push("/admin-pengelola/peminjaman-inventaris");
   }
 });
