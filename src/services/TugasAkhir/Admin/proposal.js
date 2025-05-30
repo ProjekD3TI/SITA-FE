@@ -101,7 +101,7 @@ export function useShowProposal() {
         }
     };
 
-    const validateProposal = async (id, statusValidBerkas) => {
+    const validateProposal = async (id, statusValidBerkas, catatanPerbaikan = '') => {
         loadingProposal.value = true;
         try {
             const auth_token = VueCookies.get("auth_token");
@@ -111,19 +111,19 @@ export function useShowProposal() {
                 'Accept': 'application/json'
             };
             const formData = {
-                status_valid_berkas: statusValidBerkas // array, misal: [1,2] atau [1,1]
+                status_valid_berkas: statusValidBerkas, // array, misal: [1,2] atau [1,1]
+                catatan_perbaikan: catatanPerbaikan     // <-- tambahkan ini
             };
     
             await axios.put(`/api/admin_ta/proposal/${id}/status`, formData, { headers });
             toast.success("Proposal berhasil divalidasi.");
-            // await fetchData();
         } catch (err) {
             handleError(err);
             throw err;
         } finally {
             loadingProposal.value = false;
         }
-    }
+    };
 
     const getSecureFileBlobUrl = async (url) => {
         loadingProposal.value = true;

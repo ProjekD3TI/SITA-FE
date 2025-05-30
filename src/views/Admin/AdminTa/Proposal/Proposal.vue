@@ -213,7 +213,7 @@ const handleRowClickPengajuan = (item) => {
       naskah_proposal_status_valid: dataNaskahProposal.value?.status_valid ?? null,
       file_transkrip_status_valid: dataTranskrip.value?.status_valid ?? null,
     };
-    catatan.value = item.catatan || '';
+    catatan.value = item.catatan_perbaikan || '';
     modalRef.value = true;
   }
 };
@@ -284,8 +284,8 @@ const modalTimerBodyText = computed(() => {
           <SearchBar v-model="searchQueryPengajuan" />
           <Slider :modelValue="statusForm" @update:modelValue="handleSliderChange" />
         </div>
-        <Table :headers="['NIM', 'Nama', 'Judul Proposal Tugas Akhir', 'Status']" :items="filteredProposalPengajuan"
-          @rowClick="handleRowClickPengajuan">
+        <Table :headers="['NIM', 'Nama', 'Judul Proposal Tugas Akhir', 'Tanggal Pengajuan', 'Status']"
+          :items="filteredProposalPengajuan" @rowClick="handleRowClickPengajuan">
           <template #row="{ item }">
             <td class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6">
               {{ item.nim }}
@@ -298,6 +298,9 @@ const modalTimerBodyText = computed(() => {
             </td>
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               {{ item.judul_proposal }}
+            </td>
+            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+              {{ item.tanggal_pengajuan }}
             </td>
             <td class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6">
               <StatusLabel class="hidden w-fit lg:block" :status="getStatusClass(item.status_proposal)" size="md"
@@ -349,7 +352,8 @@ const modalTimerBodyText = computed(() => {
       <ValidationFile id="transkrip-nilai-mahasiswa" label="Transkrip Nilai Mahasiswa" :fileFromDatabase="fileTranskrip"
         :isDisabled="true" :statusValid="tempValidasi.file_transkrip_status_valid"
         @update:statusValid="tempValidasi.file_transkrip_status_valid = $event" />
-      <InputTextarea id="catatan" label="Catatan" placeholder="Masukkan catatan" v-model="catatan" />
+      <InputTextarea v-if="catatan" id="catatan" label="Catatan Perbaikan" placeholder="Masukkan catatan"
+        v-model="catatan" />
     </div>
   </DefaultModal>
   <ModalTimer v-if="modalTimerVisible" @close="handleModalCancel" :headText="modalTimerHeadText"

@@ -27,6 +27,7 @@ const router = useRouter();
 const modalRef = ref(false);
 const route = useRoute();
 
+
 onMounted(() => {
   if (route.params.proposal_id) {
     fetchData(route.params.proposal_id);
@@ -65,6 +66,13 @@ watch(dataProposal, (val) => {
 
 const catatan = ref('');
 
+watch(dataProposal, (val) => {
+  if (val && typeof val.catatan_perbaikan === 'string') {
+    catatan.value = val.catatan_perbaikan;
+  }
+  // ...kode fileNaskahProposal & fileTranskrip tetap...
+}, { immediate: true });
+
 const naskahRef = ref(null);
 const transkripRef = ref(null);
 
@@ -80,7 +88,7 @@ const handleSubmitValidasi = async () => {
   const statusValidBerkas = [Number(naskahStatus), Number(transkripStatus)];
 
   // Submit ke backend
-  await validateProposal(dataProposal.value.id, statusValidBerkas);
+  await validateProposal(dataProposal.value.id, statusValidBerkas, catatan.value);
 
   // Tutup modal
   modalRef.value = false;
@@ -88,6 +96,15 @@ const handleSubmitValidasi = async () => {
   // Redirect ke halaman proposal
   router.push({ name: 'ProposalforAdmin', });
 };
+
+watch(dataProposal, (val) => {
+  if (val && typeof val.catatan_perbaikan === 'string') {
+    catatan.value = val.catatan_perbaikan;
+  } else if (val && val.catatan_perbaikan === null && val.catatan_proposal) {
+    // fallback jika backend kadang pakai catatan_proposal
+    catatan.value = val.catatan_proposal;
+  }
+}, { immediate: true });
 </script>
 
 <template>
@@ -112,7 +129,7 @@ const handleSubmitValidasi = async () => {
       <ValidationFile ref="transkripRef" id="transkrip-nilai-mahasiswa" label="Transkrip Nilai Mahasiswa"
         :fileFromDatabase="fileTranskrip" :statusValid="tempValidasi.file_transkrip_status_valid"
         @update:statusValid="tempValidasi.file_transkrip_status_valid = $event" />
-      <InputTextArea id="catatan" label="Catatan" placeholder="Masukkan catatan" v-model="catatan" />
+      <InputTextArea id="catatan" label="Catatan Perbaikan" placeholder="Masukkan catatan" v-model="catatan" />
       <Button variant="primary" class="self-end w-fit" size="lg" @click="handleValidasi">
         Validasi
       </Button>

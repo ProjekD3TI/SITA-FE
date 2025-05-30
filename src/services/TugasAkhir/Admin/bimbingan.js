@@ -11,7 +11,8 @@ export function useTabelPlottingPembimbing() {
     const loadingPlotting = ref(false);
     const errorPlotting = ref(null);
     const dataPlotting = ref(null);
-    const fetchData = async () => {
+    const paginationPlotting = ref({});
+    const fetchPlottingPembimbing = async (page = 1) => {
         loadingPlotting.value = true;
         try {
             const authToken = VueCookies.get("auth_token");
@@ -21,8 +22,9 @@ export function useTabelPlottingPembimbing() {
                 'Accept': 'application/json'
             };
 
-            const response = await axios.get("/api/admin_ta/tugas-akhir/plotting", { headers });
-            dataPlotting.value = response.data.data;
+            const response = await axios.get(`/api/admin_ta/tugas-akhir/plotting?page=${page}`, { headers });
+            dataPlotting.value = response.data.data.data;
+            paginationPlotting.value = response.data.data.pagination;
         } catch (err) {
             handleError(err);
         } finally {
@@ -40,7 +42,7 @@ export function useTabelPlottingPembimbing() {
     };
     
     onMounted(() => {
-        fetchData();
+        // fetchPlottingPembimbing();
     });
     onUnmounted(() => {
         if (abortController) {
@@ -51,7 +53,8 @@ export function useTabelPlottingPembimbing() {
         loadingPlotting,
         errorPlotting,
         dataPlotting,
-        fetchData,
+        paginationPlotting,
+        fetchPlottingPembimbing,
     };
 }
 
@@ -62,8 +65,10 @@ export function useTabelBimbingan() {
     const loadingBimbingan = ref(false);
     const errorBimbingan = ref(null);
     const dataBimbingan = ref(null);
+    const paginationBimbingan = ref({})
 
-    const fetchData = async () => {
+
+    const fetchBimbingan = async (page = 1) => {
         loadingBimbingan.value = true;
         try {
             const authToken = VueCookies.get("auth_token");
@@ -73,8 +78,9 @@ export function useTabelBimbingan() {
                 'Accept': 'application/json'
             };
 
-            const response = await axios.get("/api/admin_ta/tugas-akhir/list-bimbingan", { headers });
-            dataBimbingan.value = response.data.data;
+            const response = await axios.get(`/api/admin_ta/tugas-akhir/list-bimbingan?page=${page}`, { headers });            
+            dataBimbingan.value = response.data.data.data;
+            paginationBimbingan.value = response.data.data.pagination;
         } catch (err) {
             handleError(err);
         } finally {
@@ -93,7 +99,7 @@ export function useTabelBimbingan() {
     };
 
     onMounted(() => {
-        fetchData();
+        // fetchBimbingan(1); // <-- perbaiki di sini
     });
 
     onUnmounted(() => {
@@ -106,7 +112,8 @@ export function useTabelBimbingan() {
         loadingBimbingan,
         errorBimbingan,
         dataBimbingan,
-        fetchData
+        paginationBimbingan,
+        fetchBimbingan
     };
 }
 

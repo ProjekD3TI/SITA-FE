@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import Breadcrumb from '@/components/Tugas-akhir/Breadcrumb.vue';
 import Table from '@/components/Tugas-akhir/Table.vue';
 import TabDiv from '@/components/Tugas-akhir/TabDiv.vue';
@@ -15,10 +15,24 @@ import {
   useTabelBimbingan
 } from '@/services/TugasAkhir/Admin/bimbingan.js';
 
-const { dataPlotting, fetchData, loadingPlotting, errorPlotting } = useTabelPlottingPembimbing();
+const { dataPlotting, fetchPlottingPembimbing, loadingPlotting, errorPlotting, paginationPlotting } = useTabelPlottingPembimbing();
 const { dataKategori, loadingKategori, errorKategori } = useKategori();
-const { dataBimbingan, loadingBimbingan, errorBimbingan } = useTabelBimbingan();
+const { dataBimbingan, loadingBimbingan, errorBimbingan, paginationBimbingan, fetchBimbingan } = useTabelBimbingan();
 
+const currentPage = ref(1);
+const currentPagePlotting = ref(1);
+
+onMounted(() => {
+  fetchPlottingPembimbing(currentPagePlotting.value);
+  fetchBimbingan(currentPage.value);
+});
+
+watch(currentPage, (val) => {
+  fetchBimbingan(val);
+});
+watch(currentPagePlotting, (val) => {
+  fetchPlottingPembimbing(val);
+});
 // Komputed untuk data tabel plotting pembimbing
 const tabelPlottingPembimbing = computed(() => {
   // Pastikan dataPlotting sudah terisi dan array
@@ -155,7 +169,7 @@ watch(
   <router-view v-if="$route.path.includes('plot-pembimbing')"></router-view>
   <router-view v-else-if="$route.path.includes('detail-bimbingan')"></router-view>
 
-  <div v-else-if="loadingBimbingan || loadingKategori || loadingPlotting"
+  <div v-else-if="loadingBimbingan && loadingKategori && loadingPlotting"
     class="flex items-center justify-center min-h-[80dvh]">
     <Loading />
   </div>
@@ -166,15 +180,18 @@ watch(
 
   <div v-else>
     <Breadcrumb />
-    <TabDiv :tabs="tabs" :use-named-slots="true" @tab-changed="handleTabChange">
+    <TabDiv :tabs="tabs" :use-named-slots="true" @tab-changed="handleTabChange" v-model:selected="selectedTab">
       <template #1>
         <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
           <ModalFilter title="Kategori" :items="categories" filterType="Kategori" @apply="handleFilterPlot"
             triggerText="Kategori" :preselectedValues="selectedCategoriesPlot" />
           <SearchBar v-model="searchQuery" filterKey="bimbingan" />
         </div>
-        <Table :headers="['NIM', 'Nama', 'Kategori', 'Dosen Pembimbing']" :items="filteredReqPembibingMhs"
-          @rowClick="handleRowClickPlot">
+        <Loading v-if="loadingPlotting" />
+        <ErrorMsg v-else-if="errorPlotting" :message="error" />
+        <Table v-else :headers="['NIM', 'Nama', 'Kategori', 'Dosen Pembimbing']" :items="filteredReqPembibingMhs"
+          :pagination="paginationPlotting" @rowClick="handleRowClickPlot"
+          @pageChange="(page) => { currentPagePlotting = page }">
           <template #row="{ item }">
             <!-- Kolom NIM -->
             <td class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6">
@@ -209,11 +226,12 @@ watch(
           <SearchBar v-model="searchQueryBimbingan" filterKey="bimbingan" />
         </div>
 
-        <Loading v-if="loading" />
-        <ErrorMsg v-else-if="error" :message="error" />
+        <Loading v-if="loadingBimbingan" />
+        <ErrorMsg v-else-if="errorBimbingan" :message="error" />
 
         <Table v-else :headers="['NIM', 'Nama', 'Kategori', 'Dosen Pembimbing', 'Pertemuan']"
-          :items="filteredListBimbingan" @rowClick="handleRowClickBimbingan">
+          :items="filteredListBimbingan" @rowClick="handleRowClickBimbingan" :pagination="paginationBimbingan"
+          @pageChange="(page) => { currentPage = page }">
           <template #row="{ item }">
             <!-- Kolom NIM -->
             <td class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6">
@@ -247,6 +265,7 @@ watch(
             </td>
           </template>
         </Table>
+
       </template>
     </TabDiv>
 

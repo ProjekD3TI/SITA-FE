@@ -11,8 +11,8 @@
           </tr>
         </thead>
         <tbody>
-          <template v-if="paginatedItems.length">
-            <tr v-for="(item, index) in paginatedItems" :key="index"
+          <template v-if="items.length">
+            <tr v-for="(item, index) in items" :key="index"
               class="even:bg-even odd:bg-odd hover:bg-gray-200 text-left body5 sm:body4 rounded-lg active:scale-[0.99] duration-200 cursor-pointer"
               @click="handleRowClick(item)">
               <slot name="row" :item="item" />
@@ -22,7 +22,7 @@
             <slot name="empty">
               <tr>
                 <td :colspan="headers.length">
-                  <div class="text-center text-placeholder py-8">Tidak ada data</div>
+                  <div class="py-8 text-center text-placeholder">Tidak ada data</div>
                 </td>
               </tr>
             </slot>
@@ -30,25 +30,31 @@
         </tbody>
       </table>
 
-      <!-- Pagination Controls -->
-      <div v-if="showPagination" class="flex items-center justify-between mt-4">
-        <div>
-          <span class="text-secondary body5">
-            Showing {{ startIndex + 1 }}-{{ endIndex }} of {{ items.length }}
-          </span>
-        </div>
+      <!-- Pagination Controls (backend) -->
+      <div v-if="pagination && pagination.last_page > 1" class="flex items-center justify-between mt-4">
+        <span class="text-secondary body5">
+          Menampilkan {{ pagination.per_page * (pagination.current_page - 1) + 1 }}-
+          {{ Math.min(pagination.per_page * pagination.current_page, pagination.total) }}
+          dari {{ pagination.total }}
+        </span>
         <div class="flex">
-          <button
+          <button type="button"
             class="px-2 py-2 duration-200 border rounded-l-lg border-secondary text-secondary hover:text-white hover:bg-secondary active:scale-90"
-            :disabled="currentPage === 1" @click="prevPage">
+            :disabled="pagination.current_page === 1" @click="emitPageChange(pagination.current_page - 1)">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
               stroke="currentColor" class="w-4 h-4">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
             </svg>
           </button>
-          <button
+          <button type="button" v-for="page in pagination.last_page" :key="page"
+            class="px-2 py-2 duration-200 border-t border-b border-secondary text-secondary hover:text-white hover:bg-secondary active:scale-90"
+            :class="{ 'bg-secondary text-white': pagination.current_page === page }" @click="emitPageChange(page)">
+            {{ page }}
+          </button>
+          <button type="button"
             class="px-2 py-2 duration-200 border rounded-r-lg border-secondary text-secondary hover:text-white hover:bg-secondary active:scale-90"
-            :disabled="currentPage === totalPages" @click="nextPage">
+            :disabled="pagination.current_page === pagination.last_page"
+            @click="emitPageChange(pagination.current_page + 1)">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
               stroke="currentColor" class="w-4 h-4">
               <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -61,58 +67,27 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 
 const props = defineProps({
-  headers: {
-    type: Array,
-    required: true,
-  },
-  items: {
-    type: Array,
-    required: true,
-  },
-  showPagination: {
-    type: Boolean,
-    default: true,
-  },
+  headers: Array,
+  items: Array,
   minWidth: {
     type: String,
     default: 'min-w-[800px]',
   },
+  pagination: Object, // backend pagination object
 });
-
 const minWidthClass = computed(() => props.minWidth);
 
-const emit = defineEmits(['rowClick']);
-
-const currentPage = ref(1);
-const itemsPerPage = 10;
-
-const totalPages = computed(() => Math.ceil(props.items.length / itemsPerPage));
-
-const paginatedItems = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage;
-  const end = start + itemsPerPage;
-  return props.items.slice(start, end);
-});
-
-const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage);
-const endIndex = computed(() => Math.min(startIndex.value + itemsPerPage, props.items.length));
+const emit = defineEmits(['rowClick', 'pageChange']);
 
 const handleRowClick = (item) => {
   emit('rowClick', item);
 };
-
-const prevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--;
-  }
-};
-
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++;
+const emitPageChange = (page) => {
+  if (page !== props.pagination.current_page && page >= 1 && page <= props.pagination.last_page) {
+    emit('pageChange', page);
   }
 };
 </script>

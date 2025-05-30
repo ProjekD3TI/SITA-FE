@@ -44,7 +44,7 @@ const modalRef = ref(false);
 const judulProposal = ref('');
 const fileProposal = ref(null);
 const fileTranskrip = ref(null);
-
+const catatanPerbaikan = ref('');
 // Methods
 const showModal = () => {
   modalRef.value = true;
@@ -100,9 +100,21 @@ const handleUpdate = async () => {
 
 // Disabled logic
 const isNaskahDisabled = computed(() => {
+  console.log("Status type:", typeof naskahProposalTAStatus.value); // Log tipe data
+  console.log("Status value:", naskahProposalTAStatus.value); // Log nilai aktual
+
+  // Cek eksplisit dengan double equals
+  if (naskahProposalTAStatus.value == 0) {
+    return true;
+  }
+
+  if (naskahProposalTAStatus.value === null) {
+    return false;
+  }
+
+  // Pastikan konversi angka
   const status = Number(naskahProposalTAStatus.value);
-  if (naskahProposalTAStatus.value == null) return false;
-  return status === STATUS.WAITING || status === STATUS.ACCEPTED;
+  return status == STATUS.WAITING || status == STATUS.ACCEPTED;
 });
 const isTranskripDisabled = computed(() => {
   if (transkripNilaiMahasiswaStatus.value === null || transkripNilaiMahasiswaStatus.value === undefined) return false;
@@ -115,6 +127,13 @@ watch(
     if (!judulProposal.value || judulProposal.value === '' || judulProposal.value === undefined) {
       judulProposal.value = val || '';
     }
+  },
+  { immediate: true }
+);
+watch(
+  () => dataProposal.value?.proposal?.catatan_perbaikan,
+  (val) => {
+    catatanPerbaikan.value = val || '';
   },
   { immediate: true }
 );
@@ -171,6 +190,8 @@ watch(
               id="transkrip-nilai-mahasiswa" label="Transkrip Nilai Mahasiswa" v-model="fileTranskrip"
               :existingFileName="transkripNilaiMahasiswa" :existingFileUrl="fileTranskripNilaiMahasiswa"
               :disabled="isTranskripDisabled" />
+            <InputTextarea v-if="catatanPerbaikan" :class="formConfig.wrapperClass" id="catatan-perbaikan-ta"
+              label="Catatan Perbaikan" v-model="catatanPerbaikan" disabled />
           </div>
 
           <!-- Action Buttons -->

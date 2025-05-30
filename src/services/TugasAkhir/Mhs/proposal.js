@@ -150,10 +150,10 @@ export const fileTranskripNilaiMahasiswa = computed(() => {
 export const nilaiProposalTA = computed(() => dataProposal.value?.tugas_akhir?.nilai_proposal || null);
 export const catatanProposalTA = computed(() => dataProposal.value?.tugas_akhir?.catatan_proposal || 'Tidak ada catatan');
 export const naskahProposalTAStatus = computed(() => {
-    return dataProposal.value?.proposal?.berkas?.find(berkas => berkas.nama_berkas === "Naskah Proposal Tugas Akhir")?.status_valid || null;
+    return dataProposal.value?.proposal?.berkas?.find(berkas => berkas.nama_berkas === "Naskah Proposal Tugas Akhir")?.status_valid ?? null;
 });
 export const transkripNilaiMahasiswaStatus = computed(() => {
-    return dataProposal.value?.proposal?.berkas?.find(berkas => berkas.nama_berkas === "Transkrip Nilai Mahasiswa")?.status_valid || null;
+    return dataProposal.value?.proposal?.berkas?.find(berkas => berkas.nama_berkas === "Transkrip Nilai Mahasiswa")?.status_valid ?? null;
 });
 export const namaPembimbing = computed(() => {
     return dataProposal.value?.tugas_akhir?.dosen_pembimbing?.nama || 'Tidak ada pembimbing';
