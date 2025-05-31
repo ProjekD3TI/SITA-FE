@@ -154,7 +154,7 @@ export function useRequestPembimbing() {
         'Accept': 'application/json'
       };
       // POST ke endpoint API request pembimbing
-      const response = await axios.post("/api/mahasiswa/request-pembimbing/", data, { headers });
+      const response = await axios.post("/api/mahasiswa/request-pembimbing", data, { headers });
       toast.success("Permintaan pembimbing berhasil dikirim, Silahkan tunggu respon dari dosen pembimbing Anda.");
       return true;
     } catch (err) {
