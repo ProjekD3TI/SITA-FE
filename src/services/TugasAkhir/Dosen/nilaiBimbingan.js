@@ -132,7 +132,7 @@ export function useNilaiBimbingan() {
       };
       
       const response = await axios.put(
-        `/api/dosen/nilai-bimbingan/${tugasAkhirId}`, 
+        `/api/dosen/nilai-bimbingan/${tugasAkhirId}/update`, 
         data,
         { headers }
       );
