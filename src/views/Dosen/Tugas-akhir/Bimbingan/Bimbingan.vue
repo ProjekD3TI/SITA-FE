@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import { RouterLink, useRouter } from "vue-router";
 import TabDiv from "@/components/Tugas-akhir/TabDiv.vue";
@@ -8,29 +8,50 @@ import ModalResponBimbingan from "@/components/Tugas-akhir/Modals/ModalResponBim
 import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
 import ModalFilter from "@/components/Tugas-akhir/Modals/ModalFilter.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
+import { useRequestPembimbing } from "@/services/TugasAkhir/Dosen/requestPembimbing";
+import { useDibimbing } from "@/services/TugasAkhir/Dosen/dibimbing";
+import { useKategori } from "@/services/TugasAkhir/Dosen/kategori";
 
 const activeTab = ref("permintaan");
 const searchQuery = ref("");
+const router = useRouter();
 
-// Update filter categories to only 10 items
-const filterCategories = ref([
-  "Internet of Things",
-  "Mobile Development",
-  "Cyber Security",
-  "Big Data",
-  "Artificial Intelligence",
-  "Web Development",
-  "Multimedia",
-  "Blockchain",
-  "Geographic Information System",
-  "Network Security",
-]);
+// Inisialisasi layanan
+const { requests: requestsData, loading: loadingRequests, error: errorRequests, fetchRequests, updateApproval } = useRequestPembimbing();
+const { 
+  tugasAkhirList, 
+  loadingTugasAkhir, 
+  errorTugasAkhir, 
+  fetchTugasAkhir
+} = useDibimbing();
+const {
+  categories,
+  loading: loadingCategories,
+  error: errorCategories,
+  fetchCategories
+} = useKategori();
+
+// Menggunakan computed property untuk kategori filter
+const filterCategories = computed(() => {
+  if (categories.value && categories.value.length > 0) {
+    return categories.value.map(category => category.nama_kategori);
+  }
+  
+  return loadingCategories.value ? ["Memuat kategori..."] : [];
+});
+
 const selectedFilters = ref([]);
 
-// Handle filter application
+// Item breadcrumb untuk navigasi
+const breadcrumbItems = [
+  { label: "Tugas Akhir", path: "/dosen/tugas-akhir" },
+  { label: "Bimbingan", path: "/dosen/tugas-akhir/bimbingan" },
+];
+
+// Menangani penerapan filter
 const applyFilter = (filterData) => {
   selectedFilters.value = filterData.values;
-  console.log("Filters applied:", selectedFilters.value);
+  console.log("Filter diterapkan:", selectedFilters.value);
 };
 
 const modalRef = ref(null);
@@ -38,314 +59,77 @@ const selectedItem = ref(null);
 const modalTitle = ref("Respon Permintaan Bimbingan");
 const modalContent = ref("");
 
-const requests = ref([
-  {
-    nim: "V3420101",
-    name: "Christine Brooks",
-    avatar: "/api/placeholder/40/40",
-    category: "Internet of Things",
-    date: "04 Sep 2023",
-  },
-  {
-    nim: "V3420102",
-    name: "David Johnson",
-    avatar: "/api/placeholder/40/40",
-    category: "Artificial Intelligence",
-    date: "15 Oct 2023",
-  },
-  {
-    nim: "V3420103",
-    name: "Emily Wilson",
-    avatar: "/api/placeholder/40/40",
-    category: "Big Data",
-    date: "22 Nov 2023",
-  },
-  {
-    nim: "V3420104",
-    name: "Michael Brown",
-    avatar: "/api/placeholder/40/40",
-    category: "Web Development",
-    date: "10 Dec 2023",
-  },
-  {
-    nim: "V3420105",
-    name: "Sarah Thompson",
-    avatar: "/api/placeholder/40/40",
-    category: "Cyber Security",
-    date: "05 Jan 2024",
-  },
-  {
-    nim: "V3420106",
-    name: "Jason Rodriguez",
-    avatar: "/api/placeholder/40/40",
-    category: "Artificial Intelligence",
-    date: "18 Jan 2024",
-  },
-  {
-    nim: "V3420107",
-    name: "Laura Martinez",
-    avatar: "/api/placeholder/40/40",
-    category: "Network Security",
-    date: "02 Feb 2024",
-  },
-  {
-    nim: "V3420108",
-    name: "Kevin Anderson",
-    avatar: "/api/placeholder/40/40",
-    category: "Mobile Development",
-    date: "20 Feb 2024",
-  },
-  {
-    nim: "V3420109",
-    name: "Jennifer Davis",
-    avatar: "/api/placeholder/40/40",
-    category: "Big Data",
-    date: "07 Mar 2024",
-  },
-  {
-    nim: "V3420110",
-    name: "Robert Wilson",
-    avatar: "/api/placeholder/40/40",
-    category: "Network Security",
-    date: "25 Mar 2024",
-  },
-  {
-    nim: "V3420111",
-    name: "Anna Lee",
-    avatar: "/api/placeholder/40/40",
-    category: "Big Data",
-    date: "10 Apr 2024",
-  },
-  {
-    nim: "V3420112",
-    name: "Thomas Clark",
-    avatar: "/api/placeholder/40/40",
-    category: "Blockchain",
-    date: "27 Apr 2024",
-  },
-  {
-    nim: "V3420113",
-    name: "Olivia White",
-    avatar: "/api/placeholder/40/40",
-    category: "Geographic Information System",
-    date: "15 May 2024",
-  },
-  {
-    nim: "V3420114",
-    name: "Daniel Lewis",
-    avatar: "/api/placeholder/40/40",
-    category: "Multimedia",
-    date: "01 Jun 2024",
-  },
-  {
-    nim: "V3420115",
-    name: "Emma Garcia",
-    avatar: "/api/placeholder/40/40",
-    category: "Blockchain",
-    date: "18 Jun 2024",
-  },
-  {
-    nim: "V3420116",
-    name: "Brandon Taylor",
-    avatar: "/api/placeholder/40/40",
-    category: "Web Development",
-    date: "05 Jul 2024",
-  },
-  {
-    nim: "V3420117",
-    name: "Sophia Martin",
-    avatar: "/api/placeholder/40/40",
-    category: "Artificial Intelligence",
-    date: "22 Jul 2024",
-  },
-  {
-    nim: "V3420118",
-    name: "Lucas Moore",
-    avatar: "/api/placeholder/40/40",
-    category: "Internet of Things",
-    date: "10 Aug 2024",
-  },
-  {
-    nim: "V3420119",
-    name: "Victoria Jackson",
-    avatar: "/api/placeholder/40/40",
-    category: "Multimedia",
-    date: "28 Aug 2024",
-  },
-  {
-    nim: "V3420120",
-    name: "Ryan Adams",
-    avatar: "/api/placeholder/40/40",
-    category: "Mobile Development",
-    date: "15 Sep 2024",
-  },
-]);
+// Memetakan data API untuk tab permintaan
+const requests = computed(() => {
+  if (!requestsData.value) return [];
+  
+  console.log("Data permintaan mentah:", requestsData.value);
+  
+  return requestsData.value.map(req => {
+    return {
+      id: req.request_pembimbing_id,
+      nim: req.mahasiswa?.nim || "N/A",
+      name: req.mahasiswa?.name || "Tidak diketahui",
+      avatar: "/api/placeholder/40/40",
+      category: req.kategori?.nama_kategori || "Tidak terkategorisasi",
+      date: req.tanggal_request || new Date().toLocaleDateString('id-ID'),
+      status_request: 0,
+      tugas_akhir_id: req.tugas_akhir_id
+    };
+  });
+});
 
-const mentorships = ref([
-  {
-    nim: "V3420001",
-    name: "Andrew Parker",
-    avatar: "/api/placeholder/40/40",
-    title: "Implementasi IoT untuk Smart Home",
-    category: "Internet of Things",
-  },
-  {
-    nim: "V3420002",
-    name: "Michelle Williams",
-    avatar: "/api/placeholder/40/40",
-    title: "Sistem Prediksi menggunakan AI",
-    category: "Artificial Intelligence",
-  },
-  {
-    nim: "V3420003",
-    name: "Christopher Allen",
-    avatar: "/api/placeholder/40/40",
-    title: "Analisis Sentimen pada Data Media Sosial",
-    category: "Big Data",
-  },
-  {
-    nim: "V3420004",
-    name: "Rebecca Nelson",
-    avatar: "/api/placeholder/40/40",
-    title: "Pengembangan Progressive Web App",
-    category: "Web Development",
-  },
-  {
-    nim: "V3420005",
-    name: "Jonathan Hill",
-    avatar: "/api/placeholder/40/40",
-    title: "Sistem Deteksi Intrusi Berbasis AI",
-    category: "Cyber Security",
-  },
-  {
-    nim: "V3420006",
-    name: "Amanda Scott",
-    avatar: "/api/placeholder/40/40",
-    title: "Asisten Virtual Menggunakan Deep Learning",
-    category: "Artificial Intelligence",
-  },
-  {
-    nim: "V3420007",
-    name: "Brian Green",
-    avatar: "/api/placeholder/40/40",
-    title: "Arsitektur Jaringan Aman",
-    category: "Network Security",
-  },
-  {
-    nim: "V3420008",
-    name: "Melissa King",
-    avatar: "/api/placeholder/40/40",
-    title: "Aplikasi Mobile untuk Tracking Kesehatan",
-    category: "Mobile Development",
-  },
-  {
-    nim: "V3420009",
-    name: "Steven Baker",
-    avatar: "/api/placeholder/40/40",
-    title: "Clustering Data Pelanggan E-commerce",
-    category: "Big Data",
-  },
-  {
-    nim: "V3420010",
-    name: "Jessica Cooper",
-    avatar: "/api/placeholder/40/40",
-    title: "Keamanan Jaringan pada Infrastruktur Kritis",
-    category: "Network Security",
-  },
-  {
-    nim: "V3420011",
-    name: "Gregory Roberts",
-    avatar: "/api/placeholder/40/40",
-    title: "Pengolahan Data Streaming Real-time",
-    category: "Big Data",
-  },
-  {
-    nim: "V3420012",
-    name: "Catherine Phillips",
-    avatar: "/api/placeholder/40/40",
-    title: "Sistem Transaksi Berbasis Blockchain",
-    category: "Blockchain",
-  },
-  {
-    nim: "V3420013",
-    name: "Peter Henderson",
-    avatar: "/api/placeholder/40/40",
-    title: "Sistem Informasi Geografis untuk Pemetaan Bencana",
-    category: "Geographic Information System",
-  },
-  {
-    nim: "V3420014",
-    name: "Nancy Ross",
-    avatar: "/api/placeholder/40/40",
-    title: "Sistem Pengenalan Objek pada Video Streaming",
-    category: "Multimedia",
-  },
-  {
-    nim: "V3420015",
-    name: "Mark Edwards",
-    avatar: "/api/placeholder/40/40",
-    title: "Smart Contract untuk Supply Chain",
-    category: "Blockchain",
-  },
-  {
-    nim: "V3420016",
-    name: "Diana Watson",
-    avatar: "/api/placeholder/40/40",
-    title: "Aplikasi Web Interaktif untuk E-Learning",
-    category: "Web Development",
-  },
-  {
-    nim: "V3420017",
-    name: "Timothy Butler",
-    avatar: "/api/placeholder/40/40",
-    title: "Sistem Terjemahan Bahasa Otomatis",
-    category: "Artificial Intelligence",
-  },
-  {
-    nim: "V3420018",
-    name: "Rachel Morgan",
-    avatar: "/api/placeholder/40/40",
-    title: "Sistem Kendali Smart Factory",
-    category: "Internet of Things",
-  },
-  {
-    nim: "V3420019",
-    name: "Kyle Russell",
-    avatar: "/api/placeholder/40/40",
-    title: "Pengembangan Game Edukasi Interaktif",
-    category: "Multimedia",
-  },
-  {
-    nim: "V3420020",
-    name: "Elizabeth Price",
-    avatar: "/api/placeholder/40/40",
-    title: "Aplikasi Mobile Edukasi Anak",
-    category: "Mobile Development",
-  },
-]);
+// Memetakan data API untuk tab dibimbing
+const mentorships = computed(() => {
+  if (!tugasAkhirList.value) return [];
+  
+  console.log("Data tugas akhir mentah:", tugasAkhirList.value);
+  
+  return tugasAkhirList.value.map(ta => {
+    return {
+      id: ta.tugas_akhir_id,
+      nim: ta.mahasiswa?.nim || "N/A",
+      name: ta.mahasiswa?.name || "Tidak diketahui", 
+      avatar: "/api/placeholder/40/40",
+      title: ta.judul_tugas_akhir || "Judul Tidak Tersedia",
+      category: ta.kategori?.nama_kategori || "Tidak terkategorisasi",
+    };
+  });
+});
 
+// Status loading dan error untuk konten utama
+const loading = computed(() => 
+  activeTab.value === 'permintaan' ? loadingRequests.value : loadingTugasAkhir.value
+);
+
+const error = computed(() => 
+  activeTab.value === 'permintaan' ? errorRequests.value : errorTugasAkhir.value
+);
+
+// Item berdasarkan tab aktif
 const items = computed(() => {
   return activeTab.value === "permintaan" ? requests.value : mentorships.value;
 });
 
+// Item yang sudah difilter berdasarkan pencarian dan filter kategori
 const filteredItems = computed(() => {
   let filtered = items.value;
 
-  // Apply text search filter
+  // Menerapkan filter pencarian teks
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     filtered = filtered.filter((item) => {
       return (
-        item.name.toLowerCase().includes(query) ||
-        item.nim.toLowerCase().includes(query) ||
-        item.category.toLowerCase().includes(query) ||
+        (item.name && item.name.toLowerCase().includes(query)) ||
+        (item.nim && item.nim.toLowerCase().includes(query)) ||
+        (item.category && item.category.toLowerCase().includes(query)) ||
         (item.title && item.title.toLowerCase().includes(query)) ||
         (item.date && item.date.toLowerCase().includes(query))
       );
     });
   }
 
-  // Apply category filter if any selected
+  // Menerapkan filter kategori jika ada yang dipilih
   if (selectedFilters.value.length > 0) {
     filtered = filtered.filter((item) =>
       selectedFilters.value.includes(item.category)
@@ -355,35 +139,79 @@ const filteredItems = computed(() => {
   return filtered;
 });
 
-const router = useRouter();
-
-// New function to show response modal
+// Fungsi untuk menampilkan modal respon
 const showResponModal = (item) => {
   selectedItem.value = item;
   modalContent.value = `Respon permintaan ${item.name} sebagai mahasiswa bimbingan anda.`;
   modalRef.value.open();
 };
 
-// Handle accept and reject actions from modal
-const handleAcceptRequest = () => {
-  console.log("Request accepted for:", selectedItem.value);
-  // Here you would implement the API call to accept the request
-  // After successful response, you might want to refresh the data
-  // or move the item from requests to mentorships
+// Menangani tindakan menerima dan menolak dari modal
+const handleAcceptRequest = async () => {
+  try {
+    await updateApproval(selectedItem.value.id, 1);
+    await fetchRequests();
+    modalRef.value.close();
+  } catch (err) {
+    console.error("Error saat menerima permintaan:", err);
+  }
 };
 
-const handleRejectRequest = () => {
-  console.log("Request rejected for:", selectedItem.value);
-  // Here you would implement the API call to reject the request
-  // After successful response, you might want to remove the item from the list
+const handleRejectRequest = async () => {
+  try {
+    await updateApproval(selectedItem.value.id, 2);
+    await fetchRequests();
+    modalRef.value.close();
+  } catch (err) {
+    console.error("Error saat menolak permintaan:", err);
+  }
 };
+
+// Mengambil data ketika tab aktif berubah
+watch(activeTab, (newTab) => {
+  if (newTab === "permintaan") {
+    fetchRequests();
+  } else if (newTab === "dibimbing") {
+    fetchTugasAkhir();
+  }
+});
+
+// Mengambil data awal ketika komponen dimuat
+onMounted(() => {
+  fetchCategories();
+  
+  if (activeTab.value === "permintaan") {
+    fetchRequests();
+  } else {
+    fetchTugasAkhir();
+  }
+});
 </script>
 
 <template>
-  <Breadcrumb :items="breadcrumbItems" />
+<Breadcrumb v-if="!$route.path.includes('detail-bimbingan')" :items="breadcrumbItems" />
   <div v-if="!$route.path.includes('detail-bimbingan')">
-    <!-- Tab Navigation -->
+    <!-- Status loading -->
+    <div v-if="loading" class="flex justify-center items-center py-8">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+
+    <!-- Status error -->
+    <div v-else-if="error" class="p-4 bg-red-100 text-red-700 rounded-lg my-4">
+      <p>{{ error }}</p>
+      <Button 
+        @click="activeTab === 'permintaan' ? fetchRequests() : fetchTugasAkhir()" 
+        variant="outlined" 
+        size="sm" 
+        class="mt-2"
+      >
+        Coba Lagi
+      </Button>
+    </div>
+    
+    <!-- Navigasi Tab -->
     <TabDiv
+      v-else
       :tabs="[
         {
           id: 'permintaan',
@@ -395,15 +223,29 @@ const handleRejectRequest = () => {
           id: 'dibimbing',
           label: 'Dibimbing',
           icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
+          count: mentorships.length,
         },
       ]"
       :default-tab="activeTab"
       @tab-changed="activeTab = $event"
     >
-      <!-- Search and Filter - Stack on mobile -->
+      <!-- Pencarian dan Filter -->
       <div class="flex flex-row mb-2 gap-2">
         <div class="w-auto sm:w-auto sm:mr-2">
+          <!-- Indikator loading untuk kategori -->
+          <div v-if="loadingCategories" class="inline-flex items-center">
+            <span class="animate-pulse mr-2">Memuat kategori...</span>
+            <div class="animate-spin h-4 w-4 border-t-2 border-b-2 border-blue-500 rounded-full"></div>
+          </div>
+          
+          <!-- Pesan error jika kategori gagal dimuat -->
+          <div v-else-if="errorCategories" class="text-red-500 text-sm">
+            Gagal memuat kategori: {{ errorCategories }}
+          </div>
+          
+          <!-- Tampilkan filter ketika kategori dimuat -->
           <ModalFilter
+            v-else
             title="Kategori"
             :items="filterCategories"
             :preselectedValues="selectedFilters"
@@ -418,15 +260,25 @@ const handleRejectRequest = () => {
         <div class="flex-grow w-full">
           <SearchBar
             v-model="searchQuery"
-            placeholder="Search..."
+            placeholder="Cari..."
             :debounce="300"
-            @search="(query) => console.log('Searching for:', query)"
+            @search="(query) => console.log('Mencari:', query)"
           />
         </div>
       </div>
 
-      <!-- Table implementation for all screen sizes -->
-      <div class="relative overflow-x-auto">
+      <!-- Status kosong jika tidak ada item -->
+      <div v-if="filteredItems.length === 0" class="text-center py-8 bg-gray-50 rounded-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+        <p class="mt-2 text-gray-600">
+          {{ activeTab === 'permintaan' ? 'Tidak ada permintaan bimbingan' : 'Tidak ada mahasiswa bimbingan' }}
+        </p>
+      </div>
+
+      <!-- Implementasi tabel untuk semua ukuran layar -->
+      <div v-else class="relative overflow-x-auto">
         <Table
           :headers="
             activeTab === 'permintaan'
@@ -462,7 +314,7 @@ const handleRejectRequest = () => {
             </td>
             <!-- Kolom Aksi -->
             <td class="px-6 py-4 rounded-r-lg">
-              <!-- Button for permintaan tab -->
+              <!-- Tombol untuk tab permintaan -->
               <Button
                 v-if="activeTab === 'permintaan'"
                 variant="secondary"
@@ -472,12 +324,13 @@ const handleRejectRequest = () => {
                 Respon
               </Button>
 
-              <!-- Button for dibimbing tab -->
+              <!-- Tombol untuk tab dibimbing -->
               <router-link
                 v-if="activeTab === 'dibimbing'"
                 :to="{
                   path: '/dosen/tugas-akhir/bimbingan/detail-bimbingan',
                   query: {
+                    id: item.id,
                     nim: item.nim || '',
                     name: item.name || '',
                     category: item.category || '',

@@ -13,9 +13,21 @@ import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
+import { useDibimbing } from "@/services/TugasAkhir/Dosen/dibimbing";
 
 const route = useRoute();
 const router = useRouter();
+
+// Inisialisasi layanan dibimbing
+const { 
+  bimbinganList, 
+  loadingBimbingan, 
+  errorBimbingan, 
+  fetchBimbingan,
+  updateVerifikasiBimbingan 
+} = useDibimbing();
+
+// Informasi mahasiswa dari parameter query route
 const studentInfo = ref({
   nim: "",
   name: "",
@@ -23,73 +35,63 @@ const studentInfo = ref({
   title: "",
 });
 
-// Data riwayat bimbingan (seeder)
-const bimbinganData = ref([
-  {
-    id: 1,
-    tanggal: "10 Januari 2024",
-    bab: "1",
-    catatan: "Perlu perbaikan pada latar belakang dan rumusan masalah",
-    status: "Diterima", // revisi, acc, pending
-  },
-  {
-    id: 2,
-    tanggal: "25 Januari 2024",
-    bab: "1",
-    catatan:
-      "Latar belakang sudah diperbaiki, rumusan masalah masih perlu tambahan data pendukung",
-    status: "Diterima",
-  },
-  {
-    id: 3,
-    tanggal: "15 Februari 2024",
-    bab: "1",
-    catatan: "Semua sudah baik, bisa lanjut ke BAB II",
-    status: "Diterima",
-  },
-  {
-    id: 4,
-    tanggal: "5 Maret 2024",
-    bab: "2",
-    catatan:
-      "Kajian pustaka perlu diperdalam, landasan teori kurang komprehensif",
-    status: "Ditolak",
-  },
-  {
-    id: 5,
-    tanggal: "20 Maret 2024",
-    bab: "2",
-    catatan: "Kajian pustaka sudah diperbaiki, lanjutkan ke BAB III",
-    status: "Diterima",
-  },
-  {
-    id: 6,
-    tanggal: "10 April 2024",
-    bab: "3",
-    catatan: "Metodologi penelitian perlu diperjelas tahapannya",
-    status: "Menunggu",
-  },
+// Tambahkan di bagian awal script, dekat dengan deklarasi data lainnya
+const breadcrumbItems = computed(() => [
+  { label: "Tugas Akhir", path: "/dosen/tugas-akhir" },
+  { label: "Bimbingan", path: "/dosen/tugas-akhir/bimbingan" },
+  { label: "Detail Bimbingan", path: `/dosen/tugas-akhir/bimbingan/detail-bimbingan?id=${studentInfo.value.id}` }
 ]);
 
-// Format data untuk tabel (terbaru di atas)
-const formattedBimbinganData = computed(() => {
-  // Salin array untuk menghindari mutasi data asli
-  const sortedData = [...bimbinganData.value];
-
-  // Urutkan berdasarkan tanggal terbaru
-  sortedData.sort((a, b) => {
-    // Konversi tanggal dari string ke Date object
-    const dateA = new Date(a.tanggal.split(" ").reverse().join(" "));
-    const dateB = new Date(b.tanggal.split(" ").reverse().join(" "));
-    return dateB - dateA; // Urutan menurun (terbaru di atas)
-  });
-
-  // Tambahkan nomor urut sesuai urutan tampilan
-  return sortedData.map((item, index) => ({
-    ...item,
-    no: index + 1,
-  }));
+// Pesan error untuk ditampilkan
+const errorMessage = computed(() => {
+  return errorBimbingan.value || "Terjadi kesalahan saat memuat data.";
 });
+
+// Format data bimbingan untuk tampilan tabel
+const formattedBimbinganData = computed(() => {
+  if (!bimbinganList.value || !bimbinganList.value.bimbingan) {
+    return [];
+  }
+  
+  // Urutkan berdasarkan tanggal terbaru
+  const sortedData = [...bimbinganList.value.bimbingan].sort((a, b) => {
+    const dateA = new Date(a.tanggal_bimbingan || a.created_at);
+    const dateB = new Date(b.tanggal_bimbingan || b.created_at);
+    return dateB - dateA;
+  });
+  
+  // Petakan data ke format tabel
+  return sortedData.map((item, index) => {
+    const date = new Date(item.tanggal_bimbingan || item.created_at);
+    const formattedDate = date.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+    
+    return {
+      id: item.id,
+      no: index + 1,
+      tanggal: formattedDate,
+      bab: item.bab?.toString() || "0",
+      catatan: item.catatan || "",
+      status: mapStatusToText(item.status_verifikasi)
+    };
+  });
+});
+
+// Pemetaan status numerik ke teks
+function mapStatusToText(status) {
+  switch (status) {
+    case 1:
+      return "Diterima";
+    case 2:
+      return "Ditolak";
+    case 0:
+    default:
+      return "Menunggu";
+  }
+}
 
 // Fungsi untuk menentukan kelas status
 const getStatusClass = (status) => {
@@ -107,45 +109,57 @@ const getStatusClass = (status) => {
 
 // Fungsi untuk menentukan label status
 const getStatusLabel = (status) => {
-  switch (status) {
-    case "Diterima":
-      return "Diterima";
-    case "Menunggu":
-      return "Menunggu";
-    case "Ditolak":
-      return "Ditolak";
-    default:
-      return "Unknown";
-  }
+  return status;
 };
 
 // Menentukan BAB tertinggi yang sudah di-ACC
 const highestChapter = computed(() => {
-  const accChapters = bimbinganData.value
-    .filter((item) => item.status === "Diterima")
-    .map((item) => parseInt(item.bab));
-
+  if (!bimbinganList.value || !bimbinganList.value.bimbingan) {
+    return 0;
+  }
+  
+  const accChapters = bimbinganList.value.bimbingan
+    .filter(item => item.status_verifikasi === 1)
+    .map(item => parseInt(item.bab || 0));
+    
+  if (bimbinganList.value.bab_tertinggi) {
+    return bimbinganList.value.bab_tertinggi;
+  }
+  
   return Math.max(...accChapters, 0);
 });
 
-// Fungsi untuk mengupdate data dari query parameters
+// Computed property untuk tahun ajaran
+const tahunAjaran = computed(() => {
+  if (bimbinganList.value && bimbinganList.value.tahun_ajaran) {
+    return bimbinganList.value.tahun_ajaran.tahun_ajaran;
+  }
+  return "2024/2025";
+});
+
+// Fungsi untuk mengupdate data dari parameter query
 const updateStudentInfo = () => {
   const nim = route.query.nim;
   const name = route.query.name;
   const category = route.query.category;
   const title = route.query.title;
+  const id = route.query.id;
 
-  console.log("Query params received:", { nim, name, category, title });
+  console.log("Query params received:", { id, nim, name, category, title });
 
-  // Update hanya jika ada data query parameter
   if (nim) {
     studentInfo.value = {
-      nim: nim,
-      name: name || "John Batubara",
-      category: category || "Internet of Things",
-      title: title || "Pengembangan El Pikir",
+      id,
+      nim,
+      name: name || "Unknown",
+      category: category || "Uncategorized",
+      title: title || "Judul Tidak Tersedia",
     };
     console.log("Updated student info:", studentInfo.value);
+  }
+  
+  if (id) {
+    fetchBimbingan(id);
   }
 };
 
@@ -153,13 +167,9 @@ const updateStudentInfo = () => {
 onMounted(() => {
   console.log("DetailBimbingan mounted with route:", route.fullPath);
   updateStudentInfo();
-
-  // Simulasi loading data bimbingan dari API berdasarkan NIM
-  // Di sini kita menggunakan data statis, dalam implementasi nyata
-  // Anda akan mengambil data dari API berdasarkan studentInfo.value.nim
 });
 
-// Watch untuk perubahan route.query dengan immediate true
+// Watch untuk perubahan route.query
 watch(
   () => route.query,
   (newQuery) => {
@@ -169,23 +179,36 @@ watch(
   { deep: true, immediate: true }
 );
 
-// Ref for modal components
-const verifikasiModal = ref(null);
-const detailModal = ref(null);
-const nilaiModal = ref(false); // Changed to boolean for visibility control
-
-// Data for bimbingan detail (needed for nilai modal)
-const bimbinganDetail = ref({
-  nilaiDisiplin: 85,
-  nilaiKomunikasi: 80,
-  nilaiPengetahuan: 90,
-  nilaiTingkahLaku: 85,
-  catatanRevisi:
-    "Perbaikan pada metodologi dan analisis data sudah dilakukan dengan baik.",
-  nilaiRataRata: 86.25,
+// Data untuk detail bimbingan (untuk modal nilai)
+const bimbinganDetail = computed(() => {
+  if (!bimbinganList.value || !bimbinganList.value.nilai_bimbingan) {
+    return {
+      nilaiDisiplin: 0,
+      nilaiKomunikasi: 0,
+      nilaiPengetahuan: 0,
+      nilaiTingkahLaku: 0,
+      catatanRevisi: "",
+      nilaiRataRata: 0,
+    };
+  }
+  
+  const nilai = bimbinganList.value.nilai_bimbingan;
+  return {
+    nilaiDisiplin: nilai.disiplin || 0,
+    nilaiKomunikasi: nilai.komunikasi || 0,
+    nilaiPengetahuan: nilai.skill_pengetahuan || 0,
+    nilaiTingkahLaku: nilai.tingkah_laku || 0,
+    catatanRevisi: nilai.catatan || "",
+    nilaiRataRata: nilai.rerata_bimbingan || 0,
+  };
 });
 
-// Create refs for modal form data
+// Ref untuk komponen modal
+const verifikasiModal = ref(null);
+const detailModal = ref(null);
+const nilaiModal = ref(false);
+
+// Ref untuk data form modal
 const id = ref(0);
 const tanggal = ref("");
 const bab = ref("");
@@ -193,42 +216,28 @@ const catatan = ref("");
 const status = ref("");
 const statusLabel = ref("");
 
-// Functions for modal handling
-const openVerifikasiModal = () => {
-  // Find bimbingan data with id 6
-  const bimbingan = bimbinganData.value.find((item) => item.id === 6);
-
-  if (bimbingan) {
-    // Set modal data from bimbingan data
-    id.value = bimbingan.id;
-    tanggal.value = bimbingan.tanggal;
-    bab.value = bimbingan.bab;
-    catatan.value = bimbingan.catatan;
-  }
-
-  // Open the modal using the exposed method
+// Fungsi untuk penanganan modal
+const openVerifikasiModal = (item) => {
+  id.value = item.id;
+  tanggal.value = item.tanggal;
+  bab.value = item.bab;
+  catatan.value = item.catatan;
+  
   verifikasiModal.value.open();
 };
 
-const openDetailModal = () => {
-  // Find bimbingan data with id 6
-  const bimbingan = bimbinganData.value.find((item) => item.id === 6);
-
-  if (bimbingan) {
-    // Set modal data from bimbingan data
-    id.value = bimbingan.id;
-    tanggal.value = bimbingan.tanggal;
-    bab.value = bimbingan.bab;
-    catatan.value = bimbingan.catatan;
-    status.value = getStatusClass(bimbingan.status); // Pass the CSS class name instead of the status text
-    statusLabel.value = getStatusLabel(bimbingan.status);
-  }
-
-  // Open the modal using the exposed method
+const openDetailModal = (item) => {
+  id.value = item.id;
+  tanggal.value = item.tanggal;
+  bab.value = item.bab;
+  catatan.value = item.catatan;
+  status.value = getStatusClass(item.status);
+  statusLabel.value = getStatusLabel(item.status);
+  
   detailModal.value.open();
 };
 
-// Function to open nilai modal
+// Fungsi untuk membuka modal nilai
 const openNilaiModal = () => {
   nilaiModal.value = true;
   console.log("Nilai modal opened");
@@ -237,37 +246,59 @@ const openNilaiModal = () => {
 const closeNilaiModal = () => {
   console.log("Modal closed");
   nilaiModal.value = false;
-  // Any cleanup logic here
 };
 
-// Handler for action buttons
+const closeModal = () => {
+  console.log("Modal closed");
+};
+
+// Menangani aksi terima verifikasi
+const handleAccept = async () => {
+  try {
+    await updateVerifikasiBimbingan(id.value, 1);
+    if (studentInfo.value.id) {
+      fetchBimbingan(studentInfo.value.id);
+    }
+    verifikasiModal.value.close();
+  } catch (err) {
+    console.error("Error accepting bimbingan:", err);
+  }
+};
+
+// Menangani aksi tolak verifikasi
+const handleReject = async () => {
+  try {
+    await updateVerifikasiBimbingan(id.value, 2);
+    if (studentInfo.value.id) {
+      fetchBimbingan(studentInfo.value.id);
+    }
+    verifikasiModal.value.close();
+  } catch (err) {
+    console.error("Error rejecting bimbingan:", err);
+  }
+};
+
+// Penanganan tombol aksi
 const handleActionClick = (item, action) => {
   console.log(`Action ${action} clicked for item:`, item);
 
-  // Set data for modals
-  id.value = item.id;
-  tanggal.value = item.tanggal;
-  bab.value = item.bab;
-  catatan.value = item.catatan;
-  status.value = getStatusClass(item.status);
-  statusLabel.value = getStatusLabel(item.status);
-
-  // Open appropriate modal based on action
   if (action === "verifikasi") {
-    verifikasiModal.value.open();
+    openVerifikasiModal(item);
   } else if (action === "detail") {
-    detailModal.value.open();
+    openDetailModal(item);
   }
 
-  // Prevent event propagation to avoid triggering row click
   event.stopPropagation();
 };
 </script>
 
 <template>
-  <Loading v-if="loading" />
-  <ErrorMsg v-else-if="error" :message="errorMessage" />
-  <div v-if="!$route.path.includes('input-nilai-bimbingan')">
+
+<Breadcrumb :items="breadcrumbItems" />
+
+  <Loading v-if="loadingBimbingan" />
+  <ErrorMsg v-else-if="errorBimbingan" :message="errorMessage" />
+  <div v-else-if="!$route.path.includes('input-nilai-bimbingan')">
     <!-- Header: Info Dosen & Progress BAB -->
     <div class="card-rounded bg-white p-6 lg:p-8">
       <!-- Info Dosen Pembimbing -->
@@ -290,7 +321,7 @@ const handleActionClick = (item, action) => {
 
         <!-- Detail Informasi -->
         <div class="self-center flex flex-wrap justify-between w-full">
-          <!-- Dosen Pembimbing -->
+          <!-- Mahasiswa Info -->
           <div>
             <span class="body5 sm:body4-bold">{{ studentInfo.name }}</span>
             <h5 class="body5-bold sm:body3-bold lg:body2-bold text-primary">
@@ -310,7 +341,7 @@ const handleActionClick = (item, action) => {
           <div class="lg:border-l-2 border-black lg:pl-4">
             <span class="body5 sm:body4-bold">Tahun Ajaran</span>
             <h5 class="body5-bold sm:body3-bold lg:body2-bold text-primary">
-              2024/2025
+              {{ tahunAjaran }}
             </h5>
           </div>
         </div>
@@ -330,6 +361,7 @@ const handleActionClick = (item, action) => {
             :to="{
               path: '/dosen/tugas-akhir/bimbingan/detail-bimbingan/input-nilai-bimbingan',
               query: {
+                id: studentInfo.id,
                 nim: studentInfo.nim,
                 name: studentInfo.name,
                 category: studentInfo.category,
@@ -453,6 +485,8 @@ const handleActionClick = (item, action) => {
   <ModalVerifikasiBimbingan
     ref="verifikasiModal"
     @close="closeModal"
+    @accept="handleAccept"
+    @reject="handleReject"
     title="Verfikasi Bimbingan"
     :bimbinganKe="id"
     :tanggalBimbingan="tanggal"

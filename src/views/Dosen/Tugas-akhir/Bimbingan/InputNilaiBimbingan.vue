@@ -1,15 +1,30 @@
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
+import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
+import Loading from "@/components/Loading.vue";
+import ErrorMsg from "@/components/ErrorMsg.vue";
+import { useNilaiBimbingan } from "@/services/TugasAkhir/Dosen/nilaiBimbingan";
 
 const route = useRoute();
 const router = useRouter();
 
-// Data mahasiswa dari query parameters
+// Inisialisasi layanan nilai bimbingan
+const { 
+  nilaiBimbingan, 
+  loading, 
+  error, 
+  success, 
+  fetchNilaiBimbingan, 
+  saveNilaiBimbingan 
+} = useNilaiBimbingan();
+
+// Data mahasiswa dari parameter query
 const studentInfo = ref({
+  id: "",
   nim: "",
   name: "",
   category: "",
@@ -21,8 +36,32 @@ const disiplin = ref("");
 const komunikasi = ref("");
 const pengetahuan = ref("");
 const tingkahLaku = ref("");
+const catatanAkhir = ref("");
 
-// Error tracking for validation
+// Computed property untuk nilai rata-rata berdasarkan rumus pembobotan
+const rerataValue = computed(() => {
+  // Cek apakah semua nilai sudah diisi
+  if (
+    disiplin.value === "" || 
+    komunikasi.value === "" || 
+    pengetahuan.value === "" || 
+    tingkahLaku.value === ""
+  ) {
+    return "";
+  }
+  
+  // Konversi ke angka dan terapkan bobot
+  const d = parseFloat(disiplin.value) * 0.2; // 20%
+  const k = parseFloat(komunikasi.value) * 0.2; // 20%
+  const p = parseFloat(pengetahuan.value) * 0.45; // 45%
+  const t = parseFloat(tingkahLaku.value) * 0.15; // 15%
+  
+  // Hitung rata-rata tertimbang dan bulatkan ke 2 desimal
+  const average = d + k + p + t;
+  return average.toFixed(2);
+});
+
+// Pelacakan error untuk validasi
 const errors = ref({
   disiplin: false,
   komunikasi: false,
@@ -30,10 +69,17 @@ const errors = ref({
   tingkahLaku: false,
 });
 
-// Track if form has been submitted at least once
+// Pesan feedback
+const submissionStatus = ref({
+  success: false,
+  message: "",
+  isSubmitting: false
+});
+
+// Pelacakan apakah form sudah pernah disubmit
 const formSubmitted = ref(false);
 
-// Validate all required fields
+// Validasi semua field yang wajib diisi
 const validateForm = () => {
   let isValid = true;
 
@@ -45,7 +91,7 @@ const validateForm = () => {
     tingkahLaku: false,
   };
 
-  // Check nilai fields - use explicit checks for empty string
+  // Cek field nilai - gunakan pengecekan eksplisit untuk string kosong
   if (
     disiplin.value === "" ||
     disiplin.value === null ||
@@ -85,79 +131,160 @@ const validateForm = () => {
   return isValid;
 };
 
-// Ambil data dari query parameters
+// Muat nilai yang sudah ada jika tersedia
+const loadNilaiBimbingan = async (tugasAkhirId) => {
+  try {
+    const data = await fetchNilaiBimbingan(tugasAkhirId);
+    
+    // Jika data ada, isi form
+    if (data && data.data) {
+      disiplin.value = data.data.disiplin;
+      komunikasi.value = data.data.komunikasi;
+      pengetahuan.value = data.data.skill_pengetahuan;
+      tingkahLaku.value = data.data.tingkah_laku;
+      catatanAkhir.value = data.data.catatan_akhir_bimbingan || "";
+    }
+  } catch (err) {
+    console.error("Error loading nilai bimbingan:", err);
+    // 404 diharapkan jika nilai belum ada, jangan tampilkan error
+    if (err.response?.status !== 404) {
+      submissionStatus.value = {
+        success: false,
+        message: "Gagal memuat data nilai bimbingan: " + (err.response?.data?.message || err.message)
+      };
+    }
+  }
+};
+
+// Ambil data dari parameter query dan muat nilai jika ada
 onMounted(() => {
+  const id = route.query.id;
   const nim = route.query.nim;
   const name = route.query.name;
   const category = route.query.category;
   const title = route.query.title;
 
-  console.log("Nilai bimbingan query params:", { nim, name, category, title });
+  console.log("Nilai bimbingan query params:", { id, nim, name, category, title });
 
   if (nim) {
     studentInfo.value = {
+      id,
       nim,
       name,
       category,
       title,
     };
+    
+    // Jika ada ID, coba muat nilai yang sudah ada
+    if (id) {
+      loadNilaiBimbingan(id);
+    }
   }
 });
 
-// Handle submit nilai
-const handleSubmit = () => {
+// Tangani submit nilai
+const handleSubmit = async () => {
   formSubmitted.value = true;
-
-  // Validate form before submitting
+  
+  // Validasi form sebelum submit
   if (!validateForm()) {
-    // Scroll to first error
+    // Scroll ke error pertama
     const firstErrorEl = document.querySelector(".error-text");
     if (firstErrorEl) {
       firstErrorEl.scrollIntoView({ behavior: "smooth", block: "center" });
     }
     return;
   }
-
-  // Logic untuk submit nilai
-  console.log("Submitting nilai:", {
-    mahasiswa: studentInfo.value,
-    nilai: {
-      disiplin: disiplin.value,
-      komunikasi: komunikasi.value,
-      pengetahuan: pengetahuan.value,
-      tingkahLaku: tingkahLaku.value,
-    },
-  });
-
-  // Kembali ke halaman detail bimbingan
-  router.push({
-    path: "/dosen/tugas-akhir/bimbingan/detail-bimbingan",
-    query: {
-      nim: studentInfo.value.nim,
-      name: studentInfo.value.name,
-      category: studentInfo.value.category,
-      title: studentInfo.value.title,
-    },
-  });
+  
+  // Cegah double submission
+  if (submissionStatus.value.isSubmitting) {
+    return;
+  }
+  
+  submissionStatus.value.isSubmitting = true;
+  
+  try {
+    // Siapkan data sesuai kebutuhan API
+    const nilaiData = {
+      disiplin: parseFloat(disiplin.value),
+      komunikasi: parseFloat(komunikasi.value),
+      skill_pengetahuan: parseFloat(pengetahuan.value),
+      tingkah_laku: parseFloat(tingkahLaku.value),
+      rerata_bimbingan: parseFloat(rerataValue.value),
+      catatan_akhir_bimbingan: catatanAkhir.value || ""
+    };
+    
+    console.log("Submitting nilai:", nilaiData);
+    
+    // Panggil API untuk menyimpan nilai
+    const response = await saveNilaiBimbingan(studentInfo.value.id, nilaiData);
+    
+    // Tampilkan pesan sukses
+    submissionStatus.value = {
+      success: true,
+      message: "Nilai bimbingan berhasil disimpan!",
+      isSubmitting: false
+    };
+    
+    // Kembali ke halaman detail setelah delay singkat
+    setTimeout(() => {
+      router.push({
+        path: "/dosen/tugas-akhir/bimbingan/detail-bimbingan",
+        query: {
+          id: studentInfo.value.id,
+          nim: studentInfo.value.nim,
+          name: studentInfo.value.name,
+          category: studentInfo.value.category,
+          title: studentInfo.value.title,
+          _t: Date.now() 
+        },
+      });
+    }, 1500);
+    
+  } catch (err) {
+    console.error("Error saving nilai:", err);
+    submissionStatus.value = {
+      success: false,
+      message: "Gagal menyimpan nilai: " + (err.response?.data?.message || err.message),
+      isSubmitting: false
+    };
+    
+    // Scroll ke pesan error
+    setTimeout(() => {
+      const alertEl = document.querySelector(".alert-error");
+      if (alertEl) {
+        alertEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 100);
+  }
 };
 
-// Add a function to reset validation errors when value changes
+// Fungsi untuk mereset error validasi saat nilai berubah
 const resetValidationError = (field) => {
   if (formSubmitted.value && errors.value[field]) {
     errors.value[field] = false;
   }
 };
 
-// Watch for input changes to clear errors
+// Watch untuk perubahan input untuk menghapus error
 watch(disiplin, () => resetValidationError("disiplin"));
 watch(komunikasi, () => resetValidationError("komunikasi"));
 watch(pengetahuan, () => resetValidationError("pengetahuan"));
 watch(tingkahLaku, () => resetValidationError("tingkahLaku"));
+
+// Reset pesan error ketika mencoba lagi
+const resetErrorMessage = () => {
+  submissionStatus.value.message = "";
+};
 </script>
 
 <template>
-  <div class="card-rounded bg-white p-6 lg:p-8">
-    <!-- Header Section -->
+  <!-- Status loading -->
+  <Loading v-if="loading" />
+  
+  <!-- Konten utama -->
+  <div v-else class="card-rounded bg-white p-6 lg:p-8">
+    <!-- Bagian Header -->
     <div class="mb-6">
       <h4 class="heading4 font-semibold">Input Nilai Bimbingan</h4>
       <div class="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -170,8 +297,32 @@ watch(tingkahLaku, () => resetValidationError("tingkahLaku"));
         </p>
       </div>
     </div>
+    
+    <!-- Alert Sukses/Error -->
+    <div v-if="submissionStatus.message" class="mb-4">
+      <div 
+        v-if="submissionStatus.success" 
+        class="p-4 bg-green-100 text-green-700 rounded-lg alert-success"
+      >
+        {{ submissionStatus.message }}
+      </div>
+      <div 
+        v-else 
+        class="p-4 bg-red-100 text-red-700 rounded-lg flex justify-between items-center alert-error"
+      >
+        <span>{{ submissionStatus.message }}</span>
+        <button 
+          @click="resetErrorMessage" 
+          class="text-red-700 hover:text-red-900"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+    </div>
 
-    <!-- Form Section -->
+    <!-- Bagian Form -->
     <div class="flex flex-wrap gap-4">
       <div class="w-full sm:w-[calc(50%-0.5rem)]">
         <InputNumber
@@ -240,12 +391,51 @@ watch(tingkahLaku, () => resetValidationError("tingkahLaku"));
           Nilai tingkah laku wajib diisi
         </p>
       </div>
+      
+      <!-- Rata-rata yang dihitung (Hanya baca) -->
+      <div class="w-full sm:w-[calc(50%-0.5rem)]">
+        <InputNumber
+          id="rerataValue"
+          label="Nilai Rata-Rata"
+          :modelValue="rerataValue"
+          disabled
+          class="font-semibold"
+        />
+        <p class="text-gray-500 mt-1 text-sm">
+          Nilai rata-rata dihitung otomatis berdasarkan bobot
+        </p>
+      </div>
+      
+      <!-- Catatan Akhir Bimbingan -->
+      <div class="w-full mt-2">
+        <InputTextarea
+          id="catatanAkhir"
+          label="Catatan Akhir Bimbingan"
+          placeholder="Masukkan catatan untuk mahasiswa bimbingan"
+          v-model="catatanAkhir"
+          rows="4"
+        />
+      </div>
     </div>
 
-    <!-- Button Section -->
+    <!-- Bagian Tombol -->
     <div class="flex justify-end w-full mt-6">
-      <Button variant="primary" size="lg" @click="handleSubmit">
-        Simpan Nilai
+      <Button 
+        variant="secondary" 
+        size="lg" 
+        class="mr-2"
+        @click="router.go(-1)"
+      >
+        Kembali
+      </Button>
+      <Button 
+        variant="primary" 
+        size="lg" 
+        @click="handleSubmit"
+        :disabled="submissionStatus.isSubmitting"
+      >
+        <span v-if="submissionStatus.isSubmitting">Menyimpan...</span>
+        <span v-else>Simpan Nilai</span>
       </Button>
     </div>
   </div>
