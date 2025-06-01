@@ -53,21 +53,55 @@ const formattedBimbinganData = computed(() => {
     return [];
   }
   
-  // Urutkan berdasarkan tanggal terbaru
+  console.log("Raw bimbingan data:", bimbinganList.value.bimbingan);
+  
+  // Urutkan berdasarkan ID (terbaru di atas)
   const sortedData = [...bimbinganList.value.bimbingan].sort((a, b) => {
-    const dateA = new Date(a.tanggal_bimbingan || a.created_at);
-    const dateB = new Date(b.tanggal_bimbingan || b.created_at);
-    return dateB - dateA;
+    return b.id - a.id;
   });
   
   // Petakan data ke format tabel
   return sortedData.map((item, index) => {
-    const date = new Date(item.tanggal_bimbingan || item.created_at);
-    const formattedDate = date.toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
+    // Untuk tanggal, gunakan tanggal_bimbingan langsung jika tersedia dalam format teks
+    let formattedDate = "Tanggal tidak tersedia";
+    
+    if (item.tanggal_bimbingan) {
+      // Gunakan langsung nilai tanggal dari API jika sudah dalam format teks
+      formattedDate = item.tanggal_bimbingan;
+      console.log(`Using tanggal_bimbingan directly: ${formattedDate}`);
+    } else {
+      // Fallback jika tidak ada tanggal_bimbingan
+      try {
+        // Coba parse created_at jika tersedia
+        if (item.created_at) {
+          const date = new Date(item.created_at);
+          if (!isNaN(date.getTime())) {
+            formattedDate = date.toLocaleDateString('id-ID', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            });
+          }
+        } else {
+          // Fallback ke tanggal hari ini
+          const today = new Date();
+          formattedDate = today.toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+          });
+        }
+      } catch (e) {
+        console.error("Error formatting date:", e);
+        // Gunakan tanggal hari ini sebagai fallback
+        const today = new Date();
+        formattedDate = today.toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+      }
+    }
     
     return {
       id: item.id,
@@ -113,20 +147,72 @@ const getStatusLabel = (status) => {
 };
 
 // Menentukan BAB tertinggi yang sudah di-ACC
+// Menentukan BAB tertinggi yang sudah di-ACC
 const highestChapter = computed(() => {
-  if (!bimbinganList.value || !bimbinganList.value.bimbingan) {
-    return 0;
-  }
-  
-  const accChapters = bimbinganList.value.bimbingan
-    .filter(item => item.status_verifikasi === 1)
-    .map(item => parseInt(item.bab || 0));
+  try {
+    if (!bimbinganList.value || !bimbinganList.value.bimbingan) {
+      console.log("No bimbingan data available");
+      return 0;
+    }
     
-  if (bimbinganList.value.bab_tertinggi) {
-    return bimbinganList.value.bab_tertinggi;
+    // Log untuk debugging
+    console.log("All bimbingan entries:", bimbinganList.value.bimbingan);
+    
+    // Hanya ambil BAB yang sudah disetujui (status_verifikasi = 1)
+    const accBimbingan = bimbinganList.value.bimbingan.filter(item => item.status_verifikasi === 1);
+    console.log("Accepted bimbingan entries:", accBimbingan);
+    
+    // Jika tidak ada BAB yang disetujui, kembalikan 0
+    if (accBimbingan.length === 0) {
+      console.log("No accepted chapters found");
+      return 0;
+    }
+    
+    // Map ke nomor BAB dan filter nilai yang valid
+    const accChapters = accBimbingan
+      .map(item => {
+        // Pastikan bab adalah angka
+        const babStr = item.bab?.toString() || "0";
+        const babNumber = parseInt(babStr);
+        console.log(`Chapter mapping: original=${babStr}, parsed=${babNumber}`);
+        return isNaN(babNumber) ? 0 : babNumber;
+      })
+      .filter(num => num > 0); // Hanya ambil BAB yang valid (> 0)
+    
+    console.log("Valid accepted chapter numbers:", accChapters);
+    
+    // Jika tidak ada BAB valid yang disetujui, kembalikan 0
+    if (accChapters.length === 0) {
+      console.log("No valid accepted chapter numbers");
+      return 0;
+    }
+    
+    // Cek jika ada nilai bab_tertinggi dari API
+    if (bimbinganList.value.bab_tertinggi !== undefined && 
+        bimbinganList.value.bab_tertinggi !== null) {
+      const highest = parseInt(bimbinganList.value.bab_tertinggi);
+      console.log(`Using API bab_tertinggi value: ${highest}`);
+      
+      // Verifikasi nilai bab_tertinggi (harus valid dan <= BAB tertinggi yang disetujui)
+      if (!isNaN(highest) && highest > 0) {
+        const maxAccChapter = Math.max(...accChapters);
+        // Jika bab_tertinggi > BAB tertinggi yang disetujui, gunakan BAB tertinggi yang disetujui
+        if (highest > maxAccChapter) {
+          console.log(`API bab_tertinggi (${highest}) > max accepted chapter (${maxAccChapter}), using max accepted chapter`);
+          return maxAccChapter;
+        }
+        return highest;
+      }
+    }
+    
+    // Jika tidak ada bab_tertinggi yang valid, gunakan BAB tertinggi yang sudah di-ACC
+    const maxChapter = Math.max(...accChapters);
+    console.log(`Using calculated max chapter: ${maxChapter}`);
+    return maxChapter;
+  } catch (err) {
+    console.error("Error calculating highest chapter:", err);
+    return 0; // Default ke 0 jika terjadi error
   }
-  
-  return Math.max(...accChapters, 0);
 });
 
 // Computed property untuk tahun ajaran
@@ -137,8 +223,8 @@ const tahunAjaran = computed(() => {
   return "2024/2025";
 });
 
-// Fungsi untuk mengupdate data dari parameter query
-const updateStudentInfo = () => {
+// Fungsi untuk mengupdate data dari parameter query dan response API
+const updateStudentInfo = async () => {
   const nim = route.query.nim;
   const name = route.query.name;
   const category = route.query.category;
@@ -155,11 +241,21 @@ const updateStudentInfo = () => {
       category: category || "Uncategorized",
       title: title || "Judul Tidak Tersedia",
     };
-    console.log("Updated student info:", studentInfo.value);
+    console.log("Updated student info from query params:", studentInfo.value);
   }
   
   if (id) {
-    fetchBimbingan(id);
+    try {
+      const response = await fetchBimbingan(id);
+      
+      // Update judul dari response API jika tersedia
+      if (response.data?.judul_tugas_akhir) {
+        studentInfo.value.title = response.data.judul_tugas_akhir;
+        console.log("Updated title from API:", studentInfo.value.title);
+      }
+    } catch (err) {
+      console.error("Error fetching bimbingan data:", err);
+    }
   }
 };
 
@@ -211,7 +307,7 @@ const nilaiModal = ref(false);
 // Ref untuk data form modal
 const id = ref(0);
 const tanggal = ref("");
-const bab = ref("");
+const bab = ref(0);
 const catatan = ref("");
 const status = ref("");
 const statusLabel = ref("");
@@ -220,7 +316,7 @@ const statusLabel = ref("");
 const openVerifikasiModal = (item) => {
   id.value = item.id;
   tanggal.value = item.tanggal;
-  bab.value = item.bab;
+  bab.value = parseInt(item.bab) || 0;
   catatan.value = item.catatan;
   
   verifikasiModal.value.open();
@@ -229,7 +325,7 @@ const openVerifikasiModal = (item) => {
 const openDetailModal = (item) => {
   id.value = item.id;
   tanggal.value = item.tanggal;
-  bab.value = item.bab;
+  bab.value = parseInt(item.bab) || 0;
   catatan.value = item.catatan;
   status.value = getStatusClass(item.status);
   statusLabel.value = getStatusLabel(item.status);

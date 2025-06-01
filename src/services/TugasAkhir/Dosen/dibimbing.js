@@ -87,10 +87,19 @@ export function useDibimbing() {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       };
-      
       const response = await axios.get(`/api/dosen/bimbingan/${tugasAkhirId}`, { headers });
-      
+    
       console.log("Bimbingan response:", response.data);
+      
+      // Tambahkan debugging detail untuk data bimbingan
+      if (response.data.data?.bimbingan && response.data.data.bimbingan.length > 0) {
+        console.log("First bimbingan item details:", {
+          id: response.data.data.bimbingan[0].id,
+          tanggal_bimbingan: response.data.data.bimbingan[0].tanggal_bimbingan,
+          created_at: response.data.data.bimbingan[0].created_at,
+          updated_at: response.data.data.bimbingan[0].updated_at
+        });
+      }
       
       bimbinganList.value = response.data.data;
       return response.data;
