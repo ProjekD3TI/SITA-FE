@@ -58,6 +58,15 @@
             </div>
 
             <div>
+              <h3 class="text-sm font-medium text-gray-500">
+                Total Inventaris
+              </h3>
+              <p class="mt-1 text-lg">
+                {{ jenis_inventaris.total_inventaris }}
+              </p>
+            </div>
+
+            <div>
               <h3 class="text-sm font-medium text-gray-500">Peruntukan</h3>
               <p class="mt-1 text-lg">
                 <span

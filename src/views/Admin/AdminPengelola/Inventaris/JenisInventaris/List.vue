@@ -3,47 +3,118 @@
     <h2 class="text-2xl font-bold mb-6">Daftar Jenis Inventaris</h2>
 
     <div class="grid grid-cols-1 gap-4 mb-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-        <input
-          v-model="searchTerm"
-          type="text"
-          placeholder="Cari Jenis Inventaris..."
-          class="px-3 py-2 border rounded-md w-full"
-          @input="onSearch"
-        />
+      <div class="flex gap-2">
+        <div class="relative flex-1">
+          <div
+            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+          >
+            <i class="fas fa-search text-gray-400"></i>
+          </div>
+          <input
+            v-model="searchTerm"
+            type="text"
+            placeholder="Cari Jenis Inventaris..."
+            class="pl-10 pr-3 py-2 border rounded-md w-full"
+            @input="onSearch"
+          />
+        </div>
 
-        <select
-          v-model="filters.peruntukan"
-          @change="onFilterChange"
-          class="px-3 py-2 border rounded-md w-full"
-        >
-          <option value="">Semua Peruntukan</option>
-          <option value="alat_lab">Alat Laboratorium</option>
-          <option value="inventaris_kantor">Inventaris Kantor</option>
-        </select>
+        <div class="relative">
+          <button
+            @click="toggleFilterDropdown"
+            class="px-4 py-2 border rounded-md bg-white hover:bg-gray-50 transition flex items-center gap-2 relative"
+            :class="{ 'bg-blue-50 border-blue-300': hasActiveFilters }"
+          >
+            <i class="fa fa-filter" aria-hidden="true"></i>
+            Filter
+            <span
+              v-if="hasActiveFilters"
+              class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+            >
+              {{ activeFilterCount }}
+            </span>
+          </button>
 
-        <select
-          v-model="filters.status_import"
-          @change="onFilterChange"
-          class="px-3 py-2 border rounded-md w-full"
-        >
-          <option value="">Semua Status Import</option>
-          <option value="produk_luar_negeri">Produk Luar Negeri</option>
-          <option value="produk_dalam_negeri">Produk Dalam Negeri</option>
-        </select>
+          <div
+            v-if="showFilterDropdown"
+            class="absolute top-full right-0 mt-2 w-80 bg-white border rounded-lg shadow-lg z-50"
+          >
+            <div class="p-4">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="font-medium text-gray-900">Filter Data</h3>
+                <button
+                  @click="clearAllFilters"
+                  class="text-sm text-red-600 hover:text-red-800"
+                  v-if="hasActiveFilters"
+                >
+                  Clear All
+                </button>
+              </div>
+
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-building text-gray-400 mr-2"></i>
+                    Peruntukan
+                  </label>
+                  <select
+                    v-model="filters.peruntukan"
+                    @change="onFilterChange"
+                    class="w-full px-3 py-2 border rounded-md"
+                  >
+                    <option value="">Semua Peruntukan</option>
+                    <option value="alat_lab">Alat Laboratorium</option>
+                    <option value="inventaris_kantor">Inventaris Kantor</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-globe text-gray-400 mr-2"></i>
+                    Status Import
+                  </label>
+                  <select
+                    v-model="filters.status_import"
+                    @change="onFilterChange"
+                    class="w-full px-3 py-2 border rounded-md"
+                  >
+                    <option value="">Semua Status Import</option>
+                    <option value="produk_luar_negeri">
+                      Produk Luar Negeri
+                    </option>
+                    <option value="produk_dalam_negeri">
+                      Produk Dalam Negeri
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mt-4 pt-4 border-t flex justify-end">
+                <button
+                  @click="closeFilterDropdown"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="flex flex-wrap justify-between gap-2">
         <button
           @click="exportJenisInventaris()"
-          class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+          class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center gap-2"
         >
+          <i class="fas fa-file-excel"></i>
           Export Excel
         </button>
         <button
           @click="goToCreate()"
-          class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center gap-2"
         >
+          <i class="fas fa-plus"></i>
           Tambah Jenis
         </button>
       </div>
@@ -57,7 +128,7 @@
         :loading="loading"
         :server-options="serverOptions"
         :server-items-length="pagination.total"
-        @update:options="onOptionsUpdate"
+        @update:server-options="onServerOptionsUpdate"
         :rows-per-page="serverOptions.rowsPerPage"
         :rows-items="[10, 25, 50]"
         :pagination="false"
@@ -65,6 +136,8 @@
         class="bg-white shadow-md rounded-lg"
         empty-message="Tidak ada data Jenis Inventaris"
         border-cell
+        server-side-sort
+        :key="tableKey"
       >
         <template #item-peruntukan="item">
           <span
@@ -201,11 +274,17 @@
         </div>
       </div>
     </div>
+
+    <div
+      v-if="showFilterDropdown"
+      @click="closeFilterDropdown"
+      class="fixed inset-0 z-40"
+    ></div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, nextTick, computed } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
@@ -223,25 +302,29 @@ const debounceTimeout = ref(null);
 const showDeleteModal = ref(false);
 const selectedItem = ref(null);
 const isDeleting = ref(false);
+const tableKey = ref(0);
+const showFilterDropdown = ref(false);
+
+const headers = [
+  { text: "No", value: "no", sortable: true },
+  { text: "Nama Inventaris", value: "nama_inventaris", sortable: true },
+  { text: "Merk", value: "nama_merk", sortable: true },
+  { text: "Tipe", value: "nama_tipe", sortable: true },
+  { text: "Peruntukan", value: "peruntukan", sortable: true },
+  { text: "Status Import", value: "status_import", sortable: true },
+  { text: "Aksi", value: "actions", sortable: false },
+];
 
 const filters = reactive({
   peruntukan: "",
   status_import: "",
 });
 
-const headers = [
-  { text: "No", value: "no" },
-  { text: "Nama Inventaris", value: "nama_inventaris" },
-  { text: "Merk", value: "nama_merk" },
-  { text: "Tipe", value: "nama_tipe" },
-  { text: "Peruntukan", value: "peruntukan" },
-  { text: "Status Import", value: "status_import" },
-  { text: "Aksi", value: "actions" },
-];
-
 const serverOptions = reactive({
   page: 1,
   rowsPerPage: 10,
+  sortBy: null,
+  sortType: null,
 });
 
 const pagination = reactive({
@@ -251,25 +334,35 @@ const pagination = reactive({
   last_page: 1,
 });
 
-const formatPeruntukan = (value) => {
-  const formats = {
-    alat_lab: "Alat Laboratorium",
-    inventaris_kantor: "Inventaris Kantor",
-  };
-  return formats[value] || value;
-};
+const hasActiveFilters = computed(() => {
+  return filters.peruntukan || filters.status_import;
+});
 
-const formatStatusImport = (value) => {
-  const formats = {
-    produk_luar_negeri: "Produk Luar Negeri",
-    produk_dalam_negeri: "Produk Dalam Negeri",
-  };
-  return formats[value] || value;
-};
+const activeFilterCount = computed(() => {
+  let count = 0;
+  if (filters.peruntukan) count++;
+  if (filters.status_import) count++;
+  return count;
+});
 
 const setupAxios = () => {
   const token = VueCookies.get("auth_token");
   if (token) axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+};
+
+const toggleFilterDropdown = () => {
+  showFilterDropdown.value = !showFilterDropdown.value;
+};
+
+const closeFilterDropdown = () => {
+  showFilterDropdown.value = false;
+};
+
+const clearAllFilters = () => {
+  filters.peruntukan = "";
+  filters.status_import = "";
+  serverOptions.page = 1;
+  fetchInventarisList();
 };
 
 const fetchInventarisList = async () => {
@@ -284,6 +377,11 @@ const fetchInventarisList = async () => {
       ...(filters.peruntukan && { peruntukan: filters.peruntukan }),
       ...(filters.status_import && { status_import: filters.status_import }),
     };
+
+    if (serverOptions.sortBy && serverOptions.sortType) {
+      params.sort_by = serverOptions.sortBy;
+      params.sort_type = serverOptions.sortType;
+    }
 
     const response = await axios.get("/api/admin_pengelola/jenis_inventaris", {
       params,
@@ -332,14 +430,35 @@ const onSearch = () => {
   }, 300);
 };
 
-const onFilterChange = () => {
-  serverOptions.page = 1;
-  fetchInventarisList();
-};
+const onServerOptionsUpdate = async (options) => {
+  if (options.page !== undefined) {
+    serverOptions.page = options.page;
+  }
+  if (options.rowsPerPage !== undefined) {
+    serverOptions.rowsPerPage = options.rowsPerPage;
+  }
 
-const onOptionsUpdate = async (options) => {
-  serverOptions.page = options.page || 1;
-  serverOptions.rowsPerPage = options.rowsPerPage || 10;
+  if (options.sortBy !== undefined && options.sortType !== undefined) {
+    const newSortBy = options.sortBy;
+
+    if (serverOptions.sortBy === newSortBy) {
+      if (serverOptions.sortType === "asc") {
+        serverOptions.sortType = "desc";
+      } else if (serverOptions.sortType === "desc") {
+        serverOptions.sortBy = null;
+        serverOptions.sortType = null;
+      } else {
+        serverOptions.sortType = "asc";
+      }
+    } else {
+      serverOptions.sortBy = newSortBy;
+      serverOptions.sortType = "asc";
+    }
+  }
+
+  tableKey.value++;
+
+  await nextTick();
   await fetchInventarisList();
 };
 
@@ -362,13 +481,71 @@ const goToNextPage = () => {
   }
 };
 
+const onFilterChange = () => {
+  serverOptions.page = 1;
+  fetchInventarisList();
+};
+
+const formatPeruntukan = (value) => {
+  const formats = {
+    alat_lab: "Alat Laboratorium",
+    inventaris_kantor: "Inventaris Kantor",
+  };
+  return formats[value] || value;
+};
+
+const formatStatusImport = (value) => {
+  const formats = {
+    produk_luar_negeri: "Produk Luar Negeri",
+    produk_dalam_negeri: "Produk Dalam Negeri",
+  };
+  return formats[value] || value;
+};
+
 const handleApiError = (error, message) => {
-  console.error(`${message}:`, error);
   if (error.response?.status === 401) {
     toast.error("Sesi anda telah berakhir. Silakan login kembali.");
     router.push("/login-admin");
   } else {
     toast.error(error.response?.data?.message || message);
+  }
+};
+
+const exportJenisInventaris = async () => {
+  try {
+    setupAxios();
+    const params = {
+      search: searchTerm.value,
+      status_import: filters.status_import,
+      peruntukan: filters.peruntukan,
+    };
+
+    if (serverOptions.sortBy && serverOptions.sortType) {
+      params.sort_by = serverOptions.sortBy;
+      params.sort_type = serverOptions.sortType;
+    }
+
+    const response = await axios.get(
+      "/api/admin_pengelola/jenis_inventaris/export",
+      {
+        responseType: "blob",
+        params,
+      }
+    );
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    const today = new Date().toISOString().split("T")[0];
+
+    link.href = url;
+    link.setAttribute("download", `jenis_inventaris_${today}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success("Export berhasil");
+  } catch (error) {
+    handleApiError(error, "Gagal mengexport data Jenis Inventaris");
   }
 };
 
@@ -393,35 +570,6 @@ const deleteInventaris = async () => {
   } finally {
     isDeleting.value = false;
     showDeleteModal.value = false;
-  }
-};
-
-const exportJenisInventaris = async () => {
-  try {
-    setupAxios();
-    const response = await axios.get(
-      "/api/admin_pengelola/jenis_inventaris/export",
-      {
-        responseType: "blob",
-        params: {
-          search: searchTerm.value,
-          status_import: filters.status_import,
-          peruntukan: filters.peruntukan,
-        },
-      }
-    );
-
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "jenis_inventaris.xlsx");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    toast.success("Export berhasil");
-  } catch (error) {
-    handleApiError(error, "Gagal mengexport data Jenis Inventaris");
   }
 };
 

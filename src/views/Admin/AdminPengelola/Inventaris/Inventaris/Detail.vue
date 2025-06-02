@@ -61,9 +61,8 @@
                 :class="{
                   'bg-green-100 text-green-800': inventaris.kondisi === 'baik',
                   'bg-yellow-100 text-yellow-800':
-                    inventaris.kondisi === 'rusak_ringan',
-                  'bg-red-100 text-red-800':
-                    inventaris.kondisi === 'rusak_berat',
+                    inventaris.kondisi === 'rusak',
+                  'bg-red-100 text-red-800': inventaris.kondisi === 'hilang',
                 }"
               >
                 {{ formatKondisi(inventaris.kondisi) }}
@@ -75,12 +74,11 @@
               <span
                 class="mt-1 inline-block px-2 py-1 rounded text-sm font-medium"
                 :class="{
-                  'bg-blue-100 text-blue-800': inventaris.status === 'tersedia',
-                  'bg-purple-100 text-purple-800':
-                    inventaris.status === 'dipinjam',
+                  'bg-blue-100 text-blue-800': inventaris.status == 1,
+                  'bg-yellow-100 text-yellow-800': inventaris.status == 0,
                 }"
               >
-                {{ formatStatus(inventaris.status) }}
+                {{ inventaris.status == 1 ? "Bisa Digunakan" : "Dipinjam" }}
               </span>
             </div>
 
@@ -231,8 +229,8 @@ const fetchInventaris = async () => {
 const formatKondisi = (value) => {
   const formats = {
     baik: "Baik",
-    rusak_ringan: "Rusak Ringan",
-    rusak_berat: "Rusak Berat",
+    rusak: "Rusak ",
+    hilang: "Hilang",
   };
   return formats[value] || value;
 };

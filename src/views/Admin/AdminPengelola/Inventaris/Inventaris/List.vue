@@ -3,47 +3,131 @@
     <h2 class="text-2xl font-bold mb-6">Daftar Inventaris</h2>
 
     <div class="grid grid-cols-1 gap-4 mb-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-        <input
-          v-model="searchTerm"
-          type="text"
-          placeholder="Cari Inventaris..."
-          class="px-3 py-2 border rounded-md w-full"
-          @input="onSearch"
-        />
-        <select
-          v-model="filters.kondisi"
-          @change="onFilterChange"
-          class="px-3 py-2 border rounded-md w-full"
-        >
-          <option value="">Semua Kondisi</option>
-          <option value="baik">Baik</option>
-          <option value="rusak">Rusak</option>
-          <option value="hilang">Hilang</option>
-        </select>
+      <div class="flex gap-2">
+        <div class="relative flex-1">
+          <div
+            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+          >
+            <i class="fas fa-search text-gray-400"></i>
+          </div>
+          <input
+            v-model="searchTerm"
+            type="text"
+            placeholder="Cari Inventaris..."
+            class="pl-10 pr-3 py-2 border rounded-md w-full"
+            @input="onSearch"
+          />
+        </div>
 
-        <select
-          v-model="filters.status"
-          @change="onFilterChange"
-          class="px-3 py-2 border rounded-md w-full"
-        >
-          <option value="">Semua Status</option>
-          <option value="1">Bisa Digunakan</option>
-          <option value="0">Dipinjam</option>
-        </select>
+        <div class="relative">
+          <button
+            @click="toggleFilterDropdown"
+            class="px-4 py-2 border rounded-md bg-white hover:bg-gray-50 transition flex items-center gap-2 relative"
+            :class="{ 'bg-blue-50 border-blue-300': hasActiveFilters }"
+          >
+            <i class="fa fa-filter" aria-hidden="true"></i>
+            Filter
+            <span
+              v-if="hasActiveFilters"
+              class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+            >
+              {{ activeFilterCount }}
+            </span>
+          </button>
+
+          <div
+            v-if="showFilterDropdown"
+            class="absolute top-full right-0 mt-2 w-80 bg-white border rounded-lg shadow-lg z-50"
+          >
+            <div class="p-4">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="font-medium text-gray-900">Filter Data</h3>
+                <button
+                  @click="clearAllFilters"
+                  class="text-sm text-red-600 hover:text-red-800"
+                  v-if="hasActiveFilters"
+                >
+                  Clear All
+                </button>
+              </div>
+
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-tools text-gray-400 mr-2"></i>
+                    Kondisi
+                  </label>
+                  <select
+                    v-model="filters.kondisi"
+                    @change="onFilterChange"
+                    class="w-full px-3 py-2 border rounded-md"
+                  >
+                    <option value="">Semua Kondisi</option>
+                    <option value="baik">Baik</option>
+                    <option value="rusak">Rusak</option>
+                    <option value="hilang">Hilang</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-check-circle text-gray-400 mr-2"></i>
+                    Status
+                  </label>
+                  <select
+                    v-model="filters.status"
+                    @change="onFilterChange"
+                    class="w-full px-3 py-2 border rounded-md"
+                  >
+                    <option value="">Semua Status</option>
+                    <option value="1">Bisa Digunakan</option>
+                    <option value="0">Dipinjam</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-calendar-alt text-gray-400 mr-2"></i>
+                    Tahun Pengadaan
+                  </label>
+                  <input
+                    v-model="filters.year"
+                    type="number"
+                    placeholder="Contoh: 2024"
+                    min="2000"
+                    :max="currentYear"
+                    class="w-full px-3 py-2 border rounded-md"
+                    @input="onYearChange"
+                  />
+                </div>
+              </div>
+
+              <div class="mt-4 pt-4 border-t flex justify-end">
+                <button
+                  @click="closeFilterDropdown"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="flex flex-wrap justify-between gap-2">
         <button
           @click="exportInventaris()"
-          class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+          class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center gap-2"
         >
+          <i class="fas fa-file-excel"></i>
           Export Excel
         </button>
         <button
           @click="goToCreate()"
-          class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center gap-2"
         >
+          <i class="fas fa-plus"></i>
           Tambah Inventaris
         </button>
       </div>
@@ -57,7 +141,7 @@
         :loading="loading"
         :server-options="serverOptions"
         :server-items-length="pagination.total"
-        @update:options="onOptionsUpdate"
+        @update:server-options="onServerOptionsUpdate"
         :rows-per-page="serverOptions.rowsPerPage"
         :rows-items="[10, 25, 50]"
         :pagination="false"
@@ -65,28 +149,45 @@
         class="bg-white shadow-md rounded-lg"
         empty-message="Tidak ada data Inventaris"
         border-cell
+        server-side-sort
+        :key="tableKey"
       >
         <template #item-kondisi="item">
           <span
             :class="{
-              'px-2 py-1 rounded text-xs font-medium': true,
+              'px-2 py-1 rounded text-xs font-medium flex items-center gap-1': true,
               'bg-green-100 text-green-800': item.kondisi === 'baik',
               'bg-yellow-100 text-red-800': item.kondisi === 'rusak',
               'bg-red-200 text-red-800': item.kondisi === 'hilang',
             }"
-            >{{ formatKondisi(item.kondisi) }}</span
           >
+            <i
+              :class="{
+                'fas fa-check-circle': item.kondisi === 'baik',
+                'fas fa-exclamation-triangle': item.kondisi === 'rusak',
+                'fas fa-times-circle': item.kondisi === 'hilang',
+              }"
+            ></i>
+            {{ formatKondisi(item.kondisi) }}
+          </span>
         </template>
 
         <template #item-status="item">
           <span
             :class="{
-              'px-2 py-1 rounded text-xs font-medium': true,
+              'px-2 py-1 rounded text-xs font-medium flex items-center gap-1': true,
               'bg-blue-100 text-blue-800': item.status === 1,
               'bg-yellow-100 text-yellow-800': item.status === 0,
             }"
-            >{{ formatStatus(item.status) }}</span
           >
+            <i
+              :class="{
+                'fas fa-check': item.status === 1,
+                'fas fa-hand-paper': item.status === 0,
+              }"
+            ></i>
+            {{ formatStatus(item.status) }}
+          </span>
         </template>
 
         <template #item-actions="item">
@@ -199,11 +300,17 @@
         </div>
       </div>
     </div>
+
+    <div
+      v-if="showFilterDropdown"
+      @click="closeFilterDropdown"
+      class="fixed inset-0 z-40"
+    ></div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, nextTick, computed } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
@@ -218,27 +325,35 @@ const inventarisList = ref([]);
 const loading = ref(false);
 const searchTerm = ref("");
 const debounceTimeout = ref(null);
+const yearDebounceTimeout = ref(null);
 const showDeleteModal = ref(false);
 const selectedItem = ref(null);
 const isDeleting = ref(false);
+const tableKey = ref(0);
+const showFilterDropdown = ref(false);
 
 const headers = [
-  { text: "No", value: "no" },
-  { text: "No Inventaris", value: "no_inventaris" },
-  { text: "Kondisi", value: "kondisi" },
-  { text: "Tahun Pengadaan", value: "tahun_pengadaan" },
-  { text: "Barang", value: "status" },
-  { text: "Aksi", value: "actions" },
+  { text: "No", value: "no", sortable: true },
+  { text: "No Inventaris", value: "no_inventaris", sortable: true },
+  { text: "Nama Inventaris", value: "nama_inventaris", sortable: true },
+  { text: "Ruang", value: "nama_ruang", sortable: true },
+  { text: "Kondisi", value: "kondisi", sortable: true },
+  { text: "Tahun Pengadaan", value: "tahun_pengadaan", sortable: true },
+  { text: "Status", value: "status", sortable: true },
+  { text: "Aksi", value: "actions", sortable: false },
 ];
 
 const filters = reactive({
   kondisi: "",
   status: "",
+  year: "",
 });
 
 const serverOptions = reactive({
   page: 1,
   rowsPerPage: 10,
+  sortBy: null,
+  sortType: null,
 });
 
 const pagination = reactive({
@@ -248,9 +363,39 @@ const pagination = reactive({
   last_page: 1,
 });
 
+const currentYear = computed(() => new Date().getFullYear());
+
+const hasActiveFilters = computed(() => {
+  return filters.kondisi || filters.status || filters.year;
+});
+
+const activeFilterCount = computed(() => {
+  let count = 0;
+  if (filters.kondisi) count++;
+  if (filters.status) count++;
+  if (filters.year) count++;
+  return count;
+});
+
 const setupAxios = () => {
   const token = VueCookies.get("auth_token");
   if (token) axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+};
+
+const toggleFilterDropdown = () => {
+  showFilterDropdown.value = !showFilterDropdown.value;
+};
+
+const closeFilterDropdown = () => {
+  showFilterDropdown.value = false;
+};
+
+const clearAllFilters = () => {
+  filters.kondisi = "";
+  filters.status = "";
+  filters.year = "";
+  serverOptions.page = 1;
+  fetchInventarisList();
 };
 
 const fetchInventarisList = async () => {
@@ -264,7 +409,13 @@ const fetchInventarisList = async () => {
       ...(searchTerm.value && { search: searchTerm.value }),
       ...(filters.kondisi && { kondisi: filters.kondisi }),
       ...(filters.status && { status: filters.status }),
+      ...(filters.year && { year: filters.year }),
     };
+
+    if (serverOptions.sortBy && serverOptions.sortType) {
+      params.sort_by = serverOptions.sortBy;
+      params.sort_type = serverOptions.sortType;
+    }
 
     const response = await axios.get("/api/admin_pengelola/inventaris", {
       params,
@@ -311,9 +462,44 @@ const onSearch = () => {
   }, 300);
 };
 
-const onOptionsUpdate = async (options) => {
-  serverOptions.page = options.page || 1;
-  serverOptions.rowsPerPage = options.rowsPerPage || 10;
+const onYearChange = () => {
+  if (yearDebounceTimeout.value) clearTimeout(yearDebounceTimeout.value);
+  yearDebounceTimeout.value = setTimeout(() => {
+    serverOptions.page = 1;
+    fetchInventarisList();
+  }, 500);
+};
+
+const onServerOptionsUpdate = async (options) => {
+  if (options.page !== undefined) {
+    serverOptions.page = options.page;
+  }
+  if (options.rowsPerPage !== undefined) {
+    serverOptions.rowsPerPage = options.rowsPerPage;
+  }
+
+  if (options.sortBy !== undefined && options.sortType !== undefined) {
+    const newSortBy = options.sortBy;
+    const newSortType = options.sortType;
+
+    if (serverOptions.sortBy === newSortBy) {
+      if (serverOptions.sortType === "asc") {
+        serverOptions.sortType = "desc";
+      } else if (serverOptions.sortType === "desc") {
+        serverOptions.sortBy = null;
+        serverOptions.sortType = null;
+      } else {
+        serverOptions.sortType = "asc";
+      }
+    } else {
+      serverOptions.sortBy = newSortBy;
+      serverOptions.sortType = "asc";
+    }
+  }
+
+  tableKey.value++;
+
+  await nextTick();
   await fetchInventarisList();
 };
 
@@ -355,7 +541,6 @@ const formatStatus = (value) => {
 };
 
 const handleApiError = (error, message) => {
-  console.error(`${message}:`, error);
   if (error.response?.status === 401) {
     toast.error("Sesi anda telah berakhir. Silakan login kembali.");
     router.push("/login-admin");
@@ -366,19 +551,29 @@ const handleApiError = (error, message) => {
 
 const exportInventaris = async () => {
   try {
+    setupAxios();
+    const params = {
+      search: searchTerm.value,
+      status: filters.status,
+      kondisi: filters.kondisi,
+      year: filters.year,
+    };
+
+    if (serverOptions.sortBy && serverOptions.sortType) {
+      params.sort_by = serverOptions.sortBy;
+      params.sort_type = serverOptions.sortType;
+    }
+
     const response = await axios.get("/api/admin_pengelola/inventaris/export", {
       responseType: "blob",
-      params: {
-        search: searchTerm.value,
-        status: filters.status,
-        kondisi: filters.kondisi,
-      },
+      params,
     });
 
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement("a");
+    const today = new Date().toISOString().split("T")[0];
     link.href = url;
-    link.setAttribute("download", "inventaris.xlsx");
+    link.setAttribute("download", `inventaris_${today}.xlsx`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
