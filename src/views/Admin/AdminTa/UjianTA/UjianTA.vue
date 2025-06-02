@@ -137,7 +137,6 @@ const pendaftarUjianWithStatus = computed(() =>
     status: String(item.status_valid ?? "0"),
     tugas_akhir_id: item.tugas_akhir_id,
     berkas: item.berkas || [], // <-- TAMBAHKAN INI!
-    // tambahkan field lain jika perlu
   }))
 );
 onMounted(() => {
@@ -181,7 +180,8 @@ const daftarPenguji = computed(() => {
 
 // Ambil jadwal dari item yang dipilih
 const jadwalUjianTA = computed(() => {
-  const ujian = selectedJadwalItem.value?.jadwal;
+  // Cek apakah data ada di .ujian_ta atau langsung di selectedJadwalItem
+  const ujian = selectedJadwalItem.value?.ujian_ta || selectedJadwalItem.value;
   if (!ujian) return { date: "", time: "", room: "" };
   return {
     date: ujian.tanggal_ujian || "",
@@ -313,8 +313,9 @@ const penjadwalanWithStatus = computed(() =>
     status: item.ujian_ta ? "1" : "0", // '1' jika sudah ada jadwal, '0' jika belum
     tugas_akhir_id: item.tugas_akhir_id,
     dosen_penguji: item.dosen_penguji || [],
-    jadwal: item.ujian_ta.id || null,
+    jadwal: item.ujian_ta?.id || null,
     status_kelulusan: item.status_kelulusan || null,
+    ujian_ta: item.ujian_ta || null,
   }))
 );
 
@@ -566,7 +567,6 @@ const handleRowClickJadwal = (item) => {
   if (item.jadwal) {
     selectedJadwalItem.value = item;
     modalRef1.value = true;
-    selectedJadwalNim.value = item.nim;
   } else {
     router.push({
       name: "PenjadwalanForAdmin",
@@ -579,7 +579,7 @@ const handleEditJadwal = () => {
   modalRef1.value = false;
   router.push({
     name: "PenjadwalanForAdmin",
-    params: { nim: selectedJadwalNim.value },
+    params: { tugas_akhir_id: selectedJadwalItem.value?.tugas_akhir_id },
   });
 };
 
