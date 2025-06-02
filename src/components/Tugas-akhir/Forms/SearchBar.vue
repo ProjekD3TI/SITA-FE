@@ -9,8 +9,8 @@
     </div>
     <input type="text" :placeholder="placeholder" :value="modelValue" @input="handleInput"
       class="border border-placeholder input-rounded pl-10 pr-4 py-2.5 w-full" />
-    <div v-if="showClearButton && modelValue" class="absolute top-2.5 right-3 cursor-pointer" @click="clearSearch">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-placeholder hover:text-primary" fill="none"
+    <div v-if="showClearButton && modelValue" class="absolute cursor-pointer top-3 right-3" @click="clearSearch">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-placeholder hover:text-secondary" fill="none"
         viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
       </svg>
@@ -28,11 +28,11 @@ const props = defineProps({
   },
   placeholder: {
     type: String,
-    default: 'Search...',
+    default: 'Cari...',
   },
   debounce: {
     type: Number,
-    default: 300, // waktu debounce dalam milliseconds
+    default: 250, // waktu debounce dalam milliseconds
   },
   showClearButton: {
     type: Boolean,

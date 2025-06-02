@@ -187,7 +187,7 @@ const routes = [
                 path: "tambah-bimbingan",
                 component: TambahBimbinganforMhs,
                 meta: {
-                  breadcrumb: "Tambah Bimbingan",
+                  breadcrumb: "Tambah",
                 },
               },
             ],
@@ -203,7 +203,7 @@ const routes = [
             path: "ujian-ta",
             component: TugasAkhirforMhs,
             meta: {
-              breadcrumb: "Ujian TA",
+              breadcrumb: "Ujian",
             },
             children: [
               {
@@ -278,7 +278,7 @@ const routes = [
             path: "ujian-ta",
             component: UjianTAforDosen,
             meta: {
-              breadcrumb: "Ujian Tugas Akhir",
+              breadcrumb: "Ujian",
             },
             children: [
               {
@@ -429,7 +429,7 @@ const routes = [
             name: "PlotPembimbingForAdmin",
             component: PlotPembimbingForAdmin,
             meta: {
-              breadcrumb: "Plotting Pembimbing",
+              breadcrumb: "Plot Pembimbing",
             },
           },
           {
@@ -437,7 +437,7 @@ const routes = [
             name: "DetailBimbinganForAdmin",
             component: DetailBimbinganForAdmin,
             meta: {
-              breadcrumb: "Detail Bimbingan",
+              breadcrumb: "Detail",
             },
           },
         ],
@@ -455,7 +455,7 @@ const routes = [
             name: "DetailPengajuanForAdmin",
             component: DetailPengajuanForAdmin,
             meta: {
-              breadcrumb: "Detail Pengajuan",
+              breadcrumb: "Validasi",
             },
           },
           {
@@ -463,7 +463,7 @@ const routes = [
             name: "DetailProposalForAdmin",
             component: DetailProposalForAdmin,
             meta: {
-              breadcrumb: "Detail Proposal",
+              breadcrumb: "Detail",
             },
             children: [
               {
@@ -483,27 +483,27 @@ const routes = [
         name: "UjianTAforAdmin",
         component: TugasAkhirforAdmin,
         meta: {
-          breadcrumb: "Ujian Tugas Akhir",
+          breadcrumb: "Ujian",
         },
         children: [
           {
-            path: "plotting-penguji/:nim",
+            path: "plotting-penguji/:tugas_akhir_id",
             name: "PlottingPengujiForAdmin",
             component: PlottingPengujiForAdmin,
             meta: {
-              breadcrumb: "Plotting Penguji",
+              breadcrumb: "Plot Penguji",
             },
           },
           {
-            path: "detail-pendaftar/:nim",
+            path: "detail-pendaftar/:tugas_akhir_id",
             name: "DetailPendaftarForAdmin",
             component: DetailPendaftarForAdmin,
             meta: {
-              breadcrumb: "Detail Pendaftar",
+              breadcrumb: "Validasi",
             },
           },
           {
-            path: "penjadwalan",
+            path: "penjadwalan/:tugas_akhir_id",
             name: "PenjadwalanForAdmin",
             component: PenjadwalanForAdmin,
             meta: {

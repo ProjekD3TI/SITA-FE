@@ -68,7 +68,7 @@ export function useTabelBimbingan() {
     const paginationBimbingan = ref({})
 
 
-    const fetchBimbingan = async (page = 1) => {
+    const fetchBimbingan = async (page = 1, search = '', kategori = '') => {
         loadingBimbingan.value = true;
         try {
             const authToken = VueCookies.get("auth_token");
@@ -77,8 +77,16 @@ export function useTabelBimbingan() {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             };
-
-            const response = await axios.get(`/api/admin_ta/tugas-akhir/list-bimbingan?page=${page}`, { headers });            
+            const params = {};
+            if (search) params.search = search;
+            if (kategori) params.kategori = kategori;
+    
+            //simulasi jeda
+            // await new Promise(resolve => setTimeout(resolve, 2000));
+            const response = await axios.get(`/api/admin_ta/tugas-akhir/list-bimbingan`, {
+                headers,
+                params: { page, ...params } 
+            });
             dataBimbingan.value = response.data.data.data;
             paginationBimbingan.value = response.data.data.pagination;
         } catch (err) {

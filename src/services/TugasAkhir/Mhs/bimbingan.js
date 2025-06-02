@@ -184,13 +184,13 @@ export function useRequestPembimbing() {
   };
 }
 
-//fungsi dan method
-function formatDate(dateString) {
-  if (!dateString) return '-';
-  const date = new Date(dateString);
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-  return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
-}
+// //fungsi dan method
+// function formatDate(dateString) {
+//   if (!dateString) return '-';
+//   const date = new Date(dateString);
+//   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+//   return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+// }
 
 export function getStatusClass(status) {
   if (status === 1) return 'success';
@@ -257,7 +257,7 @@ export const formattedBimbinganData = computed(() => {
   if (!dataBimbingan.value || !dataBimbingan.value.length) return [];
   return dataBimbingan.value.map((item, index) => ({
     no: (index + 1).toString(),
-    tanggal: formatDate(item.tanggal_bimbingan),
+    tanggal: (item.tanggal_bimbingan),
     bab: item.bab ? item.bab.toString() : '-',
     catatan: item.catatan || '-',
     status: item.status_verifikasi
