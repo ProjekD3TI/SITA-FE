@@ -15,7 +15,15 @@ const props = defineProps({
     type: String,
     required: true,
     validator: (value) =>
-      ["success", "danger", "warning", "inactive"].includes(value),
+      [
+        "success",
+        "danger",
+        "warning",
+        "success-ouline",
+        "danger-outline",
+        "warning-outline",
+        "inactive",
+      ].includes(value),
   },
   label: {
     type: String,

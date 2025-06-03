@@ -305,8 +305,11 @@ const modalTimerBodyText = computed(() => {
     <Breadcrumb />
     <TabDiv :tabs="tabs" :use-named-slots="true" @tab-changed="handleTabChange">
       <template #1>
-        <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
+        <div
+          class="flex flex-wrap items-center justify-between gap-2 mb-4 lg:gap-4"
+        >
           <ModalFilter
+            class="flex-grow md:flex-none"
             title="Status"
             :items="statuses"
             filterType="status"
@@ -314,7 +317,10 @@ const modalTimerBodyText = computed(() => {
             triggerText="Status"
             :preselectedValues="selectedStatusesPengajuan"
           />
-          <SearchBar v-model="searchQueryPengajuan" />
+          <SearchBar
+            class="order-last md:order-none sm:min-w-[367px]"
+            v-model="searchQueryPengajuan"
+          />
           <Slider
             :modelValue="statusForm"
             @update:modelValue="handleSliderChange"
@@ -324,7 +330,7 @@ const modalTimerBodyText = computed(() => {
           :headers="[
             'NIM',
             'Nama',
-            'Judul Proposal Tugas Akhir',
+            'Judul Proposal',
             'Tanggal Pengajuan',
             'Status',
           ]"
@@ -385,13 +391,7 @@ const modalTimerBodyText = computed(() => {
           <SearchBar v-model="searchQuerySeminar" />
         </div>
         <Table
-          :headers="[
-            'NIM',
-            'Nama',
-            'Kategori',
-            'Judul Proposal Tugas Akhir',
-            'Nilai',
-          ]"
+          :headers="['NIM', 'Nama', 'Kategori', 'Judul Proposal ', 'Nilai']"
           :items="filteredProposalSeminar"
           @rowClick="handleRowClickSeminar"
         >

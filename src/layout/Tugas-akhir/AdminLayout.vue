@@ -63,7 +63,7 @@
       </div>
 
       <!-- Navbar  -->
-      <nav class="mt-5">
+      <div class="mt-5">
         <SidebarLink
           :to="withPrefix('')"
           :active="isActive(withPrefix(['', '/']))"
@@ -126,7 +126,7 @@
           label="Mahasiswa & Dosen"
           icon="<path d='M3 6.5V14' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/><path d='M5.08203 20.7499C5.83246 19.5989 6.8582 18.6533 8.06631 17.9988C9.27443 17.3443 10.6268 17.0015 12.0008 17.0015C13.3748 17.0015 14.7271 17.3443 15.9353 17.9988C17.1434 18.6533 18.1691 19.5989 18.9195 20.7499' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/><path d='M21 6.5L12 9.5L3 6.5L12 3.5L21 6.5Z' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/><path d='M15.8719 8.2063C16.5599 8.95759 17.0144 9.89281 17.1801 10.898C17.3458 11.9031 17.2155 12.9347 16.805 13.8671C16.3946 14.7994 15.7218 15.5923 14.8686 16.1489C14.0154 16.7055 13.0187 17.0019 12 17.0019C10.9813 17.0019 9.9846 16.7055 9.13141 16.1489C8.27822 15.5923 7.6054 14.7994 7.19497 13.8671C6.78453 12.9347 6.65422 11.9031 6.81991 10.898C6.98561 9.89281 7.44015 8.95759 8.12813 8.2063' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/>"
         />
-      </nav>
+      </div>
     </div>
 
     <!-- Main Content -->

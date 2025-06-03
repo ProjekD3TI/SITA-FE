@@ -20,12 +20,15 @@ export function useBimbingan() {
     try {
       const authToken = VueCookies.get("auth_token");
       const headers = {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+        Authorization: `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
       };
 
-      const response = await axios.get("/api/mahasiswa/bimbingan/list-bimbingan", { headers });
+      const response = await axios.get(
+        "/api/mahasiswa/bimbingan/list-bimbingan",
+        { headers }
+      );
       dataBimbingan.value = response.data.data;
     } catch (err) {
       handleError(err);
@@ -49,21 +52,26 @@ export function useBimbingan() {
     try {
       const authToken = VueCookies.get("auth_token");
       const headers = {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        Authorization: `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
       };
       const formData = {
         tanggal_bimbingan,
         bab,
-        catatan
+        catatan,
       };
-      await axios.post('/api/mahasiswa/bimbingan', formData, { headers });
-      toast.success('Bimbingan berhasil ditambahkan, Silahkan tunggu verifikasi dari dosen pembimbing Anda.');
-      await fetchData(); 
+      await axios.post("/api/mahasiswa/bimbingan", formData, { headers });
+      toast.success(
+        "Bimbingan berhasil ditambahkan, Silahkan tunggu verifikasi dari dosen pembimbing Anda."
+      );
+      await fetchData();
       return true;
     } catch (error) {
-      toast.error('Gagal menambah bimbingan: ' + (error.response?.data?.message || error.message));
+      toast.error(
+        "Gagal menambah bimbingan: " +
+          (error.response?.data?.message || error.message)
+      );
       return false;
     } finally {
       loadingBimbingan.value = false;
@@ -72,20 +80,23 @@ export function useBimbingan() {
 
   // Computed property untuk BAB tertinggi
   const highestBAB = computed(() => {
-    if (!dataBimbingan.value || dataBimbingan.value.length === 0) {
+    if (
+      !dataBimbingan.value?.bimbingan ||
+      dataBimbingan.value?.bimbingan.length === 0
+    ) {
       return 0;
     }
 
     // Filter data yang terverifikasi
-    const verifiedBimbingan = dataBimbingan.value.filter(
-      item => item.status_verifikasi === 1
+    const verifiedBimbingan = dataBimbingan.value?.bimbingan.filter(
+      (item) => item.status_verifikasi === 1
     );
 
     if (verifiedBimbingan.length === 0) {
       return 0;
     }
 
-    return Math.max(...verifiedBimbingan.map(item => item.bab));
+    return Math.max(...verifiedBimbingan.map((item) => item.bab));
   });
 
   onMounted(() => {
@@ -119,12 +130,15 @@ export function useRequestPembimbing() {
     try {
       const authToken = VueCookies.get("auth_token");
       const headers = {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+        Authorization: `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
       };
 
-      const response = await axios.get("/api/mahasiswa/bimbingan/request-pembimbing", { headers });
+      const response = await axios.get(
+        "/api/mahasiswa/bimbingan/request-pembimbing",
+        { headers }
+      );
       dataRequestPembimbing.value = response.data.data;
     } catch (err) {
       handleRequestError(err);
@@ -149,13 +163,19 @@ export function useRequestPembimbing() {
     try {
       const authToken = VueCookies.get("auth_token");
       const headers = {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        Authorization: `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
       };
       // POST ke endpoint API request pembimbing
-      const response = await axios.post("/api/mahasiswa/request-pembimbing", data, { headers });
-      toast.success("Permintaan pembimbing berhasil dikirim, Silahkan tunggu respon dari dosen pembimbing Anda.");
+      const response = await axios.post(
+        "/api/mahasiswa/request-pembimbing",
+        data,
+        { headers }
+      );
+      toast.success(
+        "Permintaan pembimbing berhasil dikirim, Silahkan tunggu respon dari dosen pembimbing Anda."
+      );
       return true;
     } catch (err) {
       handleRequestError(err);
@@ -164,8 +184,6 @@ export function useRequestPembimbing() {
       loadingRequest.value = false;
     }
   };
-
-  
 
   onMounted(() => {
     fetchRequestData();
@@ -193,73 +211,115 @@ export function useRequestPembimbing() {
 // }
 
 export function getStatusClass(status) {
-  if (status === 1) return 'success';
-  if (status === 0) return 'warning';
-  return 'danger';
+  if (status === 1) return "success";
+  if (status === 0) return "warning";
+  return "danger";
 }
 
 export function getStatusLabel(status) {
-  if (status === 1) return 'Diterima';
-  if (status === 0) return 'Menunggu';
-  return 'Ditolak';
+  if (status === 1) return "Diterima";
+  if (status === 0) return "Menunggu";
+  return "Ditolak";
 }
 
-// computed 
-export const dosens = computed(() => dataRequestPembimbing.value?.list_dosen ?? []);
+// computed
+export const dosens = computed(
+  () => dataRequestPembimbing.value?.list_dosen ?? []
+);
 export const categories = computed(() => {
   if (!dataRequestPembimbing.value?.list_kategori) return [];
 
-  return dataRequestPembimbing.value.list_kategori.map(kategori => ({
+  return dataRequestPembimbing.value.list_kategori.map((kategori) => ({
     value: kategori.id.toString(), // Gunakan id sebagai value
-    label: kategori.name // Gunakan name sebagai label
+    label: kategori.name, // Gunakan name sebagai label
   }));
 });
-export const selectedPembimbing = ref('');
+export const selectedPembimbing = ref("");
 
 export const selectedDosenData = computed(() => {
   if (!selectedPembimbing.value || !dosens.value.length) return null;
-  return dosens.value.find(dosen => dosen.id.toString() === selectedPembimbing.value.toString());
+  return dosens.value.find(
+    (dosen) => dosen.id.toString() === selectedPembimbing.value.toString()
+  );
 });
 
 export const pembimbings = computed(() => {
   if (!dataRequestPembimbing.value?.list_dosen) return [];
 
-  return dataRequestPembimbing.value.list_dosen.map(dosen => ({
+  return dataRequestPembimbing.value.list_dosen.map((dosen) => ({
     value: dosen.id.toString(),
-    label: `${dosen.name} (${dosen.nik})`
+    label: `${dosen.name} (${dosen.nik})`,
   }));
 });
 
-export const namaDosenRequestPembimbing = computed(() => dataRequestPembimbing.value?.tugas_akhir?.request_pembimbing?.dosen?.nama ?? '-');
+export const namaDosenRequestPembimbing = computed(
+  () =>
+    dataRequestPembimbing.value?.tugas_akhir?.request_pembimbing?.dosen?.nama ??
+    "-"
+);
 
-export const defaultTahunAjaran = computed(() => dataRequestPembimbing.value?.default_tahun_ajaran?.tahun_ajaran ?? '-');
+export const defaultTahunAjaran = computed(
+  () => dataRequestPembimbing.value?.default_tahun_ajaran?.tahun_ajaran ?? "-"
+);
 
-export const tahunAjaranTA = computed(() => dataRequestPembimbing.value?.tugas_akhir?.tahun_ajaran?.tahun_ajaran ?? '-');
+export const tahunAjaranTA = computed(
+  () =>
+    dataRequestPembimbing.value?.tugas_akhir?.tahun_ajaran?.tahun_ajaran ?? "-"
+);
 
-export const namaPembimbing = computed(() => dataRequestPembimbing.value?.tugas_akhir?.dosen_pembimbing?.nama ?? '-');
+export const namaPembimbing = computed(
+  () => dataRequestPembimbing.value?.tugas_akhir?.dosen_pembimbing?.nama ?? "-"
+);
 
-export const kategoriTA = computed(() => dataRequestPembimbing.value?.tugas_akhir?.kategori?.nama ?? '-');
+export const kategoriTA = computed(
+  () => dataRequestPembimbing.value?.tugas_akhir?.kategori?.nama ?? "-"
+);
 
-export const statusRequestValue = computed(() => dataRequestPembimbing.value?.tugas_akhir?.request_pembimbing?.status_request ?? null);
+export const statusRequestValue = computed(
+  () =>
+    dataRequestPembimbing.value?.tugas_akhir?.request_pembimbing
+      ?.status_request ?? null
+);
 
-export const dospemValue = computed(() => dataRequestPembimbing.value?.tugas_akhir?.dosen_pembimbing?.id ?? null);
+export const dospemValue = computed(
+  () => dataRequestPembimbing.value?.tugas_akhir?.dosen_pembimbing?.id ?? null
+);
 
-export const hasActiveTA = computed(() => dataRequestPembimbing.value?.tugas_akhir?.status_active === 1 ?? false);
+export const hasActiveTA = computed(
+  () => dataRequestPembimbing.value?.tugas_akhir?.status_active === 1 ?? false
+);
 
-export const noPembimbing = computed(() => dataRequestPembimbing.value?.tugas_akhir?.dosen_pembimbing?.id === null || dataRequestPembimbing.value?.tugas_akhir?.dosen_pembimbing?.id === undefined);
+export const noPembimbing = computed(
+  () =>
+    dataRequestPembimbing.value?.tugas_akhir?.dosen_pembimbing?.id === null ||
+    dataRequestPembimbing.value?.tugas_akhir?.dosen_pembimbing?.id === undefined
+);
 
 export const hasPembimbing = computed(() => !noPembimbing.value);
 
-export const waitingResponse = computed(() => dataRequestPembimbing.value?.tugas_akhir?.request_pembimbing?.status_request === 0);
-export const declined = computed(() => dataRequestPembimbing.value?.tugas_akhir?.request_pembimbing?.status_request === 2);
+export const waitingResponse = computed(
+  () =>
+    dataRequestPembimbing.value?.tugas_akhir?.request_pembimbing
+      ?.status_request === 0
+);
+export const declined = computed(
+  () =>
+    dataRequestPembimbing.value?.tugas_akhir?.request_pembimbing
+      ?.status_request === 2
+);
 
 export const formattedBimbinganData = computed(() => {
-  if (!dataBimbingan.value || !dataBimbingan.value.length) return [];
-  return dataBimbingan.value.map((item, index) => ({
+  if (!dataBimbingan.value?.bimbingan || !dataBimbingan.value?.bimbingan.length)
+    return [];
+  return dataBimbingan.value?.bimbingan.map((item, index) => ({
     no: (index + 1).toString(),
-    tanggal: (item.tanggal_bimbingan),
-    bab: item.bab ? item.bab.toString() : '-',
-    catatan: item.catatan || '-',
-    status: item.status_verifikasi
+    tanggal: item.tanggal_bimbingan,
+    bab: item.bab ? item.bab.toString() : "-",
+    catatan: item.catatan || "-",
+    status: item.status_verifikasi,
   }));
 });
+
+export const dataNilaiBimbingan = computed(
+  () => dataBimbingan.value?.nilai_bimbingan ?? null
+);

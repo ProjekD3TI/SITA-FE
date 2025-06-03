@@ -211,127 +211,175 @@ watch(
 );
 </script>
 <template>
-  <Breadcrumb />
-  <div class="p-4 bg-white card-rounded lg:p-8">
-    <div class="mx-auto max-w-screen-2xl">
-      <UserData
-        :headText="mahasiswaData?.mahasiswa?.nim"
-        :bodyText="mahasiswaData?.mahasiswa?.name"
-        :headText2="mahasiswaData?.kategori"
-        :bodyText2="mahasiswaData?.judul_proposal"
-        :tahunAjaran="mahasiswaData?.tahun_ajaran"
-      />
-      <div class="flex flex-col gap-4 mt-4">
-        <div class="flex flex-col gap-2">
-          <InputDropdown
-            id="ketua-penguji"
-            label="Ketua Penguji"
-            placeholder="Pilih Dosen"
-            :options="list_dosen"
-            v-model="selectedKetuaPenguji"
-          />
-          <div v-if="selectedKetuaDosenData" class="flex gap-2 mb-2 sm:gap-4">
-            <div class="flex gap-2 sm:gap-4">
-              <!-- Icon Dosen -->
-              <img
-                :src="DefaultAvatar"
-                alt=""
-                class="self-center w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12"
-              />
+  <div
+    v-if="loadingShowPlottingPenguji"
+    class="flex items-center justify-center min-h-[80dvh]"
+  >
+    <Loading />
+  </div>
 
-              <!-- Informasi Dosen -->
-              <div class="self-center">
-                <h5 class="body4-bold sm:body2-bold lg:body1-bold text-primary">
-                  {{ selectedKetuaDosenData.name }}
-                </h5>
-                <span class="body5 lg:body4"
-                  >{{ selectedKetuaDosenData.nik }} | D-3 Teknik
-                  Informatika</span
-                >
+  <div v-else-if="errorShowPlottingPenguji" class="p-4">
+    <ErrorMsg :message="errorShowPlottingPenguji" />
+  </div>
+
+  <div v-else>
+    <Breadcrumb />
+    <div class="p-4 bg-white card-rounded lg:p-8">
+      <div class="mx-auto max-w-screen-2xl">
+        <UserData
+          :headText="mahasiswaData?.mahasiswa?.nim || 'NIM Mahasiswa'"
+          :bodyText="mahasiswaData?.mahasiswa?.name || 'Nama Mahasiswa'"
+          :headText2="mahasiswaData?.kategori || 'Kategori Tugas Akhir'"
+          :bodyText2="mahasiswaData?.judul_proposal || 'Judul Tugas Akhir'"
+          :tahunAjaran="
+            mahasiswaData?.tahun_ajaran || 'Tahun Ajaran Tugas Akhir'
+          "
+        />
+        <div class="flex flex-col gap-4 mt-4">
+          <div class="flex flex-col gap-2">
+            <InputDropdown
+              id="ketua-penguji"
+              label="Ketua Penguji"
+              placeholder="Pilih Dosen"
+              :options="list_dosen"
+              v-model="selectedKetuaPenguji"
+            />
+            <div v-if="selectedKetuaDosenData" class="flex gap-2 mb-2 sm:gap-4">
+              <div class="flex gap-2 sm:gap-4">
+                <!-- Icon Dosen -->
+                <img
+                  :src="DefaultAvatar"
+                  alt=""
+                  class="self-center w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12"
+                />
+
+                <!-- Informasi Dosen -->
+                <div class="self-center">
+                  <h5
+                    class="body4-bold sm:body2-bold lg:body1-bold text-primary"
+                  >
+                    {{ selectedKetuaDosenData.name }}
+                  </h5>
+                  <span class="body5 lg:body4"
+                    >{{ selectedKetuaDosenData.nik }} | D-3 Teknik
+                    Informatika</span
+                  >
+                </div>
               </div>
             </div>
-          </div>
-          <InputText
-            id="dosen-pembimbing"
-            class="mt-2"
-            label="Sekretaris Penguji"
-            placeholder="Pilih Dosen"
-            :modelValue="mahasiswaData?.dosen_pembimbing.name"
-            :disabled="true"
-          />
-          <div class="flex gap-2 mb-2 sm:gap-4">
-            <div class="flex gap-2 sm:gap-4">
-              <!-- Icon Dosen -->
-              <img
-                :src="DefaultAvatar"
-                alt=""
-                class="self-center w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12"
-              />
+            <InputText
+              id="dosen-pembimbing"
+              class="mt-2"
+              label="Sekretaris Penguji"
+              placeholder="Pilih Dosen"
+              :modelValue="mahasiswaData?.dosen_pembimbing.name || ''"
+              :disabled="true"
+            />
+            <div class="flex gap-2 mb-2 sm:gap-4">
+              <div class="flex gap-2 sm:gap-4">
+                <!-- Icon Dosen -->
+                <img
+                  :src="DefaultAvatar"
+                  alt=""
+                  class="self-center w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12"
+                />
 
-              <!-- Informasi Dosen -->
-              <div class="self-center">
-                <h5 class="body4-bold sm:body2-bold lg:body1-bold text-primary">
-                  {{ mahasiswaData?.dosen_pembimbing.name }} (Dosen Pembimbing)
-                </h5>
-                <span class="body5 lg:body4"
-                  >{{ mahasiswaData?.dosen_pembimbing.nik }} | D-3 Teknik
-                  Informatika
-                </span>
+                <!-- Informasi Dosen -->
+                <div class="self-center">
+                  <h5
+                    class="body4-bold sm:body2-bold lg:body1-bold text-primary"
+                  >
+                    {{ mahasiswaData?.dosen_pembimbing.name }} (Dosen
+                    Pembimbing)
+                  </h5>
+                  <span class="body5 lg:body4"
+                    >{{ mahasiswaData?.dosen_pembimbing.nik }} | D-3 Teknik
+                    Informatika
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-          <InputDropdown
-            id="penguji"
-            class="mt-2"
-            label="Penguji"
-            placeholder="Pilih Dosen"
-            :options="list_dosen"
-            v-model="selectedPenguji"
-          />
-          <div v-if="selectedPengujiDosenData" class="flex gap-2 mb-2 sm:gap-4">
-            <div class="flex gap-2 sm:gap-4">
-              <!-- Icon Dosen -->
-              <img
-                :src="DefaultAvatar"
-                alt=""
-                class="self-center w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12"
-              />
+            <InputDropdown
+              id="penguji"
+              class="mt-2"
+              label="Penguji"
+              placeholder="Pilih Dosen"
+              :options="list_dosen"
+              v-model="selectedPenguji"
+            />
+            <div
+              v-if="selectedPengujiDosenData"
+              class="flex gap-2 mb-2 sm:gap-4"
+            >
+              <div class="flex gap-2 sm:gap-4">
+                <!-- Icon Dosen -->
+                <img
+                  :src="DefaultAvatar"
+                  alt=""
+                  class="self-center w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12"
+                />
 
-              <!-- Informasi Dosen -->
-              <div class="self-center">
-                <h5 class="body4-bold sm:body2-bold lg:body1-bold text-primary">
-                  {{ selectedPengujiDosenData.name }}
-                </h5>
-                <span class="body5 lg:body4"
-                  >{{ selectedPengujiDosenData.nik }} | D-3 Teknik
-                  Informatika</span
-                >
+                <!-- Informasi Dosen -->
+                <div class="self-center">
+                  <h5
+                    class="body4-bold sm:body2-bold lg:body1-bold text-primary"
+                  >
+                    {{ selectedPengujiDosenData.name }}
+                  </h5>
+                  <span class="body5 lg:body4"
+                    >{{ selectedPengujiDosenData.nik }} | D-3 Teknik
+                    Informatika</span
+                  >
+                </div>
               </div>
             </div>
+            <Button
+              v-if="
+                !mahasiswaData?.dosen_penguji ||
+                mahasiswaData.dosen_penguji.length === 0
+              "
+              variant="primary"
+              size="lg"
+              class="self-end hidden w-fit sm:flex"
+              :disabled="false"
+              @click="handleSubmit"
+            >
+              Simpan
+            </Button>
+            <Button
+              v-else
+              variant="primary"
+              size="lg"
+              class="self-end hidden w-fit sm:flex"
+              :disabled="false"
+              @click="handleUpdate"
+            >
+              Update
+            </Button>
+            <Button
+              v-if="
+                !mahasiswaData?.dosen_penguji ||
+                mahasiswaData.dosen_penguji.length === 0
+              "
+              variant="primary"
+              size="md"
+              class="self-end w-fit sm:hidden"
+              :disabled="false"
+              @click="handleSubmit"
+            >
+              Simpan
+            </Button>
+            <Button
+              v-else
+              variant="primary"
+              size="md"
+              class="self-end w-fit sm:hidden"
+              :disabled="false"
+              @click="handleUpdate"
+            >
+              Update
+            </Button>
           </div>
-          <Button
-            v-if="
-              !mahasiswaData?.dosen_penguji ||
-              mahasiswaData.dosen_penguji.length === 0
-            "
-            variant="primary"
-            size="lg"
-            class="self-end w-fit"
-            :disabled="false"
-            @click="handleSubmit"
-          >
-            Simpan
-          </Button>
-          <Button
-            v-else
-            variant="primary"
-            size="lg"
-            class="self-end w-fit"
-            :disabled="false"
-            @click="handleUpdate"
-          >
-            Update
-          </Button>
         </div>
       </div>
     </div>

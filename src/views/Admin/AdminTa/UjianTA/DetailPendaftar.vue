@@ -220,11 +220,15 @@ const handleSubmitValidasi = async () => {
     <div class="p-4 bg-white card-rounded lg:p-8">
       <div class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
         <UserData
-          :headText="dataShowPendaftar?.mahasiswa?.nim"
-          :bodyText="dataShowPendaftar?.mahasiswa?.name"
-          :headText2="dataShowPendaftar?.kategori"
-          :bodyText2="dataShowPendaftar?.judul_tugas_akhir"
-          :tahunAjaran="dataShowPendaftar?.tahun_ajaran"
+          :headText="dataShowPendaftar?.mahasiswa?.nim || 'NIM mahasiswa'"
+          :bodyText="dataShowPendaftar?.mahasiswa?.name || 'Nama Mahasiswa'"
+          :headText2="dataShowPendaftar?.kategori || 'Kategori Tugas Akhir'"
+          :bodyText2="
+            dataShowPendaftar?.judul_tugas_akhir || 'Judul Tugas Akhir'
+          "
+          :tahunAjaran="
+            dataShowPendaftar?.tahun_ajaran || 'Tahun Ajaran Tugas Akhir'
+          "
         />
         <!-- All the file uploads -->
         <ValidationFile
@@ -310,8 +314,16 @@ const handleSubmitValidasi = async () => {
         />
         <Button
           variant="primary"
-          class="self-end w-fit"
+          class="self-end hidden w-fit sm:flex"
           size="lg"
+          @click="handleSubmitValidasi"
+        >
+          Validasi
+        </Button>
+        <Button
+          variant="primary"
+          class="self-end w-fit sm:hidden"
+          size="md"
           @click="handleSubmitValidasi"
         >
           Validasi

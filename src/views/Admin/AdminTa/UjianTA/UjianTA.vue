@@ -231,11 +231,6 @@ const tabs = [
     icon: "M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1-2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5",
     count: countPenjadwalanMenunggu,
   },
-  // {
-  //   id: "tab4",
-  //   label: "Berita Acara",
-  //   icon: "M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z",
-  // },
 ];
 
 // State untuk search & filter tiap tab
@@ -667,309 +662,329 @@ const modalFileUjianTAFiles = ref({
 </script>
 
 <template>
-  <div v-if="!isDataLoaded" class="">
+  <router-view v-if="$route.path.includes('plotting-penguji')"></router-view>
+  <router-view
+    v-else-if="$route.path.includes('detail-pendaftar')"
+  ></router-view>
+  <router-view v-else-if="$route.path.includes('penjadwalan')"></router-view>
+
+  <div
+    v-else-if="
+      loadingTabelPlottingPenguji ||
+      loadingTabelPendaftar ||
+      loadingTabelPenjadwalan
+    "
+    class="flex items-center justify-center min-h-[80dvh]"
+  >
     <Loading />
   </div>
 
-  <div>
-    <router-view v-if="$route.path.includes('plotting-penguji')"></router-view>
-    <router-view
-      v-else-if="$route.path.includes('detail-pendaftar')"
-    ></router-view>
-    <router-view v-else-if="$route.path.includes('penjadwalan')"></router-view>
+  <div
+    v-else-if="
+      errorTabelPlottingPenguji || errorTabelPendaftar || errorTabelPenjadwalan
+    "
+    class="p-4"
+  >
+    <ErrorMsg
+      :message="
+        errorTabelPlottingPenguji ||
+        errorTabelPendaftar ||
+        errorTabelPenjadwalan
+      "
+    />
+  </div>
 
-    <div v-else>
-      <Breadcrumb />
+  <div v-else>
+    <Breadcrumb />
 
-      <TabDiv
-        :tabs="tabs"
-        :use-named-slots="true"
-        v-model:activeTab="selectedTab"
-        @tab-changed="handleTabChange"
-      >
-        <template #tab1>
-          <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
-            <ModalFilter
-              class=""
-              title="Status"
-              :items="statuses"
-              filterType="status"
-              @apply="handleFilterTab1"
-              triggerText="Status"
-              :preselectedValues="selectedStatusesTab1"
-            />
-            <SearchBar v-model="searchQueryTab1" />
-          </div>
+    <TabDiv
+      :tabs="tabs"
+      :use-named-slots="true"
+      v-model:activeTab="selectedTab"
+      @tab-changed="handleTabChange"
+    >
+      <template #tab1>
+        <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
+          <ModalFilter
+            class=""
+            title="Status"
+            :items="statuses"
+            filterType="status"
+            @apply="handleFilterTab1"
+            triggerText="Status"
+            :preselectedValues="selectedStatusesTab1"
+          />
+          <SearchBar v-model="searchQueryTab1" />
+        </div>
 
-          <Table
-            :headers="[
-              'NIM',
-              'Nama',
-              'Judul Proposal Tugas Akhir',
-              'Dosen Pembimbing',
-              'Status',
-            ]"
-            :items="filteredPlottingPengujiWithStatus"
-            :pagination="paginationTabelPlottingPenguji"
-            @pageChange="
-              (page) => {
-                currentPageTabelPlottingPenguji = page;
-              }
-            "
-            @rowClick="handleRowClickPlot"
-          >
-            <template #row="{ item }">
-              <td
-                class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
-              >
-                {{ item.nim }}
-              </td>
-              <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-                <div class="flex items-center gap-2">
-                  <img
-                    v-if="item.img"
-                    :src="item.img"
-                    alt="Profile Image"
-                    class="w-8 h-8 rounded-full"
-                  />
-                  <img
-                    v-else
-                    :src="DefaultAvatar"
-                    alt="Profile Image"
-                    class="w-8 h-8 rounded-full"
-                  />
-                  {{ item.nama }}
-                </div>
-              </td>
-              <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-                {{ item.judul_proposal_ta }}
-              </td>
-              <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-                <div class="flex items-center gap-2">
-                  <img
-                    v-if="item.img"
-                    :src="item.img"
-                    alt="Profile Image"
-                    class="w-8 h-8 rounded-full"
-                  />
-                  <img
-                    v-else
-                    :src="DefaultAvatar"
-                    alt="Profile Image"
-                    class="w-8 h-8 rounded-full"
-                  />
-                  {{ item.dosen_pembimbing }}
-                </div>
-              </td>
-              <td
-                class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
-              >
+        <Table
+          :headers="[
+            'NIM',
+            'Nama',
+            'Judul Proposal',
+            'Dosen Pembimbing',
+            'Status',
+          ]"
+          :items="filteredPlottingPengujiWithStatus"
+          :pagination="paginationTabelPlottingPenguji"
+          @pageChange="
+            (page) => {
+              currentPageTabelPlottingPenguji = page;
+            }
+          "
+          @rowClick="handleRowClickPlot"
+        >
+          <template #row="{ item }">
+            <td
+              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
+            >
+              {{ item.nim }}
+            </td>
+            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+              <div class="flex items-center gap-2">
+                <img
+                  v-if="item.img"
+                  :src="item.img"
+                  alt="Profile Image"
+                  class="w-8 h-8 rounded-full"
+                />
+                <img
+                  v-else
+                  :src="DefaultAvatar"
+                  alt="Profile Image"
+                  class="w-8 h-8 rounded-full"
+                />
+                {{ item.nama }}
+              </div>
+            </td>
+            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+              {{ item.judul_proposal_ta }}
+            </td>
+            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+              <div class="flex items-center gap-2">
+                <img
+                  v-if="item.img"
+                  :src="item.img"
+                  alt="Profile Image"
+                  class="w-8 h-8 rounded-full"
+                />
+                <img
+                  v-else
+                  :src="DefaultAvatar"
+                  alt="Profile Image"
+                  class="w-8 h-8 rounded-full"
+                />
+                {{ item.dosen_pembimbing }}
+              </div>
+            </td>
+            <td
+              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
+            >
+              <StatusLabel
+                class="hidden w-fit lg:block"
+                :status="getStatusClass(item.status)"
+                size="md"
+                :label="getStatusLabelPlotting(item.status)"
+              />
+              <StatusLabel
+                class="block w-fit lg:hidden"
+                :status="getStatusClass(item.status)"
+                size="sm"
+                :label="getStatusLabelPlotting(item.status)"
+              />
+            </td>
+          </template>
+        </Table>
+      </template>
+
+      <template #tab2>
+        <div
+          class="flex flex-wrap items-center justify-between gap-2 mb-4 lg:gap-4"
+        >
+          <ModalFilter
+            class="flex-grow md:flex-none"
+            title="Status"
+            :items="statuses"
+            filterType="status"
+            @apply="handleFilterTab2"
+            triggerText="Status"
+            :preselectedValues="selectedStatusesTab2"
+          />
+          <SearchBar
+            class="order-last md:order-none sm:min-w-[367px]"
+            v-model="searchQueryTab2"
+          />
+          <Slider
+            :modelValue="statusForm"
+            @update:modelValue="handleSliderChange"
+          />
+        </div>
+
+        <Table
+          :headers="[
+            'NIM',
+            'Nama',
+            'Judul Tugas Akhir',
+            'Dosen Pembimbing',
+            'Status',
+          ]"
+          :items="filteredPendaftarUjian"
+          :pagination="paginationTabelPendaftar"
+          @pageChange="
+            (page) => {
+              currentPageTabelPendaftar = page;
+            }
+          "
+          @rowClick="handleRowClickDaftar"
+        >
+          <template #row="{ item }">
+            <td
+              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
+            >
+              {{ item.nim }}
+            </td>
+            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+              <div class="flex items-center gap-2">
+                <img
+                  v-if="item.img"
+                  :src="item.img"
+                  alt="Profile Image"
+                  class="w-8 h-8 rounded-full"
+                />
+                <img
+                  v-else
+                  :src="DefaultAvatar"
+                  alt="Profile Image"
+                  class="w-8 h-8 rounded-full"
+                />
+                {{ item.nama }}
+              </div>
+            </td>
+            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+              {{ item.judul_ta }}
+            </td>
+            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+              <div class="flex items-center gap-2">
+                <img
+                  v-if="item.img"
+                  :src="item.img"
+                  alt="Profile Image"
+                  class="w-8 h-8 rounded-full"
+                />
+                <img
+                  v-else
+                  :src="DefaultAvatar"
+                  alt="Profile Image"
+                  class="w-8 h-8 rounded-full"
+                />
+                {{ item.dosen_pembimbing }}
+              </div>
+            </td>
+            <td
+              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
+            >
+              <StatusLabel
+                class="hidden w-fit lg:block"
+                :status="getStatusClass(item.status)"
+                size="md"
+                :label="getStatusLabelPendaftar(item.status)"
+              />
+              <StatusLabel
+                class="block w-fit lg:hidden"
+                :status="getStatusClass(item.status)"
+                size="sm"
+                :label="getStatusLabelPendaftar(item.status)"
+              />
+            </td>
+          </template>
+        </Table>
+      </template>
+
+      <template #tab3>
+        <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
+          <ModalFilter
+            title="Status"
+            :items="statuses"
+            filterType="status"
+            @apply="handleFilterTab3"
+            triggerText="Status"
+            :preselectedValues="selectedStatusesTab3"
+          />
+          <SearchBar v-model="searchQueryTab3" />
+        </div>
+
+        <Table
+          :headers="['NIM', 'Nama', 'Judul Tugas Akhir', 'Tanggal', 'Status']"
+          :items="filteredPenjadwalan"
+          :pagination="paginationTabelPenjadwalan"
+          @pageChange="
+            (page) => {
+              currentPageTabelPenjadwalan = page;
+            }
+          "
+          @rowClick="handleRowClickJadwal"
+        >
+          <template #row="{ item }">
+            <td
+              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
+            >
+              {{ item.nim }}
+            </td>
+            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+              <div class="flex items-center gap-2">
+                <img
+                  v-if="item.img"
+                  :src="item.img"
+                  alt="Profile Image"
+                  class="w-8 h-8 rounded-full"
+                />
+                {{ item.nama }}
+              </div>
+            </td>
+            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+              {{ item.judul_ta }}
+            </td>
+            <td
+              class="py-3 px-3 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-3 sm:px-6 border-r border-white"
+            >
+              {{ item.tanggal }}
+            </td>
+            <td
+              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
+            >
+              <div v-if="!item.status_kelulusan">
                 <StatusLabel
                   class="hidden w-fit lg:block"
-                  :status="getStatusClass(item.status)"
+                  :status="item.jadwal ? 'success' : 'warning'"
                   size="md"
-                  :label="getStatusLabelPlotting(item.status)"
+                  :label="item.jadwal ? 'Terjadwal' : 'Menunggu'"
                 />
                 <StatusLabel
                   class="block w-fit lg:hidden"
-                  :status="getStatusClass(item.status)"
+                  :status="item.jadwal ? 'success' : 'warning'"
                   size="sm"
-                  :label="getStatusLabelPlotting(item.status)"
+                  :label="item.jadwal ? 'Terjadwal' : 'Menunggu'"
                 />
-              </td>
-            </template>
-          </Table>
-        </template>
-
-        <template #tab2>
-          <div
-            class="flex flex-wrap items-center justify-between gap-2 mb-4 lg:gap-4"
-          >
-            <ModalFilter
-              class="flex-grow md:flex-none"
-              title="Status"
-              :items="statuses"
-              filterType="status"
-              @apply="handleFilterTab2"
-              triggerText="Status"
-              :preselectedValues="selectedStatusesTab2"
-            />
-            <SearchBar
-              class="order-last md:order-none"
-              v-model="searchQueryTab2"
-            />
-            <Slider
-              :modelValue="statusForm"
-              @update:modelValue="handleSliderChange"
-            />
-          </div>
-
-          <Table
-            :headers="[
-              'NIM',
-              'Nama',
-              'Judul Tugas Akhir',
-              'Dosen Pembimbing',
-              'Status',
-            ]"
-            :items="filteredPendaftarUjian"
-            :pagination="paginationTabelPendaftar"
-            @pageChange="
-              (page) => {
-                currentPageTabelPendaftar = page;
-              }
-            "
-            @rowClick="handleRowClickDaftar"
-          >
-            <template #row="{ item }">
-              <td
-                class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
-              >
-                {{ item.nim }}
-              </td>
-              <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-                <div class="flex items-center gap-2">
-                  <img
-                    v-if="item.img"
-                    :src="item.img"
-                    alt="Profile Image"
-                    class="w-8 h-8 rounded-full"
-                  />
-                  <img
-                    v-else
-                    :src="DefaultAvatar"
-                    alt="Profile Image"
-                    class="w-8 h-8 rounded-full"
-                  />
-                  {{ item.nama }}
-                </div>
-              </td>
-              <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-                {{ item.judul_ta }}
-              </td>
-              <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-                <div class="flex items-center gap-2">
-                  <img
-                    v-if="item.img"
-                    :src="item.img"
-                    alt="Profile Image"
-                    class="w-8 h-8 rounded-full"
-                  />
-                  <img
-                    v-else
-                    :src="DefaultAvatar"
-                    alt="Profile Image"
-                    class="w-8 h-8 rounded-full"
-                  />
-                  {{ item.dosen_pembimbing }}
-                </div>
-              </td>
-              <td
-                class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
-              >
+              </div>
+              <div v-else>
                 <StatusLabel
                   class="hidden w-fit lg:block"
-                  :status="getStatusClass(item.status)"
+                  :status="getStatusClassBeritaAcara(item.status_kelulusan)"
                   size="md"
-                  :label="getStatusLabelPendaftar(item.status)"
+                  :label="getStatusLabelBeritaAcara(item.status_kelulusan)"
                 />
                 <StatusLabel
                   class="block w-fit lg:hidden"
-                  :status="getStatusClass(item.status)"
+                  :status="getStatusClassBeritaAcara(item.status_kelulusan)"
                   size="sm"
-                  :label="getStatusLabelPendaftar(item.status)"
+                  :label="getStatusLabelBeritaAcara(item.status_kelulusan)"
                 />
-              </td>
-            </template>
-          </Table>
-        </template>
-
-        <template #tab3>
-          <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
-            <ModalFilter
-              title="Status"
-              :items="statuses"
-              filterType="status"
-              @apply="handleFilterTab3"
-              triggerText="Status"
-              :preselectedValues="selectedStatusesTab3"
-            />
-            <SearchBar v-model="searchQueryTab3" />
-          </div>
-
-          <Table
-            :headers="['NIM', 'Nama', 'Judul Tugas Akhir', 'Tanggal', 'Status']"
-            :items="filteredPenjadwalan"
-            :pagination="paginationTabelPenjadwalan"
-            @pageChange="
-              (page) => {
-                currentPageTabelPenjadwalan = page;
-              }
-            "
-            @rowClick="handleRowClickJadwal"
-          >
-            <template #row="{ item }">
-              <td
-                class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
-              >
-                {{ item.nim }}
-              </td>
-              <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-                <div class="flex items-center gap-2">
-                  <img
-                    v-if="item.img"
-                    :src="item.img"
-                    alt="Profile Image"
-                    class="w-8 h-8 rounded-full"
-                  />
-                  {{ item.nama }}
-                </div>
-              </td>
-              <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-                {{ item.judul_ta }}
-              </td>
-              <td
-                class="py-3 px-3 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-3 sm:px-6 border-r border-white"
-              >
-                {{ item.tanggal }}
-              </td>
-              <td
-                class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
-              >
-                <div v-if="!item.status_kelulusan">
-                  <StatusLabel
-                    class="hidden w-fit lg:block"
-                    :status="item.jadwal ? 'success' : 'warning'"
-                    size="md"
-                    :label="item.jadwal ? 'Terjadwal' : 'Menunggu'"
-                  />
-                  <StatusLabel
-                    class="block w-fit lg:hidden"
-                    :status="item.jadwal ? 'success' : 'warning'"
-                    size="sm"
-                    :label="item.jadwal ? 'Terjadwal' : 'Menunggu'"
-                  />
-                </div>
-                <div v-else>
-                  <StatusLabel
-                    class="hidden w-fit lg:block"
-                    :status="getStatusClassBeritaAcara(item.status_kelulusan)"
-                    size="md"
-                    :label="getStatusLabelBeritaAcara(item.status_kelulusan)"
-                  />
-                  <StatusLabel
-                    class="block w-fit lg:hidden"
-                    :status="getStatusClassBeritaAcara(item.status_kelulusan)"
-                    size="sm"
-                    :label="getStatusLabelBeritaAcara(item.status_kelulusan)"
-                  />
-                </div>
-              </td>
-            </template>
-          </Table>
-        </template>
-      </TabDiv>
-    </div>
+              </div>
+            </td>
+          </template>
+        </Table>
+      </template>
+    </TabDiv>
     <!-- Modal Validasi  -->
     <DefaultModal
       v-if="modalRef2"
@@ -1088,12 +1103,22 @@ const modalFileUjianTAFiles = ref({
           :examiners="daftarPenguji"
           :jadwal="jadwalUjianTA"
         />
-        <div class="flex justify-end gap-4">
+        <div class="flex flex-wrap gap-2 sm:justify-end sm:gap-4">
           <Button
             v-if="selectedJadwalItem.status_kelulusan !== 1 && 2"
             variant="secondary"
             size="lg"
-            class="w-fit"
+            class="hidden w-fit sm:flex"
+            leftIconPath="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+            @click="handleEditJadwal"
+          >
+            Edit
+          </Button>
+          <Button
+            v-if="selectedJadwalItem.status_kelulusan !== 1 && 2"
+            variant="secondary"
+            size="md"
+            class="w-full sm:hidden"
             leftIconPath="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
             @click="handleEditJadwal"
           >
@@ -1103,19 +1128,37 @@ const modalFileUjianTAFiles = ref({
             v-if="selectedJadwalItem.status_kelulusan !== null"
             variant="primary"
             size="lg"
-            class="w-fit"
+            class="hidden w-fit sm:flex"
             leftIconPath="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0-2.25 2.25h13.5M6 7.5h3v3H6v-3Z"
           >
-            Cetak Berita Acara
+            Berita Acara
           </Button>
           <Button
             v-if="selectedJadwalItem.status_kelulusan !== null && 1"
             variant="primary"
             size="lg"
-            class="w-fit"
+            class="hidden w-fit sm:flex"
             leftIconPath="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
           >
-            Cetak Lembar Revisi
+            Lembar Revisi
+          </Button>
+          <Button
+            v-if="selectedJadwalItem.status_kelulusan !== null"
+            variant="primary"
+            size="md"
+            class="w-full sm:hidden"
+            leftIconPath="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0-2.25 2.25h13.5M6 7.5h3v3H6v-3Z"
+          >
+            Berita Acara
+          </Button>
+          <Button
+            v-if="selectedJadwalItem.status_kelulusan !== null && 1"
+            variant="primary"
+            size="md"
+            class="w-full sm:hidden"
+            leftIconPath="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+          >
+            Lembar Revisi
           </Button>
         </div>
       </div>
