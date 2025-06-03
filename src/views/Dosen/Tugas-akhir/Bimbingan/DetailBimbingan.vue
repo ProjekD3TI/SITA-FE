@@ -147,7 +147,6 @@ const getStatusLabel = (status) => {
 };
 
 // Menentukan BAB tertinggi yang sudah di-ACC
-// Menentukan BAB tertinggi yang sudah di-ACC
 const highestChapter = computed(() => {
   try {
     if (!bimbinganList.value || !bimbinganList.value.bimbingan) {
@@ -311,6 +310,7 @@ const bab = ref(0);
 const catatan = ref("");
 const status = ref("");
 const statusLabel = ref("");
+const noBimbingan = ref(0);
 
 // Fungsi untuk penanganan modal
 const openVerifikasiModal = (item) => {
@@ -329,6 +329,9 @@ const openDetailModal = (item) => {
   catatan.value = item.catatan;
   status.value = getStatusClass(item.status);
   statusLabel.value = getStatusLabel(item.status);
+  
+  // Tambahkan properti untuk nomor bimbingan
+  noBimbingan.value = item.no;
   
   detailModal.value.open();
 };
@@ -591,17 +594,17 @@ const handleActionClick = (item, action) => {
   ></ModalVerifikasiBimbingan>
 
   <!-- Modal Detail Bimbingan -->
-  <ModalDetailBimbingan
-    ref="detailModal"
-    @close="closeModal"
-    title="Detail Bimbingan"
-    :bimbinganKe="id"
-    :tanggalBimbingan="tanggal"
-    :bab="bab"
-    :catatan="catatan"
-    :status="status"
-    :statusLabel="statusLabel"
-  ></ModalDetailBimbingan>
+<ModalDetailBimbingan
+  ref="detailModal"
+  @close="closeModal"
+  title="Detail Bimbingan"
+  :bimbinganKe="noBimbingan"
+  :tanggalBimbingan="tanggal"
+  :bab="bab"
+  :catatan="catatan"
+  :status="status"
+  :statusLabel="statusLabel"
+></ModalDetailBimbingan>
 
   <!-- Modal Lihat Nilai -->
   <DefaultModal
