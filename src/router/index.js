@@ -249,6 +249,11 @@ const routes = [
         name: "DetailPK",
         component: () => import("../views/Dosen/Kalab/Pelaporan/PelaporanKejadian/DetailPK.vue"),
       },
+      {
+        path: "/laporan/:id/edit",
+        name: "EditPelaporanKejadianKalab",
+        component: () => import("../views/Dosen/Kalab/Pelaporan/PelaporanKejadian/EditPK.vue"),
+      },
       // route yg laen
     ],
   },

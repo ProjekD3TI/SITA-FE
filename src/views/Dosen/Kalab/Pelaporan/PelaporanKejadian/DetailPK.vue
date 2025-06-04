@@ -22,9 +22,21 @@
         <div v-else-if="laporan" class="detail-content">
             <div class="status-header">
                 <div class="laporan-number">{{ laporan.nomor_laporan }}</div>
-                <div :class="['status-badge', laporan.status]">
-                    {{ formatStatus(laporan.status) }}
+                <div class="action-btn-container">
+                    <button 
+                        class="edit-button"
+                        @click="goToEditLaporan"
+                        title="Lengkapi atau ubah data laporan">
+                        <i class="fas fa-edit"></i> <span>Edit Laporan</span>
+                    </button>
+                    <div :class="['status-badge', laporan.status]">
+                        {{ formatStatus(laporan.status) }}
+                    </div>
                 </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="mb-0">Detail Laporan</h3>
             </div>
 
             <div class="detail-card main-info">
@@ -188,6 +200,11 @@
                         <p class="tanggapan-text">{{ item.text }}</p>
                     </div>
                 </div>
+            </div>
+
+            <!-- Floating action button for mobile view -->
+            <div class="floating-edit-btn" @click="goToEditLaporan">
+                <i class="fas fa-edit"></i>
             </div>
 
             <div class="action-buttons">
@@ -460,6 +477,16 @@ export default {
                 this.loading = false;
             }
         },
+
+        goToEditLaporan() {
+    // Navigate to the edit page using the current laporan ID
+    this.$router.push({
+        name: "EditPelaporanKejadianKalab",
+        params: {
+            id: this.laporanId
+        }
+    });
+},
         
         goBack() {
             this.$router.go(-1);
@@ -1648,6 +1675,65 @@ export default {
     font-size: 0.95rem;
 }
 
+/* Enhanced Edit Button Styling */
+.action-btn-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.edit-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.edit-button:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.edit-button i {
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+/* Floating Edit Button for Mobile */
+.floating-edit-btn {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: #3498db;
+    color: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    z-index: 100;
+    transition: all 0.3s ease;
+}
+
+.floating-edit-btn:hover {
+    background-color: #2980b9;
+    transform: scale(1.05);
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .detail-cards-row {
@@ -1665,6 +1751,22 @@ export default {
     
     .image-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .edit-button span {
+        display: none; /* Hide text on mobile */
+    }
+    
+    .edit-button {
+        padding: 8px;
+    }
+    
+    .edit-button i {
+        margin-right: 0;
+    }
+
+    .floating-edit-btn {
+        display: flex; /* Show floating button on mobile */
     }
 }
 
