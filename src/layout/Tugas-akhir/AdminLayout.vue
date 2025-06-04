@@ -1,316 +1,125 @@
 <template>
   <div class="min-h-screen bg-gray-100">
     <!-- Sidebar -->
-    <div
+    <aside
       id="admin-sidebar"
-      v-bind:class="{
-        'translate-x-0  w-64': showNavbar,
+      :class="{
+        'translate-x-0 w-64': showNavbar,
         '-translate-x-full lg:translate-x-0 w-20': !showNavbar,
       }"
       class="fixed top-0 left-0 z-50 h-full duration-200 transform bg-white shadow-md"
     >
-      <div class="absolute top-4 -right-4">
-        <!-- Tombol di sidebar (panah kanan) -->
+      <!-- Toggle Button (Desktop) -->
+      <button
+        @click="toggleNavbar"
+        class="absolute hidden p-2 bg-white border rounded-full shadow-md top-4 -right-4 lg:block hover:text-gray-700 focus:outline-none sidebar-toggle"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          :class="{ 'transform rotate-180': showNavbar }"
+          class="w-4 h-4 transition-transform duration-500"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M15.75 19.5 8.25 12l7.5-7.5"
+          />
+        </svg>
+      </button>
+
+      <!-- Sidebar Header -->
+      <div class="flex items-center justify-between p-4 duration-200">
+        <router-link to="/">
+          <img
+            :src="D3TILogo"
+            alt="D3TI Logo"
+            :class="{ 'w-20': showNavbar, 'w-9 my-2': !showNavbar }"
+          />
+        </router-link>
+        <!-- Close Button (Mobile) -->
         <button
+          v-show="showNavbar"
           @click="toggleNavbar"
-          class="hidden p-2 bg-white border rounded-full shadow-md lg:block hover:text-gray-700 focus:outline-none sidebar-toggle"
+          class="p-1 duration-150 rounded-full hover:bg-gray-100 lg:hidden active:scale-90 sidebar-toggle"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
-            stroke-width="2"
+            stroke-width="1.5"
             stroke="currentColor"
-            :class="{ 'transform rotate-180': showNavbar }"
-            class="w-4 h-4 transition-transform duration-500"
+            class="w-5 h-5 lg:hidden"
           >
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
-              d="M15.75 19.5 8.25 12l7.5-7.5"
+              d="M6 18 18 6M6 6l12 12"
             />
           </svg>
         </button>
       </div>
 
-      <div class="flex items-center justify-between p-4 duration-200">
-        <router-link to="/">
-          <img
-            :src="D3TILogo"
-            alt=""
-            v-bind:class="{ 'w-20': showNavbar, 'w-9 my-2': !showNavbar }"
-          />
-        </router-link>
-        <div v-show="showNavbar">
-          <!-- Tombol hamburger di header -->
-          <button
-            @click="toggleNavbar"
-            class="p-1 duration-150 rounded-full hover:bg-gray-100 lg:hidden active:scale-90 sidebar-toggle"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-5 h-5 lg:hidden"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M6 18 18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Navbar  -->
+      <!-- Navigation Links -->
       <div class="mt-5">
         <SidebarLink
-          :to="withPrefix('')"
-          :active="isActive(withPrefix(['', '/']))"
+          v-for="link in navigationLinks"
+          :key="link.to"
+          :to="withPrefix(link.to)"
+          :active="link.isActive(route)"
           :showLabel="showNavbar"
-          label="Dashboard"
-          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' />"
-        />
-
-        <SidebarLink
-          :to="withPrefix('/bimbingan')"
-          :active="route.path.startsWith(withPrefix('/bimbingan'))"
-          :showLabel="showNavbar"
-          label="Bimbingan"
-          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25' />"
-        />
-
-        <SidebarLink
-          :to="withPrefix('/proposal')"
-          :active="route.path.startsWith(withPrefix('/proposal'))"
-          :showLabel="showNavbar"
-          label="Proposal"
-          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z' />"
-        />
-
-        <SidebarLink
-          :to="withPrefix('/ujian-ta')"
-          :active="route.path.startsWith(withPrefix('/ujian-ta'))"
-          :showLabel="showNavbar"
-          label="Ujian TA"
-          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 0 1 9 9v.375M10.125 2.25A3.375 3.375 0 0 1 13.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 0 1 3.375 3.375M9 15l2.25 2.25L15 12' />"
+          :label="link.label"
+          :icon="link.icon"
         />
 
         <div
+          v-for="(_, index) in navigationSeparators"
+          :key="`separator-${index}`"
           class="max-w-[240px] w-10/12 h-px bg-placeholder mx-auto my-4"
         ></div>
 
         <SidebarLink
-          :to="withPrefix('/ruang-sesi')"
-          :active="isActive(withPrefix(['/ruang-sesi']))"
+          v-for="link in secondaryNavLinks"
+          :key="link.to"
+          :to="withPrefix(link.to)"
+          :active="link.isActive(route)"
           :showLabel="showNavbar"
-          label="Ruang & Sesi"
-          icon="<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6.429 9.75 2.25 12l4.179 2.25m0-4.5 5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0 4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0-5.571 3-5.571-3' />"
-        />
-        <SidebarLink
-          :to="withPrefix('/kategori')"
-          :active="isActive(withPrefix(['/kategori']))"
-          :showLabel="showNavbar"
-          label="Kategori TA"
-          icon="<path d='M14.875 4.8125C14.875 6.71098 11.797 8.25 8 8.25C4.20304 8.25 1.125 6.71098 1.125 4.8125M14.875 4.8125C14.875 2.91402 11.797 1.375 8 1.375C4.20304 1.375 1.125 2.91402 1.125 4.8125M14.875 4.8125V14.1875C14.875 16.086 11.797 17.625 8 17.625C4.20304 17.625 1.125 16.086 1.125 14.1875V4.8125M14.875 4.8125V7.9375M1.125 4.8125V7.9375M14.875 7.9375V11.0625C14.875 12.961 11.797 14.5 8 14.5C4.20304 14.5 1.125 12.961 1.125 11.0625V7.9375M14.875 7.9375C14.875 9.83598 11.797 11.375 8 11.375C4.20304 11.375 1.125 9.83598 1.125 7.9375' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/>"
-        />
-
-        <div
-          class="max-w-[240px] w-10/12 h-px bg-placeholder mx-auto my-4"
-        ></div>
-
-        <SidebarLink
-          :to="withPrefix('/mahasiswa-dosen-aktif')"
-          :active="isActive(withPrefix(['/mahasiswa-dosen-aktif']))"
-          :showLabel="showNavbar"
-          label="Mahasiswa & Dosen"
-          icon="<path d='M3 6.5V14' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/><path d='M5.08203 20.7499C5.83246 19.5989 6.8582 18.6533 8.06631 17.9988C9.27443 17.3443 10.6268 17.0015 12.0008 17.0015C13.3748 17.0015 14.7271 17.3443 15.9353 17.9988C17.1434 18.6533 18.1691 19.5989 18.9195 20.7499' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/><path d='M21 6.5L12 9.5L3 6.5L12 3.5L21 6.5Z' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/><path d='M15.8719 8.2063C16.5599 8.95759 17.0144 9.89281 17.1801 10.898C17.3458 11.9031 17.2155 12.9347 16.805 13.8671C16.3946 14.7994 15.7218 15.5923 14.8686 16.1489C14.0154 16.7055 13.0187 17.0019 12 17.0019C10.9813 17.0019 9.9846 16.7055 9.13141 16.1489C8.27822 15.5923 7.6054 14.7994 7.19497 13.8671C6.78453 12.9347 6.65422 11.9031 6.81991 10.898C6.98561 9.89281 7.44015 8.95759 8.12813 8.2063' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/>"
+          :label="link.label"
+          :icon="link.icon"
         />
       </div>
-    </div>
+    </aside>
 
-    <!-- Main Content -->
+    <!-- Main Content Area -->
     <div class="flex flex-col flex-1">
       <!-- Header -->
-      <header
-        class="fixed z-40 flex items-center justify-between w-full p-4 bg-white"
-      >
-        <div class="flex items-center gap-4">
-          <router-link to="/">
-            <img :src="D3TILogo" alt="" class="w-16 lg:hidden" />
-          </router-link>
-          <!-- Tombol hamburger di header -->
-          <button
-            @click="toggleNavbar"
-            class="p-1 duration-150 rounded-full hover:bg-gray-100 lg:hidden active:scale-90 sidebar-toggle"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-5 h-5 lg:hidden"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-              />
-            </svg>
-          </button>
-        </div>
-        <div class="flex items-center">
-          <div class="relative mr-2">
-            <button
-              id="notification-button"
-              @click="toggleNotification"
-              class="flex p-1 text-gray-500 duration-150 hover:text-gray-700 focus:outline-none active:scale-90"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-6 h-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                />
-              </svg>
-              <svg
-                :class="{ 'transform rotate-180': showNotification }"
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-5 h-5 transition-transform"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-              <div
-                v-show="hasNotification"
-                class="absolute top-0 w-3 h-3 border-2 border-white rounded-full right-6 bg-secondary"
-              ></div>
-            </button>
-          </div>
-          <div class="flex items-center">
-            <span class="hidden mr-2 text-sm font-medium sm:inline">{{
-              user.name
-            }}</span>
-            <button
-              id="user-button"
-              @click="toggleUser"
-              class="flex items-center justify-center w-8 h-8 duration-150 bg-gray-200 rounded-full active:scale-90"
-            >
-              <span class="text-sm font-medium text-gray-600">{{
-                user.name.charAt(0)
-              }}</span>
-            </button>
-          </div>
-        </div>
+      <AppHeader
+        :show-navbar="showNavbar"
+        :toggle-navbar="toggleNavbar"
+        :user="user"
+        :logo="D3TILogo"
+        :show-notification="showNotification"
+        :toggle-notification="toggleNotification"
+        :has-notification="hasNotification"
+        :show-user="showUser"
+        :toggle-user="toggleUser"
+        :handle-logout="handleLogout"
+      />
 
-        <!-- notifikasi -->
-        <Notification
-          :notifications="notifications"
-          :showNotification="showNotification"
-          @markAllAsRead="markAllAsRead"
-          @markAsRead="markAsRead"
-        />
-
-        <!-- user menu -->
-        <div
-          id="user-menu"
-          class="absolute z-50 w-64 mt-2 duration-200 bg-white rounded-lg shadow-lg top-12 right-5"
-          v-show="showUser"
-        >
-          <div class="p-4">
-            <ul class="">
-              <li>
-                <router-link
-                  to="/"
-                  class="flex items-center w-full px-4 py-2 text-left duration-200 active:scale-90 hover:bg-gray-100 button-rounded"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="w-5 h-5 mr-2"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
-                    />
-                  </svg>
-                  <button>Home</button>
-                </router-link>
-              </li>
-              <li>
-                <router-link
-                  to=""
-                  class="flex items-center w-full px-4 py-2 text-left duration-200 active:scale-90 hover:bg-gray-100 button-rounded"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="w-5 h-5 mr-2"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
-                  <button>Profile</button>
-                </router-link>
-              </li>
-              <li>
-                <button
-                  class="flex items-center w-full px-4 py-2 text-left duration-200 text-danger active:scale-90 hover:bg-gray-100 button-rounded"
-                  @click="handleLogout"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="w-5 h-5 mr-2"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
-                    />
-                  </svg>
-                  Log Out
-                </button>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </header>
+      <!-- Notification Component -->
+      <Notification
+        :notifications="notifications"
+        :showNotification="showNotification"
+        @markAllAsRead="markAllAsRead"
+        @markAsRead="markAsRead"
+      />
 
       <!-- Dashboard Content -->
       <main
-        v-bind:class="{ 'lg:ml-64': showNavbar, 'lg:ml-20': !showNavbar }"
+        :class="{ 'lg:ml-64': showNavbar, 'lg:ml-20': !showNavbar }"
         class="p-4 mt-16 ml-0 duration-200 bg-gray-100 sm:p-6"
       >
         <router-view />
@@ -320,51 +129,99 @@
 </template>
 
 <script setup>
-import D3TILogo from "@/assets/images/d3ti-logo.png";
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { authMahasiswa, getUserData } from "@/services/authMahasiswa";
 import { useToast } from "vue-toastification";
-
-// sidebar
+import D3TILogo from "@/assets/images/d3ti-logo.png";
 import SidebarLink from "@/components/Tugas-akhir/SidebarLink.vue";
-import SidebarDropdown from "@/components/Tugas-akhir/SidebarDropdown.vue";
+import Notification from "@/components/Tugas-akhir/Notification.vue";
+import AppHeader from "@/layout/Tugas-akhir/AppHeader.vue";
 
+// Hooks
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
 const { logout } = authMahasiswa();
 
-// Notifikasi
-import Notification from "@/components/Tugas-akhir/Notification.vue";
+// State
+const showBimbingan = ref(false);
+const showTugasAkhir = ref(false);
+const showNavbar = ref(false);
+const showUser = ref(false);
+const isLgScreen = ref(false);
+const hasNotification = ref(false);
+const showNotification = ref(false);
+const username = ref("");
+const userRole = ref("Dosen"); // Default role
 
+// Navigation Config
+const navigationLinks = [
+  {
+    to: "",
+    label: "Dashboard",
+    icon: "<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' />",
+    isActive: (route) => isActive(withPrefix(["", "/"])),
+  },
+  {
+    to: "/bimbingan",
+    label: "Bimbingan",
+    icon: "<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25' />",
+    isActive: (route) => route.path.startsWith(withPrefix("/bimbingan")),
+  },
+  {
+    to: "/proposal",
+    label: "Proposal",
+    icon: "<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z' />",
+    isActive: (route) => route.path.startsWith(withPrefix("/proposal")),
+  },
+  {
+    to: "/ujian-ta",
+    label: "Ujian TA",
+    icon: "<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 0 1 9 9v.375M10.125 2.25A3.375 3.375 0 0 1 13.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 0 1 3.375 3.375M9 15l2.25 2.25L15 12' />",
+    isActive: (route) => route.path.startsWith(withPrefix("/ujian-ta")),
+  },
+];
+
+// Separators between link groups
+const navigationSeparators = [1];
+
+// Secondary Navigation
+const secondaryNavLinks = [
+  {
+    to: "/mahasiswa-dosen-aktif",
+    label: "Mahasiswa & Dosen",
+    icon: "<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z'/>",
+    isActive: (route) => isActive(withPrefix(["/mahasiswa-dosen-aktif"])),
+  },
+  {
+    to: "/ruang-sesi",
+    label: "Ruang & Sesi",
+    icon: "<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6.429 9.75 2.25 12l4.179 2.25m0-4.5 5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0 4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0-5.571 3-5.571-3' />",
+    isActive: (route) => isActive(withPrefix(["/ruang-sesi"])),
+  },
+  {
+    to: "/kategori",
+    label: "Kategori TA",
+    icon: "<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125' />",
+    isActive: (route) => isActive(withPrefix(["/kategori"])),
+  },
+];
+
+// Add secondary links to main navigation
+// navigationLinks.push(...secondaryNavLinks);
+
+// Mock Notifications (Move to a separate store in a real app)
 const notifications = ref([
   {
     id: 1,
     title: "Prof. Dika Anjay",
-    message:
-      "Telah menerima request pembimbing anda. Telah menerima request pembimbing anda. Telah menerima request pembimbing anda.",
+    message: "Telah menerima request pembimbing anda.",
     time: "09/03/2024 20:03",
     isNew: true,
   },
   {
     id: 2,
-    title: "Prof. Dika Anjay",
-    message:
-      "Telah menerima request pembimbing anda. Telah menerima request pembimbing anda. Telah menerima request pembimbing anda.",
-    time: "09/03/2024 20:03",
-    isNew: true,
-  },
-  {
-    id: 3,
-    title: "Prof. Dika Anjay",
-    message:
-      "Telah menerima request pembimbing anda. Telah menerima request pembimbing anda. Telah menerima request pembimbing anda.",
-    time: "09/03/2024 20:03",
-    isNew: true,
-  },
-  {
-    id: 4,
     title: "Prof. John Doe",
     message: "Bimbingan telah dijadwalkan.",
     time: "08/03/2024 18:00",
@@ -372,8 +229,31 @@ const notifications = ref([
   },
 ]);
 
-const showNotification = ref(false);
+// Computed Properties
+const user = computed(() => ({
+  name: username.value || "User",
+  role: userRole.value,
+}));
 
+// Methods
+const withPrefix = (paths) => {
+  if (typeof paths === "string") {
+    return `/admin-ta/tugas-akhir${paths}`;
+  }
+  return paths.map((path) => `/admin-ta/tugas-akhir${path}`);
+};
+
+const isActive = (paths) => paths.some((path) => path === route.path);
+
+const checkScreenSize = () => {
+  isLgScreen.value = window.innerWidth >= 1024;
+  if (!isLgScreen.value) {
+    showBimbingan.value = false;
+    showTugasAkhir.value = false;
+  }
+};
+
+// Mark notifications as read
 const markAsRead = (notificationId) => {
   const index = notifications.value.findIndex((n) => n.id === notificationId);
   if (index !== -1) {
@@ -393,162 +273,120 @@ const checkNotification = () => {
   );
 };
 
-const showBimbingan = ref(false);
-const showTugasAkhir = ref(false);
-const showNavbar = ref(false);
-const showUser = ref(false);
-const isLgScreen = ref(false);
-const hasNotification = ref(false);
-
-const withPrefix = (paths) => {
-  if (typeof paths === "string") {
-    return `/admin-ta/tugas-akhir${paths}`;
-  }
-  return paths.map((path) => `/admin-ta/tugas-akhir${path}`);
-};
-
-const isActive = (paths) => {
-  return paths.some((path) => path === route.path);
-};
-
-const checkScreenSize = () => {
-  isLgScreen.value = window.innerWidth >= 1024;
-  if (isLgScreen.value === false) {
-    showBimbingan.value = false;
-    showTugasAkhir.value = false;
-  }
-};
-
-onUnmounted(() => {
-  window.removeEventListener("resize", checkScreenSize);
-  document.removeEventListener("click", closeDropdownOnClickOutside);
-});
-
-const closeDropdownOnClickOutside = (event) => {
-  const notificationMenu = document.getElementById("notification-menu");
-  const userMenu = document.getElementById("user-menu");
-  const notificationButton = document.getElementById("notification-button");
-  const userButton = document.getElementById("user-button");
-  const sidebar = document.getElementById("admin-sidebar");
-
-  // Cek semua tombol dengan class sidebar-toggle
-  const toggleButtons = document.querySelectorAll(".sidebar-toggle");
-  let isToggleButton = false;
-
-  // Periksa apakah event.target ada dalam salah satu toggle button
-  for (const button of toggleButtons) {
-    if (button.contains(event.target)) {
-      isToggleButton = true;
-      break;
-    }
-  }
-
-  // Tutup dropdown notifikasi jika klik di luar
-  if (
-    notificationMenu &&
-    !notificationMenu.contains(event.target) &&
-    notificationButton &&
-    !notificationButton.contains(event.target)
-  ) {
-    showNotification.value = false;
-  }
-
-  // Tutup dropdown user jika klik di luar
-  if (
-    userMenu &&
-    !userMenu.contains(event.target) &&
-    userButton &&
-    !userButton.contains(event.target)
-  ) {
-    showUser.value = false;
-  }
-
-  // Tutup sidebar jika klik di luar sidebar dan bukan pada tombol toggle
-  if (
-    !isLgScreen.value &&
-    showNavbar.value &&
-    sidebar &&
-    !sidebar.contains(event.target) &&
-    !isToggleButton
-  ) {
-    showNavbar.value = false;
-  }
-};
-
-const toggleBimbingan = () => {
-  showBimbingan.value = !showBimbingan.value;
-  showNavbar.value = true;
-};
-
-const toggleTugasAkhir = () => {
-  showTugasAkhir.value = !showTugasAkhir.value;
-  showNavbar.value = true;
-};
-
+// Toggle Functionality
 const toggleNavbar = () => {
   showNavbar.value = !showNavbar.value;
-  if (isLgScreen.value == false) {
+  localStorage.setItem("adminSidebarOpen", showNavbar.value); // save state
+  if (!isLgScreen.value) {
     showNotification.value = false;
     showUser.value = false;
   }
   showBimbingan.value = false;
   showTugasAkhir.value = false;
 };
+
 const toggleNotification = () => {
   showNotification.value = !showNotification.value;
   showUser.value = false;
-  if (isLgScreen.value == false) {
+  if (!isLgScreen.value) {
     showNavbar.value = false;
   }
 };
+
 const toggleUser = () => {
   showUser.value = !showUser.value;
   showNotification.value = false;
-  if (isLgScreen.value == false) {
+  if (!isLgScreen.value) {
     showNavbar.value = false;
   }
 };
 
-// Referensi untuk nama user
-const username = ref("");
-const userRole = ref("Dosen"); // Default role
+const handleLogout = () => {
+  try {
+    logout();
+    username.value = "";
+    toast.success("Berhasil Logout!");
+    router.push("/");
+  } catch (error) {
+    toast.error("Terjadi kesalahan saat logout.");
+  }
+};
 
-// Computed property untuk user data
-const user = computed(() => {
-  return {
-    name: username.value || "Dosen",
-    role: userRole.value,
+// Handle click outside to close dropdowns
+const closeDropdownOnClickOutside = (event) => {
+  const elements = {
+    notificationMenu: document.getElementById("notification-menu"),
+    userMenu: document.getElementById("user-menu"),
+    notificationButton: document.getElementById("notification-button"),
+    userButton: document.getElementById("user-button"),
+    sidebar: document.getElementById("admin-sidebar"),
   };
-});
 
-// Tambahkan event listener untuk resize
+  // Check if click is on sidebar toggle buttons
+  const isToggleButton = Array.from(
+    document.querySelectorAll(".sidebar-toggle")
+  ).some((button) => button.contains(event.target));
+
+  // Close notification dropdown when clicking outside
+  if (
+    elements.notificationMenu &&
+    !elements.notificationMenu.contains(event.target) &&
+    elements.notificationButton &&
+    !elements.notificationButton.contains(event.target)
+  ) {
+    showNotification.value = false;
+  }
+
+  // Close user dropdown when clicking outside
+  if (
+    elements.userMenu &&
+    !elements.userMenu.contains(event.target) &&
+    elements.userButton &&
+    !elements.userButton.contains(event.target)
+  ) {
+    showUser.value = false;
+  }
+
+  // Close sidebar on mobile when clicking outside
+  if (
+    !isLgScreen.value &&
+    showNavbar.value &&
+    elements.sidebar &&
+    !elements.sidebar.contains(event.target) &&
+    !isToggleButton
+  ) {
+    showNavbar.value = false;
+  }
+};
+
+// Lifecycle hooks
 onMounted(() => {
-  // Ambil data user menggunakan getUserData()
+  // Restore sidebar state from localStorage, default open if not set
+  const savedSidebar = localStorage.getItem("adminSidebarOpen");
+  if (savedSidebar === null) {
+    showNavbar.value = true; // default open
+  } else {
+    showNavbar.value = savedSidebar === "true";
+  }
+
+  // Get user data
   const userData = getUserData();
 
   if (userData) {
-    username.value = userData.name || userData.email?.split("@")[0] || "Dosen";
+    username.value = userData.name || userData.email?.split("@")[0] || "User";
     userRole.value = userData.role || "Dosen";
   } else {
-    // Fallback: coba ambil dari localStorage langsung
+    // Fallback: try to get from localStorage directly
     try {
       const userInfo = JSON.parse(localStorage.getItem("user"));
-      console.log("User info from localStorage:", userInfo);
 
-      if (userInfo && userInfo.name) {
-        username.value = userInfo.name;
-      } else if (userInfo && userInfo.username) {
-        username.value = userInfo.username;
-      } else if (userInfo && userInfo.email) {
-        username.value = userInfo.email.split("@")[0];
+      if (userInfo) {
+        username.value =
+          userInfo.name ||
+          userInfo.username ||
+          (userInfo.email ? userInfo.email.split("@")[0] : "User");
+        userRole.value = userInfo.role || "Dosen";
       }
-
-      // Set role jika ada
-      if (userInfo && userInfo.role) {
-        userRole.value = userInfo.role;
-      }
-
-      console.log("Username set from localStorage:", username.value);
     } catch (error) {
       console.error("Error parsing user data from localStorage:", error);
     }
@@ -557,18 +395,20 @@ onMounted(() => {
   checkScreenSize();
   checkNotification();
 
+  // Add event listeners
   window.addEventListener("resize", checkScreenSize);
   document.addEventListener("click", closeDropdownOnClickOutside);
 });
 
-const handleLogout = () => {
-  try {
-    logout();
-    username.value = ""; // Reset username
-    toast.success("Berhasil Logout!");
-    router.push("/");
-  } catch (error) {
-    toast.error("Terjadi kesalahan saat logout.");
-  }
-};
+onUnmounted(() => {
+  // Remove event listeners
+  window.removeEventListener("resize", checkScreenSize);
+  document.removeEventListener("click", closeDropdownOnClickOutside);
+});
 </script>
+
+<style scoped>
+.button-rounded {
+  border-radius: 0.375rem;
+}
+</style>
