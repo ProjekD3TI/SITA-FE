@@ -788,163 +788,213 @@ export default {
     },
     
     submitForm() {
-      try {
-        // Validation
-        if (!this.validateForm()) {
-          this.submitting = false;
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Harap perbaiki kesalahan pada form'
-          });
-          return;
-        }
-        
-        this.submitting = true;
-        this.errors = {};
-        
-        // Create FormData instance
-        const formData = new FormData();
-        
-        // Add ALL form fields
-        formData.append('judul', this.formData.judul);
-        formData.append('category_id', this.formData.category_id);
-        formData.append('deskripsi', this.formData.deskripsi);
-        formData.append('nomor_telepon', this.formData.nomor_telepon || '');
-        formData.append('nama_pelapor', this.formData.nama_pelapor || '');
-        formData.append('ni_pelapor', this.formData.ni_pelapor || '');
-        formData.append('lampiran_link', this.formData.lampiran_link || '');
-        formData.append('tanggal_kejadian', this.formData.tanggal_kejadian);
-        formData.append('profesi', this.formData.profesi || '');
-        formData.append('jenis_kelamin', this.formData.jenis_kelamin || '');
-        formData.append('umur_pelapor', this.formData.umur_pelapor || '');
-        
-        // Handle complex objects
-        let terlapor = (this.formData.terlapor || []).filter(t => 
-          t.nama_lengkap || t.email || t.nomor_telepon || t.status_warga
-        );
-        formData.append('terlapor', JSON.stringify(terlapor));
-        
-        let saksi = (this.formData.saksi || []).filter(s => 
-          s.nama_lengkap || s.email || s.nomor_telepon
-        );
-        formData.append('saksi', JSON.stringify(saksi));
-        
-        formData.append('bukti_pelanggaran', JSON.stringify(this.formData.bukti_pelanggaran || []));
-        
-        // Method spoofing for Laravel
-        formData.append('_method', 'PUT');
-        
-        // Handle new image uploads
-        if (this.formData.image_path && this.formData.image_path.length > 0) {
-          for (let i = 0; i < this.formData.image_path.length; i++) {
-            formData.append(`new_images[${i}]`, this.formData.image_path[i]);
+  try {
+    // Validation
+    if (!this.validateForm()) {
+      this.submitting = false;
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Harap perbaiki kesalahan pada form'
+      });
+      return;
+    }
+    
+    this.submitting = true;
+    this.errors = {};
+    
+    // Create FormData instance
+    const formData = new FormData();
+    
+    // Add basic text fields
+    formData.append('judul', this.formData.judul);
+    formData.append('category_id', this.formData.category_id);
+    formData.append('deskripsi', this.formData.deskripsi);
+    formData.append('nomor_telepon', this.formData.nomor_telepon || '');
+    formData.append('nama_pelapor', this.formData.nama_pelapor || '');
+    formData.append('ni_pelapor', this.formData.ni_pelapor || '');
+    formData.append('lampiran_link', this.formData.lampiran_link || '');
+    formData.append('tanggal_kejadian', this.formData.tanggal_kejadian);
+    formData.append('profesi', this.formData.profesi || '');
+    formData.append('jenis_kelamin', this.formData.jenis_kelamin || '');
+    formData.append('umur_pelapor', this.formData.umur_pelapor || '');
+    
+    // Method spoofing for Laravel
+    formData.append('_method', 'PUT');
+    
+    // Handle complex arrays - this is the key fix
+    // Filter out empty objects from terlapor array
+    let terlapor = (this.formData.terlapor || []).filter(t => 
+      t.nama_lengkap || t.email || t.nomor_telepon || t.status_warga
+    );
+    
+    // Create individual array entries for bukti_pelanggaran[]
+    if (this.formData.bukti_pelanggaran && this.formData.bukti_pelanggaran.length > 0) {
+      this.formData.bukti_pelanggaran.forEach((item, index) => {
+        formData.append(`bukti_pelanggaran[${index}]`, item);
+      });
+    } else {
+      // If empty, at least create an empty array structure
+      formData.append('bukti_pelanggaran[]', '');
+    }
+    
+    // Handle terlapor as individual array entries
+    if (terlapor.length > 0) {
+      terlapor.forEach((item, index) => {
+        Object.keys(item).forEach(key => {
+          if (item[key]) {
+            formData.append(`terlapor[${index}][${key}]`, item[key]);
           }
-        }
+        });
+      });
+    } else {
+      // If empty, at least create an empty array structure
+      formData.append('terlapor[]', '');
+    }
+    
+    // Filter out empty objects from saksi array
+    let saksi = (this.formData.saksi || []).filter(s => 
+      s.nama_lengkap || s.email || s.nomor_telepon
+    );
+    
+    // Handle saksi as individual array entries
+    if (saksi.length > 0) {
+      saksi.forEach((item, index) => {
+        Object.keys(item).forEach(key => {
+          if (item[key]) {
+            formData.append(`saksi[${index}][${key}]`, item[key]);
+          }
+        });
+      });
+    } else {
+      // If empty, at least create an empty array structure
+      formData.append('saksi[]', '');
+    }
+    
+    // Handle new image uploads
+    if (this.formData.image_path && this.formData.image_path.length > 0) {
+      for (let i = 0; i < this.formData.image_path.length; i++) {
+        formData.append(`new_images[${i}]`, this.formData.image_path[i]);
+      }
+    }
+    
+    // Keep existing images
+    if (this.originalImages && this.originalImages.length > 0) {
+      this.originalImages.forEach((image, index) => {
+        formData.append(`keep_images[${index}]`, image);
+      });
+    } else {
+      formData.append('keep_images[]', '');
+    }
+    
+    // Get the raw auth_token from cookies without attempting decryption
+    const token = VueCookies.get('auth_token');
+    
+    if (!token) {
+      this.submitting = false;
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Token autentikasi tidak ditemukan'
+      });
+      return;
+    }
+    
+    // Create and configure XHR
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://v3422040.mhs.d3tiuns.com/api/laporan/update/${this.laporanId}`);
+    
+    // Set Authorization header with proper Bearer token
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    
+    // Log form data for debugging
+    console.log("FormData being sent:");
+    for (let pair of formData.entries()) {
+      console.log(pair[0] + ': ' + pair[1]);
+    }
+    
+    xhr.onload = () => {
+      this.submitting = false;
+      
+      if (xhr.status >= 200 && xhr.status < 300) {
+        // Success
+        console.log("Update successful:", xhr.responseText);
         
-        // Keep existing images
-        formData.append('keep_images', JSON.stringify(this.originalImages || []));
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil',
+          text: 'Data berhasil diperbarui',
+          confirmButtonText: 'OK'
+        }).then(() => {
+          this.$router.go(-1); // Go back to previous page
+        });
+      } else {
+        // Error
+        console.error('Error response:', xhr.status, xhr.responseText);
         
-        // Get the raw auth_token from cookies without attempting decryption
-        const token = VueCookies.get('auth_token');
+        let errorMessage = 'Gagal memperbarui data. Silakan coba lagi.';
         
-        if (!token) {
-          this.submitting = false;
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Token autentikasi tidak ditemukan'
-          });
-          return;
-        }
-        
-        // Create and configure XHR
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', `https://v3422040.mhs.d3tiuns.com/api/laporan/update/${this.laporanId}`);
-        
-        // Set Authorization header with proper Bearer token
-        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-        // Don't set Content-Type for FormData, browser will handle it
-        
-        xhr.onload = () => {
-          this.submitting = false;
+        try {
+          const response = JSON.parse(xhr.responseText);
+          if (response.message) {
+            errorMessage = response.message;
+          }
           
-          if (xhr.status >= 200 && xhr.status < 300) {
-            // Success
-            console.log("Update successful:", xhr.responseText);
+          // If there are validation errors, update the errors object
+          if (response.errors) {
+            this.errors = response.errors;
             
-            Swal.fire({
-              icon: 'success',
-              title: 'Berhasil',
-              text: 'Data berhasil diperbarui',
-              confirmButtonText: 'OK'
-            }).then(() => {
-              // Add timestamp for audit logging
-              console.log(`Form submitted successfully at: ${new Date().toISOString()} by user: ${VueCookies.get('username') || 'miftahul01'}`);
-              this.$router.go(-1); // Go back to previous page
-            });
-          } else {
-            // Error
-            console.error('Error response:', xhr.status, xhr.responseText);
-            
-            let errorMessage = 'Gagal memperbarui data. Silakan coba lagi.';
-            
-            try {
-              const response = JSON.parse(xhr.responseText);
-              if (response.message) {
-                errorMessage = response.message;
-              }
+            // Create a more detailed error message
+            const errorDetails = Object.entries(response.errors)
+              .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
+              .join('\n');
               
-              // If there are validation errors, update the errors object
-              if (response.errors) {
-                this.errors = response.errors;
-              }
-            } catch (e) {
-              console.error('Error parsing error response:', e);
-            }
-            
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: errorMessage
-            });
+            errorMessage += '\n\n' + errorDetails;
           }
-        };
+        } catch (e) {
+          console.error('Error parsing error response:', e);
+        }
         
-        xhr.onerror = () => {
-          this.submitting = false;
-          console.error('Network error during form submission');
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Terjadi kesalahan jaringan. Silakan periksa koneksi internet Anda.'
-          });
-        };
-        
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const percentComplete = (event.loaded / event.total) * 100;
-            console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
-          }
-        };
-        
-        // Debug what we're sending
-        console.log('Sending form data with authentication');
-        console.log('Current time:', new Date().toISOString());
-        console.log('User:', VueCookies.get('username') || 'miftahul01');
-        
-        // Send the request
-        xhr.send(formData);
-      } catch (e) {
-        this.submitting = false;
-        console.error("Exception in submitForm:", e);
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: 'Terjadi kesalahan yang tidak diharapkan'
+          text: errorMessage,
+          customClass: {
+            content: 'text-left'
+          }
         });
       }
-    },
+    };
+    
+    xhr.onerror = () => {
+      this.submitting = false;
+      console.error('Network error during form submission');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Terjadi kesalahan jaringan. Silakan periksa koneksi internet Anda.'
+      });
+    };
+    
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = (event.loaded / event.total) * 100;
+        console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
+      }
+    };
+    
+    // Send the request
+    xhr.send(formData);
+  } catch (e) {
+    this.submitting = false;
+    console.error("Exception in submitForm:", e);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Terjadi kesalahan yang tidak diharapkan'
+    });
+  }
+},
     
     goBack() {
       this.$router.go(-1);
