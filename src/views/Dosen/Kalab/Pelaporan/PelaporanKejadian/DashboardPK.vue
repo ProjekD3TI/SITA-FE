@@ -305,488 +305,489 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted, watch, nextTick, onBeforeUnmount } from "vue";
+import { decryptData } from "../../../../../services/encrypt";
+import VueCookies from "vue-cookies";
 import axios from 'axios';
 import html2pdf from 'html2pdf.js';
 import d3tiLogo from '../../../../../assets/images/d3ti-logo.png';
+import { useRouter } from 'vue-router';
 
-export default {
-  name: 'DashboardPelaporanKejadian',
-  data() {
-    return {
-      d3tiLogoSrc: d3tiLogo,
-      currentPage: 1,
-      pageSize: 10,
-      filters: {
-        category_id: '',
-        status: '',
-        startDate: '',
-        endDate: ''
-      },
-      laporan: [], // This will store API data
-      categories: {},
-      selectedStatus: 'all',
-      itemsPerPage: 10,
-      loading: true, // Start with loading true
-      error: null,
-      filteredLaporan: [], // New property to hold filtered results
-      search: '', // Replace or use alongside searchQuery if you prefer
-      totalFilteredCount: 0, // New property to store total filtered count
-      exportInProgress: false, // Flag to prevent multiple exports at once
-      dataToExport: [], // Data that will be exported to PDF
-      sortKey: '', // Add this for tracking sort column
-      sortOrder: 'asc', // Add this for tracking sort direction
+const router = useRouter();
+
+// State with ref
+const d3tiLogoSrc = ref(d3tiLogo);
+const currentPage = ref(1);
+const pageSize = ref(10);
+const filters = ref({
+  category_id: '',
+  status: '',
+  startDate: '',
+  endDate: ''
+});
+const laporan = ref([]); // This will store API data
+const categories = ref({});
+const selectedStatus = ref('all');
+const itemsPerPage = ref(10);
+const loading = ref(true); // Start with loading true
+const error = ref(null);
+const search = ref(''); // Replace or use alongside searchQuery if you prefer
+const totalFilteredCount = ref(0); // New property to store total filtered count
+const exportInProgress = ref(false); // Flag to prevent multiple exports at once
+const dataToExport = ref([]); // Data that will be exported to PDF
+const sortKey = ref(''); // Add this for tracking sort column
+const sortOrder = ref('asc'); // Add this for tracking sort direction
+
+// Computed properties
+const filteredLaporan = computed(() => {
+  // Start with all reports
+  let result = [...laporan.value];
+  
+  // Apply search filter
+  if (search.value) {
+    const searchTerm = search.value.toLowerCase();
+    result = result.filter(item => 
+      (item.judul && item.judul.toLowerCase().includes(searchTerm)) || 
+      (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(searchTerm)) ||
+      (item.nama_pelapor && item.nama_pelapor.toLowerCase().includes(searchTerm))
+    );
+  }
+
+  // Apply sorting
+  if (sortKey.value) {
+    result.sort((a, b) => {
+      let aValue = a[sortKey.value];
+      let bValue = b[sortKey.value];
+      
+      // Special handling for category_id
+      if (sortKey.value === 'category_id') {
+        aValue = getCategoryName(aValue);
+        bValue = getCategoryName(bValue);
+      }
+      
+      // Special handling for status
+      if (sortKey.value === 'status') {
+        aValue = formatStatus(aValue);
+        bValue = formatStatus(bValue);
+      }
+      
+      // Handle dates
+      if (sortKey.value === 'created_at') {
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+      }
+      
+      // Compare the values
+      if (aValue === bValue) return 0;
+      
+      const comparison = aValue > bValue ? 1 : -1;
+      return sortOrder.value === 'desc' ? -comparison : comparison;
+    });
+  }
+  
+  // Apply category filter
+  if (filters.value.category_id) {
+    result = result.filter(item => 
+      String(item.category_id) === String(filters.value.category_id)
+    );
+  }
+  
+  // Apply status filter
+  if (filters.value.status) {
+    // Map frontend status labels to actual status values in the data
+    const statusMap = {
+      'Belum Diverifikasi': 'unverified',
+      'Diproses': 'verified',
+      'Ditolak': 'rejected',
+      'Selesai': 'finished'
     };
-  },
+    
+    const statusValue = statusMap[filters.value.status] || filters.value.status;
+    result = result.filter(item => item.status === statusValue);
+  }
   
-  computed: {
-    filteredLaporan() {
-      // Start with all reports
-      let result = [...this.laporan];
+  // Apply date range filter
+  if (filters.value.startDate || filters.value.endDate) {
+    result = result.filter(item => {
+      // Convert to Date objects for comparison
+      const itemDate = new Date(item.created_at || item.tanggal);
       
-      // Apply search filter
-      if (this.search) {
-        const searchTerm = this.search.toLowerCase();
-        result = result.filter(item => 
-          (item.judul && item.judul.toLowerCase().includes(searchTerm)) || 
-          (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(searchTerm)) ||
-          (item.nama_pelapor && item.nama_pelapor.toLowerCase().includes(searchTerm))
-        );
-      }
-
-      // Apply sorting
-      if (this.sortKey) {
-        result.sort((a, b) => {
-          let aValue = a[this.sortKey];
-          let bValue = b[this.sortKey];
-          
-          // Special handling for category_id
-          if (this.sortKey === 'category_id') {
-            aValue = this.getCategoryName(aValue);
-            bValue = this.getCategoryName(bValue);
-          }
-          
-          // Special handling for status
-          if (this.sortKey === 'status') {
-            aValue = this.formatStatus(aValue);
-            bValue = this.formatStatus(bValue);
-          }
-          
-          // Handle dates
-          if (this.sortKey === 'created_at') {
-            aValue = new Date(aValue);
-            bValue = new Date(bValue);
-          }
-          
-          // Compare the values
-          if (aValue === bValue) return 0;
-          
-          const comparison = aValue > bValue ? 1 : -1;
-          return this.sortOrder === 'desc' ? -comparison : comparison;
-        });
+      // Check start date if specified
+      if (filters.value.startDate) {
+        const startDate = new Date(filters.value.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        if (itemDate < startDate) return false;
       }
       
-      // Apply category filter
-      if (this.filters.category_id) {
-        result = result.filter(item => 
-          String(item.category_id) === String(this.filters.category_id)
-        );
+      // Check end date if specified
+      if (filters.value.endDate) {
+        const endDate = new Date(filters.value.endDate);
+        endDate.setHours(23, 59, 59, 999);
+        if (itemDate > endDate) return false;
       }
       
-      // Apply status filter
-      if (this.filters.status) {
-        // Map frontend status labels to actual status values in the data
-        const statusMap = {
-          'Belum Diverifikasi': 'unverified',
-          'Diproses': 'verified',
-          'Ditolak': 'rejected',
-          'Selesai': 'finished'
-        };
-        
-        const statusValue = statusMap[this.filters.status] || this.filters.status;
-        result = result.filter(item => item.status === statusValue);
-      }
-      
-      // Apply date range filter
-      if (this.filters.startDate || this.filters.endDate) {
-        result = result.filter(item => {
-          // Convert to Date objects for comparison
-          const itemDate = new Date(item.created_at || item.tanggal);
-          
-          // Check start date if specified
-          if (this.filters.startDate) {
-            const startDate = new Date(this.filters.startDate);
-            startDate.setHours(0, 0, 0, 0);
-            if (itemDate < startDate) return false;
-          }
-          
-          // Check end date if specified
-          if (this.filters.endDate) {
-            const endDate = new Date(this.filters.endDate);
-            endDate.setHours(23, 59, 59, 999);
-            if (itemDate > endDate) return false;
-          }
-          
-          return true;
-        });
-      }
-      
-      // Store total filtered count before pagination
-      this.totalFilteredCount = result.length;
-      
-      // Apply pagination directly in filteredLaporan
-      const start = (this.currentPage - 1) * this.pageSize;
-      const end = start + this.pageSize;
-      
-      return result.slice(start, end);
-    },
-    
-    // Computed property untuk mendapatkan semua data yang terfilter tanpa pagination
-    allFilteredData() {
-      // Start with all reports
-      let result = [...this.laporan];
-      
-      // Apply search filter
-      if (this.search) {
-        const searchTerm = this.search.toLowerCase();
-        result = result.filter(item => 
-          (item.judul && item.judul.toLowerCase().includes(searchTerm)) || 
-          (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(searchTerm)) ||
-          (item.nama_pelapor && item.nama_pelapor.toLowerCase().includes(searchTerm))
-        );
-      }
-      
-      // Apply category filter
-      if (this.filters.category_id) {
-        result = result.filter(item => 
-          String(item.category_id) === String(this.filters.category_id)
-        );
-      }
-      
-      // Apply status filter
-      if (this.filters.status) {
-        // Map frontend status labels to actual status values in the data
-        const statusMap = {
-          'Belum Diverifikasi': 'unverified',
-          'Diproses': 'verified',
-          'Ditolak': 'rejected'
-        };
-        
-        const statusValue = statusMap[this.filters.status] || this.filters.status;
-        result = result.filter(item => item.status === statusValue);
-      }
-      
-      // Apply date range filter
-      if (this.filters.startDate || this.filters.endDate) {
-        result = result.filter(item => {
-          // Convert to Date objects for comparison
-          const itemDate = new Date(item.created_at || item.tanggal);
-          
-          // Check start date if specified
-          if (this.filters.startDate) {
-            const startDate = new Date(this.filters.startDate);
-            startDate.setHours(0, 0, 0, 0);
-            if (itemDate < startDate) return false;
-          }
-          
-          // Check end date if specified
-          if (this.filters.endDate) {
-            const endDate = new Date(this.filters.endDate);
-            endDate.setHours(23, 59, 59, 999);
-            if (itemDate > endDate) return false;
-          }
-          
-          return true;
-        });
-      }
-      
-      return result;
-    },
-    
-    // Check if any filter is active
-    isFilterActive() {
-      return (
-        this.search.trim() !== '' || 
-        this.filters.category_id !== '' || 
-        this.filters.status !== '' || 
-        this.filters.startDate !== '' || 
-        this.filters.endDate !== ''
-      );
-    },
-    
-    // Update totalPages to use totalFilteredCount
-    totalPages() {
-      return Math.ceil(this.totalFilteredCount / this.pageSize);
-    },
-    
-    startIndex() {
-      return (this.currentPage - 1) * this.pageSize;
-    },
-    
-    endIndex() {
-      return Math.min(this.startIndex + this.filteredLaporan.length, this.totalFilteredCount);
-    },
-    
-    unverifiedCount() {
-      return this.laporan.filter(item => item.status === 'verified').length;
-    },
-    
-    verifiedCount() {
-      return this.laporan.filter(item => item.status === 'finished').length;
-    },
-
-    // Display data should be based on filteredLaporan instead of laporan directly
-    displayedLaporan() {
-      const start = this.startIndex;
-      const end = start + this.itemsPerPage;
-      return this.filteredLaporan.slice(start, end);
-    },
-
-    filteredCategories() {
-      const filtered = {};
-      
-      // Loop through the categories object and exclude those starting with "Kekerasan"
-      for (const [id, name] of Object.entries(this.categories)) {
-        if (!name.startsWith('Kekerasan')) {
-          filtered[id] = name;
-        }
-      }
-      
-      return filtered;
-    },
-  },
+      return true;
+    });
+  }
   
-  methods: {
-    async fetchData() {
-      this.loading = true;
-      try {
-        // Fetch categories first
-        const categoriesResponse = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
-        // Transform categories array to an object with id as key for easy lookup
-        this.categories = categoriesResponse.data.reduce((acc, category) => {
-          acc[category.category_id] = category.nama;
-          return acc;
-        }, {});
-        
-        // Then fetch laporan data
-        const laporanResponse = await axios.get('https://v3422040.mhs.d3tiuns.com/api/laporan');
-        this.laporan = laporanResponse.data;
-        
-        // Initialize filteredLaporan with all data
-        this.filteredLaporan = [...this.laporan];
-        
-        console.log('Laporan data loaded:', this.laporan); // Debug log
-        console.log('Categories loaded:', this.categories); // Debug log
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        this.error = 'Gagal memuat data. Silakan coba lagi nanti.';
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    sortBy(key) {
-      // If clicking the same column, toggle sort order
-      if (this.sortKey === key) {
-        this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
-      } else {
-        // If clicking a different column, set it as the new sort key and default to ascending
-        this.sortKey = key;
-        this.sortOrder = 'asc';
-      }
-      
-      // Reset to first page when sorting changes
-      this.currentPage = 1;
-    },
-    
-    getSortIcon(key) {
-      if (this.sortKey !== key) {
-        return 'fas fa-sort'; // Default icon when column is not being sorted
-      }
-      return this.sortOrder === 'asc' 
-        ? 'fas fa-sort-up' 
-        : 'fas fa-sort-down';
-    },
-    
-    getCategoryName(categoryId) {
-      return this.categories[categoryId] || 'Tidak ada kategori';
-    },
-    
-    formatStatus(status) {
-      const statusMap = {
-        'unverified': 'Belum Diverifikasi',
-        'verified': 'Diproses',
-        'rejected': 'Ditolak',
-        'finished': 'Selesai'
-      };
-      
-      return statusMap[status] || status;
-    },
-
-    openUrgentReportDialog() {
-      // Add your logic to open a dialog or navigate to urgent report form
-      this.$router.push('/kalab/addpelaporankejadianmendesakkalab'); // Or use a dialog instead
-    },
-
-    addNewReport() {
-      // Navigate to form page or show modal for adding a new report
-      console.log('Add new incident report');
-      // For example:
-      this.$router.push('/kalab/addpelaporankejadiankalab');
-    },
-    
-    viewDetail(laporanId) {
-      // Explicitly use the correct route name with parameter
-      this.$router.push({ 
-        name: 'DetailPK', 
-        params: { id: laporanId } 
-      });
-    },
-    
-    // Pagination methods
-    goToPage(page) {
-      if (page >= 1 && page <= this.totalPages) {
-        this.currentPage = page;
-      }
-    },
-    
-    prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-      }
-    },
-    
-    nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++;
-      }
-    },
-
-    // New filtering method
-    applyFilters() {
-      // The computed property will automatically apply filters
-      // Just reset the current page
-      this.currentPage = 1;
-    },
-    
-    resetFilters() {
-      this.filters = {
-        category_id: '',
-        status: '',
-        startDate: '',
-        endDate: ''
-      };
-      this.search = '';
-      this.currentPage = 1;
-    },
-
-    handleSearch() {
-      // Reset to first page when search term changes
-      this.currentPage = 1;
-    },
-    
-    // Make sure to call this when component is created or data is loaded
-    initializeReports() {
-      this.filteredLaporan = [...this.laporan];
-    },
-
-    resetPage() {
-      // Reset to page 1 when page size changes
-      this.currentPage = 1;
-    },
-
-    formatDate(dateString) {
-      if (!dateString) return '-';
-      
-      const date = new Date(dateString);
-      
-      // Format to DD-MM-YYYY
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const year = date.getFullYear();
-      
-      return `${day}-${month}-${year}`;
-    },
-    
-    // Method baru untuk export PDF dengan html2pdf.js
-    async exportToPDF() {
-      if (this.exportInProgress) return;
-
-      this.exportInProgress = true;
-
-      try {
-        // Determine the data to export based on active filters or all data
-        this.dataToExport = this.isFilterActive ? this.allFilteredData : this.laporan;
-
-        // Wait for Vue to render hidden elements
-        await this.$nextTick();
-
-        // Get the element to be converted to PDF
-        const element = document.getElementById('pdf-content');
-
-        // Ensure the element is visible
-        element.style.display = 'block';
-
-        // Options for html2pdf
-        const options = {
-          margin: [20, 10, 20, 10], // [top, right, bottom, left] in mm
-          filename: `Laporan_Kejadian_${this.formatDate(new Date()).replace(/-/g, '')}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-        };
-
-        // Generate PDF
-        await html2pdf()
-          .from(element)
-          .set(options)
-          .save();
-
-        // Hide the element again after processing
-        element.style.display = 'none';
-      } catch (error) {
-        console.error('Error exporting to PDF:', error);
-        alert('Terjadi kesalahan saat export PDF. Silakan coba lagi.');
-      } finally {
-        this.exportInProgress = false;
-      }
-    }
-  },
+  // Store total filtered count before pagination
+  totalFilteredCount.value = result.length;
   
-  mounted() {
-    this.fetchData();
+  // Apply pagination directly in filteredLaporan
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  
+  return result.slice(start, end);
+});
 
-    const savedPageSize = localStorage.getItem('dashboardPkPageSize');
-    if (savedPageSize) {
-      this.pageSize = parseInt(savedPageSize);
-    }
-  },
-
-  watch: {
-    search() {
-      this.currentPage = 1;
-    },
-
-    pageSize(newValue) {
-      // Optionally save the user's preference to localStorage
-      localStorage.setItem('dashboardPkPageSize', newValue);
-    },
-
-    'filters': {
-      handler() {
-        this.resetPage();
-      },
-      deep: true
-    },
+// Computed property untuk mendapatkan semua data yang terfilter tanpa pagination
+const allFilteredData = computed(() => {
+  // Start with all reports
+  let result = [...laporan.value];
+  
+  // Apply search filter
+  if (search.value) {
+    const searchTerm = search.value.toLowerCase();
+    result = result.filter(item => 
+      (item.judul && item.judul.toLowerCase().includes(searchTerm)) || 
+      (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(searchTerm)) ||
+      (item.nama_pelapor && item.nama_pelapor.toLowerCase().includes(searchTerm))
+    );
+  }
+  
+  // Apply category filter
+  if (filters.value.category_id) {
+    result = result.filter(item => 
+      String(item.category_id) === String(filters.value.category_id)
+    );
+  }
+  
+  // Apply status filter
+  if (filters.value.status) {
+    // Map frontend status labels to actual status values in the data
+    const statusMap = {
+      'Belum Diverifikasi': 'unverified',
+      'Diproses': 'verified',
+      'Ditolak': 'rejected'
+    };
     
-    // Reset pagination when filtered results change significantly
-    filteredLaporan() {
-      if (this.currentPage > this.totalPages && this.totalPages > 0) {
-        this.currentPage = this.totalPages;
+    const statusValue = statusMap[filters.value.status] || filters.value.status;
+    result = result.filter(item => item.status === statusValue);
+  }
+  
+  // Apply date range filter
+  if (filters.value.startDate || filters.value.endDate) {
+    result = result.filter(item => {
+      // Convert to Date objects for comparison
+      const itemDate = new Date(item.created_at || item.tanggal);
+      
+      // Check start date if specified
+      if (filters.value.startDate) {
+        const startDate = new Date(filters.value.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        if (itemDate < startDate) return false;
       }
+      
+      // Check end date if specified
+      if (filters.value.endDate) {
+        const endDate = new Date(filters.value.endDate);
+        endDate.setHours(23, 59, 59, 999);
+        if (itemDate > endDate) return false;
+      }
+      
+      return true;
+    });
+  }
+  
+  return result;
+});
+
+// Check if any filter is active
+const isFilterActive = computed(() => {
+  return (
+    search.value.trim() !== '' || 
+    filters.value.category_id !== '' || 
+    filters.value.status !== '' || 
+    filters.value.startDate !== '' || 
+    filters.value.endDate !== ''
+  );
+});
+
+// Update totalPages to use totalFilteredCount
+const totalPages = computed(() => {
+  return Math.ceil(totalFilteredCount.value / pageSize.value);
+});
+
+const startIndex = computed(() => {
+  return (currentPage.value - 1) * pageSize.value;
+});
+
+const endIndex = computed(() => {
+  return Math.min(startIndex.value + filteredLaporan.value.length, totalFilteredCount.value);
+});
+
+const unverifiedCount = computed(() => {
+  return laporan.value.filter(item => item.status === 'verified').length;
+});
+
+const verifiedCount = computed(() => {
+  return laporan.value.filter(item => item.status === 'finished').length;
+});
+
+// Display data should be based on filteredLaporan instead of laporan directly
+const displayedLaporan = computed(() => {
+  const start = startIndex.value;
+  const end = start + itemsPerPage.value;
+  return filteredLaporan.value.slice(start, end);
+});
+
+const filteredCategories = computed(() => {
+  const filtered = {};
+  
+  // Loop through the categories object and exclude those starting with "Kekerasan"
+  for (const [id, name] of Object.entries(categories.value)) {
+    if (!name.startsWith('Kekerasan')) {
+      filtered[id] = name;
     }
   }
+  
+  return filtered;
+});
+
+// Methods
+const fetchData = async () => {
+  loading.value = true;
+  try {
+    // Check for authentication token in cookies
+    const token = VueCookies.get('auth_token');
+    if (token) {
+      // You can use the decryptData function here if needed
+      // const decryptedToken = decryptData(token);
+      
+      // Set axios headers
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+    
+    // Fetch categories first
+    const categoriesResponse = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
+    // Transform categories array to an object with id as key for easy lookup
+    categories.value = categoriesResponse.data.reduce((acc, category) => {
+      acc[category.category_id] = category.nama;
+      return acc;
+    }, {});
+    
+    // Then fetch laporan data
+    const laporanResponse = await axios.get('https://v3422040.mhs.d3tiuns.com/api/laporan');
+    laporan.value = laporanResponse.data;
+    
+    console.log('Laporan data loaded:', laporan.value); // Debug log
+    console.log('Categories loaded:', categories.value); // Debug log
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    error.value = 'Gagal memuat data. Silakan coba lagi nanti.';
+  } finally {
+    loading.value = false;
+  }
 };
+
+const sortBy = (key) => {
+  // If clicking the same column, toggle sort order
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    // If clicking a different column, set it as the new sort key and default to ascending
+    sortKey.value = key;
+    sortOrder.value = 'asc';
+  }
+  
+  // Reset to first page when sorting changes
+  currentPage.value = 1;
+};
+
+const getSortIcon = (key) => {
+  if (sortKey.value !== key) {
+    return 'fas fa-sort'; // Default icon when column is not being sorted
+  }
+  return sortOrder.value === 'asc' 
+    ? 'fas fa-sort-up' 
+    : 'fas fa-sort-down';
+};
+
+const getCategoryName = (categoryId) => {
+  return categories.value[categoryId] || 'Tidak ada kategori';
+};
+
+const formatStatus = (status) => {
+  const statusMap = {
+    'unverified': 'Belum Diverifikasi',
+    'verified': 'Diproses',
+    'rejected': 'Ditolak',
+    'finished': 'Selesai'
+  };
+  
+  return statusMap[status] || status;
+};
+
+const openUrgentReportDialog = () => {
+  // Add your logic to open a dialog or navigate to urgent report form
+  router.push('/kalab/addpelaporankejadianmendesakkalab'); // Or use a dialog instead
+};
+
+const addNewReport = () => {
+  // Navigate to form page or show modal for adding a new report
+  console.log('Add new incident report');
+  // For example:
+  router.push('/kalab/addpelaporankejadiankalab');
+};
+
+const viewDetail = (laporanId) => {
+  // Explicitly use the correct route name with parameter
+  router.push({ 
+    name: 'DetailPK', 
+    params: { id: laporanId } 
+  });
+};
+
+// Pagination methods
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+  }
+};
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+};
+
+// New filtering method
+const applyFilters = () => {
+  // The computed property will automatically apply filters
+  // Just reset the current page
+  currentPage.value = 1;
+};
+
+const resetFilters = () => {
+  filters.value = {
+    category_id: '',
+    status: '',
+    startDate: '',
+    endDate: ''
+  };
+  search.value = '';
+  currentPage.value = 1;
+};
+
+const handleSearch = () => {
+  // Reset to first page when search term changes
+  currentPage.value = 1;
+};
+
+const resetPage = () => {
+  // Reset to page 1 when page size changes
+  currentPage.value = 1;
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return '-';
+  
+  const date = new Date(dateString);
+  
+  // Format to DD-MM-YYYY
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  
+  return `${day}-${month}-${year}`;
+};
+
+// Method untuk export PDF dengan html2pdf.js
+const exportToPDF = async () => {
+  if (exportInProgress.value) return;
+
+  exportInProgress.value = true;
+
+  try {
+    // Determine the data to export based on active filters or all data
+    dataToExport.value = isFilterActive.value ? allFilteredData.value : laporan.value;
+
+    // Wait for Vue to render hidden elements
+    await nextTick();
+
+    // Get the element to be converted to PDF
+    const element = document.getElementById('pdf-content');
+
+    // Ensure the element is visible
+    element.style.display = 'block';
+
+    // Options for html2pdf
+    const options = {
+      margin: [20, 10, 20, 10], // [top, right, bottom, left] in mm
+      filename: `Laporan_Kejadian_${formatDate(new Date()).replace(/-/g, '')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    };
+
+    // Generate PDF
+    await html2pdf()
+      .from(element)
+      .set(options)
+      .save();
+
+    // Hide the element again after processing
+    element.style.display = 'none';
+  } catch (error) {
+    console.error('Error exporting to PDF:', error);
+    alert('Terjadi kesalahan saat export PDF. Silakan coba lagi.');
+  } finally {
+    exportInProgress.value = false;
+  }
+};
+
+// Lifecycle hooks
+onMounted(() => {
+  fetchData();
+
+  const savedPageSize = localStorage.getItem('dashboardPkPageSize');
+  if (savedPageSize) {
+    pageSize.value = parseInt(savedPageSize);
+  }
+});
+
+// Clean up any event listeners or resources when component unmounts
+onBeforeUnmount(() => {
+  // Any cleanup logic needed
+});
+
+// Watchers
+watch(search, () => {
+  currentPage.value = 1;
+});
+
+watch(pageSize, (newValue) => {
+  // Optionally save the user's preference to localStorage
+  localStorage.setItem('dashboardPkPageSize', newValue);
+});
+
+watch(filters, () => {
+  resetPage();
+}, { deep: true });
+
+// Reset pagination when filtered results change significantly
+watch(totalFilteredCount, (newCount) => {
+  if (currentPage.value > totalPages.value && totalPages.value > 0) {
+    currentPage.value = totalPages.value;
+  }
+});
 </script>
 
 <style scoped>

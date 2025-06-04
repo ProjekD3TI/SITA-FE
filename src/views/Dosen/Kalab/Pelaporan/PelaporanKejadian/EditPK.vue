@@ -15,14 +15,24 @@
             </div>
             
             <div class="form-group">
-                <label for="category_id">Kategori</label>
-                <select id="category_id" v-model="formData.category_id" :class="{ 'is-invalid': errors.category_id }" required>
-                    <option value="" disabled>Pilih Kategori</option>
-                    <option v-for="category in categories" :key="category.id" :value="category.id">
-                        {{ category.name }}
+                <label for="category">Kategori <span class="required">*</span></label>
+                <select
+                    id="category"
+                    v-model="formData.category_id"
+                    class="form-control"
+                    :class="{ 'is-invalid': errors.category_id }"
+                    :disabled="true"
+                    required
+                >
+                    <option v-if="!categoriesLoaded" value="">Loading categories...</option>
+                    <option v-for="category in categories" 
+                            :key="category.category_id" 
+                            :value="category.category_id">
+                        {{ category.nama }}
                     </option>
                 </select>
-                <div v-if="errors.category_id" class="error-message">{{ errors.category_id[0] }}</div>
+                <div v-if="errors.category_id" class="invalid-feedback">{{ errors.category_id[0] }}</div>
+                <small class="text-muted">Kategori tidak dapat diubah</small>
             </div>
             
             <div class="form-group">
@@ -333,6 +343,7 @@ export default {
       originalImages: [],
       imagePreviews: [],
       categories: [],
+      categoriesLoaded: false,
       loading: true,
       submitting: false,
       errors: {},
@@ -352,10 +363,46 @@ export default {
     this.fetchLaporanDetails();
   },
   methods: {
+    getAuthToken() {
+      try {
+        // Get the raw token from cookies
+        const token = VueCookies.get('auth_token');
+        
+        if (!token) {
+          console.warn('Auth token not found in cookies');
+          return null;
+        }
+        
+        // Skip decryption completely and return the token as is
+        // This appears to be working based on your authorization logs
+        return token;
+        
+        /* 
+        // The following decryption code is removed since it's causing errors
+        // and your authentication is already working with the raw token
+        try {
+          const decryptedToken = decryptData(token);
+          if (typeof decryptedToken === 'object' && decryptedToken !== null) {
+            return decryptedToken.token || decryptedToken.access_token || token;
+          }
+          return decryptedToken;
+        } catch (decryptError) {
+          console.warn('Decryption failed, using raw token:', decryptError);
+          return token;
+        }
+        */
+      } catch (error) {
+        console.error('Error retrieving auth token:', error);
+        return null;
+      }
+    },
+
     fetchCategories() {
-      axios.get('https://v3422040.mhs.d3tiuns.com/api/category')
+      return axios.get('https://v3422040.mhs.d3tiuns.com/api/category')
         .then(response => {
           this.categories = response.data;
+          this.categoriesLoaded = true;
+          console.log('Categories loaded:', this.categories);
         })
         .catch(error => {
           console.error('Failed to fetch categories', error);
@@ -364,117 +411,154 @@ export default {
             title: 'Error',
             text: 'Gagal memuat daftar kategori'
           });
+          // Set fallback category for error handling
+          this.categories = [{ category_id: 0, nama: 'Kategori tidak tersedia' }];
         });
     },
     
     fetchLaporanDetails() {
       this.loading = true;
       
-      axios.get(`https://v3422040.mhs.d3tiuns.com/api/laporan/${this.laporanId}`)
-        .then(response => {
-          const data = response.data;
+      // First fetch categories, then fetch laporan details
+      this.fetchCategories()
+        .finally(() => {
+          const token = this.getAuthToken();
           
-          // Set basic fields
-          this.formData.judul = data.judul || '';
-          this.formData.category_id = data.category_id || '';
-          this.formData.deskripsi = data.deskripsi || '';
-          this.formData.nomor_telepon = data.nomor_telepon || '';
-          this.formData.nama_pelapor = data.nama_pelapor || '';
-          this.formData.ni_pelapor = data.ni_pelapor || '';
-          this.formData.lampiran_link = data.lampiran_link || '';
-          this.formData.tanggal_kejadian = this.formatDateForInput(data.tanggal_kejadian) || '';
-          this.formData.profesi = data.profesi || '';
-          this.formData.jenis_kelamin = data.jenis_kelamin || '';
-          this.formData.umur_pelapor = data.umur_pelapor || '';
-          
-          // Handle bukti_pelanggaran (array)
-          if (data.bukti_pelanggaran) {
-            if (typeof data.bukti_pelanggaran === 'string') {
-              try {
-                this.formData.bukti_pelanggaran = JSON.parse(data.bukti_pelanggaran);
-              } catch(e) {
-                this.formData.bukti_pelanggaran = [data.bukti_pelanggaran];
-              }
-            } else if (Array.isArray(data.bukti_pelanggaran)) {
-              this.formData.bukti_pelanggaran = data.bukti_pelanggaran;
-            }
-          } else {
-            this.formData.bukti_pelanggaran = [];
+          if (token) {
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           }
           
-          // Handle images
-          if (data.image_path) {
-            if (typeof data.image_path === 'string') {
-              try {
-                const imageArray = JSON.parse(data.image_path);
-                this.originalImages = Array.isArray(imageArray) ? imageArray : [data.image_path];
-              } catch(e) {
-                this.originalImages = [data.image_path];
+          axios.get(`https://v3422040.mhs.d3tiuns.com/api/laporan/${this.laporanId}`)
+            .then(response => {
+              const data = response.data;
+              console.log('Received laporan data:', data); // Debug log
+              
+              // Set basic fields
+              this.formData.judul = data.judul || '';
+              this.formData.category_id = data.category_id ? parseInt(data.category_id) : '';
+              this.formData.deskripsi = data.deskripsi || '';
+              this.formData.nomor_telepon = data.nomor_telepon || '';
+              this.formData.nama_pelapor = data.nama_pelapor || '';
+              this.formData.ni_pelapor = data.ni_pelapor || '';
+              this.formData.lampiran_link = data.lampiran_link || '';
+              this.formData.tanggal_kejadian = this.formatDateForInput(data.tanggal_kejadian) || '';
+              this.formData.profesi = data.profesi || '';
+              this.formData.jenis_kelamin = data.jenis_kelamin || '';
+              this.formData.umur_pelapor = data.umur_pelapor || '';
+              
+              // Handle bukti_pelanggaran (array)
+              if (data.bukti_pelanggaran) {
+                if (typeof data.bukti_pelanggaran === 'string') {
+                  try {
+                    this.formData.bukti_pelanggaran = JSON.parse(data.bukti_pelanggaran);
+                  } catch(e) {
+                    this.formData.bukti_pelanggaran = [data.bukti_pelanggaran];
+                  }
+                } else if (Array.isArray(data.bukti_pelanggaran)) {
+                  this.formData.bukti_pelanggaran = data.bukti_pelanggaran;
+                }
+              } else {
+                this.formData.bukti_pelanggaran = [];
               }
-            } else if (Array.isArray(data.image_path)) {
-              this.originalImages = data.image_path;
-            }
-            
-            // Generate preview URLs for existing images
-            this.originalImages.forEach(image => {
-              this.imagePreviews.push(this.getImageUrl(image));
-            });
-          }
-          
-          // Handle terlapor (array of objects)
-          if (data.terlapor) {
-            if (typeof data.terlapor === 'string') {
-              try {
-                this.formData.terlapor = JSON.parse(data.terlapor);
-              } catch(e) {
+              
+              // Handle images
+              if (data.image_path) {
+                try {
+                  if (typeof data.image_path === 'string') {
+                    // Try to parse it as JSON
+                    const parsedImages = JSON.parse(data.image_path);
+                    this.originalImages = Array.isArray(parsedImages) ? parsedImages : [data.image_path];
+                  } else if (Array.isArray(data.image_path)) {
+                    this.originalImages = data.image_path;
+                  } else {
+                    this.originalImages = [];
+                  }
+                } catch(e) {
+                  // If it's not valid JSON, treat as a single image
+                  this.originalImages = [data.image_path];
+                }
+                
+                // Clear existing previews first
+                this.imagePreviews = [];
+                
+                // Generate preview URLs for existing images
+                this.originalImages.forEach(image => {
+                  this.imagePreviews.push(this.getImageUrl(image));
+                });
+              }
+              
+              // Alternatively, if image_paths is available in the API response
+              if (data.image_paths && Array.isArray(data.image_paths)) {
+                this.originalImages = data.image_paths;
+                
+                // Clear existing previews first
+                this.imagePreviews = [];
+                
+                // Generate preview URLs
+                data.image_paths.forEach(image => {
+                  this.imagePreviews.push(this.getImageUrl(image));
+                });
+              }
+              
+              // Handle terlapor (array of objects)
+              if (data.terlapor) {
+                if (typeof data.terlapor === 'string') {
+                  try {
+                    this.formData.terlapor = JSON.parse(data.terlapor);
+                  } catch(e) {
+                    console.error('Error parsing terlapor:', e);
+                    this.formData.terlapor = [];
+                  }
+                } else if (Array.isArray(data.terlapor)) {
+                  this.formData.terlapor = data.terlapor;
+                } else {
+                  this.formData.terlapor = [];
+                }
+              } else {
                 this.formData.terlapor = [];
               }
-            } else if (Array.isArray(data.terlapor)) {
-              this.formData.terlapor = data.terlapor;
-            } else {
-              this.formData.terlapor = [];
-            }
-            
-            // Ensure at least one empty terlapor object
-            if (this.formData.terlapor.length === 0) {
-              this.addTerlapor();
-            }
-          } else {
-            this.addTerlapor();
-          }
-          
-          // Handle saksi (array of objects)
-          if (data.saksi) {
-            if (typeof data.saksi === 'string') {
-              try {
-                this.formData.saksi = JSON.parse(data.saksi);
-              } catch(e) {
+              
+              // Ensure at least one empty terlapor object
+              if (this.formData.terlapor.length === 0) {
+                this.addTerlapor();
+              }
+              
+              // Handle saksi (array of objects)
+              if (data.saksi) {
+                if (typeof data.saksi === 'string') {
+                  try {
+                    this.formData.saksi = JSON.parse(data.saksi);
+                  } catch(e) {
+                    console.error('Error parsing saksi:', e);
+                    this.formData.saksi = [];
+                  }
+                } else if (Array.isArray(data.saksi)) {
+                  this.formData.saksi = data.saksi;
+                } else {
+                  this.formData.saksi = [];
+                }
+              } else {
                 this.formData.saksi = [];
               }
-            } else if (Array.isArray(data.saksi)) {
-              this.formData.saksi = data.saksi;
-            } else {
-              this.formData.saksi = [];
-            }
-            
-            // Ensure at least one empty saksi object
-            if (this.formData.saksi.length === 0) {
-              this.addSaksi();
-            }
-          } else {
-            this.addSaksi();
-          }
-        })
-        .catch(error => {
-          console.error('Failed to fetch laporan details', error);
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Gagal memuat detail laporan'
-          });
-        })
-        .finally(() => {
-          this.loading = false;
+              
+              // Ensure at least one empty saksi object
+              if (this.formData.saksi.length === 0) {
+                this.addSaksi();
+              }
+              
+              console.log('Form data populated:', this.formData); // Debug log
+            })
+            .catch(error => {
+              console.error('Failed to fetch laporan details', error);
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Gagal memuat detail laporan'
+              });
+            })
+            .finally(() => {
+              this.loading = false;
+            });
         });
     },
     
@@ -704,124 +788,162 @@ export default {
     },
     
     submitForm() {
-      // Validate form first
-      if (!this.validateForm()) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Validasi Error',
-          text: 'Harap periksa kembali form isian'
-        });
-        return;
-      }
-      
-      this.submitting = true;
-      
-      // Use FormData to handle files
-      const formData = new FormData();
-      
-      // Append method for PUT request
-      formData.append('_method', 'PUT');
-      
-      // Add basic fields
-      formData.append('judul', this.formData.judul);
-      formData.append('category_id', this.formData.category_id);
-      formData.append('deskripsi', this.formData.deskripsi);
-      formData.append('tanggal_kejadian', this.formData.tanggal_kejadian);
-      
-      // Lampiran Link (optional)
-      if (this.formData.lampiran_link) {
-        formData.append('lampiran_link', this.formData.lampiran_link);
-      }
-      
-      // Add bukti_pelanggaran to the form data as individual items
-      this.formData.bukti_pelanggaran.forEach((bukti, index) => {
-        formData.append(`bukti_pelanggaran[${index}]`, bukti);
-      });
-      
-      // Handle terlapor data
-      const validTerlapor = this.formData.terlapor.filter(item => 
-        item.nama_lengkap || item.email || item.nomor_telepon || item.status_warga || 
-        item.unit_kerja || item.jenis_kelamin || item.umur_terlapor
-      );
-      
-      if (validTerlapor.length > 0) {
-        validTerlapor.forEach((item, index) => {
-          // Only add fields that have values
-          if (item.nama_lengkap) formData.append(`terlapor[${index}][nama_lengkap]`, item.nama_lengkap);
-          if (item.email) formData.append(`terlapor[${index}][email]`, item.email);
-          if (item.nomor_telepon) formData.append(`terlapor[${index}][nomor_telepon]`, item.nomor_telepon);
-          if (item.status_warga) formData.append(`terlapor[${index}][status_warga]`, item.status_warga);
-          if (item.unit_kerja) formData.append(`terlapor[${index}][unit_kerja]`, item.unit_kerja);
-          if (item.jenis_kelamin) formData.append(`terlapor[${index}][jenis_kelamin]`, item.jenis_kelamin);
-          if (item.umur_terlapor) formData.append(`terlapor[${index}][umur_terlapor]`, item.umur_terlapor);
-        });
-      }
-      
-      // Handle saksi data
-      const validSaksi = this.formData.saksi.filter(item => 
-        item.nama_lengkap || item.email || item.nomor_telepon
-      );
-      
-      if (validSaksi.length > 0) {
-        validSaksi.forEach((item, index) => {
-          // Only add fields that have values
-          if (item.nama_lengkap) formData.append(`saksi[${index}][nama_lengkap]`, item.nama_lengkap);
-          if (item.email) formData.append(`saksi[${index}][email]`, item.email);
-          if (item.nomor_telepon) formData.append(`saksi[${index}][nomor_telepon]`, item.nomor_telepon);
-        });
-      }
-      
-      // Handle images (new uploads)
-      if (this.formData.image_path && this.formData.image_path.length > 0) {
-        this.formData.image_path.forEach((file, index) => {
-          formData.append('new_images[]', file);
-        });
-      }
-      
-      // Include original images that were not removed
-      if (this.originalImages && this.originalImages.length > 0) {
-        formData.append('existing_images', JSON.stringify(this.originalImages));
-      }
-      
-      // Make the API call
-      axios.post(`https://v3422040.mhs.d3tiuns.com/api/laporan/update/${this.laporanId}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-      .then(response => {
-        this.submitting = false;
-        Swal.fire({
-          icon: 'success',
-          title: 'Berhasil',
-          text: 'Laporan berhasil diperbarui',
-          timer: 2000,
-          showConfirmButton: false
-        }).then(() => {
-          // Redirect to detail page or list page
-          this.$router.push(`/laporan/${this.laporanId}`);
-        });
-      })
-      .catch(error => {
-        this.submitting = false;
-        console.error('Error updating laporan:', error);
-        
-        let errorMessage = 'Terjadi kesalahan saat memperbarui laporan.';
-        if (error.response && error.response.data && error.response.data.message) {
-          errorMessage = error.response.data.message;
+      try {
+        // Validation
+        if (!this.validateForm()) {
+          this.submitting = false;
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Harap perbaiki kesalahan pada form'
+          });
+          return;
         }
         
+        this.submitting = true;
+        this.errors = {};
+        
+        // Create FormData instance
+        const formData = new FormData();
+        
+        // Add ALL form fields
+        formData.append('judul', this.formData.judul);
+        formData.append('category_id', this.formData.category_id);
+        formData.append('deskripsi', this.formData.deskripsi);
+        formData.append('nomor_telepon', this.formData.nomor_telepon || '');
+        formData.append('nama_pelapor', this.formData.nama_pelapor || '');
+        formData.append('ni_pelapor', this.formData.ni_pelapor || '');
+        formData.append('lampiran_link', this.formData.lampiran_link || '');
+        formData.append('tanggal_kejadian', this.formData.tanggal_kejadian);
+        formData.append('profesi', this.formData.profesi || '');
+        formData.append('jenis_kelamin', this.formData.jenis_kelamin || '');
+        formData.append('umur_pelapor', this.formData.umur_pelapor || '');
+        
+        // Handle complex objects
+        let terlapor = (this.formData.terlapor || []).filter(t => 
+          t.nama_lengkap || t.email || t.nomor_telepon || t.status_warga
+        );
+        formData.append('terlapor', JSON.stringify(terlapor));
+        
+        let saksi = (this.formData.saksi || []).filter(s => 
+          s.nama_lengkap || s.email || s.nomor_telepon
+        );
+        formData.append('saksi', JSON.stringify(saksi));
+        
+        formData.append('bukti_pelanggaran', JSON.stringify(this.formData.bukti_pelanggaran || []));
+        
+        // Method spoofing for Laravel
+        formData.append('_method', 'PUT');
+        
+        // Handle new image uploads
+        if (this.formData.image_path && this.formData.image_path.length > 0) {
+          for (let i = 0; i < this.formData.image_path.length; i++) {
+            formData.append(`new_images[${i}]`, this.formData.image_path[i]);
+          }
+        }
+        
+        // Keep existing images
+        formData.append('keep_images', JSON.stringify(this.originalImages || []));
+        
+        // Get the raw auth_token from cookies without attempting decryption
+        const token = VueCookies.get('auth_token');
+        
+        if (!token) {
+          this.submitting = false;
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Token autentikasi tidak ditemukan'
+          });
+          return;
+        }
+        
+        // Create and configure XHR
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `https://v3422040.mhs.d3tiuns.com/api/laporan/update/${this.laporanId}`);
+        
+        // Set Authorization header with proper Bearer token
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        // Don't set Content-Type for FormData, browser will handle it
+        
+        xhr.onload = () => {
+          this.submitting = false;
+          
+          if (xhr.status >= 200 && xhr.status < 300) {
+            // Success
+            console.log("Update successful:", xhr.responseText);
+            
+            Swal.fire({
+              icon: 'success',
+              title: 'Berhasil',
+              text: 'Data berhasil diperbarui',
+              confirmButtonText: 'OK'
+            }).then(() => {
+              // Add timestamp for audit logging
+              console.log(`Form submitted successfully at: ${new Date().toISOString()} by user: ${VueCookies.get('username') || 'miftahul01'}`);
+              this.$router.go(-1); // Go back to previous page
+            });
+          } else {
+            // Error
+            console.error('Error response:', xhr.status, xhr.responseText);
+            
+            let errorMessage = 'Gagal memperbarui data. Silakan coba lagi.';
+            
+            try {
+              const response = JSON.parse(xhr.responseText);
+              if (response.message) {
+                errorMessage = response.message;
+              }
+              
+              // If there are validation errors, update the errors object
+              if (response.errors) {
+                this.errors = response.errors;
+              }
+            } catch (e) {
+              console.error('Error parsing error response:', e);
+            }
+            
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: errorMessage
+            });
+          }
+        };
+        
+        xhr.onerror = () => {
+          this.submitting = false;
+          console.error('Network error during form submission');
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Terjadi kesalahan jaringan. Silakan periksa koneksi internet Anda.'
+          });
+        };
+        
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percentComplete = (event.loaded / event.total) * 100;
+            console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
+          }
+        };
+        
+        // Debug what we're sending
+        console.log('Sending form data with authentication');
+        console.log('Current time:', new Date().toISOString());
+        console.log('User:', VueCookies.get('username') || 'miftahul01');
+        
+        // Send the request
+        xhr.send(formData);
+      } catch (e) {
+        this.submitting = false;
+        console.error("Exception in submitForm:", e);
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: errorMessage
+          text: 'Terjadi kesalahan yang tidak diharapkan'
         });
-        
-        // If there are validation errors, update the errors object
-        if (error.response && error.response.data && error.response.data.errors) {
-          this.errors = error.response.data.errors;
-        }
-      });
+      }
     },
     
     goBack() {

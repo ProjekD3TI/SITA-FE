@@ -292,743 +292,758 @@
     </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted, watch, nextTick, onBeforeUnmount } from "vue";
+import { decryptData } from "../../../../../services/encrypt";
+import VueCookies from "vue-cookies";
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { useRoute, useRouter } from 'vue-router';
 
-export default {
-    name: 'DetailPK',
-    data() {
-        return {
-            laporanId: null,
-            laporan: null,
-            categories: {},
-            loading: true,
-            loadingAction: false,
-            error: null,
-            showLightbox: false,
-            currentImageIndex: 0,
-            showTanggapanModal: false,
-            tanggapanText: '',
-            showVerificationModal: false,
-            isVerifying: false,
-            currentUser: 'miftahul01', // Current user's login as specified
-        };
-    },
-    
-    created() {
-        this.laporanId = this.$route.params.id;
-        this.fetchCategories();
-        this.fetchLaporanDetail();
-    },
-    
-    computed: {
-        hasTanggapan() {
-            if (!this.laporan) return false;
-            if (!this.laporan.tanggapan) return false;
-            
-            if (Array.isArray(this.laporan.tanggapan)) {
-                return this.laporan.tanggapan.length > 0;
-            }
-            
-            return typeof this.laporan.tanggapan === 'string' && this.laporan.tanggapan.trim() !== '';
-        },
-        
-        // Process image path to get an array of images
-        imageArray() {
-            if (!this.laporan || !this.laporan.image_path) return [];
-            
-            // If already an array, return it
-            if (Array.isArray(this.laporan.image_path)) {
-                return this.laporan.image_path;
-            }
-            
-            // If it's a JSON string, parse it
-            if (typeof this.laporan.image_path === 'string') {
-                try {
-                    const parsedArray = JSON.parse(this.laporan.image_path);
-                    if (Array.isArray(parsedArray)) {
-                        return parsedArray;
-                    }
-                } catch (e) {
-                    // Not a valid JSON or parsing error, treat as a single image
-                    console.log('Not a JSON string, treating as single image');
-                }
-                
-                // If not a parseable JSON array, return as single item array
-                return [this.laporan.image_path];
-            }
-            
-            return [];
-        },
-        
-        // Process terlapor data to get an array
-        terlaporArray() {
-            if (!this.laporan || !this.laporan.terlapor) return [];
-            
-            // If already an array, return it
-            if (Array.isArray(this.laporan.terlapor)) {
-                return this.laporan.terlapor;
-            }
-            
-            // If it's a JSON string, parse it
-            if (typeof this.laporan.terlapor === 'string') {
-                try {
-                    const parsedArray = JSON.parse(this.laporan.terlapor);
-                    if (Array.isArray(parsedArray)) {
-                        return parsedArray;
-                    }
-                } catch (e) {
-                    console.log('Terlapor is not a valid JSON string', e);
-                }
-            }
-            
-            return [];
-        },
-        
-        // Process saksi data to get an array
-        saksiArray() {
-            if (!this.laporan || !this.laporan.saksi) return [];
-            
-            // If already an array, return it
-            if (Array.isArray(this.laporan.saksi)) {
-                return this.laporan.saksi;
-            }
-            
-            // If it's a JSON string, parse it
-            if (typeof this.laporan.saksi === 'string') {
-                try {
-                    const parsedArray = JSON.parse(this.laporan.saksi);
-                    if (Array.isArray(parsedArray)) {
-                        return parsedArray;
-                    }
-                } catch (e) {
-                    console.log('Saksi is not a valid JSON string', e);
-                }
-            }
-            
-            return [];
-        },
+const route = useRoute();
+const router = useRouter();
 
-        buktiPelanggaranArray() {
-            if (!this.laporan || !this.laporan.bukti_pelanggaran) return [];
-            
-            // If already an array, return it
-            if (Array.isArray(this.laporan.bukti_pelanggaran)) {
-                return this.laporan.bukti_pelanggaran;
-            }
-            
-            // If it's a JSON string, parse it
-            if (typeof this.laporan.bukti_pelanggaran === 'string') {
-                try {
-                    const parsedArray = JSON.parse(this.laporan.bukti_pelanggaran);
-                    if (Array.isArray(parsedArray)) {
-                        return parsedArray;
-                    }
-                } catch (e) {
-                    console.log('bukti_pelanggaran is not a valid JSON string', e);
-                }
-            }
-            
-            return [];
-        },
-    },
-    
-    methods: {
-        async fetchCategories() {
-            try {
-                const response = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
-                this.categories = response.data.reduce((acc, category) => {
-                    acc[category.category_id] = category.nama;
-                    return acc;
-                }, {});
-            } catch (error) {
-                console.error('Error fetching categories:', error);
-            }
-        },
-        
-        async fetchLaporanDetail() {
-            this.loading = true;
-            this.error = null;
-            
-            try {
-                const response = await axios.get(`https://v3422040.mhs.d3tiuns.com/api/laporan/${this.laporanId}`);
-                this.laporan = response.data;
-                
-                // Process tanggapan data
-                if (this.laporan.tanggapan) {
-                    // Try to parse if it's a JSON string
-                    try {
-                        const parsed = JSON.parse(this.laporan.tanggapan);
-                        if (Array.isArray(parsed)) {
-                            this.laporan.tanggapan = parsed;
-                        }
-                    } catch (e) {
-                        // If it's not valid JSON, keep it as a string
-                        console.log('Tanggapan is not in JSON format, keeping as string');
-                    }
-                }
-                
-                this.tanggapanText = '';
-            } catch (error) {
-                console.error('Error fetching laporan detail:', error);
-                this.error = 'Gagal memuat data laporan. Silakan coba lagi.';
-            } finally {
-                this.loading = false;
-            }
-        },
+// State with ref
+const laporanId = ref(null);
+const laporan = ref(null);
+const categories = ref({});
+const loading = ref(true);
+const loadingAction = ref(false);
+const error = ref(null);
+const showLightbox = ref(false);
+const currentImageIndex = ref(0);
+const showTanggapanModal = ref(false);
+const tanggapanText = ref('');
+const showVerificationModal = ref(false);
+const isVerifying = ref(false);
+const currentUser = ref('miftahul01'); // Current user's login as specified
 
-        goToEditLaporan() {
-    // Navigate to the edit page using the current laporan ID
-    this.$router.push({
-        name: "EditPelaporanKejadianKalab",
-        params: {
-            id: this.laporanId
+// Initialize data
+onMounted(() => {
+    laporanId.value = route.params.id;
+    fetchCategories();
+    fetchLaporanDetail();
+});
+
+// Computed properties
+const hasTanggapan = computed(() => {
+    if (!laporan.value) return false;
+    if (!laporan.value.tanggapan) return false;
+    
+    if (Array.isArray(laporan.value.tanggapan)) {
+        return laporan.value.tanggapan.length > 0;
+    }
+    
+    return typeof laporan.value.tanggapan === 'string' && laporan.value.tanggapan.trim() !== '';
+});
+
+// Process image path to get an array of images
+const imageArray = computed(() => {
+    if (!laporan.value || !laporan.value.image_path) return [];
+    
+    // If already an array, return it
+    if (Array.isArray(laporan.value.image_path)) {
+        return laporan.value.image_path;
+    }
+    
+    // If it's a JSON string, parse it
+    if (typeof laporan.value.image_path === 'string') {
+        try {
+            const parsedArray = JSON.parse(laporan.value.image_path);
+            if (Array.isArray(parsedArray)) {
+                return parsedArray;
+            }
+        } catch (e) {
+            // Not a valid JSON or parsing error, treat as a single image
+            console.log('Not a JSON string, treating as single image');
         }
-    });
-},
         
-        goBack() {
-            this.$router.go(-1);
-        },
-        
-        formatDate(dateString) {
-            if (!dateString) return '-';
-            
-            try {
-                let date;
-                
-                // Special case for tanggal_kejadian - Apply timezone adjustment for MySQL format
-                if (typeof dateString === 'string' && this.laporan && dateString === this.laporan.tanggal_kejadian) {
-                    const [datePart, timePart] = dateString.split(' ');
-                    const [year, month, day] = datePart.split('-').map(Number);
-                    const [hours, minutes, seconds] = timePart.split(':').map(Number);
-                    
-                    // For tanggal_kejadian, assume it's UTC and add 7 hours for Jakarta
-                    date = new Date(Date.UTC(year, month-1, day, hours, minutes, seconds));
-                    date.setTime(date.getTime() + (7 * 60 * 60 * 1000)); // Add 7 hours
-                }
-                // For tanggapan timestamps (typically in ISO format)
-                else if (typeof dateString === 'string' && dateString.includes('T')) {
-                    // Parse ISO format but don't add hours because tanggapan timestamps are already in Jakarta time
-                    date = new Date(dateString);
-                }
-                // For all other dates (like created_at, updated_at in MySQL format)
-                else if (typeof dateString === 'string' && dateString.includes(' ')) {
-                    // Parse MySQL date format
-                    const [datePart, timePart] = dateString.split(' ');
-                    const [year, month, day] = datePart.split('-').map(Number);
-                    const [hours, minutes, seconds] = timePart.split(':').map(Number);
-                    
-                    // For regular MySQL dates, assume they're already in local time
-                    date = new Date(year, month-1, day, hours, minutes, seconds);
-                }
-                else {
-                    // Fallback for any other format
-                    date = new Date(dateString);
-                }
-                
-                // Check if date is valid
-                if (isNaN(date.getTime())) {
-                    return '-';
-                }
-                
-                // Format using Indonesian month names
-                const monthNames = [
-                    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-                    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-                ];
-                
-                const day = date.getDate();
-                const month = monthNames[date.getMonth()];
-                const year = date.getFullYear();
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                
-                // Return formatted date
-                return `${day} ${month} ${year} pukul ${hours}:${minutes}`;
-            } catch (error) {
-                console.error('Error formatting date:', error);
-                return dateString || '-';
-            }
-        },
+        // If not a parseable JSON array, return as single item array
+        return [laporan.value.image_path];
+    }
+    
+    return [];
+});
 
-        formatedDate(dateString) {
-            if (!dateString) return '-';
-            
-            try {
-                // Parse the date string
-                let date;
-                
-                if (typeof dateString === 'string') {
-                    // Handle different date formats
-                    if (dateString.includes(' ') && !dateString.includes('T')) {
-                        // MySQL format: "2025-04-24 11:01:00" - Assume this is already in Jakarta time
-                        const [datePart, timePart] = dateString.split(' ');
-                        const [year, month, day] = datePart.split('-').map(Number);
-                        const [hours, minutes] = timePart.split(':').map(Number);
-                        
-                        // Create date object directly without timezone adjustment
-                        // since we assume the time is already in Jakarta time
-                        date = new Date(year, month-1, day, hours, minutes);
-                    } 
-                    else if (dateString.includes('T')) {
-                        // ISO format: "2025-04-24T04:01:38.000000Z"
-                        // This is in UTC, so we need to adjust to Jakarta time
-                        const utcDate = new Date(dateString);
-                        
-                        // Adjust for Jakarta timezone (UTC+7)
-                        const jakartaOffset = 7 * 60 * 60 * 1000; // 7 hours in milliseconds
-                        date = new Date(utcDate.getTime() + jakartaOffset);
-                    }
-                    else {
-                        // Other format
-                        date = new Date(dateString);
-                    }
-                } else {
-                    date = new Date(dateString);
-                }
-                
-                // Check if date is valid
-                if (isNaN(date.getTime())) {
-                    return '-';
-                }
-                
-                // Format manually using Indonesian month names
-                const monthNames = [
-                    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-                    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-                ];
-                
-                const day = date.getDate();
-                const month = monthNames[date.getMonth()];
-                const year = date.getFullYear();
-                
-                // Format time with leading zeros
-                let hours = date.getHours();
-                let minutes = date.getMinutes();
-                
-                // Ensure two digits for hours and minutes
-                hours = hours.toString().padStart(2, '0');
-                minutes = minutes.toString().padStart(2, '0');
-                
-                // Return formatted date with "pukul" for time
-                return `${day} ${month} ${year} pukul ${hours}:${minutes}`;
-            } catch (error) {
-                console.error('Error formatting date:', error);
-                return dateString || '-';
+// Process terlapor data to get an array
+const terlaporArray = computed(() => {
+    if (!laporan.value || !laporan.value.terlapor) return [];
+    
+    // If already an array, return it
+    if (Array.isArray(laporan.value.terlapor)) {
+        return laporan.value.terlapor;
+    }
+    
+    // If it's a JSON string, parse it
+    if (typeof laporan.value.terlapor === 'string') {
+        try {
+            const parsedArray = JSON.parse(laporan.value.terlapor);
+            if (Array.isArray(parsedArray)) {
+                return parsedArray;
             }
-        },
-        
-        formatJenisKelamin(jenis) {
-            if (jenis === 'laki-laki') return 'Laki-laki';
-            if (jenis === 'perempuan') return 'Perempuan';
-            return jenis;
-        },
-        
-        formatUmur(umur) {
-            if (umur === '<20') return 'Kurang dari 20 tahun';
-            if (umur === '20-40') return '20 - 40 tahun';
-            if (umur === '40<') return 'Lebih dari 40 tahun';
-            return umur;
-        },
-        
-        formatStatusWarga(status) {
-            const statusMap = {
-                'dosen': 'Dosen',
-                'mahasiswa': 'Mahasiswa', 
-                'staff': 'Staff',
-                'lainnya': 'Lainnya'
-            };
-            
-            return statusMap[status] || status;
-        },
-        
-        formatStatus(status) {
-            const statusMap = {
-                'unverified': 'Belum Diverifikasi',
-                'verified': 'Diproses',
-                'rejected': 'Ditolak',
-                'finished': 'Selesai'
-            };
-            
-            return statusMap[status] || status;
-        },
-        
-        getCategoryName(categoryId) {
-            return this.categories[categoryId] || `Kategori ${categoryId}`;
-        },
-        
-        getImageUrl(imagePath) {
-            if (!imagePath) return '';
-            
-            // Clean the path by removing any quotes if present
-            const cleanPath = typeof imagePath === 'string' ? imagePath.replace(/['"]/g, '') : imagePath;
-            
-            // Check if it's already a full URL
-            if (typeof cleanPath === 'string' && cleanPath.startsWith('http')) {
-                return cleanPath;
-            }
-            
-            // Define the base URL
-            const baseUrl = 'https://v3422040.mhs.d3tiuns.com';
-            
-            // Primary URL - use this as default
-            return `${baseUrl}/Backend-Port/backend/engine/public/storage/laporan/${cleanPath}`;
-        },
-        
-        // Lightbox methods for multiple images
-        openLightbox(index) {
-            this.currentImageIndex = index;
-            this.showLightbox = true;
-            // Prevent scrolling when lightbox is open
-            document.body.style.overflow = 'hidden';
-        },
-        
-        closeLightbox() {
-            this.showLightbox = false;
-            // Restore scrolling
-            document.body.style.overflow = '';
-        },
-        
-        prevImage(e) {
-            if (e) e.stopPropagation();
-            if (this.currentImageIndex > 0) {
-                this.currentImageIndex--;
-            }
-        },
-        
-        nextImage(e) {
-            if (e) e.stopPropagation();
-            if (this.currentImageIndex < this.imageArray.length - 1) {
-                this.currentImageIndex++;
-            }
-        },
-        
-        // Verification methods
-        verifyReport() {
-            this.showVerificationModal = true;
-        },
+        } catch (e) {
+            console.log('Terlapor is not a valid JSON string', e);
+        }
+    }
+    
+    return [];
+});
 
-        async confirmVerification() {
-            this.isVerifying = true;
-            
-            try {
-                // Use FormData for consistency with other methods
-                const formData = new FormData();
-                formData.append('_method', 'PUT');
-                formData.append('status', 'verified');
-                
-                // Make the API call using POST with _method: PUT for compatibility
-                await axios.post(`https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${this.laporanId}`, formData);
-                
-                // Update local data after successful verification
-                this.laporan.status = 'verified';
-                
-                // Show success message using Swal for consistency
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: 'Laporan berhasil diverifikasi',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-                
-                // Refresh data
-                await this.fetchLaporanDetail();
-            } catch (error) {
-                console.error('Verification failed:', error);
-                
-                // Show error message
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal!',
-                    text: 'Gagal memverifikasi laporan',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-            } finally {
-                this.isVerifying = false;
-                this.showVerificationModal = false; // Close the modal after processing
+// Process saksi data to get an array
+const saksiArray = computed(() => {
+    if (!laporan.value || !laporan.value.saksi) return [];
+    
+    // If already an array, return it
+    if (Array.isArray(laporan.value.saksi)) {
+        return laporan.value.saksi;
+    }
+    
+    // If it's a JSON string, parse it
+    if (typeof laporan.value.saksi === 'string') {
+        try {
+            const parsedArray = JSON.parse(laporan.value.saksi);
+            if (Array.isArray(parsedArray)) {
+                return parsedArray;
             }
-        },
+        } catch (e) {
+            console.log('Saksi is not a valid JSON string', e);
+        }
+    }
+    
+    return [];
+});
 
-        async rejectReport() {
-            try {
-                if (!this.laporanId) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Laporan ID tidak ditemukan',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000
-                    });
-                    return;
-                }
-                
-                // Make the API call using POST with _method: PUT
-                const formData = new FormData();
-                formData.append('_method', 'PUT');
-                formData.append('status', 'rejected');
-
-                await axios.post(
-                    `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${this.laporanId}`, 
-                    formData
-                );
-                              
-                // Update local data after successful rejection
-                this.laporan.status = 'rejected';
-                
-                // Show success message with Swal
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: 'Laporan berhasil ditolak',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-                
-                // Refresh data
-                await this.fetchLaporanDetail();
-                
-            } catch (error) {
-                console.error('Error rejecting report:', error);
-                // Safely access error message with optional chaining
-                const errorMessage = error.response?.data?.message || 'Gagal menolak laporan';
-                
-                // Show error message with Swal
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal!',
-                    text: `Gagal menolak laporan: ${errorMessage}`,
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
+const buktiPelanggaranArray = computed(() => {
+    if (!laporan.value || !laporan.value.bukti_pelanggaran) return [];
+    
+    // If already an array, return it
+    if (Array.isArray(laporan.value.bukti_pelanggaran)) {
+        return laporan.value.bukti_pelanggaran;
+    }
+    
+    // If it's a JSON string, parse it
+    if (typeof laporan.value.bukti_pelanggaran === 'string') {
+        try {
+            const parsedArray = JSON.parse(laporan.value.bukti_pelanggaran);
+            if (Array.isArray(parsedArray)) {
+                return parsedArray;
             }
-        },
+        } catch (e) {
+            console.log('bukti_pelanggaran is not a valid JSON string', e);
+        }
+    }
+    
+    return [];
+});
+
+// Methods
+const fetchCategories = async () => {
+    try {
+        // Check for authentication token in cookies
+        const token = VueCookies.get('auth_token');
+        if (token) {
+            // Just use the token directly without attempting to decrypt it
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        }
         
-        async saveTanggapan() {
-            try {
-                if (!this.laporanId) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Laporan ID tidak ditemukan',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000
-                    });
-                    return;
-                }
-                
-                if (!this.tanggapanText.trim()) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Tanggapan tidak boleh kosong',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000
-                    });
-                    return;
-                }
-                
-                // Prepare tanggapan array
-                let tanggapanArray = [];
-                
-                if (this.laporan.tanggapan) {
-                    // If tanggapan exists and is already an array, use it
-                    if (Array.isArray(this.laporan.tanggapan)) {
-                        tanggapanArray = [...this.laporan.tanggapan];
-                    } 
-                    // If tanggapan exists but is a string (old format), convert it to array
-                    else if (typeof this.laporan.tanggapan === 'string' && this.laporan.tanggapan.trim() !== '') {
-                        tanggapanArray = [{
-                            text: this.laporan.tanggapan,
-                            timestamp: this.laporan.updated_at, // Use the previous update time 
-                            user: 'Admin'
-                        }];
-                    }
-                }
-                
-                // Create a new tanggapan object
-                const newTanggapan = {
-                    text: this.tanggapanText,
-                    timestamp: new Date().toISOString(), // Use current time
-                    user: this.currentUser
-                };
-                
-                // Add the new tanggapan
-                tanggapanArray.push(newTanggapan);
-                
-                // Make the API call
-                const formData = new FormData();
-                formData.append('_method', 'PUT');
-                formData.append('tanggapan', JSON.stringify(tanggapanArray));
-                
-                // Include the current status to maintain it
-                if (this.laporan && this.laporan.status) {
-                    formData.append('status', this.laporan.status);
-                }
-
-                await axios.post(
-                    `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${this.laporanId}`, 
-                    formData
-                );
-                
-                // Show success message
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: 'Tanggapan berhasil disimpan',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-                
-                // Reset and close modal
-                this.tanggapanText = '';
-                this.showTanggapanModal = false;
-                
-                // Refresh data
-                await this.fetchLaporanDetail();
-                
-            } catch (error) {
-                console.error('Error saving tanggapan:', error);
-                
-                // Try to get a more specific error message
-                const errorMessage = error.response?.data?.message || 
-                                error.response?.data?.error || 
-                                'Gagal menyimpan tanggapan';
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal!',
-                    text: `Gagal menyimpan tanggapan: ${errorMessage}`,
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-            }
-        },
-
-        async finishReport() {
-            try {
-                if (!this.laporanId) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Laporan ID tidak ditemukan',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000
-                    });
-                    return;
-                }
-                
-                // Show confirmation dialog first
-                const result = await Swal.fire({
-                    title: 'Tutup Kasus Laporan',
-                    text: 'Apakah Anda yakin ingin menutup dan menyelesaikan kasus laporan ini?',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Ya, Selesaikan!',
-                    cancelButtonText: 'Batal'
-                });
-                
-                if (!result.isConfirmed) {
-                    return; // User canceled
-                }
-                
-                // Make the API call using POST with _method: PUT
-                const formData = new FormData();
-                formData.append('_method', 'PUT');
-                formData.append('status', 'finished');
-                
-                // IMPORTANT: Preserve the existing tanggapan data
-                if (this.laporan.tanggapan) {
-                    let tanggapanData = this.laporan.tanggapan;
-                    
-                    // If it's already a string (old format), keep it as is
-                    if (typeof tanggapanData !== 'string') {
-                        // If it's an array (new format), convert it to JSON string
-                        tanggapanData = JSON.stringify(tanggapanData);
-                    }
-                    
-                    formData.append('tanggapan', tanggapanData);
-                }
-
-                await axios.post(
-                    `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${this.laporanId}`, 
-                    formData
-                );
-                            
-                // Update local data after successful completion
-                this.laporan.status = 'finished';
-                
-                // Show success message with Swal
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: 'Laporan berhasil ditutup dan selesai',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-                
-                // Refresh data
-                await this.fetchLaporanDetail();
-                
-            } catch (error) {
-                console.error('Error finishing report:', error);
-                // Safely access error message with optional chaining
-                const errorMessage = error.response?.data?.message || 'Gagal menyelesaikan laporan';
-                
-                // Show error message with Swal
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal!',
-                    text: `Gagal menyelesaikan laporan: ${errorMessage}`,
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-            }
-        },
-
-        formatBuktiPelanggaran(bukti) {
-            const buktiMap = {
-                'bukti_transfer': 'Bukti transfer, cek, bukti penyetoran, dan rekening koran bank',
-                'dokumen_rekaman': 'Dokumen dan/atau rekaman',
-                'foto_dokumentasi': 'Foto dokumentasi',
-                'surat_disposisi': 'Surat disposisi perintah',
-                'identitas_sumber': 'Identitas sumber informasi',
-                'lainnya': 'Lainnya'
-            };
-            
-            return buktiMap[bukti] || bukti;
-        },
+        const response = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
+        categories.value = response.data.reduce((acc, category) => {
+            acc[category.category_id] = category.nama;
+            return acc;
+        }, {});
+    } catch (error) {
+        console.error('Error fetching categories:', error);
     }
 };
+
+const fetchLaporanDetail = async () => {
+    loading.value = true;
+    error.value = null;
+    
+    try {
+        const response = await axios.get(`https://v3422040.mhs.d3tiuns.com/api/laporan/${laporanId.value}`);
+        laporan.value = response.data;
+        
+        // Process tanggapan data
+        if (laporan.value.tanggapan) {
+            // Try to parse if it's a JSON string
+            try {
+                const parsed = JSON.parse(laporan.value.tanggapan);
+                if (Array.isArray(parsed)) {
+                    laporan.value.tanggapan = parsed;
+                }
+            } catch (e) {
+                // If it's not valid JSON, keep it as a string
+                console.log('Tanggapan is not in JSON format, keeping as string');
+            }
+        }
+        
+        tanggapanText.value = '';
+    } catch (error) {
+        console.error('Error fetching laporan detail:', error);
+        error.value = 'Gagal memuat data laporan. Silakan coba lagi.';
+    } finally {
+        loading.value = false;
+    }
+};
+
+const goToEditLaporan = () => {
+    // Navigate to the edit page using the current laporan ID
+    router.push({
+        name: "EditPelaporanKejadianKalab",
+        params: {
+            id: laporanId.value
+        }
+    });
+};
+
+const goBack = () => {
+    router.go(-1);
+};
+
+const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    
+    try {
+        let date;
+        
+        // Special case for tanggal_kejadian - Apply timezone adjustment for MySQL format
+        if (typeof dateString === 'string' && laporan.value && dateString === laporan.value.tanggal_kejadian) {
+            const [datePart, timePart] = dateString.split(' ');
+            const [year, month, day] = datePart.split('-').map(Number);
+            const [hours, minutes, seconds] = timePart.split(':').map(Number);
+            
+            // For tanggal_kejadian, assume it's UTC and add 7 hours for Jakarta
+            date = new Date(Date.UTC(year, month-1, day, hours, minutes, seconds));
+            date.setTime(date.getTime() + (7 * 60 * 60 * 1000)); // Add 7 hours
+        }
+        // For tanggapan timestamps (typically in ISO format)
+        else if (typeof dateString === 'string' && dateString.includes('T')) {
+            // Parse ISO format but don't add hours because tanggapan timestamps are already in Jakarta time
+            date = new Date(dateString);
+        }
+        // For all other dates (like created_at, updated_at in MySQL format)
+        else if (typeof dateString === 'string' && dateString.includes(' ')) {
+            // Parse MySQL date format
+            const [datePart, timePart] = dateString.split(' ');
+            const [year, month, day] = datePart.split('-').map(Number);
+            const [hours, minutes, seconds] = timePart.split(':').map(Number);
+            
+            // For regular MySQL dates, assume they're already in local time
+            date = new Date(year, month-1, day, hours, minutes, seconds);
+        }
+        else {
+            // Fallback for any other format
+            date = new Date(dateString);
+        }
+        
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+            return '-';
+        }
+        
+        // Format using Indonesian month names
+        const monthNames = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+        
+        const day = date.getDate();
+        const month = monthNames[date.getMonth()];
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        
+        // Return formatted date
+        return `${day} ${month} ${year} pukul ${hours}:${minutes}`;
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return dateString || '-';
+    }
+};
+
+const formatedDate = (dateString) => {
+    if (!dateString) return '-';
+    
+    try {
+        // Parse the date string
+        let date;
+        
+        if (typeof dateString === 'string') {
+            // Handle different date formats
+            if (dateString.includes(' ') && !dateString.includes('T')) {
+                // MySQL format: "2025-04-24 11:01:00" - Assume this is already in Jakarta time
+                const [datePart, timePart] = dateString.split(' ');
+                const [year, month, day] = datePart.split('-').map(Number);
+                const [hours, minutes] = timePart.split(':').map(Number);
+                
+                // Create date object directly without timezone adjustment
+                // since we assume the time is already in Jakarta time
+                date = new Date(year, month-1, day, hours, minutes);
+            } 
+            else if (dateString.includes('T')) {
+                // ISO format: "2025-04-24T04:01:38.000000Z"
+                // This is in UTC, so we need to adjust to Jakarta time
+                const utcDate = new Date(dateString);
+                
+                // Adjust for Jakarta timezone (UTC+7)
+                const jakartaOffset = 7 * 60 * 60 * 1000; // 7 hours in milliseconds
+                date = new Date(utcDate.getTime() + jakartaOffset);
+            }
+            else {
+                // Other format
+                date = new Date(dateString);
+            }
+        } else {
+            date = new Date(dateString);
+        }
+        
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+            return '-';
+        }
+        
+        // Format manually using Indonesian month names
+        const monthNames = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+        
+        const day = date.getDate();
+        const month = monthNames[date.getMonth()];
+        const year = date.getFullYear();
+        
+        // Format time with leading zeros
+        let hours = date.getHours();
+        let minutes = date.getMinutes();
+        
+        // Ensure two digits for hours and minutes
+        hours = hours.toString().padStart(2, '0');
+        minutes = minutes.toString().padStart(2, '0');
+        
+        // Return formatted date with "pukul" for time
+        return `${day} ${month} ${year} pukul ${hours}:${minutes}`;
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return dateString || '-';
+    }
+};
+
+const formatJenisKelamin = (jenis) => {
+    if (jenis === 'laki-laki') return 'Laki-laki';
+    if (jenis === 'perempuan') return 'Perempuan';
+    return jenis;
+};
+
+const formatUmur = (umur) => {
+    if (umur === '<20') return 'Kurang dari 20 tahun';
+    if (umur === '20-40') return '20 - 40 tahun';
+    if (umur === '40<') return 'Lebih dari 40 tahun';
+    return umur;
+};
+
+const formatStatusWarga = (status) => {
+    const statusMap = {
+        'dosen': 'Dosen',
+        'mahasiswa': 'Mahasiswa', 
+        'staff': 'Staff',
+        'lainnya': 'Lainnya'
+    };
+    
+    return statusMap[status] || status;
+};
+
+const formatStatus = (status) => {
+    const statusMap = {
+        'unverified': 'Belum Diverifikasi',
+        'verified': 'Diproses',
+        'rejected': 'Ditolak',
+        'finished': 'Selesai'
+    };
+    
+    return statusMap[status] || status;
+};
+
+const getCategoryName = (categoryId) => {
+    return categories.value[categoryId] || `Kategori ${categoryId}`;
+};
+
+const getImageUrl = (imagePath) => {
+    if (!imagePath) return '';
+    
+    // Clean the path by removing any quotes if present
+    const cleanPath = typeof imagePath === 'string' ? imagePath.replace(/['"]/g, '') : imagePath;
+    
+    // Check if it's already a full URL
+    if (typeof cleanPath === 'string' && cleanPath.startsWith('http')) {
+        return cleanPath;
+    }
+    
+    // Define the base URL
+    const baseUrl = 'https://v3422040.mhs.d3tiuns.com';
+    
+    // Primary URL - use this as default
+    return `${baseUrl}/Backend-Port/backend/engine/public/storage/laporan/${cleanPath}`;
+};
+
+// Lightbox methods for multiple images
+const openLightbox = (index) => {
+    currentImageIndex.value = index;
+    showLightbox.value = true;
+    // Prevent scrolling when lightbox is open
+    document.body.style.overflow = 'hidden';
+};
+
+const closeLightbox = () => {
+    showLightbox.value = false;
+    // Restore scrolling
+    document.body.style.overflow = '';
+};
+
+const prevImage = (e) => {
+    if (e) e.stopPropagation();
+    if (currentImageIndex.value > 0) {
+        currentImageIndex.value--;
+    }
+};
+
+const nextImage = (e) => {
+    if (e) e.stopPropagation();
+    if (currentImageIndex.value < imageArray.value.length - 1) {
+        currentImageIndex.value++;
+    }
+};
+
+// Verification methods
+const verifyReport = () => {
+    showVerificationModal.value = true;
+};
+
+const confirmVerification = async () => {
+    isVerifying.value = true;
+    
+    try {
+        // Use FormData for consistency with other methods
+        const formData = new FormData();
+        formData.append('_method', 'PUT');
+        formData.append('status', 'verified');
+        
+        // Make the API call using POST with _method: PUT for compatibility
+        await axios.post(`https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${laporanId.value}`, formData);
+        
+        // Update local data after successful verification
+        laporan.value.status = 'verified';
+        
+        // Show success message using Swal for consistency
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: 'Laporan berhasil diverifikasi',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+        
+        // Refresh data
+        await fetchLaporanDetail();
+    } catch (error) {
+        console.error('Verification failed:', error);
+        
+        // Show error message
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal!',
+            text: 'Gagal memverifikasi laporan',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+    } finally {
+        isVerifying.value = false;
+        showVerificationModal.value = false; // Close the modal after processing
+    }
+};
+
+const rejectReport = async () => {
+    try {
+        if (!laporanId.value) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Laporan ID tidak ditemukan',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000
+            });
+            return;
+        }
+        
+        // Make the API call using POST with _method: PUT
+        const formData = new FormData();
+        formData.append('_method', 'PUT');
+        formData.append('status', 'rejected');
+
+        await axios.post(
+            `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${laporanId.value}`, 
+            formData
+        );
+                    
+        // Update local data after successful rejection
+        laporan.value.status = 'rejected';
+        
+        // Show success message with Swal
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: 'Laporan berhasil ditolak',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+        
+        // Refresh data
+        await fetchLaporanDetail();
+        
+    } catch (error) {
+        console.error('Error rejecting report:', error);
+        // Safely access error message with optional chaining
+        const errorMessage = error.response?.data?.message || 'Gagal menolak laporan';
+        
+        // Show error message with Swal
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal!',
+            text: `Gagal menolak laporan: ${errorMessage}`,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+    }
+};
+
+const saveTanggapan = async () => {
+    try {
+        if (!laporanId.value) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Laporan ID tidak ditemukan',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000
+            });
+            return;
+        }
+        
+        if (!tanggapanText.value.trim()) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Tanggapan tidak boleh kosong',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000
+            });
+            return;
+        }
+        
+        // Prepare tanggapan array
+        let tanggapanArray = [];
+        
+        if (laporan.value.tanggapan) {
+            // If tanggapan exists and is already an array, use it
+            if (Array.isArray(laporan.value.tanggapan)) {
+                tanggapanArray = [...laporan.value.tanggapan];
+            } 
+            // If tanggapan exists but is a string (old format), convert it to array
+            else if (typeof laporan.value.tanggapan === 'string' && laporan.value.tanggapan.trim() !== '') {
+                tanggapanArray = [{
+                    text: laporan.value.tanggapan,
+                    timestamp: laporan.value.updated_at, // Use the previous update time 
+                    user: 'Admin'
+                }];
+            }
+        }
+        
+        // Create a new tanggapan object
+        const newTanggapan = {
+            text: tanggapanText.value,
+            timestamp: new Date().toISOString(), // Use current time
+            user: currentUser.value
+        };
+        
+        // Add the new tanggapan
+        tanggapanArray.push(newTanggapan);
+        
+        // Make the API call
+        const formData = new FormData();
+        formData.append('_method', 'PUT');
+        formData.append('tanggapan', JSON.stringify(tanggapanArray));
+        
+        // Include the current status to maintain it
+        if (laporan.value && laporan.value.status) {
+            formData.append('status', laporan.value.status);
+        }
+
+        await axios.post(
+            `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${laporanId.value}`, 
+            formData
+        );
+        
+        // Show success message
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: 'Tanggapan berhasil disimpan',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+        
+        // Reset and close modal
+        tanggapanText.value = '';
+        showTanggapanModal.value = false;
+        
+        // Refresh data
+        await fetchLaporanDetail();
+        
+    } catch (error) {
+        console.error('Error saving tanggapan:', error);
+        
+        // Try to get a more specific error message
+        const errorMessage = error.response?.data?.message || 
+                        error.response?.data?.error || 
+                        'Gagal menyimpan tanggapan';
+        
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal!',
+            text: `Gagal menyimpan tanggapan: ${errorMessage}`,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+    }
+};
+
+const finishReport = async () => {
+    try {
+        if (!laporanId.value) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Laporan ID tidak ditemukan',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000
+            });
+            return;
+        }
+        
+        // Show confirmation dialog first
+        const result = await Swal.fire({
+            title: 'Tutup Kasus Laporan',
+            text: 'Apakah Anda yakin ingin menutup dan menyelesaikan kasus laporan ini?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, Selesaikan!',
+            cancelButtonText: 'Batal'
+        });
+        
+        if (!result.isConfirmed) {
+            return; // User canceled
+        }
+        
+        // Make the API call using POST with _method: PUT
+        const formData = new FormData();
+        formData.append('_method', 'PUT');
+        formData.append('status', 'finished');
+        
+        // IMPORTANT: Preserve the existing tanggapan data
+        if (laporan.value.tanggapan) {
+            let tanggapanData = laporan.value.tanggapan;
+            
+            // If it's already a string (old format), keep it as is
+            if (typeof tanggapanData !== 'string') {
+                // If it's an array (new format), convert it to JSON string
+                tanggapanData = JSON.stringify(tanggapanData);
+            }
+            
+            formData.append('tanggapan', tanggapanData);
+        }
+
+        await axios.post(
+            `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${laporanId.value}`, 
+            formData
+        );
+                    
+        // Update local data after successful completion
+        laporan.value.status = 'finished';
+        
+        // Show success message with Swal
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: 'Laporan berhasil ditutup dan selesai',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+        
+        // Refresh data
+        await fetchLaporanDetail();
+        
+    } catch (error) {
+        console.error('Error finishing report:', error);
+        // Safely access error message with optional chaining
+        const errorMessage = error.response?.data?.message || 'Gagal menyelesaikan laporan';
+        
+        // Show error message with Swal
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal!',
+            text: `Gagal menyelesaikan laporan: ${errorMessage}`,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+    }
+};
+
+const formatBuktiPelanggaran = (bukti) => {
+    const buktiMap = {
+        'bukti_transfer': 'Bukti transfer, cek, bukti penyetoran, dan rekening koran bank',
+        'dokumen_rekaman': 'Dokumen dan/atau rekaman',
+        'foto_dokumentasi': 'Foto dokumentasi',
+        'surat_disposisi': 'Surat disposisi perintah',
+        'identitas_sumber': 'Identitas sumber informasi',
+        'lainnya': 'Lainnya'
+    };
+    
+    return buktiMap[bukti] || bukti;
+};
+
+// Clean up resources when component is unmounted
+onBeforeUnmount(() => {
+    // Reset any global state or remove event listeners if needed
+    if (showLightbox.value) {
+        document.body.style.overflow = ''; // Restore scrolling if lightbox was open
+    }
+});
 </script>
 
 <style scoped>

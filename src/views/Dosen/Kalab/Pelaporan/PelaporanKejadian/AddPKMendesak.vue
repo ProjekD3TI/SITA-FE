@@ -50,6 +50,24 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="form-group">
+                            <label for="category">Kategori <span class="required">*</span></label>
+                            <select
+                                id="category"
+                                v-model="formData.category_id"
+                                class="form-control"
+                                :class="{ 'is-invalid': errors.category_id }"
+                                disabled
+                                required
+                            >
+                                <option v-for="category in categories" :key="category.category_id" :value="category.category_id">
+                                    {{ category.nama }}
+                                </option>
+                            </select>
+                            <div v-if="errors.category_id" class="invalid-feedback">{{ errors.category_id[0] }}</div>
+                            <small class="text-muted">Kategori tidak dapat diubah</small>
+                        </div>
                     </div>
 
                     <!-- Right column -->
@@ -214,28 +232,28 @@ export default {
                 this.formData.nomor_telepon = userData.no_telp || '';
             }
         },
-        fetchCategories() {
-            axios.get('https://v3422040.mhs.d3tiuns.com/api/category')
-                .then(response => {
-                    this.categories = response.data;
-                    // Find the "Darurat dan Mendesak" category
-                    const emergencyCategory = this.categories.find(cat => cat.nama.includes("Darurat dan Mendesak"));
-                    if (emergencyCategory) {
-                        this.emergencyCategoryId = emergencyCategory.category_id;
-                        this.formData.category_id = emergencyCategory.category_id;
-                        console.log("Automatically selected category:", emergencyCategory.nama);
-                    } else {
-                        console.error('Emergency category not found');
-                        // If no "Darurat dan Mendesak" category found, use the first category as fallback
-                        if (this.categories.length > 0) {
-                            this.formData.category_id = this.categories[0].category_id;
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching categories:', error);
-                    this.showNotification('Error', 'Gagal memuat kategori laporan.', false);
-                });
+        async fetchCategories() {
+            try {
+                const response = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
+                this.categories = response.data;
+                
+                // Find the "Darurat dan Mendesak" category
+                const mendesakCategory = this.categories.find(cat => cat.nama === "Darurat dan Mendesak");
+                if (mendesakCategory) {
+                    this.formData.category_id = mendesakCategory.category_id;
+                } else if (this.categories.length > 0) {
+                    // Fallback to the first category if "Darurat dan Mendesak" is not found
+                    this.formData.category_id = this.categories[0].category_id;
+                }
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+                // If API fails, create a fallback category
+                this.categories = [{
+                    category_id: 21,
+                    nama: "Darurat dan Mendesak"
+                }];
+                this.formData.category_id = 21;
+            }
         },
         handleFileUpload(event) {
             const files = event.target.files;
