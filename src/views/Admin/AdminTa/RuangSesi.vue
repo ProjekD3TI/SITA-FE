@@ -9,6 +9,7 @@ import Table from "@/components/Tugas-akhir/Table.vue";
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputTime from "@/components/Tugas-akhir/Forms/InputTime.vue";
+import Loading from "@/components/Loading.vue";
 import { useToast } from "vue-toastification";
 import { useRuang } from "@/services/TugasAkhir/Admin/ruang";
 import { useSesi } from "@/services/TugasAkhir/Admin/sesi";
@@ -242,23 +243,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <Breadcrumb :items="breadcrumbItems" />
-  <TabDiv :tabs="tabs" :use-named-slots="true">
+    <div v-if="ruangLoading && sesiLoading" class="flex items-center justify-center min-h-[70dvh]">
+    <Loading />
+  </div>
+  
+    <div v-else>
+      <Breadcrumb :items="breadcrumbItems" />
+      <TabDiv :tabs="tabs" :use-named-slots="true">
     <!-- === TAB 1: RUANG === -->
     <template #tab1>
-      <!-- Loading state -->
-      <div v-if="ruangLoading" class="flex justify-center items-center py-12">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-      
-      <!-- Error state -->
-      <div v-else-if="ruangError" class="py-8 text-center text-red-500">
-        <p>{{ ruangError }}</p>
-        <Button variant="primary" class="mt-4" @click="fetchRuangs">Coba Lagi</Button>
-      </div>
-      
-      <!-- Data state -->
-      <div v-else>
+      <div>
         <div class="flex justify-between items-center mb-4 space-x-4">
           <div class="w-4/5">  
             <SearchBar
@@ -363,19 +357,7 @@ onMounted(() => {
 
     <!-- === TAB 2: SESI === -->
     <template #tab2>
-      <!-- Loading state -->
-      <div v-if="sesiLoading" class="flex justify-center items-center py-12">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-      
-      <!-- Error state -->
-      <div v-else-if="sesiError" class="py-8 text-center text-red-500">
-        <p>{{ sesiError }}</p>
-        <Button variant="primary" class="mt-4" @click="fetchSesis">Coba Lagi</Button>
-      </div>
-      
-      <!-- Data state -->
-      <div v-else>
+      <div>
         <div class="flex justify-between items-center mb-4 space-x-4">
           <div class="w-4/5">  
             <SearchBar
@@ -507,6 +489,8 @@ onMounted(() => {
       />
     </template>
   </TabDiv>
+    </div>
+
 </template>
 
 <style scoped>

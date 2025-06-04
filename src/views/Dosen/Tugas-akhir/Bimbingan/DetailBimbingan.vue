@@ -9,8 +9,6 @@ import StatusLabel from "@/components/Tugas-akhir/Label.vue";
 import ModalVerifikasiBimbingan from "@/components/Tugas-akhir/Modals/ModalVerifikasiBimbingan.vue";
 import ModalDetailBimbingan from "@/components/Tugas-akhir/Modals/ModalDetailBimbingan.vue";
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
-import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
-import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
 import { useDibimbing } from "@/services/TugasAkhir/Dosen/dibimbing";
@@ -34,13 +32,6 @@ const studentInfo = ref({
   category: "",
   title: "",
 });
-
-// Tambahkan di bagian awal script, dekat dengan deklarasi data lainnya
-const breadcrumbItems = computed(() => [
-  { label: "Tugas Akhir", path: "/dosen/tugas-akhir" },
-  { label: "Bimbingan", path: "/dosen/tugas-akhir/bimbingan" },
-  { label: "Detail Bimbingan", path: `/dosen/tugas-akhir/bimbingan/detail-bimbingan?id=${studentInfo.value.id}` }
-]);
 
 // Pesan error untuk ditampilkan
 const errorMessage = computed(() => {
@@ -392,106 +383,116 @@ const handleActionClick = (item, action) => {
 </script>
 
 <template>
+  <!-- Status Loading: Breadcrumb disembunyikan selama loading -->
+  <div v-if="loadingBimbingan" class="flex justify-center items-center min-h-[75vh] w-full">
+    <Loading />
+  </div>
+  
+  <!-- Konten setelah loading: Breadcrumb muncul setelah loading selesai -->
+  <div v-else>
+    <!-- Breadcrumb muncul setelah loading selesai -->
+    <Breadcrumb :items="breadcrumbItems" />
 
-<Breadcrumb :items="breadcrumbItems" />
-
-  <Loading v-if="loadingBimbingan" />
-  <ErrorMsg v-else-if="errorBimbingan" :message="errorMessage" />
-  <div v-else-if="!$route.path.includes('input-nilai-bimbingan')">
-    <!-- Header: Info Dosen & Progress BAB -->
-    <div class="card-rounded bg-white p-6 lg:p-8">
-      <!-- Info Dosen Pembimbing -->
-      <div class="flex gap-2 sm:gap-4 max-w-screen-xl mx-auto">
-        <!-- Icon Dosen -->
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="1.5"
-          stroke="currentColor"
-          class="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-          />
-        </svg>
-
-        <!-- Detail Informasi -->
-        <div class="self-center flex flex-wrap justify-between w-full">
-          <!-- Mahasiswa Info -->
-          <div>
-            <span class="body5 sm:body4-bold">{{ studentInfo.name }}</span>
-            <h5 class="body5-bold sm:body3-bold lg:body2-bold text-primary">
-              {{ studentInfo.nim }}
-            </h5>
-          </div>
-
-          <!-- Kategori TA -->
-          <div class="lg:border-l-2 border-black lg:pl-4">
-            <span class="body5 sm:body5-bold">{{ studentInfo.category }}</span>
-            <h5 class="body5-bold sm:body3-bold lg:body2-bold text-primary">
-              {{ studentInfo.title }}
-            </h5>
-          </div>
-
-          <!-- Tahun Ajaran -->
-          <div class="lg:border-l-2 border-black lg:pl-4">
-            <span class="body5 sm:body4-bold">Tahun Ajaran</span>
-            <h5 class="body5-bold sm:body3-bold lg:body2-bold text-primary">
-              {{ tahunAjaran }}
-            </h5>
-          </div>
-        </div>
-      </div>
-
-      <!-- Progress BAB & Tombol Input -->
-      <div
-        class="flex flex-wrap justify-between items-center max-w-screen-xl mx-auto"
-      >
-        <!-- Progress Bar BAB -->
-        <ProgressBarBAB class="sm:ms-3" :currentStep="highestChapter" />
-
-        <!-- Action Buttons -->
-        <div class="flex gap-2">
-          <!-- Tombol Nilai (Desktop) -->
-          <router-link
-            :to="{
-              path: '/dosen/tugas-akhir/bimbingan/detail-bimbingan/input-nilai-bimbingan',
-              query: {
-                id: studentInfo.id,
-                nim: studentInfo.nim,
-                name: studentInfo.name,
-                category: studentInfo.category,
-                title: studentInfo.title,
-              },
-            }"
+    <!-- Error state -->
+    <ErrorMsg v-if="errorBimbingan" :message="errorMessage" />
+    
+    <!-- Konten utama setelah loading dan tidak ada error -->
+    <div v-else-if="!$route.path.includes('input-nilai-bimbingan')">
+      <!-- Header: Info Dosen & Progress BAB -->
+      <div class="card-rounded bg-white p-6 lg:p-8">
+        <!-- Info Dosen Pembimbing -->
+        <div class="flex gap-2 sm:gap-4 max-w-screen-xl mx-auto">
+          <!-- Icon Dosen -->
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16"
           >
-            <Button
-              class="hidden lg:flex"
-              variant="primary"
-              size="xl"
-              left-icon-path="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z"
-            >
-              Nilai
-            </Button>
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+            />
+          </svg>
 
-            <!-- Tombol Nilai (Mobile) -->
-            <Button
-              class="lg:hidden"
-              variant="primary"
-              size="md"
-              left-icon-path="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z"
+          <!-- Detail Informasi -->
+          <div class="self-center flex flex-wrap justify-between w-full">
+            <!-- Mahasiswa Info -->
+            <div>
+              <span class="body5 sm:body4-bold">{{ studentInfo.name }}</span>
+              <h5 class="body5-bold sm:body3-bold lg:body2-bold text-primary">
+                {{ studentInfo.nim }}
+              </h5>
+            </div>
+
+            <!-- Kategori TA -->
+            <div class="lg:border-l-2 border-black lg:pl-4">
+              <span class="body5 sm:body5-bold">{{ studentInfo.category }}</span>
+              <h5 class="body5-bold sm:body3-bold lg:body2-bold text-primary">
+                {{ studentInfo.title }}
+              </h5>
+            </div>
+
+            <!-- Tahun Ajaran -->
+            <div class="lg:border-l-2 border-black lg:pl-4">
+              <span class="body5 sm:body4-bold">Tahun Ajaran</span>
+              <h5 class="body5-bold sm:body3-bold lg:body2-bold text-primary">
+                {{ tahunAjaran }}
+              </h5>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress BAB & Tombol Input -->
+        <div
+          class="flex flex-wrap justify-between items-center max-w-screen-xl mx-auto"
+        >
+          <!-- Progress Bar BAB -->
+          <ProgressBarBAB class="sm:ms-3" :currentStep="highestChapter" />
+
+          <!-- Action Buttons -->
+          <div class="flex gap-2">
+            <!-- Tombol Nilai (Desktop) -->
+            <router-link
+              :to="{
+                path: '/dosen/tugas-akhir/bimbingan/detail-bimbingan/input-nilai-bimbingan',
+                query: {
+                  id: studentInfo.id,
+                  nim: studentInfo.nim,
+                  name: studentInfo.name,
+                  category: studentInfo.category,
+                  title: studentInfo.title,
+                },
+              }"
             >
-              Nilai
-            </Button>
-          </router-link>
+              <Button
+                class="hidden lg:flex"
+                variant="primary"
+                size="xl"
+                left-icon-path="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z"
+              >
+                Nilai
+              </Button>
+
+              <!-- Tombol Nilai (Mobile) -->
+              <Button
+                class="lg:hidden"
+                variant="primary"
+                size="md"
+                left-icon-path="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z"
+              >
+                Nilai
+              </Button>
+            </router-link>
+          </div>
         </div>
       </div>
-    </div>
-    <!-- Tabel Riwayat Bimbingan -->
-    <div class="card-rounded bg-white p-4 lg:p-8 mt-4">
+
+      <!-- Tabel Riwayat Bimbingan -->
+      <div class="card-rounded bg-white p-4 lg:p-8 mt-4">
       <Table
         :headers="['No', 'Tanggal', 'BAB', 'Catatan', 'Status', 'Aksi']"
         :items="formattedBimbinganData"
@@ -577,9 +578,11 @@ const handleActionClick = (item, action) => {
         </template>
       </Table>
     </div>
+    </div>
+    <router-view v-else></router-view>
   </div>
-  <router-view v-else></router-view>
 
+  <!-- Modal-modal tetap berada di luar struktur kondisional utama -->
   <!-- Modal Verifikasi Bimbingan with ref -->
   <ModalVerifikasiBimbingan
     ref="verifikasiModal"
@@ -594,17 +597,17 @@ const handleActionClick = (item, action) => {
   ></ModalVerifikasiBimbingan>
 
   <!-- Modal Detail Bimbingan -->
-<ModalDetailBimbingan
-  ref="detailModal"
-  @close="closeModal"
-  title="Detail Bimbingan"
-  :bimbinganKe="noBimbingan"
-  :tanggalBimbingan="tanggal"
-  :bab="bab"
-  :catatan="catatan"
-  :status="status"
-  :statusLabel="statusLabel"
-></ModalDetailBimbingan>
+  <ModalDetailBimbingan
+    ref="detailModal"
+    @close="closeModal"
+    title="Detail Bimbingan"
+    :bimbinganKe="noBimbingan"
+    :tanggalBimbingan="tanggal"
+    :bab="bab"
+    :catatan="catatan"
+    :status="status"
+    :statusLabel="statusLabel"
+  ></ModalDetailBimbingan>
 
   <!-- Modal Lihat Nilai -->
   <DefaultModal
@@ -613,56 +616,5 @@ const handleActionClick = (item, action) => {
     headText="Nilai Bimbingan"
     :bodyText="`${studentInfo.name} | ${studentInfo.nim} | ${studentInfo.title}`"
   >
-    <div class="space-y-6">
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-        <InputNumber
-          id="disiplin"
-          label="Disiplin (20%)"
-          :modelValue="bimbinganDetail.nilaiDisiplin"
-          disabled
-        ></InputNumber>
-        <InputNumber
-          id="komunikasi"
-          label="Komunikasi (20%)"
-          :modelValue="bimbinganDetail.nilaiKomunikasi"
-          disabled
-        ></InputNumber>
-        <InputNumber
-          id="pengetahuan"
-          label="Skill / Pengetahuan (45%)"
-          :modelValue="bimbinganDetail.nilaiPengetahuan"
-          disabled
-        ></InputNumber>
-        <InputNumber
-          id="tingkahLaku"
-          label="Tingkah Laku (15%)"
-          :modelValue="bimbinganDetail.nilaiTingkahLaku"
-          disabled
-        ></InputNumber>
-      </div>
-
-      <div>
-        <InputTextarea
-          id="catatanRevisi"
-          label="Catatan Revisi"
-          :modelValue="bimbinganDetail.catatanRevisi"
-          disabled
-        ></InputTextarea>
-      </div>
-
-      <div class="">
-        <InputNumber
-          id="nilaiRataRata"
-          label="Nilai Rata-Rata"
-          :modelValue="bimbinganDetail.nilaiRataRata"
-          class="font-semibold"
-          disabled
-        ></InputNumber>
-      </div>
-
-      <div class="flex justify-end mt-6">
-        <Button variant="secondary" size="lg"> Edit Nilai </Button>
-      </div>
-    </div>
   </DefaultModal>
 </template>

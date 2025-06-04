@@ -280,7 +280,9 @@ const resetErrorMessage = () => {
 
 <template>
   <!-- Status loading -->
-  <Loading v-if="loading" />
+  <div v-if="loadingBimbingan" class="flex justify-center items-center min-h-[75vh] w-full">
+    <Loading />
+  </div>
   
   <!-- Konten utama -->
   <div v-else class="card-rounded bg-white p-6 lg:p-8">

@@ -8,6 +8,7 @@ import ModalResponBimbingan from "@/components/Tugas-akhir/Modals/ModalResponBim
 import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
 import ModalFilter from "@/components/Tugas-akhir/Modals/ModalFilter.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
+import Loading from "@/components/Loading.vue";
 import { useRequestPembimbing } from "@/services/TugasAkhir/Dosen/requestPembimbing";
 import { useDibimbing } from "@/services/TugasAkhir/Dosen/dibimbing";
 import { useKategori } from "@/services/TugasAkhir/Dosen/kategori";
@@ -189,28 +190,31 @@ onMounted(() => {
 </script>
 
 <template>
-<Breadcrumb v-if="!$route.path.includes('detail-bimbingan')" :items="breadcrumbItems" />
   <div v-if="!$route.path.includes('detail-bimbingan')">
     <!-- Status loading -->
-    <div v-if="loading" class="flex justify-center items-center py-8">
-      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    <div v-if="loading" class="flex justify-center items-center min-h-[75vh] w-full">
+      <Loading />
     </div>
 
-    <!-- Status error -->
-    <div v-else-if="error" class="p-4 bg-red-100 text-red-700 rounded-lg my-4">
-      <p>{{ error }}</p>
-      <Button 
-        @click="activeTab === 'permintaan' ? fetchRequests() : fetchTugasAkhir()" 
-        variant="outlined" 
-        size="sm" 
-        class="mt-2"
-      >
-        Coba Lagi
-      </Button>
-    </div>
-    
-    <!-- Navigasi Tab -->
-    <TabDiv
+    <!-- Konten setelah loading -->
+    <div v-else>
+      <!-- Breadcrumb muncul setelah loading selesai -->
+      <Breadcrumb :items="breadcrumbItems" />
+
+      <!-- Status error -->
+      <div v-if="error" class="p-4 bg-red-100 text-red-700 rounded-lg my-4">
+        <p>{{ error }}</p>
+        <Button 
+          @click="activeTab === 'permintaan' ? fetchRequests() : fetchTugasAkhir()" 
+          variant="outlined" 
+          size="sm" 
+          class="mt-2"
+        >
+          Coba Lagi
+        </Button>
+      </div>
+      
+      <TabDiv
       v-else
       :tabs="[
         {
@@ -233,10 +237,9 @@ onMounted(() => {
       <div class="flex flex-row mb-2 gap-2">
         <div class="w-auto sm:w-auto sm:mr-2">
           <!-- Indikator loading untuk kategori -->
-          <div v-if="loadingCategories" class="inline-flex items-center">
-            <span class="animate-pulse mr-2">Memuat kategori...</span>
-            <div class="animate-spin h-4 w-4 border-t-2 border-b-2 border-blue-500 rounded-full"></div>
-          </div>
+          <div v-if="loadingCategories" class="flex justify-center items-center py-2 w-full">
+          <Loading />
+        </div>
           
           <!-- Pesan error jika kategori gagal dimuat -->
           <div v-else-if="errorCategories" class="text-red-500 text-sm">
@@ -346,6 +349,7 @@ onMounted(() => {
         </Table>
       </div>
     </TabDiv>
+    </div>
   </div>
   <router-view v-else></router-view>
 
