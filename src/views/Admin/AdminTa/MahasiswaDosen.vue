@@ -7,6 +7,7 @@ import Table from "@/components/Tugas-akhir/Table.vue";
 import ModalFilter from "@/components/Tugas-akhir/Modals/ModalFilter.vue";
 import StatusLabel from "@/components/Tugas-akhir/Label.vue";
 import TabDiv from "@/components/Tugas-akhir/TabDiv.vue";
+import ModalSelected from "@/components/Tugas-akhir/Modals/ModalSelected.vue"; // Tambahkan ini
 
 // Data tab
 const tabs = [
@@ -24,11 +25,11 @@ const tabs = [
 
 // Search for Mahasiswa
 const searchQueryMahasiswa = ref("");
-const handleSearchMahasiswa = () => {};
+const handleSearchMahasiswa = () => { };
 
 // Search for Dosen
 const searchQueryDosen = ref("");
-const handleSearchDosen = () => {};
+const handleSearchDosen = () => { };
 
 // Data mahasiswa
 const students = ref([
@@ -36,6 +37,7 @@ const students = ref([
     id: 1,
     name: "Budi Santoso",
     nim: "V3423000",
+    angkatan: "2023",
     email: "budi.santoso@student.uns.ac.id",
     status: "success", // Untuk "Aktif"
   },
@@ -43,6 +45,7 @@ const students = ref([
     id: 2,
     name: "Siti Rahma",
     nim: "V3423000",
+    angkatan: "2023",
     email: "siti.rahma@student.uns.ac.id",
     status: "success",
   },
@@ -50,6 +53,7 @@ const students = ref([
     id: 3,
     name: "Ahmad Fauzi",
     nim: "V3423000",
+    angkatan: "2023",
     email: "ahmad.fauzi@student.uns.ac.id",
     status: "success",
   },
@@ -57,6 +61,7 @@ const students = ref([
     id: 4,
     name: "Maya Indah",
     nim: "V3423000",
+    angkatan: "2023",
     email: "maya.indah@student.uns.ac.id",
     status: "inactive", // Untuk "Non Aktif"
   },
@@ -64,6 +69,7 @@ const students = ref([
     id: 5,
     name: "Doni Kusuma",
     nim: "V3423000",
+    angkatan: "2023",
     email: "doni.kusuma@student.uns.ac.id",
     status: "inactive",
   },
@@ -207,11 +213,47 @@ const toggleLecturerStatus = (lecturer) => {
 const tableHeadersMahasiswa = [
   "Nama Lengkap",
   "NIM",
+  "Angkatan",
   "Email",
   "Status",
-  "Aksi",
 ];
-const tableHeadersDosen = ["Nama Lengkap", "NIP", "Email", "Status", "Aksi"];
+const tableHeadersDosen = ["Nama Lengkap", "NIP", "Email", "Status"];
+
+// Checked items for mahasiswa
+const checkedMahasiswa = ref([]);
+const checkedLecturers = ref([]); // TAMBAHKAN
+
+// Fungsi untuk mengubah status massal mahasiswa
+const setMahasiswaStatus = (status) => {
+  students.value = students.value.map((student) => {
+    if (checkedMahasiswa.value.includes(student.id)) {
+      return { ...student, status };
+    }
+    return student;
+  });
+  checkedMahasiswa.value = [];
+};
+
+// Fungsi untuk mengubah status massal dosen
+const setLecturerStatus = (status) => {
+  lecturers.value = lecturers.value.map((lecturer) => {
+    if (checkedLecturers.value.includes(lecturer.id)) {
+      return { ...lecturer, status };
+    }
+    return lecturer;
+  });
+  checkedLecturers.value = [];
+};
+
+// Untuk menutup modal
+const closeModalSelected = () => {
+  checkedMahasiswa.value = [];
+};
+
+// Untuk menutup modal dosen
+const closeModalSelectedLecturer = () => {
+  checkedLecturers.value = [];
+};
 </script>
 
 <template>
@@ -221,113 +263,53 @@ const tableHeadersDosen = ["Nama Lengkap", "NIP", "Email", "Status", "Aksi"];
     <!-- === TAB 1: MAHASISWA === -->
     <template #tab1>
       <div class="flex gap-2 lg:gap-4 justify-between items-center mb-4">
-        <ModalFilter
-          title="Status"
-          :items="statuses"
-          filterType="status"
-          @apply="handleFilterMahasiswa"
-          triggerText="Status"
-          :preselectedValues="selectedStatusesMahasiswa"
-        />
-        <SearchBar
-          v-model="searchQueryMahasiswa"
-          @search="handleSearchMahasiswa"
-          filterKey="mahasiswa"
-        />
+        <ModalFilter title="Status" :items="statuses" filterType="status" @apply="handleFilterMahasiswa"
+          triggerText="Status" :preselectedValues="selectedStatusesMahasiswa" />
+        <SearchBar v-model="searchQueryMahasiswa" @search="handleSearchMahasiswa" filterKey="mahasiswa" />
       </div>
 
-      <Table
-        :headers="tableHeadersMahasiswa"
-        :items="filteredStudents"
-        min-width="min-w-full"
-      >
+      <Table :headers="tableHeadersMahasiswa" :items="filteredStudents" min-width="min-w-full" :showCheckbox="true"
+        :checkedItems="checkedMahasiswa" @update:checkedItems="checkedMahasiswa = $event">
         <template #row="{ item }">
           <td class="py-3 px-6">{{ item.name }}</td>
           <td class="py-3 px-6">{{ item.nim }}</td>
+          <td class="py-3 px-6">{{ item.angkatan }}</td>
           <td class="py-3 px-6">{{ item.email }}</td>
           <td class="py-3 px-6">
-            <StatusLabel
-              class="w-fit hidden lg:block"
-              :status="item.status"
-              :label="item.status === 'success' ? 'Aktif' : 'Non Aktif'"
-              :customLabel="true"
-              size="md"
-            />
-          </td>
-          <td class="py-3 px-6 text-right">
-            <div class="flex gap-2 justify-end">
-              <Button
-                :variant="item.status === 'success' ? 'danger' : 'primary'"
-                size="md"
-                @click.stop="toggleStudentStatus(item)"
-                :leftIconPath="
-                  item.status === 'success'
-                    ? 'M15 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 00-.75-.75H6a.75.75 0 000 1.5h12a.75.75 0 00.75-.75zM20.25 6.75H3.75a.75.75 0 00-.75.75v10.5c0 .414.336.75.75.75h16.5a.75.75 0 00.75-.75V7.5a.75.75 0 00-.75-.75z'
-                    : 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-                "
-              >
-                {{ item.status === "success" ? "Nonaktifkan" : "Aktifkan" }}
-              </Button>
-            </div>
+            <StatusLabel class="w-fit hidden lg:block" :status="item.status"
+              :label="item.status === 'success' ? 'Aktif' : 'Non Aktif'" :customLabel="true" size="md" />
           </td>
         </template>
       </Table>
+
+      <!-- ModalSelected muncul jika ada yang dicentang -->
+      <ModalSelected v-if="checkedMahasiswa.length > 0" :count="checkedMahasiswa.length" @close="closeModalSelected"
+        @setActive="setMahasiswaStatus('success')" @setInactive="setMahasiswaStatus('inactive')" />
     </template>
 
     <!-- === TAB 2: DOSEN === -->
     <template #tab2>
       <div class="flex gap-2 lg:gap-4 justify-between items-center mb-4">
-        <ModalFilter
-          title="Status"
-          :items="statuses"
-          filterType="status"
-          @apply="handleFilterDosen"
-          triggerText="Status"
-          :preselectedValues="selectedStatusesDosen"
-        />
-        <SearchBar
-          v-model="searchQueryDosen"
-          @search="handleSearchDosen"
-          filterKey="dosen"
-        />
+        <ModalFilter title="Status" :items="statuses" filterType="status" @apply="handleFilterDosen"
+          triggerText="Status" :preselectedValues="selectedStatusesDosen" />
+        <SearchBar v-model="searchQueryDosen" @search="handleSearchDosen" filterKey="dosen" />
       </div>
 
-      <Table
-        :headers="tableHeadersDosen"
-        :items="filteredLecturers"
-        min-width="min-w-full"
-      >
+      <Table :headers="tableHeadersDosen" :items="filteredLecturers" min-width="min-w-full" :showCheckbox="true"
+        :checkedItems="checkedLecturers" @update:checkedItems="checkedLecturers = $event">
         <template #row="{ item }">
           <td class="py-3 px-6">{{ item.name }}</td>
           <td class="py-3 px-6">{{ item.nip }}</td>
           <td class="py-3 px-6">{{ item.email }}</td>
           <td class="py-3 px-6">
-            <StatusLabel
-              class="w-fit hidden lg:block"
-              :status="item.status"
-              :label="item.status === 'success' ? 'Aktif' : 'Non Aktif'"
-              :customLabel="true"
-              size="md"
-            />
-          </td>
-          <td class="py-3 px-6 text-right">
-            <div class="flex gap-2 justify-end">
-              <Button
-                :variant="item.status === 'success' ? 'danger' : 'primary'"
-                size="md"
-                @click.stop="toggleLecturerStatus(item)"
-                :leftIconPath="
-                  item.status === 'success'
-                    ? 'M15 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 00-.75-.75H6a.75.75 0 000 1.5h12a.75.75 0 00.75-.75zM20.25 6.75H3.75a.75.75 0 00-.75.75v10.5c0 .414.336.75.75.75h16.5a.75.75 0 00.75-.75V7.5a.75.75 0 00-.75-.75z'
-                    : 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-                "
-              >
-                {{ item.status === "success" ? "Nonaktifkan" : "Aktifkan" }}
-              </Button>
-            </div>
+            <StatusLabel class="w-fit hidden lg:block" :status="item.status"
+              :label="item.status === 'success' ? 'Aktif' : 'Non Aktif'" :customLabel="true" size="md" />
           </td>
         </template>
       </Table>
+      <ModalSelected v-if="checkedLecturers.length > 0" :count="checkedLecturers.length"
+        @close="closeModalSelectedLecturer" @setActive="setLecturerStatus('success')"
+        @setInactive="setLecturerStatus('inactive')" />
     </template>
   </TabDiv>
 </template>
