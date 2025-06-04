@@ -1,25 +1,39 @@
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
-import Breadcrumb from '@/components/Tugas-akhir/Breadcrumb.vue';
-import SummaryCard from '@/components/Tugas-akhir/Dashboard/SummaryCard.vue';
-import Table from '@/components/Tugas-akhir/Table.vue';
-import DefaultAvatar from '@/assets/images/Profile Avatar.svg';
-import router from '@/router';
-import DoughnutChart from '@/components/Tugas-akhir/Dashboard/DoughnutChart.vue'
-import BarChart from '@/components/Tugas-akhir/Dashboard/BarChart.vue'
-import { useDashboard } from '@/services/TugasAkhir/Admin/dashboard.js';
+import { ref, onMounted, watch, computed } from "vue";
+import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
+import SummaryCard from "@/components/Tugas-akhir/Dashboard/SummaryCard.vue";
+import Table from "@/components/Tugas-akhir/Table.vue";
+import DefaultAvatar from "@/assets/images/Profile Avatar.svg";
+import router from "@/router";
+import Loading from "@/components/Loading.vue";
+import ErrorMsg from "@/components/ErrorMsg.vue";
+import DoughnutChart from "@/components/Tugas-akhir/Dashboard/DoughnutChart.vue";
+import BarChart from "@/components/Tugas-akhir/Dashboard/BarChart.vue";
+import { useDashboard } from "@/services/TugasAkhir/Admin/dashboard.js";
 const { data, loading, error } = useDashboard();
 
+const proposalValid = computed(
+  () => data.value?.validasi_berkas?.proposal?.valid ?? 0
+);
+const proposalMenunggu = computed(
+  () => data.value?.validasi_berkas?.proposal?.menunggu ?? 0
+);
+const ujianValid = computed(
+  () => data.value?.validasi_berkas?.ujian_tugas_akhir?.valid ?? 0
+);
+const ujianMenunggu = computed(
+  () => data.value?.validasi_berkas?.ujian_tugas_akhir?.menunggu ?? 0
+);
 
-const proposalValid = computed(() => data.value?.validasi_berkas?.proposal?.valid ?? 0);
-const proposalMenunggu = computed(() => data.value?.validasi_berkas?.proposal?.menunggu ?? 0);
-const ujianValid = computed(() => data.value?.validasi_berkas?.ujian_tugas_akhir?.valid ?? 0);
-const ujianMenunggu = computed(() => data.value?.validasi_berkas?.ujian_tugas_akhir?.menunggu ?? 0);
-
-const ActiveTA = computed(() => data.value?.summary_card?.tugas_akhir_aktif ?? 0);
-const ScheduledUjian = computed(() => data.value?.summary_card?.ujian_terjadwal ?? 0);
-const TotalBimbingan = computed(() => data.value?.summary_card?.mahasiswa_tugas_akhir ?? 0);
-
+const ActiveTA = computed(
+  () => data.value?.summary_card?.tugas_akhir_aktif ?? 0
+);
+const ScheduledUjian = computed(
+  () => data.value?.summary_card?.ujian_terjadwal ?? 0
+);
+const TotalBimbingan = computed(
+  () => data.value?.summary_card?.mahasiswa_tugas_akhir ?? 0
+);
 
 // Icon paths
 const iconPaths = {
@@ -59,76 +73,105 @@ const summaryCards = [
 
 // Data dummy
 
-const filteredTugasAkhir = computed(() => data.value?.tabel_validasi_berkas_ujian ?? []);
-const filteredPlottingProposal = computed(() => data.value?.tabel_validasi_berkas_sempro ?? []);
+const filteredTugasAkhir = computed(
+  () => data.value?.tabel_validasi_berkas_ujian ?? []
+);
+const filteredPlottingProposal = computed(
+  () => data.value?.tabel_validasi_berkas_sempro ?? []
+);
 const handleRowClickProposal = (item) => {
   router.push({
-    name: 'DetailPengajuanForAdmin',
+    name: "DetailPengajuanForAdmin",
     params: { nim: item.nim },
   });
-  console.log('Row clicked:', item);
+  console.log("Row clicked:", item);
 };
 const handleRowClickUjianTA = (item) => {
   router.push({
-    name: 'DetailPendaftarForAdmin',
+    name: "DetailPendaftarForAdmin",
     params: { nim: item.nim },
   });
-  console.log('Row clicked:', item);
+  console.log("Row clicked:", item);
 };
 
-import 'vue3-carousel/carousel.css'
-import { Carousel, Slide, Pagination, Navigation } from 'vue3-carousel'
-import { Navigation as CarouselNavigation } from 'vue3-carousel'
-import { Pagination as CarouselPagination } from 'vue3-carousel'
+import "vue3-carousel/carousel.css";
+import { Carousel, Slide, Pagination, Navigation } from "vue3-carousel";
+import { Navigation as CarouselNavigation } from "vue3-carousel";
+import { Pagination as CarouselPagination } from "vue3-carousel";
 const carouselConfig = {
   itemsToShow: 1,
   wrapAround: true,
   autoplay: 5000,
   pauseAutoplayOnHover: true,
-}
+};
 
-const BarChartData = ref(
-  {
-    labels: ['Sistem Informasi', 'Internet Of Things', 'Game Development', 'Data Science', 'Machine Learning', 'Artificial Intelligence'],
-    datasetsLabel: ['2023', '2024', '2025'],
-    datasetsBgColor: ['#f87979', '#36a2eb', '#4bc0c0'],
-    datasetsData: [
-      [40, 20, 12, 30, 25, 18],
-      [35, 25, 18, 28, 30, 22],
-      [12, 22, 32, 18, 20, 25]
-    ]
-  }
-)
+const BarChartData = ref({
+  labels: [
+    "Sistem Informasi",
+    "Internet Of Things",
+    "Game Development",
+    "Data Science",
+    "Machine Learning",
+    "Artificial Intelligence",
+  ],
+  datasetsLabel: ["2023", "2024", "2025"],
+  datasetsBgColor: ["#f87979", "#36a2eb", "#4bc0c0"],
+  datasetsData: [
+    [40, 20, 12, 30, 25, 18],
+    [35, 25, 18, 28, 30, 22],
+    [12, 22, 32, 18, 20, 25],
+  ],
+});
 
 watch(data, (val) => {
-  console.log('API dashboard:', val);
+  console.log("API dashboard:", val);
 });
 </script>
 <template>
-  <Breadcrumb />
-  <!-- Status card & Summary Cards -->
-  <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
-    <!-- Doughnut Card -->
-    <div class="card-rounded bg-white p-4 pb-8 lg:p-8 flex-1 sm:min-w-[400px]">
-      <h5 class="mb-4 body2-bold sm:body1-bold">Validasi Berkas</h5>
-      <Carousel v-bind="carouselConfig">
-        <Slide>
-          <div>
-            <DoughnutChart class="w-48 h-48 sm:w-52 sm:h-52" :labels="['Menunggu', 'Diterima']"
-              :dataValues="[proposalMenunggu, proposalValid]"
-              :centerTextValue="[proposalValid, proposalValid + proposalMenunggu]" insideText="Proposal" />
-          </div>
+  <div v-if="loading" class="flex items-center justify-center min-h-[80dvh]">
+    <Loading />
+  </div>
 
-        </Slide>
-        <Slide>
-          <div>
-            <DoughnutChart class="w-48 h-48 sm:w-52 sm:h-52" :labels="['Menunggu', 'Diterima']"
-              :dataValues="[ujianMenunggu, ujianValid]" :centerTextValue="[ujianValid, ujianMenunggu + ujianValid]"
-              insideText="Ujian TA" />
-          </div>
-        </Slide>
-        <template #addons>
-          <!-- <CarouselNavigation>
+  <div v-else-if="error" class="p-4">
+    <ErrorMsg :message="error" />
+  </div>
+  <div v-else>
+    <Breadcrumb />
+    <!-- Status card & Summary Cards -->
+    <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+      <!-- Doughnut Card -->
+      <div
+        class="card-rounded bg-white p-4 pb-8 lg:p-8 flex-1 sm:min-w-[400px]"
+      >
+        <h5 class="mb-4 body2-bold sm:body1-bold">Validasi Berkas</h5>
+        <Carousel v-bind="carouselConfig">
+          <Slide>
+            <div>
+              <DoughnutChart
+                class="mb-4 w-44 h-44 sm:w-44 sm:h-44"
+                :labels="['Menunggu', 'Diterima']"
+                :dataValues="[proposalMenunggu, proposalValid]"
+                :centerTextValue="[
+                  proposalValid,
+                  proposalValid + proposalMenunggu,
+                ]"
+                insideText="Proposal"
+              />
+            </div>
+          </Slide>
+          <Slide>
+            <div>
+              <DoughnutChart
+                class="mb-4 w-44 h-44 sm:w-44 sm:h-44"
+                :labels="['Menunggu', 'Diterima']"
+                :dataValues="[ujianMenunggu, ujianValid]"
+                :centerTextValue="[ujianValid, ujianMenunggu + ujianValid]"
+                insideText="Ujian TA"
+              />
+            </div>
+          </Slide>
+          <template #addons>
+            <!-- <CarouselNavigation>
                 <template #prev>
                   <span>←</span>
                 </template>
@@ -136,96 +179,156 @@ watch(data, (val) => {
                   <span>→</span>
                 </template>
 </CarouselNavigation> -->
-          <CarouselPagination />
-        </template>
-      </Carousel>
-    </div>
-
-    <!-- Summary Cards -->
-    <div class="flex flex-col flex-grow p-4 bg-white card-rounded lg:p-8 sm:flex-row justify-evenly">
-      <template v-for="(card, index) in summaryCards" :key="index">
-        <!-- Card -->
-        <SummaryCard :icon="card.icon" :iconColor="card.iconColor" :title="card.title || '-'"
-          :subtitle="card.subtitle" />
-
-        <!-- Divider (except after last card) -->
-        <template v-if="index < summaryCards.length - 1">
-          <div class="self-stretch hidden w-px h-auto mx-4 sm:flex my-14 bg-placeholder"></div>
-          <div class="sm:hidden max-w-[240px] w-10/12 h-px bg-placeholder mx-auto my-4"></div>
-        </template>
-      </template>
-    </div>
-  </div>
-  <div class="flex flex-wrap gap-4">
-    <div class="flex-grow p-4 mt-4 bg-white card-rounded lg:p-8">
-      <div class="flex items-center justify-between mb-4">
-        <h5 class="body2-bold sm:body1-bold">Validasi Berkas Seminar Proposal </h5>
-        <router-link class="text-secondary" to="tugas-akhir/proposal">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-            class="w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-          </svg>
-        </router-link>
+            <CarouselPagination />
+          </template>
+        </Carousel>
       </div>
-      <Table minWidth="min-w-[300px]" :headers="['NIM', 'Nama', 'Judul Proposal Tugas Akhir']"
-        :items="filteredPlottingProposal" :showPagination="false" @rowClick="handleRowClickProposal">
-        <template #row="{ item }">
-          <td class="px-1 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6">
-            {{ item.nim }}
-          </td>
-          <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
-            <div class="flex items-center gap-2">
-              <img v-if="item.img" :src="item.img" alt="Profile Image" class="w-8 h-8 rounded-full" />
-              {{ item.mahasiswa }}
-            </div>
-          </td>
-          <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
-            {{ item.judul }}
-          </td>
-        </template>
-        <template #empty>
 
+      <!-- Summary Cards -->
+      <div
+        class="flex flex-col flex-grow p-4 bg-white card-rounded lg:p-8 sm:flex-row justify-evenly"
+      >
+        <template v-for="(card, index) in summaryCards" :key="index">
+          <!-- Card -->
+          <SummaryCard
+            :icon="card.icon"
+            :iconColor="card.iconColor"
+            :title="card.title || '-'"
+            :subtitle="card.subtitle"
+          />
+
+          <!-- Divider (except after last card) -->
+          <template v-if="index < summaryCards.length - 1">
+            <div
+              class="self-stretch hidden w-px h-auto mx-4 sm:flex my-14 bg-placeholder"
+            ></div>
+            <div
+              class="sm:hidden max-w-[240px] w-10/12 h-px bg-placeholder mx-auto my-4"
+            ></div>
+          </template>
         </template>
-      </Table>
-    </div>
-    <div class="flex-grow p-4 mt-4 bg-white card-rounded lg:p-8">
-      <div class="flex items-center justify-between mb-4">
-        <h5 class="body2-bold sm:body1-bold">Validasi Berkas Ujian Tugas Akhir</h5>
-        <router-link class="text-secondary" :to="{ name: 'UjianTAforAdmin', query: { tab: 'tab2' } }">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-            class="w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-          </svg>
-        </router-link>
       </div>
-      <Table minWidth="min-w-[300px]" :headers="['NIM', 'Nama', 'Judul Tugas Akhir']" :items="filteredTugasAkhir"
-        :showPagination="false" @rowClick="handleRowClickUjianTA">
-        <template #row="{ item }">
-          <td class="px-1 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6">
-            {{ item.nim }}
-          </td>
-          <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
-            <div class="flex items-center gap-2">
-              <img v-if="item.img" :src="item.img" alt="Profile Image" class="w-8 h-8 rounded-full" />
-              {{ item.mahasiswa }}
-            </div>
-          </td>
-          <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
-            {{ item.judul }}
-          </td>
-        </template>
-        <template #empty>
-
-        </template>
-      </Table>
     </div>
-  </div>
+    <div class="flex flex-wrap gap-4">
+      <div class="flex-grow p-4 mt-4 bg-white card-rounded lg:p-8">
+        <div class="flex items-center justify-between mb-4">
+          <h5 class="body2-bold sm:body1-bold">
+            Validasi Berkas Seminar Proposal
+          </h5>
+          <router-link class="text-secondary" to="tugas-akhir/proposal">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+              />
+            </svg>
+          </router-link>
+        </div>
+        <Table
+          minWidth="min-w-[300px]"
+          :headers="['NIM', 'Nama', 'Judul Proposal Tugas Akhir']"
+          :items="filteredPlottingProposal"
+          :showPagination="false"
+          @rowClick="handleRowClickProposal"
+        >
+          <template #row="{ item }">
+            <td
+              class="px-1 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
+            >
+              {{ item.nim }}
+            </td>
+            <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
+              <div class="flex items-center gap-2">
+                <img
+                  v-if="item.img"
+                  :src="item.img"
+                  alt="Profile Image"
+                  class="w-8 h-8 rounded-full"
+                />
+                {{ item.mahasiswa }}
+              </div>
+            </td>
+            <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
+              {{ item.judul }}
+            </td>
+          </template>
+          <template #empty> </template>
+        </Table>
+      </div>
+      <div class="flex-grow p-4 mt-4 bg-white card-rounded lg:p-8">
+        <div class="flex items-center justify-between mb-4">
+          <h5 class="body2-bold sm:body1-bold">
+            Validasi Berkas Ujian Tugas Akhir
+          </h5>
+          <router-link
+            class="text-secondary"
+            :to="{ name: 'UjianTAforAdmin', query: { tab: 'tab2' } }"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+              />
+            </svg>
+          </router-link>
+        </div>
+        <Table
+          minWidth="min-w-[300px]"
+          :headers="['NIM', 'Nama', 'Judul Tugas Akhir']"
+          :items="filteredTugasAkhir"
+          :showPagination="false"
+          @rowClick="handleRowClickUjianTA"
+        >
+          <template #row="{ item }">
+            <td
+              class="px-1 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
+            >
+              {{ item.nim }}
+            </td>
+            <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
+              <div class="flex items-center gap-2">
+                <img
+                  v-if="item.img"
+                  :src="item.img"
+                  alt="Profile Image"
+                  class="w-8 h-8 rounded-full"
+                />
+                {{ item.mahasiswa }}
+              </div>
+            </td>
+            <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
+              {{ item.judul }}
+            </td>
+          </template>
+          <template #empty> </template>
+        </Table>
+      </div>
+    </div>
 
-  <div class="p-4 mt-4 bg-white card-rounded lg:p-8 h-96">
-    <BarChart :labels="BarChartData.labels" :datasets-label="BarChartData.datasetsLabel"
-      :datasets-bg-color="BarChartData.datasetsBgColor" :datasets-data="BarChartData.datasetsData" />
+    <div class="p-4 mt-4 bg-white card-rounded lg:p-8 h-96">
+      <BarChart
+        :labels="BarChartData.labels"
+        :datasets-label="BarChartData.datasetsLabel"
+        :datasets-bg-color="BarChartData.datasetsBgColor"
+        :datasets-data="BarChartData.datasetsData"
+      />
+    </div>
   </div>
 </template>
 <style scoped>

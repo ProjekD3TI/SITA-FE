@@ -197,7 +197,7 @@ watch(currentPage, (val) => {
   ></router-view>
 
   <div
-    v-else-if="loadingBimbingan && loadingKategori && loadingPlotting"
+    v-else-if="loadingBimbingan || loadingKategori || loadingPlotting"
     class="flex items-center justify-center min-h-[80dvh]"
   >
     <Loading />
@@ -227,10 +227,7 @@ watch(currentPage, (val) => {
           />
           <SearchBar v-model="searchQuery" filterKey="bimbingan" />
         </div>
-        <Loading v-if="loadingPlotting" />
-        <ErrorMsg v-else-if="errorPlotting" :message="error" />
         <Table
-          v-else
           :headers="['NIM', 'Nama', 'Kategori', 'Dosen Pembimbing']"
           :items="filteredReqPembibingMhs"
           :pagination="paginationPlotting"
@@ -251,14 +248,14 @@ watch(currentPage, (val) => {
 
             <!-- Kolom Nama -->
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-              <div class="flex items-center gap-2">
+              <!-- <div class="flex items-center gap-2">
                 <img
                   :src="DefaultAvatar"
                   alt="Profile Image"
                   class="w-8 h-8 rounded-full"
                 />
-                {{ item.mahasiswa }}
-              </div>
+              </div> -->
+              {{ item.mahasiswa }}
             </td>
 
             <!-- Kolom Judul Proposal -->
@@ -272,7 +269,7 @@ watch(currentPage, (val) => {
               :class="item.dosen_pembimbing == null ? 'text-secondary' : ''"
             >
               <div v-if="item.dosen_pembimbing" class="flex items-center gap-2">
-                <img
+                <!-- <img
                   v-if="item.img"
                   :src="item.img"
                   alt="Profile Image"
@@ -283,7 +280,7 @@ watch(currentPage, (val) => {
                   :src="DefaultAvatar"
                   alt="Profile Image"
                   class="w-8 h-8 rounded-full"
-                />
+                /> -->
                 {{ item.dosen_pembimbing }}
               </div>
               <div v-else class="text-secondary">Plot Pembimbing</div>
@@ -339,13 +336,13 @@ watch(currentPage, (val) => {
             <!-- Kolom Nama -->
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               <div class="flex items-center gap-2">
-                <img
+                <!-- <img
                   :src="DefaultAvatar"
                   alt="Profile Image"
                   class="w-8 h-8 rounded-full"
-                />
-                {{ item.mahasiswa }}
+                /> -->
               </div>
+              {{ item.mahasiswa }}
             </td>
 
             <!-- Kolom Judul Proposal -->
@@ -356,7 +353,7 @@ watch(currentPage, (val) => {
             <!-- Kolom Nilai -->
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               <div class="flex items-center gap-2">
-                <img
+                <!-- <img
                   v-if="item.img"
                   :src="item.img"
                   alt="Profile Image"
@@ -367,7 +364,7 @@ watch(currentPage, (val) => {
                   :src="DefaultAvatar"
                   alt="Profile Image"
                   class="w-8 h-8 rounded-full"
-                />
+                /> -->
                 {{ item.dosen_pembimbing }}
               </div>
             </td>

@@ -344,13 +344,13 @@ const modalTimerBodyText = computed(() => {
             </td>
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               <div class="flex items-center gap-2">
-                <img
+                <!-- <img
                   :src="DefaultAvatar"
                   alt="Profile Image"
                   class="w-8 h-8 rounded-full"
-                />
-                {{ item.mahasiswa }}
+                /> -->
               </div>
+              {{ item.mahasiswa }}
             </td>
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               {{ item.judul_proposal }}
@@ -402,13 +402,13 @@ const modalTimerBodyText = computed(() => {
             </td>
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               <div class="flex items-center gap-2">
-                <img
+                <!-- <img
                   :src="DefaultAvatar"
                   alt="Profile Image"
                   class="w-8 h-8 rounded-full"
-                />
-                {{ item.mahasiswa }}
+                /> -->
               </div>
+              {{ item.mahasiswa }}
             </td>
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               {{ item.kategori_ta?.nama_kategori }}

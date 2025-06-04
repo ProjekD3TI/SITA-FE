@@ -71,7 +71,7 @@
     @apply text-[12px] font-medium;
   }
   .card-style {
-    @apply bg-white card-rounded shadow-custom p-6;
+    @apply p-8 bg-white card-rounded shadow-custom;
   }
   .shadow-custom {
     box-shadow: var(--shadow-custom);
@@ -116,7 +116,7 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --shadow-custom: 0px 1px 5px 0px rgba(0, 0, 0, 0.2);
+    --shadow-custom: 0px 1px 12px 0px rgba(118, 118, 118, 0.097);
   }
   .dark {
     --background: 0 0% 3.9%;

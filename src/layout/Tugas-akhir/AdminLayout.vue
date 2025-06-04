@@ -276,7 +276,7 @@ const checkNotification = () => {
 // Toggle Functionality
 const toggleNavbar = () => {
   showNavbar.value = !showNavbar.value;
-  localStorage.setItem("adminSidebarOpen", showNavbar.value); // save state
+  localStorage.setItem("adminSidebarOpen", showNavbar.value); 
   if (!isLgScreen.value) {
     showNotification.value = false;
     showUser.value = false;

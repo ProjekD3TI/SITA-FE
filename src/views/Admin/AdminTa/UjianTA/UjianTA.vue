@@ -740,7 +740,7 @@ const modalFileUjianTAFiles = ref({
             </td>
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               <div class="flex items-center gap-2">
-                <img
+                <!-- <img
                   v-if="item.img"
                   :src="item.img"
                   alt="Profile Image"
@@ -751,16 +751,16 @@ const modalFileUjianTAFiles = ref({
                   :src="DefaultAvatar"
                   alt="Profile Image"
                   class="w-8 h-8 rounded-full"
-                />
-                {{ item.nama }}
+                /> -->
               </div>
+              {{ item.nama }}
             </td>
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               {{ item.judul_proposal_ta }}
             </td>
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               <div class="flex items-center gap-2">
-                <img
+                <!-- <img
                   v-if="item.img"
                   :src="item.img"
                   alt="Profile Image"
@@ -771,9 +771,9 @@ const modalFileUjianTAFiles = ref({
                   :src="DefaultAvatar"
                   alt="Profile Image"
                   class="w-8 h-8 rounded-full"
-                />
-                {{ item.dosen_pembimbing }}
+                /> -->
               </div>
+              {{ item.dosen_pembimbing }}
             </td>
             <td
               class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
@@ -843,7 +843,7 @@ const modalFileUjianTAFiles = ref({
             </td>
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               <div class="flex items-center gap-2">
-                <img
+                <!-- <img
                   v-if="item.img"
                   :src="item.img"
                   alt="Profile Image"
@@ -854,16 +854,16 @@ const modalFileUjianTAFiles = ref({
                   :src="DefaultAvatar"
                   alt="Profile Image"
                   class="w-8 h-8 rounded-full"
-                />
-                {{ item.nama }}
+                /> -->
               </div>
+              {{ item.nama }}
             </td>
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               {{ item.judul_ta }}
             </td>
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               <div class="flex items-center gap-2">
-                <img
+                <!-- <img
                   v-if="item.img"
                   :src="item.img"
                   alt="Profile Image"
@@ -874,9 +874,9 @@ const modalFileUjianTAFiles = ref({
                   :src="DefaultAvatar"
                   alt="Profile Image"
                   class="w-8 h-8 rounded-full"
-                />
-                {{ item.dosen_pembimbing }}
+                /> -->
               </div>
+              {{ item.dosen_pembimbing }}
             </td>
             <td
               class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
@@ -930,14 +930,14 @@ const modalFileUjianTAFiles = ref({
             </td>
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               <div class="flex items-center gap-2">
-                <img
+                <!-- <img
                   v-if="item.img"
                   :src="item.img"
                   alt="Profile Image"
                   class="w-8 h-8 rounded-full"
-                />
-                {{ item.nama }}
+                /> -->
               </div>
+              {{ item.nama }}
             </td>
             <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
               {{ item.judul_ta }}
@@ -1223,7 +1223,7 @@ const modalFileUjianTAFiles = ref({
           label="Catatan"
           placeholder="Masukkan catatan"
           v-model="modalFileUjianTACatatan"
-          :readonly="true"
+          disabled="true"
         />
       </div>
     </DefaultModal>
