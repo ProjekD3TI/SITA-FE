@@ -216,6 +216,108 @@
                   />
                 </div>
               </div>
+              <!-- New Field - Profesi -->
+              <div class="mb-4">
+                <label for="profesi" class="block text-sm font-medium text-gray-700 mb-1">Profesi <span class="text-red-500">*</span></label>
+                <select
+                  id="profesi"
+                  v-model="report.profesi"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                  required
+                >
+                  <option value="" disabled selected>Pilih Profesi</option>
+                  <option value="dosen">Dosen</option>
+                  <option value="mahasiswa">Mahasiswa</option>
+                  <option value="staff">Staff</option>
+                  <option value="lainnya">Lainnya</option>
+                </select>
+              </div>
+            </div>
+            
+            <div>
+              <div class="mb-4">
+                <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Nomor HP Pelapor <span class="text-red-500">*</span></label>
+                <input
+                  type="tel"
+                  id="phone"
+                  v-model="report.phone"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+                  required
+                />
+              </div>
+              
+              <!-- New Field - Jenis Kelamin -->
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Kelamin <span class="text-red-500">*</span></label>
+                <div class="flex space-x-4">
+                  <div class="flex items-center">
+                    <input 
+                      type="radio" 
+                      id="gender_male" 
+                      name="jenis_kelamin" 
+                      v-model="report.jenis_kelamin" 
+                      value="laki-laki"
+                      class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
+                      required
+                    />
+                    <label for="gender_male" class="ml-2 text-sm text-gray-700">Laki-laki</label>
+                  </div>
+                  
+                  <div class="flex items-center">
+                    <input 
+                      type="radio" 
+                      id="gender_female" 
+                      name="jenis_kelamin" 
+                      v-model="report.jenis_kelamin" 
+                      value="perempuan"
+                      class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
+                      required
+                    />
+                    <label for="gender_female" class="ml-2 text-sm text-gray-700">Perempuan</label>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- New Field - Umur Pelapor -->
+              <div class="mb-4">
+                <label for="umur_pelapor" class="block text-sm font-medium text-gray-700 mb-2">Rentang Umur <span class="text-red-500">*</span></label>
+                <div class="space-y-2 bg-gray-50 p-3 rounded-md border border-gray-300">
+                  <div class="flex items-center">
+                    <input
+                      type="radio"
+                      id="below20"
+                      name="umur_pelapor"
+                      v-model="report.umur_pelapor"
+                      value="<20"
+                      class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
+                      required
+                    />
+                    <label for="below20" class="ml-2 text-sm text-gray-700">Kurang dari 20 tahun</label>
+                  </div>
+                  <div class="flex items-center">
+                    <input
+                      type="radio"
+                      id="20to40"
+                      name="umur_pelapor"
+                      v-model="report.umur_pelapor"
+                      value="20-40"
+                      class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
+                    />
+                    <label for="20to40" class="ml-2 text-sm text-gray-700">20 - 40 tahun</label>
+                  </div>
+                  <div class="flex items-center">
+                    <input
+                      type="radio"
+                      id="above40"
+                      name="umur_pelapor"
+                      v-model="report.umur_pelapor"
+                      value="40<"
+                      class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
+                    />
+                    <label for="above40" class="ml-2 text-sm text-gray-700">Lebih dari 40 tahun</label>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -523,7 +625,10 @@ export default {
         bukti_pelanggaran: [],
         agreement: false,
         terlapor: [],
-        saksi: []
+        saksi: [],
+        profesi: '',
+        jenis_kelamin: '',
+        umur_pelapor: ''
       },
       categories: [],
       selectedBukti: [],
@@ -635,31 +740,83 @@ export default {
     },
     
     fetchCategories() {
-      axios.get('http://localhost:8000/api/category')
-        .then(response => {
-          // Check if response.data is an array directly
-          if (Array.isArray(response.data)) {
-            this.categories = response.data;
-          } 
-          // Otherwise check if it has a data property containing the array (as originally expected)
-          else if (response.data && response.data.data) {
-            this.categories = response.data.data;
-          } 
-          // Handle unexpected formats
-          else {
-            console.error('Unexpected API response structure:', response.data);
+      // Use XHR instead of axios
+      const xhr = new XMLHttpRequest();
+      
+      // Configure request
+      xhr.open('GET', 'https://v3422040.mhs.d3tiuns.com/api/category', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.setRequestHeader('Accept', 'application/json');
+      
+      // Set timeout (10 seconds)
+      xhr.timeout = 10000;
+      
+      // Handle successful completion
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          // Parse response
+          try {
+            const response = JSON.parse(xhr.responseText);
+            
+            // Check if response is an array directly
+            if (Array.isArray(response)) {
+              this.categories = response;
+            } 
+            // Or if it has a data property containing the array
+            else if (response && response.data) {
+              this.categories = response.data;
+            } 
+            // Handle unexpected formats
+            else {
+              console.error('Unexpected API response structure:', response);
+              this.categories = [];
+            }
+            console.log('Categories loaded:', this.categories);
+          } catch (e) {
+            console.error('Error parsing categories:', e);
             this.categories = [];
           }
-          console.log('Categories loaded:', this.categories);
-        })
-        .catch(error => {
-          console.error('Error fetching categories:', error);
+        } else {
+          console.error('Error fetching categories:', xhr.status, xhr.statusText);
           Swal.fire({
             icon: 'error',
             title: 'Error',
             text: 'Gagal memuat kategori laporan.'
           });
+        }
+      };
+      
+      // Handle network errors
+      xhr.onerror = () => {
+        console.error('Network error while fetching categories');
+        Swal.fire({
+          icon: 'error',
+          title: 'Network Error',
+          text: 'Gagal memuat kategori laporan. Periksa koneksi internet Anda.'
         });
+      };
+      
+      // Handle timeouts
+      xhr.ontimeout = () => {
+        console.error('Timeout while fetching categories');
+        Swal.fire({
+          icon: 'error',
+          title: 'Timeout Error',
+          text: 'Waktu permintaan habis. Silakan coba lagi.'
+        });
+      };
+      
+      // Send the request
+      try {
+        xhr.send();
+      } catch (error) {
+        console.error('Error sending request:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Terjadi kesalahan saat memuat kategori: ' + error.message
+        });
+      }
     },
     
     resetForm() {
@@ -686,7 +843,10 @@ export default {
           nama_lengkap: '',
           email: '',
           nomor_telepon: ''
-        }]
+        }],
+        profesi: '',
+        jenis_kelamin: '',
+        umur_pelapor: ''
       };
       this.selectedBukti = [];
       this.showLainnyaInput = false;
@@ -705,7 +865,7 @@ export default {
       if (fileInput) fileInput.value = '';
     },
     
-    async submitReport() {
+    submitReport() {
       // Reset warnings
       this.showBuktiWarning = false;
       this.showAgreementWarning = false;
@@ -742,118 +902,196 @@ export default {
         return;
       }
       
-      try {
-        // Show loading state
-        this.isSubmitting = true;
-        
-        // Create FormData object to handle file upload
-        const formData = new FormData();
-        formData.append('judul', this.report.title);
-        formData.append('category_id', this.report.category);
-        formData.append('deskripsi', this.report.description);
-        formData.append('nama_pelapor', this.report.reporterName);
-        formData.append('nim_pelapor', this.report.nim);
-        formData.append('nomor_telepon', this.report.phone);
-        formData.append('tanggal_kejadian', this.report.incidentDate);
-        formData.append('current_datetime', this.currentDateTime);
-        formData.append('username', this.currentUser);
-        formData.append('g-recaptcha-response', this.recaptchaResponse);
-        
-        // Add lampiran_link
-        if (this.report.lampiran_link) {
-          formData.append('lampiran_link', this.report.lampiran_link);
+      // Show loading state
+      this.isSubmitting = true;
+      
+      // Create FormData object to handle file upload
+      const formData = new FormData();
+      formData.append('judul', this.report.title);
+      formData.append('category_id', this.report.category);
+      formData.append('deskripsi', this.report.description);
+      formData.append('nama_pelapor', this.report.reporterName);
+      formData.append('nim_pelapor', this.report.nim);
+      formData.append('nomor_telepon', this.report.phone);
+      formData.append('tanggal_kejadian', this.report.incidentDate);
+      formData.append('current_datetime', this.currentDateTime);
+      formData.append('username', this.currentUser);
+      formData.append('g-recaptcha-response', this.recaptchaResponse);
+      formData.append('profesi', this.report.profesi);
+      formData.append('jenis_kelamin', this.report.jenis_kelamin);
+      formData.append('umur_pelapor', this.report.umur_pelapor);
+  
+      
+      // Add lampiran_link
+      if (this.report.lampiran_link) {
+        formData.append('lampiran_link', this.report.lampiran_link);
+      }
+      
+      // Add bukti_pelanggaran as array
+      if (this.report.bukti_pelanggaran && this.report.bukti_pelanggaran.length > 0) {
+        for (let i = 0; i < this.report.bukti_pelanggaran.length; i++) {
+          formData.append('bukti_pelanggaran[]', this.report.bukti_pelanggaran[i]);
         }
-        
-        // Add bukti_pelanggaran as array
-        if (this.report.bukti_pelanggaran && this.report.bukti_pelanggaran.length > 0) {
-          for (let i = 0; i < this.report.bukti_pelanggaran.length; i++) {
-            formData.append('bukti_pelanggaran[]', this.report.bukti_pelanggaran[i]);
-          }
-        }
-        
-        // Add terlapor with proper array format for Laravel
-        const terlaporFiltered = this.report.terlapor.filter(t => t.nama_lengkap.trim() !== '');
-        if (terlaporFiltered.length > 0) {
-          terlaporFiltered.forEach((item, index) => {
-            Object.keys(item).forEach(key => {
-              if (item[key]) { // Only append if value exists
-                formData.append(`terlapor[${index}][${key}]`, item[key]);
-              }
-            });
+      }
+      
+      // Add terlapor with proper array format for Laravel
+      const terlaporFiltered = this.report.terlapor.filter(t => t.nama_lengkap.trim() !== '');
+      if (terlaporFiltered.length > 0) {
+        terlaporFiltered.forEach((item, index) => {
+          Object.keys(item).forEach(key => {
+            if (item[key]) { // Only append if value exists
+              formData.append(`terlapor[${index}][${key}]`, item[key]);
+            }
           });
-        }
-        
-        // Add saksi with proper array format for Laravel
-        const saksiFiltered = this.report.saksi.filter(s => s.nama_lengkap.trim() !== '');
-        if (saksiFiltered.length > 0) {
-          saksiFiltered.forEach((item, index) => {
-            Object.keys(item).forEach(key => {
-              if (item[key]) { // Only append if value exists
-                formData.append(`saksi[${index}][${key}]`, item[key]);
-              }
-            });
-          });
-        }
-        
-        // Append multiple files if they exist
-        if (this.report.evidenceFiles && this.report.evidenceFiles.length > 0) {
-          for (let i = 0; i < this.report.evidenceFiles.length; i++) {
-            formData.append('image_path[]', this.report.evidenceFiles[i]);
-          }
-        }
-        
-        // Agreement field
-        formData.append('agreement', this.report.agreement);
-        
-        // Submit the data to the API
-        const response = await axios.post('http://localhost:8000/api/laporan_kekerasan/add_laporan', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Accept': 'application/json'
-          }
         });
-        
-        // Handle success
-        Swal.fire({
-          icon: 'success',
-          title: 'Sukses!',
-          text: 'Laporan berhasil dikirimkan',
-          confirmButtonColor: '#3085d6',
-          confirmButtonText: 'OK'
+      }
+      
+      // Add saksi with proper array format for Laravel
+      const saksiFiltered = this.report.saksi.filter(s => s.nama_lengkap.trim() !== '');
+      if (saksiFiltered.length > 0) {
+        saksiFiltered.forEach((item, index) => {
+          Object.keys(item).forEach(key => {
+            if (item[key]) { // Only append if value exists
+              formData.append(`saksi[${index}][${key}]`, item[key]);
+            }
+          });
         });
-        this.resetForm();
-        
-      } catch (error) {
-        // Handle error
-        console.error('Error submitting report:', error);
-        
-        if (error.response && error.response.status === 400) {
-          console.error('Validation errors:', error.response.data);
+      }
+      
+      // Append multiple files if they exist
+      if (this.report.evidenceFiles && this.report.evidenceFiles.length > 0) {
+        for (let i = 0; i < this.report.evidenceFiles.length; i++) {
+          formData.append('image_path[]', this.report.evidenceFiles[i]);
+        }
+      }
+      
+      // Agreement field
+      formData.append('agreement', this.report.agreement);
+      
+      // Create XMLHttpRequest
+      const xhr = new XMLHttpRequest();
+      
+      // Configure request
+      xhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan', true);
+      
+      // Set timeout (30 seconds)
+      xhr.timeout = 30000;
+      
+      // Handle successful completion
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          // Success response
+          this.isSubmitting = false;
           
-          let errorMessage = 'Terjadi kesalahan pada form:';
-          const errors = error.response.data;
+          // Parse response if needed
+          let responseData;
+          try {
+            responseData = JSON.parse(xhr.responseText);
+            console.log('Response data:', responseData);
+          } catch (e) {
+            console.log('Response is not JSON:', xhr.responseText);
+          }
           
-          // Create a readable error message
-          Object.keys(errors).forEach(key => {
-            errorMessage += `\n- ${errors[key][0]}`;
-          });
-          
+          // Show success message
           Swal.fire({
-            icon: 'error',
-            title: 'Validasi Form Gagal',
-            text: errorMessage
-          });
-        } else {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error!',
-            text: typeof error === 'string' ? error : 'Terjadi kesalahan saat mengirim laporan.',
+            icon: 'success',
+            title: 'Sukses!',
+            text: 'Laporan berhasil dikirimkan',
             confirmButtonColor: '#3085d6',
             confirmButtonText: 'OK'
           });
+          this.resetForm();
+          
+        } else {
+          // Error response
+          this.isSubmitting = false;
+          
+          let errorMessage = 'Terjadi kesalahan:';
+          
+          // Try to parse error response
+          try {
+            const errorResponse = JSON.parse(xhr.responseText);
+            console.log('Error response:', errorResponse);
+            
+            // Check if the error response has a detailed message
+            if (errorResponse && errorResponse.message) {
+              errorMessage += '\n- ' + errorResponse.message;
+            }
+            
+            // Check for validation errors
+            if (errorResponse && errorResponse.errors) {
+              const errors = errorResponse.errors;
+              Object.keys(errors).forEach(key => {
+                if (Array.isArray(errors[key])) {
+                  errorMessage += '\n- ' + errors[key].join(', ');
+                } else {
+                  errorMessage += '\n- ' + errors[key];
+                }
+              });
+            }
+          } catch (e) {
+            console.log('Error parsing response:', e);
+            errorMessage += '\n- ' + xhr.statusText;
+          }
+          
+          Swal.fire({
+            icon: 'error',
+            title: 'Form Submission Error',
+            text: errorMessage
+          });
+          
+          console.log('Status:', xhr.status);
+          console.log('Response:', xhr.responseText);
         }
-      } finally {
+      };
+      
+      // Handle network errors
+      xhr.onerror = () => {
         this.isSubmitting = false;
+        console.log('Network error occurred');
+        
+        Swal.fire({
+          icon: 'error',
+          title: 'Network Error',
+          text: 'Server tidak merespon. Periksa koneksi internet Anda.'
+        });
+      };
+      
+      // Handle timeouts
+      xhr.ontimeout = () => {
+        this.isSubmitting = false;
+        console.log('Request timed out');
+        
+        Swal.fire({
+          icon: 'error',
+          title: 'Timeout Error',
+          text: 'Permintaan melebihi batas waktu. Silakan coba lagi.'
+        });
+      };
+      
+      // Add a progress indicator for larger files
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable && this.report.evidenceFiles && this.report.evidenceFiles.length > 0) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
+        }
+      };
+      
+      // Log when request starts
+      console.log('Starting XHR request');
+      
+      // Send the request
+      try {
+        xhr.send(formData);
+      } catch (error) {
+        this.isSubmitting = false;
+        console.error('Error sending form:', error);
+        
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Terjadi kesalahan saat mengirim form: ' + error.message
+        });
       }
     },
     
