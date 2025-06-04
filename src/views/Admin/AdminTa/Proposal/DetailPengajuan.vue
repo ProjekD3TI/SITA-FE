@@ -24,6 +24,7 @@ function getFileName(filePath) {
 
 const router = useRouter();
 const modalRef = ref(false);
+const timerModalRef = ref(null);
 const route = useRoute();
 
 onMounted(() => {
@@ -94,7 +95,7 @@ const transkripRef = ref(null);
 
 const handleValidasi = () => {
   // Hanya buka modal, tidak submit
-  modalRef.value = true;
+  timerModalRef.value.open();
 };
 
 const handleSubmitValidasi = async () => {
@@ -143,66 +144,71 @@ watch(
     <ErrorMsg :message="errorProposal" />
   </div>
 
-  <Breadcrumb />
-  <div class="p-4 bg-white card-rounded lg:p-8">
-    <div class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
-      <UserData
-        :headText="dataProposal?.nim"
-        :bodyText="dataProposal?.mahasiswa"
-        :headText2="dataProposal?.kategori_ta?.nama_kategori"
-        :bodyText2="dataProposal?.judul_proposal"
-        :tahunAjaran="dataProposal?.tahun_ajaran?.tahun_ajaran"
-      />
-      <!-- All the file uploads -->
-      <ValidationFile
-        ref="naskahRef"
-        id="naskah-ta"
-        label="Naskah Tugas Akhir"
-        :fileFromDatabase="fileNaskahProposal"
-        :statusValid="tempValidasi.naskah_proposal_status_valid"
-        @update:statusValid="tempValidasi.naskah_proposal_status_valid = $event"
-      />
-      <ValidationFile
-        ref="transkripRef"
-        id="transkrip-nilai-mahasiswa"
-        label="Transkrip Nilai Mahasiswa"
-        :fileFromDatabase="fileTranskrip"
-        :statusValid="tempValidasi.file_transkrip_status_valid"
-        @update:statusValid="tempValidasi.file_transkrip_status_valid = $event"
-      />
-      <InputTextArea
-        id="catatan"
-        label="Catatan Perbaikan"
-        placeholder="Masukkan catatan"
-        v-model="catatan"
-      />
-      <Button
-        variant="primary"
-        class="self-end hidden w-fit sm:flex"
-        size="lg"
-        @click="handleValidasi"
-      >
-        Validasi
-      </Button>
-      <Button
-        variant="primary"
-        class="self-end w-fit sm:hidden"
-        size="md"
-        @click="handleValidasi"
-      >
-        Validasi
-      </Button>
+  <div v-else>
+    <Breadcrumb />
+    <div class="p-4 bg-white card-rounded lg:p-8">
+      <div class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
+        <UserData
+          :headText="dataProposal?.nim"
+          :bodyText="dataProposal?.mahasiswa"
+          :headText2="dataProposal?.kategori_ta?.nama_kategori"
+          :bodyText2="dataProposal?.judul_proposal"
+          :tahunAjaran="dataProposal?.tahun_ajaran?.tahun_ajaran"
+        />
+        <!-- All the file uploads -->
+        <ValidationFile
+          ref="naskahRef"
+          id="naskah-ta"
+          label="Naskah Tugas Akhir"
+          :fileFromDatabase="fileNaskahProposal"
+          :statusValid="tempValidasi.naskah_proposal_status_valid"
+          @update:statusValid="
+            tempValidasi.naskah_proposal_status_valid = $event
+          "
+        />
+        <ValidationFile
+          ref="transkripRef"
+          id="transkrip-nilai-mahasiswa"
+          label="Transkrip Nilai Mahasiswa"
+          :fileFromDatabase="fileTranskrip"
+          :statusValid="tempValidasi.file_transkrip_status_valid"
+          @update:statusValid="
+            tempValidasi.file_transkrip_status_valid = $event
+          "
+        />
+        <InputTextArea
+          id="catatan"
+          label="Catatan Perbaikan"
+          placeholder="Masukkan catatan"
+          v-model="catatan"
+        />
+        <Button
+          variant="primary"
+          class="self-end hidden w-fit sm:flex"
+          size="lg"
+          @click="handleValidasi"
+        >
+          Validasi
+        </Button>
+        <Button
+          variant="primary"
+          class="self-end w-fit sm:hidden"
+          size="md"
+          @click="handleValidasi"
+        >
+          Validasi
+        </Button>
+      </div>
     </div>
+    <ModalTimer
+      ref="timerModalRef"
+      @submit="handleSubmitValidasi"
+      headText="Pastikan pengecekan berkas sudah benar."
+      bodyText="Anda tidak dapat merubah status validasi yang telah terkirim."
+      submitText="Validasi"
+      :showCancel="false"
+      :showSubmit="true"
+      :enableTimer="false"
+    />
   </div>
-  <ModalTimer
-    v-if="modalRef"
-    @close="modalRef = false"
-    @submit="handleSubmitValidasi"
-    headText="Pastikan pengecekan berkas sudah benar."
-    bodyText="Anda tidak dapat merubah status validasi yang telah terkirim."
-    submitText="Validasi"
-    :showCancel="false"
-    :showSubmit="true"
-    :enableTimer="false"
-  />
 </template>

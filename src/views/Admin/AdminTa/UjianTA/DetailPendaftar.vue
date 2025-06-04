@@ -23,7 +23,7 @@ const {
   validateTugasAkhir,
 } = useShowPendaftar(route.params.id);
 
-const modalRef = ref(false);
+const timerModalRef = ref(null);
 const catatan = ref("");
 
 function getFileName(filePath) {
@@ -156,6 +156,11 @@ const sertifikatKompetensiRef = ref(null);
 const toeicRef = ref(null);
 const beritaAcaraSemhasRef = ref(null);
 const masaPerpanjanganStudiRef = ref(null);
+
+// Metode untuk membuka modal
+const openValidasiModal = () => {
+  timerModalRef.value.open(); // Memanggil metode open() pada komponen modal
+};
 
 const handleSubmitValidasi = async () => {
   // Ambil status validasi sesuai urutan berkas dari backend
@@ -316,7 +321,7 @@ const handleSubmitValidasi = async () => {
           variant="primary"
           class="self-end hidden w-fit sm:flex"
           size="lg"
-          @click="handleSubmitValidasi"
+          @click="openValidasiModal"
         >
           Validasi
         </Button>
@@ -324,22 +329,21 @@ const handleSubmitValidasi = async () => {
           variant="primary"
           class="self-end w-fit sm:hidden"
           size="md"
-          @click="handleSubmitValidasi"
+          @click="openValidasiModal"
         >
           Validasi
         </Button>
       </div>
     </div>
     <ModalTimer
-      v-if="modalRef"
-      @close="modalRef = false"
+      ref="timerModalRef"
+      @submit="handleSubmitValidasi"
       headText="Pastikan pengecekan berkas sudah benar."
       bodyText="Anda tidak dapat merubah status validasi yang telah terkirim."
       submitText="Validasi"
       :showCancel="false"
       :showSubmit="true"
-      :enableTimer="true"
-      :timerDuration="5"
+      :enableTimer="false"
     />
   </div>
 </template>

@@ -287,17 +287,107 @@ const handleKeyDown = (event) => {
   }
 };
 
-// Metode untuk menutup modal
-const closeModal = () => {
-  if (props.closeModalOnBackdrop) {
-    syncInternalValues(); // Reset to preselected values
-    showModal.value = false;
+// Tambahkan fungsi scroll lock
+const scrollPosition = ref(0);
+const originalStyle = ref(null);
+
+// Fungsi untuk mencegah scroll dengan event listener
+const preventScroll = (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  return false;
+};
+
+// Mencegah scroll dengan keyboard (arrow keys, space, page up/down)
+const preventScrollKeys = (e) => {
+  // Kunci arrow up, arrow down, space, page up, page down
+  const keys = [32, 33, 34, 37, 38, 39, 40];
+  if (keys.includes(e.keyCode)) {
+    e.preventDefault();
+    return false;
   }
+};
+
+// Fungsi untuk mengatur scroll lock
+const lockScroll = () => {
+  // Simpan posisi scroll saat ini
+  scrollPosition.value =
+    window.pageYOffset || document.documentElement.scrollTop;
+
+  // Simpan style asli
+  originalStyle.value = {
+    overflow: document.body.style.overflow,
+    position: document.body.style.position,
+    top: document.body.style.top,
+    width: document.body.style.width,
+    paddingRight: document.body.style.paddingRight,
+    height: document.body.style.height,
+  };
+
+  // Hitung lebar scrollbar untuk mencegah layout shift
+  const scrollbarWidth =
+    window.innerWidth - document.documentElement.clientWidth;
+
+  // Terapkan style ke body secara agresif
+  document.body.style.overflow = "hidden";
+  document.body.style.position = "fixed";
+  document.body.style.top = `-${scrollPosition.value}px`;
+  document.body.style.width = "100%";
+  document.body.style.paddingRight = `${scrollbarWidth}px`;
+  document.body.style.height = "100vh";
+
+  // Tambahkan event listener untuk wheel, touchmove, dan keydown
+  window.addEventListener("wheel", preventScroll, { passive: false });
+  window.addEventListener("touchmove", preventScroll, { passive: false });
+  window.addEventListener("keydown", preventScrollKeys, { passive: false });
+};
+
+const unlockScroll = () => {
+  // Kembalikan style body ke aslinya
+  if (originalStyle.value) {
+    for (const [key, value] of Object.entries(originalStyle.value)) {
+      if (value) {
+        document.body.style[key] = value;
+      } else {
+        document.body.style.removeProperty(key);
+      }
+    }
+  } else {
+    // Fallback jika tidak ada originalStyle
+    document.body.style.removeProperty("overflow");
+    document.body.style.removeProperty("position");
+    document.body.style.removeProperty("top");
+    document.body.style.removeProperty("width");
+    document.body.style.removeProperty("padding-right");
+    document.body.style.removeProperty("height");
+  }
+
+  // Hapus event listener
+  window.removeEventListener("wheel", preventScroll);
+  window.removeEventListener("touchmove", preventScroll);
+  window.removeEventListener("keydown", preventScrollKeys);
+
+  // Kembalikan posisi scroll
+  window.scrollTo(0, scrollPosition.value);
 };
 
 // Toggle modal state
 const toggleModal = () => {
   showModal.value = !showModal.value;
+  if (showModal.value) {
+    lockScroll();
+  } else {
+    unlockScroll();
+  }
+};
+
+// Metode untuk menutup modal
+const closeModal = () => {
+  if (props.closeModalOnBackdrop) {
+    syncInternalValues(); // Reset to preselected values
+    showModal.value = false;
+    unlockScroll();
+  }
 };
 
 // Terapkan pilihan dan tutup modal
@@ -307,6 +397,7 @@ const applyAndClose = () => {
     values: [...internalSelectedValues.value], // Gunakan shallow copy
   });
   showModal.value = false;
+  unlockScroll();
 };
 
 const isMobile = computed(() => window.innerWidth < 640);
@@ -404,7 +495,12 @@ watch(
     if (value) {
       // Ketika modal dibuka, pindahkan preselectedValues ke state internal
       syncInternalValues();
-      nextTick(updateModalPosition);
+      nextTick(() => {
+        updateModalPosition();
+        lockScroll();
+      });
+    } else {
+      unlockScroll();
     }
   }
 );
@@ -415,6 +511,7 @@ watch(showModal, (value) => {
   if (value) {
     nextTick(() => {
       updateModalPosition();
+      lockScroll();
       // Tambahkan event listener untuk resize
       window.addEventListener("resize", updateModalPosition);
       // Tambahkan event listener untuk scroll
@@ -425,6 +522,7 @@ watch(showModal, (value) => {
   } else {
     // Reset selection saat modal ditutup tanpa mengklik Apply
     syncInternalValues();
+    unlockScroll();
 
     // Hapus event listener saat modal ditutup
     window.removeEventListener("resize", updateModalPosition);
@@ -433,19 +531,33 @@ watch(showModal, (value) => {
   }
 });
 
-// Initialize on mount
-onMounted(() => {
-  syncInternalValues();
-
-  if (showModal.value) {
-    nextTick(updateModalPosition);
-  }
-});
-
 // Cleanup event listeners when component is unmounted
 onBeforeUnmount(() => {
   window.removeEventListener("resize", updateModalPosition);
   window.removeEventListener("scroll", updateModalPosition, true);
   document.removeEventListener("keydown", handleKeyDown);
+  if (showModal.value) {
+    unlockScroll();
+  }
 });
 </script>
+
+<style scoped>
+/* ...existing styles... */
+
+/* Tambahkan animasi modal */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bg-white {
+  animation: slideIn 0.25s forwards;
+}
+</style>

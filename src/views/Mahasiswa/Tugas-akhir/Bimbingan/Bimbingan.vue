@@ -57,7 +57,7 @@ const {
 // ============================================
 
 const selectedCategory = ref("");
-const showModal = ref(false);
+const timerModalRef = ref(null);
 const showBimbinganModal = ref(false);
 const selectedBimbingan = ref(null);
 const modalDetailRef = ref(null);
@@ -77,11 +77,9 @@ const isSubmitDisabled = computed(
 // ============================================
 
 const openModal = () => {
-  showModal.value = true;
+  timerModalRef.value.open();
 };
-const closeModal = () => {
-  showModal.value = false;
-};
+
 function toRoman(num) {
   const romans = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
   return romans[num - 1] || num;
@@ -95,8 +93,6 @@ const handleSubmit = async () => {
   };
   const success = await submitRequestPembimbing(payload);
   if (success) {
-    closeModal();
-    // Refresh data request pembimbing agar UI update
     await fetchRequestData();
   } else {
     toast.error("Gagal mengirim permintaan pembimbing.");
@@ -212,10 +208,8 @@ const closeDetailModal = () => {
         </form>
       </div>
 
-      <!-- Modal Konfirmasi -->
       <ModalTimer
-        v-if="showModal"
-        @close="closeModal"
+        ref="timerModalRef"
         @submit="handleSubmit"
         headText="Pastikan Dosen dan Kategori yang Dipilih Benar."
         bodyText="Anda tidak dapat merubah atau menghapus permintaan yang telah terkirim."
@@ -448,7 +442,7 @@ const closeDetailModal = () => {
         ref="modalDetailRef"
         v-if="showBimbinganModal && selectedBimbingan"
         :bimbinganKe="selectedBimbingan.no"
-        :tanggalBimbingan="selectedBimbingan.tanggal_bimbingan"
+        :tanggalBimbingan="selectedBimbingan.tanggal"
         :bab="selectedBimbingan.bab"
         :catatan="selectedBimbingan.catatan"
         :status="getStatusClass(selectedBimbingan.status)"

@@ -2,6 +2,7 @@
   <div class="min-h-screen bg-gray-100">
     <!-- Sidebar -->
     <div
+      id="user-sidebar"
       v-bind:class="{
         'translate-x-0  w-64': showNavbar,
         '-translate-x-full lg:translate-x-0 w-20': !showNavbar,
@@ -11,7 +12,7 @@
       <div class="absolute top-4 -right-4">
         <button
           @click="toggleNavbar"
-          class="hidden p-2 bg-white border rounded-full shadow-md lg:block hover:text-gray-700 focus:outline-none"
+          class="hidden p-2 bg-white border rounded-full shadow-md lg:block hover:text-gray-700 focus:outline-none sidebar-toggle"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -42,7 +43,7 @@
         <div v-show="showNavbar">
           <button
             @click="toggleNavbar"
-            class="p-2 duration-150 rounded-full hover:bg-gray-100 lg:hidden active:scale-90"
+            class="p-2 duration-150 rounded-full hover:bg-gray-100 lg:hidden active:scale-90 sidebar-toggle"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -110,7 +111,7 @@
           </router-link>
           <button
             @click="toggleNavbar"
-            class="p-1 duration-150 rounded-full hover:bg-gray-100 lg:hidden active:scale-90"
+            class="p-1 duration-150 rounded-full hover:bg-gray-100 lg:hidden active:scale-90 sidebar-toggle"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -419,7 +420,18 @@ const closeDropdownOnClickOutside = (event) => {
   const userMenu = document.getElementById("user-menu");
   const notificationButton = document.getElementById("notification-button");
   const userButton = document.getElementById("user-button");
+  const sidebar = document.getElementById("user-sidebar");
 
+  const toggleButtons = document.querySelectorAll(".sidebar-toggle");
+  let isToggleButton = false;
+
+  // Periksa apakah event.target ada dalam salah satu toggle button
+  for (const button of toggleButtons) {
+    if (button.contains(event.target)) {
+      isToggleButton = true;
+      break;
+    }
+  }
   // Tutup dropdown jika klik di luar menu dan tombol terkait
   if (
     notificationMenu &&
@@ -437,6 +449,17 @@ const closeDropdownOnClickOutside = (event) => {
     !userButton.contains(event.target)
   ) {
     showUser.value = false;
+  }
+
+  // Tutup sidebar jika klik di luar sidebar dan bukan pada tombol toggle
+  if (
+    !isLgScreen.value &&
+    showNavbar.value &&
+    sidebar &&
+    !sidebar.contains(event.target) &&
+    !isToggleButton
+  ) {
+    showNavbar.value = false;
   }
 };
 

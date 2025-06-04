@@ -2,6 +2,7 @@
   <div class="min-h-screen bg-gray-100">
     <!-- Sidebar -->
     <div
+      id="admin-sidebar"
       v-bind:class="{
         'translate-x-0  w-64': showNavbar,
         '-translate-x-full lg:translate-x-0 w-20': !showNavbar,
@@ -9,9 +10,10 @@
       class="fixed top-0 left-0 z-50 h-full duration-200 transform bg-white shadow-md"
     >
       <div class="absolute top-4 -right-4">
+        <!-- Tombol di sidebar (panah kanan) -->
         <button
           @click="toggleNavbar"
-          class="hidden p-2 bg-white border rounded-full shadow-md lg:block hover:text-gray-700 focus:outline-none"
+          class="hidden p-2 bg-white border rounded-full shadow-md lg:block hover:text-gray-700 focus:outline-none sidebar-toggle"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -40,9 +42,10 @@
           />
         </router-link>
         <div v-show="showNavbar">
+          <!-- Tombol hamburger di header -->
           <button
             @click="toggleNavbar"
-            class="p-2 duration-150 rounded-full hover:bg-gray-100 lg:hidden active:scale-90"
+            class="p-1 duration-150 rounded-full hover:bg-gray-100 lg:hidden active:scale-90 sidebar-toggle"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -139,9 +142,10 @@
           <router-link to="/">
             <img :src="D3TILogo" alt="" class="w-16 lg:hidden" />
           </router-link>
+          <!-- Tombol hamburger di header -->
           <button
             @click="toggleNavbar"
-            class="p-1 duration-150 rounded-full hover:bg-gray-100 lg:hidden active:scale-90"
+            class="p-1 duration-150 rounded-full hover:bg-gray-100 lg:hidden active:scale-90 sidebar-toggle"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -425,8 +429,21 @@ const closeDropdownOnClickOutside = (event) => {
   const userMenu = document.getElementById("user-menu");
   const notificationButton = document.getElementById("notification-button");
   const userButton = document.getElementById("user-button");
+  const sidebar = document.getElementById("admin-sidebar");
 
-  // Tutup dropdown jika klik di luar menu dan tombol terkait
+  // Cek semua tombol dengan class sidebar-toggle
+  const toggleButtons = document.querySelectorAll(".sidebar-toggle");
+  let isToggleButton = false;
+
+  // Periksa apakah event.target ada dalam salah satu toggle button
+  for (const button of toggleButtons) {
+    if (button.contains(event.target)) {
+      isToggleButton = true;
+      break;
+    }
+  }
+
+  // Tutup dropdown notifikasi jika klik di luar
   if (
     notificationMenu &&
     !notificationMenu.contains(event.target) &&
@@ -436,6 +453,7 @@ const closeDropdownOnClickOutside = (event) => {
     showNotification.value = false;
   }
 
+  // Tutup dropdown user jika klik di luar
   if (
     userMenu &&
     !userMenu.contains(event.target) &&
@@ -443,6 +461,17 @@ const closeDropdownOnClickOutside = (event) => {
     !userButton.contains(event.target)
   ) {
     showUser.value = false;
+  }
+
+  // Tutup sidebar jika klik di luar sidebar dan bukan pada tombol toggle
+  if (
+    !isLgScreen.value &&
+    showNavbar.value &&
+    sidebar &&
+    !sidebar.contains(event.target) &&
+    !isToggleButton
+  ) {
+    showNavbar.value = false;
   }
 };
 

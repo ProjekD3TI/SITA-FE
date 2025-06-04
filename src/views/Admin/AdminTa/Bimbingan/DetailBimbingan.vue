@@ -304,7 +304,7 @@ const closeDetailModal = () => {
     ref="modalDetailRef"
     v-if="showBimbinganModal && selectedBimbingan"
     :bimbinganKe="selectedBimbingan.no"
-    :tanggalBimbingan="formatDate(selectedBimbingan.tanggal_bimbingan)"
+    :tanggalBimbingan="selectedBimbingan.tanggal_bimbingan"
     :bab="selectedBimbingan.bab"
     :catatan="selectedBimbingan.catatan"
     :status="getStatusClass(selectedBimbingan.status_verifikasi)"

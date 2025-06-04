@@ -581,12 +581,13 @@ const handleEditJadwal = () => {
 const pendingStatusForm = ref(0);
 // State untuk modal timer
 const modalTimerVisible = ref(false);
+const timerModalRef = ref(null);
 
 // Saat slider dicoba diubah
 function handleSliderChange(val) {
   if (val !== statusForm.value) {
     pendingStatusForm.value = val;
-    modalTimerVisible.value = true;
+    timerModalRef.value.open();
   }
 }
 
@@ -597,17 +598,14 @@ async function handleModalSubmit() {
     statusForm.value = pendingStatusForm.value;
     toast.success("Status form berhasil diubah.");
     await fetchTabelPendaftar(); // refresh data setelah update
-    modalTimerVisible.value = false;
   } catch (e) {
     toast.error("Gagal mengubah status form.");
-    modalTimerVisible.value = false;
   }
 }
 
 // Jika batal
 function handleModalCancel() {
   pendingStatusForm.value = statusForm.value; // reset pending ke value lama
-  modalTimerVisible.value = false;
 }
 const modalTimerHeadText = computed(() => {
   return statusForm.value === 0
@@ -1079,7 +1077,7 @@ const modalFileUjianTAFiles = ref({
 
     <!-- Modal Validasi Form  -->
     <ModalTimer
-      v-if="modalTimerVisible"
+      ref="timerModalRef"
       @close="handleModalCancel"
       :headText="modalTimerHeadText"
       :bodyText="modalTimerBodyText"

@@ -45,6 +45,9 @@ const selectedStatusesPengajuan = ref([]);
 const selectedCategoriesSeminar = ref([]);
 
 const modalRef = ref(false);
+const timerModalRef = ref(null);
+const pendingStatusForm = ref(statusForm.value);
+const modalTimerVisible = ref(false);
 const modalHeadText = ref("");
 const modalBodyText = ref("");
 const dataNaskahProposal = ref({});
@@ -240,13 +243,10 @@ const handleRowClickPengajuan = (item) => {
   }
 };
 
-const pendingStatusForm = ref(statusForm.value);
-const modalTimerVisible = ref(false);
-
 function handleSliderChange(val) {
   if (val !== statusForm.value) {
     pendingStatusForm.value = val;
-    modalTimerVisible.value = true;
+    timerModalRef.value.open();
   }
 }
 watch(
@@ -271,7 +271,6 @@ async function handleModalSubmit() {
 // Jika batal
 function handleModalCancel() {
   pendingStatusForm.value = statusForm.value;
-  modalTimerVisible.value = false;
 }
 const modalTimerHeadText = computed(() => {
   return statusForm.value === 0
@@ -457,18 +456,19 @@ const modalTimerBodyText = computed(() => {
         label="Catatan Perbaikan"
         placeholder="Masukkan catatan"
         v-model="catatan"
+        :disabled="true"
       />
     </div>
   </DefaultModal>
   <ModalTimer
-    v-if="modalTimerVisible"
+    ref="timerModalRef"
     @close="handleModalCancel"
+    @submit="handleModalSubmit"
     :headText="modalTimerHeadText"
     :bodyText="modalTimerBodyText"
     submitText="Yakin"
     :showCancel="false"
     :showSubmit="true"
     :enableTimer="false"
-    @submit="handleModalSubmit"
   />
 </template>
