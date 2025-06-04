@@ -18,36 +18,32 @@ const searchQuery = ref("");
 const router = useRouter();
 
 // Inisialisasi layanan
-const { requests: requestsData, loading: loadingRequests, error: errorRequests, fetchRequests, updateApproval } = useRequestPembimbing();
-const { 
-  tugasAkhirList, 
-  loadingTugasAkhir, 
-  errorTugasAkhir, 
-  fetchTugasAkhir
-} = useDibimbing();
+const {
+  requests: requestsData,
+  loading: loadingRequests,
+  error: errorRequests,
+  fetchRequests,
+  updateApproval,
+} = useRequestPembimbing();
+const { tugasAkhirList, loadingTugasAkhir, errorTugasAkhir, fetchTugasAkhir } =
+  useDibimbing();
 const {
   categories,
   loading: loadingCategories,
   error: errorCategories,
-  fetchCategories
+  fetchCategories,
 } = useKategori();
 
 // Menggunakan computed property untuk kategori filter
 const filterCategories = computed(() => {
   if (categories.value && categories.value.length > 0) {
-    return categories.value.map(category => category.nama_kategori);
+    return categories.value.map((category) => category.nama_kategori);
   }
-  
+
   return loadingCategories.value ? ["Memuat kategori..."] : [];
 });
 
 const selectedFilters = ref([]);
-
-// Item breadcrumb untuk navigasi
-const breadcrumbItems = [
-  { label: "Tugas Akhir", path: "/dosen/tugas-akhir" },
-  { label: "Bimbingan", path: "/dosen/tugas-akhir/bimbingan" },
-];
 
 // Menangani penerapan filter
 const applyFilter = (filterData) => {
@@ -63,19 +59,19 @@ const modalContent = ref("");
 // Memetakan data API untuk tab permintaan
 const requests = computed(() => {
   if (!requestsData.value) return [];
-  
+
   console.log("Data permintaan mentah:", requestsData.value);
-  
-  return requestsData.value.map(req => {
+
+  return requestsData.value.map((req) => {
     return {
       id: req.request_pembimbing_id,
       nim: req.mahasiswa?.nim || "N/A",
       name: req.mahasiswa?.name || "Tidak diketahui",
       avatar: "/api/placeholder/40/40",
       category: req.kategori?.nama_kategori || "Tidak terkategorisasi",
-      date: req.tanggal_request || new Date().toLocaleDateString('id-ID'),
+      date: req.tanggal_request || new Date().toLocaleDateString("id-ID"),
       status_request: 0,
-      tugas_akhir_id: req.tugas_akhir_id
+      tugas_akhir_id: req.tugas_akhir_id,
     };
   });
 });
@@ -83,14 +79,14 @@ const requests = computed(() => {
 // Memetakan data API untuk tab dibimbing
 const mentorships = computed(() => {
   if (!tugasAkhirList.value) return [];
-  
+
   console.log("Data tugas akhir mentah:", tugasAkhirList.value);
-  
-  return tugasAkhirList.value.map(ta => {
+
+  return tugasAkhirList.value.map((ta) => {
     return {
       id: ta.tugas_akhir_id,
       nim: ta.mahasiswa?.nim || "N/A",
-      name: ta.mahasiswa?.name || "Tidak diketahui", 
+      name: ta.mahasiswa?.name || "Tidak diketahui",
       avatar: "/api/placeholder/40/40",
       title: ta.judul_tugas_akhir || "Judul Tidak Tersedia",
       category: ta.kategori?.nama_kategori || "Tidak terkategorisasi",
@@ -99,12 +95,14 @@ const mentorships = computed(() => {
 });
 
 // Status loading dan error untuk konten utama
-const loading = computed(() => 
-  activeTab.value === 'permintaan' ? loadingRequests.value : loadingTugasAkhir.value
+const loading = computed(() =>
+  activeTab.value === "permintaan"
+    ? loadingRequests.value
+    : loadingTugasAkhir.value
 );
 
-const error = computed(() => 
-  activeTab.value === 'permintaan' ? errorRequests.value : errorTugasAkhir.value
+const error = computed(() =>
+  activeTab.value === "permintaan" ? errorRequests.value : errorTugasAkhir.value
 );
 
 // Item berdasarkan tab aktif
@@ -180,7 +178,7 @@ watch(activeTab, (newTab) => {
 // Mengambil data awal ketika komponen dimuat
 onMounted(() => {
   fetchCategories();
-  
+
   if (activeTab.value === "permintaan") {
     fetchRequests();
   } else {
@@ -192,7 +190,10 @@ onMounted(() => {
 <template>
   <div v-if="!$route.path.includes('detail-bimbingan')">
     <!-- Status loading -->
-    <div v-if="loading" class="flex justify-center items-center min-h-[75vh] w-full">
+    <div
+      v-if="loading"
+      class="flex justify-center items-center min-h-[75vh] w-full"
+    >
       <Loading />
     </div>
 
@@ -204,151 +205,167 @@ onMounted(() => {
       <!-- Status error -->
       <div v-if="error" class="p-4 bg-red-100 text-red-700 rounded-lg my-4">
         <p>{{ error }}</p>
-        <Button 
-          @click="activeTab === 'permintaan' ? fetchRequests() : fetchTugasAkhir()" 
-          variant="outlined" 
-          size="sm" 
+        <Button
+          @click="
+            activeTab === 'permintaan' ? fetchRequests() : fetchTugasAkhir()
+          "
+          variant="outlined"
+          size="sm"
           class="mt-2"
         >
           Coba Lagi
         </Button>
       </div>
-      
+
       <TabDiv
-      v-else
-      :tabs="[
-        {
-          id: 'permintaan',
-          label: 'Permintaan',
-          icon: 'M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z',
-          count: requests.length,
-        },
-        {
-          id: 'dibimbing',
-          label: 'Dibimbing',
-          icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
-          count: mentorships.length,
-        },
-      ]"
-      :default-tab="activeTab"
-      @tab-changed="activeTab = $event"
-    >
-      <!-- Pencarian dan Filter -->
-      <div class="flex flex-row mb-2 gap-2">
-        <div class="w-auto sm:w-auto sm:mr-2">
-          <!-- Indikator loading untuk kategori -->
-          <div v-if="loadingCategories" class="flex justify-center items-center py-2 w-full">
-          <Loading />
-        </div>
-          
-          <!-- Pesan error jika kategori gagal dimuat -->
-          <div v-else-if="errorCategories" class="text-red-500 text-sm">
-            Gagal memuat kategori: {{ errorCategories }}
-          </div>
-          
-          <!-- Tampilkan filter ketika kategori dimuat -->
-          <ModalFilter
-            v-else
-            title="Kategori"
-            :items="filterCategories"
-            :preselectedValues="selectedFilters"
-            filterType="category"
-            triggerText="Kategori"
-            triggerVariant="outlined-black"
-            hint="*Pilih kategori tugas akhir"
-            modalPosition="bottom"
-            @apply="applyFilter"
-          />
-        </div>
-        <div class="flex-grow w-full">
-          <SearchBar
-            v-model="searchQuery"
-            placeholder="Cari..."
-            :debounce="300"
-            @search="(query) => console.log('Mencari:', query)"
-          />
-        </div>
-      </div>
-
-      <!-- Status kosong jika tidak ada item -->
-      <div v-if="filteredItems.length === 0" class="text-center py-8 bg-gray-50 rounded-lg">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-        </svg>
-        <p class="mt-2 text-gray-600">
-          {{ activeTab === 'permintaan' ? 'Tidak ada permintaan bimbingan' : 'Tidak ada mahasiswa bimbingan' }}
-        </p>
-      </div>
-
-      <!-- Implementasi tabel untuk semua ukuran layar -->
-      <div v-else class="relative overflow-x-auto">
-        <Table
-          :headers="
-            activeTab === 'permintaan'
-              ? ['NIM', 'Nama', 'Kategori', 'Tanggal', 'Aksi']
-              : ['NIM', 'Nama', 'Kategori', 'Judul', 'Aksi']
-          "
-          :items="filteredItems"
-        >
-          <template #row="{ item }">
-            <td
-              class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap rounded-l-lg"
+        v-else
+        :tabs="[
+          {
+            id: 'permintaan',
+            label: 'Permintaan',
+            icon: 'M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z',
+            count: requests.length,
+          },
+          {
+            id: 'dibimbing',
+            label: 'Dibimbing',
+            icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
+            count: mentorships.length,
+          },
+        ]"
+        :default-tab="activeTab"
+        @tab-changed="activeTab = $event"
+      >
+        <!-- Pencarian dan Filter -->
+        <div class="flex flex-row mb-2 gap-2">
+          <div class="w-auto sm:w-auto sm:mr-2">
+            <!-- Indikator loading untuk kategori -->
+            <div
+              v-if="loadingCategories"
+              class="flex justify-center items-center py-2 w-full"
             >
-              {{ item.nim }}
-            </td>
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-2">
-                <img
-                  class="h-6 w-6 sm:h-8 sm:w-8 rounded-full"
-                  :src="item.avatar"
-                  alt=""
-                />
-                <span>{{ item.name }}</span>
-              </div>
-            </td>
-            <td class="px-6 py-4">
-              {{ item.category }}
-            </td>
-            <td v-if="activeTab === 'permintaan'" class="px-6 py-4">
-              {{ item.date }}
-            </td>
-            <td v-if="activeTab === 'dibimbing'" class="px-6 py-4">
-              {{ item.title }}
-            </td>
-            <!-- Kolom Aksi -->
-            <td class="px-6 py-4 rounded-r-lg">
-              <!-- Tombol untuk tab permintaan -->
-              <Button
-                v-if="activeTab === 'permintaan'"
-                variant="secondary"
-                size="md"
-                @click="showResponModal(item)"
-              >
-                Respon
-              </Button>
+              <Loading />
+            </div>
 
-              <!-- Tombol untuk tab dibimbing -->
-              <router-link
-                v-if="activeTab === 'dibimbing'"
-                :to="{
-                  path: '/dosen/tugas-akhir/bimbingan/detail-bimbingan',
-                  query: {
-                    id: item.id,
-                    nim: item.nim || '',
-                    name: item.name || '',
-                    category: item.category || '',
-                    title: item.title || 'Judul Tidak Tersedia',
-                    _t: Date.now(),
-                  },
-                }"
+            <!-- Pesan error jika kategori gagal dimuat -->
+            <div v-else-if="errorCategories" class="text-red-500 text-sm">
+              Gagal memuat kategori: {{ errorCategories }}
+            </div>
+
+            <!-- Tampilkan filter ketika kategori dimuat -->
+            <ModalFilter
+              v-else
+              title="Kategori"
+              :items="filterCategories"
+              :preselectedValues="selectedFilters"
+              filterType="category"
+              triggerText="Kategori"
+              triggerVariant="outlined-black"
+              hint="*Pilih kategori tugas akhir"
+              modalPosition="bottom"
+              @apply="applyFilter"
+            />
+          </div>
+          <div class="flex-grow w-full">
+            <SearchBar
+              v-model="searchQuery"
+              placeholder="Cari..."
+              :debounce="300"
+              @search="(query) => console.log('Mencari:', query)"
+            />
+          </div>
+        </div>
+
+        <!-- Status kosong jika tidak ada item -->
+        <div
+          v-if="filteredItems.length === 0"
+          class="text-center py-8 bg-gray-50 rounded-lg"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-12 w-12 mx-auto text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+            />
+          </svg>
+          <p class="mt-2 text-gray-600">
+            {{
+              activeTab === "permintaan"
+                ? "Tidak ada permintaan bimbingan"
+                : "Tidak ada mahasiswa bimbingan"
+            }}
+          </p>
+        </div>
+
+        <!-- Implementasi tabel untuk semua ukuran layar -->
+        <div v-else class="relative overflow-x-auto">
+          <Table
+            :headers="
+              activeTab === 'permintaan'
+                ? ['NIM', 'Nama', 'Kategori', 'Tanggal', 'Aksi']
+                : ['NIM', 'Nama', 'Kategori', 'Judul', 'Aksi']
+            "
+            :items="filteredItems"
+          >
+            <template #row="{ item }">
+              <td
+                class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap rounded-l-lg"
               >
-                <Button variant="primary" size="md"> Detail </Button>
-              </router-link>
-            </td>
-          </template>
-        </Table>
-      </div>
-    </TabDiv>
+                {{ item.nim }}
+              </td>
+              <td class="px-6 py-4">
+                {{ item.name }}
+              </td>
+              <td class="px-6 py-4">
+                {{ item.category }}
+              </td>
+              <td v-if="activeTab === 'permintaan'" class="px-6 py-4">
+                {{ item.date }}
+              </td>
+              <td v-if="activeTab === 'dibimbing'" class="px-6 py-4">
+                {{ item.title }}
+              </td>
+              <!-- Kolom Aksi -->
+              <td class="px-6 py-4 rounded-r-lg">
+                <!-- Tombol untuk tab permintaan -->
+                <Button
+                  v-if="activeTab === 'permintaan'"
+                  variant="secondary"
+                  size="md"
+                  @click="showResponModal(item)"
+                >
+                  Respon
+                </Button>
+
+                <!-- Tombol untuk tab dibimbing -->
+                <router-link
+                  v-if="activeTab === 'dibimbing'"
+                  :to="{
+                    path: '/dosen/tugas-akhir/bimbingan/detail-bimbingan',
+                    query: {
+                      id: item.id,
+                      nim: item.nim || '',
+                      name: item.name || '',
+                      category: item.category || '',
+                      title: item.title || 'Judul Tidak Tersedia',
+                      _t: Date.now(),
+                    },
+                  }"
+                >
+                  <Button variant="primary" size="md"> Detail </Button>
+                </router-link>
+              </td>
+            </template>
+          </Table>
+        </div>
+      </TabDiv>
     </div>
   </div>
   <router-view v-else></router-view>

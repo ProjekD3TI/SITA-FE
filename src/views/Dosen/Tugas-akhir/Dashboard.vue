@@ -4,9 +4,9 @@ import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import LineChart from "@/components/Tugas-akhir/Dashboard/LineChart.vue";
 import DoughnutChart from "@/components/Tugas-akhir/Dashboard/DoughnutChart.vue";
 import SummaryCard from "@/components/Tugas-akhir/Dashboard/SummaryCard.vue";
-import {useDashboard} from "@/services/TugasAkhir/Dosen/dashboard.js";
-const { data, loading, error } = useDashboard();
-
+import { useDashboard } from "@/services/TugasAkhir/Dosen/dashboard.js";
+import Loading from "@/components/Loading.vue";
+const { data, loading: loadingDashboard, error } = useDashboard();
 
 function handleRowClick(item) {
   // aksi saat klik baris
@@ -29,9 +29,15 @@ const iconPaths = {
 };
 
 // Summary cards configuration
-const TAdibimbing = computed(()=> data.value?.summary_card?.ta_yang_dibimbing ?? "0");
-const UjianTerjadwal = computed(()=> data.value?.summary_card?.ujian_terjadwal ?? "0");
-const RequestPembimbing = computed(() => data.value?.summary_card?.permintaan_bimbingan ?? "0");
+const TAdibimbing = computed(
+  () => data.value?.summary_card?.ta_yang_dibimbing ?? "0"
+);
+const UjianTerjadwal = computed(
+  () => data.value?.summary_card?.ujian_terjadwal ?? "0"
+);
+const RequestPembimbing = computed(
+  () => data.value?.summary_card?.permintaan_bimbingan ?? "0"
+);
 const summaryCards = [
   {
     icon: iconPaths.book,
@@ -57,198 +63,218 @@ const summaryCards = [
 const doughnutLabels = ["BAB I", "BAB II", "BAB III", "BAB IV", "BAB V"];
 const doughnutData = computed(() => {
   const obj = data.value?.doughnat_chart ?? {};
-  return [1,2,3,4,5].map(key => obj[key]??0);
+  return [1, 2, 3, 4, 5].map((key) => obj[key] ?? 0);
 });
 const doughnutColors = ["#62B2FD", "#9BDFC4", "#F99BAB", "#FFB44F", "#9F97F7"];
 
-const JadwalHariIni =computed(() => {
+const JadwalHariIni = computed(() => {
   return data.value?.ujian_hari_ini ?? [];
 });
-const PermintaanBimbingan =computed(() => {
+const PermintaanBimbingan = computed(() => {
   return data.value?.permintaan_bimbingan ?? [];
 });
 </script>
 <template>
-  <Breadcrumb :items="breadcrumbItems" />
-  <div class="grid lg:grid-cols-3 gap-4 w-auto">
-    <div class="card-style">
-      <h5 class="body2-bold mb-4">Progress Bimbingan Mahasiswa</h5>
-      <DoughnutChart
-        class="w-44 h-44"
-        :labels="doughnutLabels"
-        datasetsLabel="Tugas Akhir Mahasiswa"
-        :dataValues="doughnutData"
-        :showCenterText="false"
-        :showInsideText="false"
-        :backgroundColor="doughnutColors"
-      />
-      <div class="flex flex-wrap gap-2 sm:gap-4 justify-center mt-2">
-        <template v-for="(label, idx) in doughnutLabels" :key="idx">
-          <p class="flex items-center gap-1 text-placeholder body5">
-            <span
-              class="w-2 h-2 inline-block rounded-full"
-              :style="{ backgroundColor: doughnutColors[idx] }"
-            ></span>
-            {{ label }}
-          </p>
-        </template>
-      </div>
-    </div>
-    <div
-      class="lg:col-span-2 card-style p-4 flex sm:flex-row flex-col justify-evenly flex-grow"
-    >
-      <template v-for="(card, index) in summaryCards" :key="index">
-        <!-- Card -->
-        <SummaryCard
-          :icon="card.icon"
-          :iconColor="card.iconColor"
-          :title="card.title || '-'"
-          :subtitle="card.subtitle"
+  <div
+    v-if="loadingDashboard"
+    class="flex items-center justify-center min-h-[80dvh]"
+  >
+    <Loading />
+  </div>
+  <div v-else>
+    <Breadcrumb :items="breadcrumbItems" />
+    <div class="grid lg:grid-cols-3 gap-4 w-auto">
+      <div class="card-style">
+        <h5 class="body2-bold mb-4">Progress Bimbingan Mahasiswa</h5>
+        <DoughnutChart
+          class="w-44 h-44"
+          :labels="doughnutLabels"
+          datasetsLabel="Tugas Akhir Mahasiswa"
+          :dataValues="doughnutData"
+          :showCenterText="false"
+          :showInsideText="false"
+          :backgroundColor="doughnutColors"
         />
-
-        <!-- Divider (except after last card) -->
-        <template v-if="index < summaryCards.length - 1">
-          <div
-            class="hidden sm:flex h-auto w-px my-8 bg-placeholder mx-4 self-stretch"
-          ></div>
-          <div
-            class="sm:hidden max-w-[240px] w-10/12 h-px bg-placeholder mx-auto my-4"
-          ></div>
-        </template>
-      </template>
-    </div>
-    <div class="lg:col-span-3 grid lg:grid-cols-2 gap-4">
-      <div class="card-style">
-        <div class="flex justify-between items-center mb-2">
-          <h1 class="body1">Jadwal Ujian Hari ini</h1>
-          <router-link
-            to="/dosen/tugas-akhir/ujian-ta"
-            title="Lihat Jadwal Ujian"
-            aria-label="Navigasi ke halaman Ujian TA"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-6 h-6 text-[var(--secondary)] cursor-pointer"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-              />
-            </svg>
-          </router-link>
+        <div class="flex flex-wrap gap-2 sm:gap-4 justify-center mt-2">
+          <template v-for="(label, idx) in doughnutLabels" :key="idx">
+            <p class="flex items-center gap-1 text-placeholder body5">
+              <span
+                class="w-2 h-2 inline-block rounded-full"
+                :style="{ backgroundColor: doughnutColors[idx] }"
+              ></span>
+              {{ label }}
+            </p>
+          </template>
         </div>
-        <table class="w-full text-left rtl:text-right">
-          <thead class="body5-bold uppercase text-white bg-[var(--primary)]">
-            <tr>
-              <th scope="col" class="px-3 py-2 rounded-l-lg">NIM</th>
-              <th scope="col" class="px-3 py-2">Sesi</th>
-              <th scope="col" class="px-3 py-2 rounded-r-lg">Ruang</th>
-            </tr>
-          </thead>
-          <tbody class="body5">
-            <template v-if="JadwalHariIni.length">
-              <tr
-                v-for="(item, index) in JadwalHariIni"
-                :key="index"
-                class="bg-white border-b rounded-l-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                @click="handleRowClick(item)"
-                role="button"
-                tabindex="0"
-              >
-                <td class="px-3 py-2">
-                  <div class="flex items-center gap-2">
-                    <img class="h-6 w-6 sm:h-8 sm:w-8 rounded-full" :src="item.avatar" alt="" />
-                    <span>{{ item.nama }}</span>
-                  </div>
-                </td>
-                <td class="px-3 py-2">
-                  {{ item.waktu }}
-                </td>
-                <td class="px-3 py-2">
-                  {{ item.ruang }}
-                </td>
-              </tr>
-            </template>
-            <template v-else>
-              <tr>
-                <td colspan="3">
-                  <div class="text-center text-placeholder py-8">tidak ada data</div>
-                </td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
       </div>
-      <div class="card-style">
-        <div class="flex justify-between items-center mb-2">
-          <h1 class="body1">Permintaan Bimbingan</h1>
-          <router-link
-            to="/dosen/tugas-akhir/bimbingan"
-            title="Lihat Permintaan Bimbingan"
-            aria-label="Navigasi ke halaman Ujian TA"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-6 h-6 text-[var(--secondary)]"
+      <div
+        class="lg:col-span-2 card-style p-4 flex sm:flex-row flex-col justify-evenly flex-grow"
+      >
+        <template v-for="(card, index) in summaryCards" :key="index">
+          <!-- Card -->
+          <SummaryCard
+            :icon="card.icon"
+            :iconColor="card.iconColor"
+            :title="card.title || '-'"
+            :subtitle="card.subtitle"
+          />
+
+          <!-- Divider (except after last card) -->
+          <template v-if="index < summaryCards.length - 1">
+            <div
+              class="hidden sm:flex h-auto w-px my-8 bg-placeholder mx-4 self-stretch"
+            ></div>
+            <div
+              class="sm:hidden max-w-[240px] w-10/12 h-px bg-placeholder mx-auto my-4"
+            ></div>
+          </template>
+        </template>
+      </div>
+      <div class="lg:col-span-3 grid lg:grid-cols-2 gap-4">
+        <div class="card-style">
+          <div class="flex justify-between items-center mb-2">
+            <h1 class="body1">Jadwal Ujian Hari ini</h1>
+            <router-link
+              to="/dosen/tugas-akhir/ujian-ta"
+              title="Lihat Jadwal Ujian"
+              aria-label="Navigasi ke halaman Ujian TA"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-              />
-            </svg>
-          </router-link>
-        </div>
-        <table class="w-full text-left rtl:text-right w-min-[350px]">
-          <thead class="body5-bold uppercase text-white bg-[var(--primary)]">
-            <tr>
-              <th scope="col" class="px-3 py-2 rounded-l-lg">NIM</th>
-              <th scope="col" class="px-3 py-2">Nama</th>
-              <th scope="col" class="px-3 py-2 rounded-r-lg">Kategori</th>
-            </tr>
-          </thead>
-          <tbody class="body5">
-            <template v-if="PermintaanBimbingan.length">
-              <tr
-                v-for="(item, index) in PermintaanBimbingan"
-                :key="index"
-                class="bg-white border-b rounded-l-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                @click="handleRowClick(item)"
-                role="button"
-                tabindex="0"
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-6 h-6 text-[var(--secondary)] cursor-pointer"
               >
-                <td class="px-3 py-2">
-                  {{ item.nim }}
-                </td>
-                <td class="px-3 py-2 w-fit">
-                  <div class="flex items-center gap-2">
-                    <img class="h-6 w-6 sm:h-8 sm:w-8 rounded-full" :src="item.avatar" alt="" />
-                    <span>{{ item.nama }}</span>
-                  </div>
-                </td>
-                <td class="px-3 py-2">
-                  {{ item.kategori }}
-                </td>
-              </tr>
-            </template>
-            <template v-else>
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                />
+              </svg>
+            </router-link>
+          </div>
+          <table class="w-full text-left rtl:text-right">
+            <thead class="body5-bold uppercase text-white bg-[var(--primary)]">
               <tr>
-                <td colspan="3">
-                  <div class="text-center text-placeholder py-8">tidak ada data</div>
-                </td>
+                <th scope="col" class="px-3 py-2 rounded-l-lg">NIM</th>
+                <th scope="col" class="px-3 py-2">Sesi</th>
+                <th scope="col" class="px-3 py-2 rounded-r-lg">Ruang</th>
               </tr>
-            </template>
-          </tbody>
-        </table>
+            </thead>
+            <tbody class="body5">
+              <template v-if="JadwalHariIni.length">
+                <tr
+                  v-for="(item, index) in JadwalHariIni"
+                  :key="index"
+                  class="bg-white border-b rounded-l-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  @click="handleRowClick(item)"
+                  role="button"
+                  tabindex="0"
+                >
+                  <td class="px-3 py-2">
+                    <div class="flex items-center gap-2">
+                      <img
+                        class="h-6 w-6 sm:h-8 sm:w-8 rounded-full"
+                        :src="item.avatar"
+                        alt=""
+                      />
+                      <span>{{ item.nama }}</span>
+                    </div>
+                  </td>
+                  <td class="px-3 py-2">
+                    {{ item.waktu }}
+                  </td>
+                  <td class="px-3 py-2">
+                    {{ item.ruang }}
+                  </td>
+                </tr>
+              </template>
+              <template v-else>
+                <tr>
+                  <td colspan="3">
+                    <div class="text-center text-placeholder py-8">
+                      tidak ada data
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-style">
+          <div class="flex justify-between items-center mb-2">
+            <h1 class="body1">Permintaan Bimbingan</h1>
+            <router-link
+              to="/dosen/tugas-akhir/bimbingan"
+              title="Lihat Permintaan Bimbingan"
+              aria-label="Navigasi ke halaman Ujian TA"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-6 h-6 text-[var(--secondary)]"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                />
+              </svg>
+            </router-link>
+          </div>
+          <table class="w-full text-left rtl:text-right w-min-[350px]">
+            <thead class="body5-bold uppercase text-white bg-[var(--primary)]">
+              <tr>
+                <th scope="col" class="px-3 py-2 rounded-l-lg">NIM</th>
+                <th scope="col" class="px-3 py-2">Nama</th>
+                <th scope="col" class="px-3 py-2 rounded-r-lg">Kategori</th>
+              </tr>
+            </thead>
+            <tbody class="body5">
+              <template v-if="PermintaanBimbingan.length">
+                <tr
+                  v-for="(item, index) in PermintaanBimbingan"
+                  :key="index"
+                  class="bg-white border-b rounded-l-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  @click="handleRowClick(item)"
+                  role="button"
+                  tabindex="0"
+                >
+                  <td class="px-3 py-2">
+                    {{ item.nim }}
+                  </td>
+                  <td class="px-3 py-2 w-fit">
+                    <div class="flex items-center gap-2">
+                      <img
+                        class="h-6 w-6 sm:h-8 sm:w-8 rounded-full"
+                        :src="item.avatar"
+                        alt=""
+                      />
+                      <span>{{ item.nama }}</span>
+                    </div>
+                  </td>
+                  <td class="px-3 py-2">
+                    {{ item.kategori }}
+                  </td>
+                </tr>
+              </template>
+              <template v-else>
+                <tr>
+                  <td colspan="3">
+                    <div class="text-center text-placeholder py-8">
+                      tidak ada data
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>

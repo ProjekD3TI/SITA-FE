@@ -8,7 +8,7 @@ import Tooltip from "@/components/Tugas-akhir/Tooltip.vue";
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
-import router from "@/router";
+import Loading from "@/components/Loading.vue";
 
 const route = useRoute();
 
@@ -178,7 +178,11 @@ const modalBodyText = computed(() => {
 </script>
 
 <template>
-  <div v-if="!$route.path.includes('input-nilai-ujian-ta')">
+  <div v-if="loading" class="flex items-center justify-center min-h-[80dvh]">
+    <Loading />
+  </div>
+  <div v-else-if="!$route.path.includes('input-nilai-ujian-ta')">
+    <Breadcrumb :items="breadcrumbItems" />
     <!-- Jadwal Section -->
     <div class="card-rounded bg-white p-6 lg:p-8">
       <div class="max-w-screen-2xl mx-auto">
@@ -281,11 +285,7 @@ const modalBodyText = computed(() => {
                   },
                 }"
               >
-                <Button
-                  variant="primary"
-                  size="md"
-                  class="w-fit sm:hidden"
-                >
+                <Button variant="primary" size="md" class="w-fit sm:hidden">
                   Input Nilai
                 </Button>
               </router-link>

@@ -11,7 +11,7 @@ import VueCookies from "vue-cookies";
 export function useNilaiBimbingan() {
   const router = useRouter();
   const toast = useToast();
-  
+
   const nilaiBimbingan = ref(null);
   const loading = ref(false);
   const error = ref(null);
@@ -38,30 +38,33 @@ export function useNilaiBimbingan() {
       error.value = "ID Tugas Akhir tidak valid";
       return null;
     }
-    
+
     loading.value = true;
     error.value = null;
-    
+
     try {
       const authToken = VueCookies.get("auth_token");
       const headers = {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        Authorization: `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
       };
-      
-      const response = await axios.get(`/api/dosen/nilai-bimbingan/${tugasAkhirId}`, { headers });
-      
+
+      const response = await axios.get(
+        `/api/dosen/nilai-bimbingan/${tugasAkhirId}`,
+        { headers }
+      );
+
       nilaiBimbingan.value = response.data.data;
       return response.data;
     } catch (err) {
       console.error("Error fetching nilai bimbingan:", err);
-      
+
       if (err.response?.status === 404) {
         nilaiBimbingan.value = null;
         return null;
       }
-      
+
       handleError(err);
       throw err;
     } finally {
@@ -77,29 +80,29 @@ export function useNilaiBimbingan() {
       error.value = "ID Tugas Akhir tidak valid";
       return null;
     }
-    
+
     loading.value = true;
     error.value = null;
     success.value = null;
-    
+
     try {
       const authToken = VueCookies.get("auth_token");
       const headers = {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        Authorization: `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
       };
-      
+
       const response = await axios.post(
-        `/api/dosen/nilai-bimbingan/${tugasAkhirId}`, 
+        `/api/dosen/nilai-bimbingan/${tugasAkhirId}`,
         data,
         { headers }
       );
-      
+
       nilaiBimbingan.value = response.data.data;
       success.value = "Nilai bimbingan berhasil disimpan";
       toast.success("Nilai bimbingan berhasil disimpan");
-      
+
       return response.data;
     } catch (err) {
       console.error("Error creating nilai bimbingan:", err);
@@ -118,29 +121,29 @@ export function useNilaiBimbingan() {
       error.value = "ID Tugas Akhir tidak valid";
       return null;
     }
-    
+
     loading.value = true;
     error.value = null;
     success.value = null;
-    
+
     try {
       const authToken = VueCookies.get("auth_token");
       const headers = {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        Authorization: `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
       };
-      
+
       const response = await axios.put(
-        `/api/dosen/nilai-bimbingan/${tugasAkhirId}/update`, 
+        `/api/dosen/nilai-bimbingan/${tugasAkhirId}/update`,
         data,
         { headers }
       );
-      
+
       nilaiBimbingan.value = response.data.data;
       success.value = "Nilai bimbingan berhasil diperbarui";
       toast.success("Nilai bimbingan berhasil diperbarui");
-      
+
       return response.data;
     } catch (err) {
       console.error("Error updating nilai bimbingan:", err);
@@ -157,7 +160,7 @@ export function useNilaiBimbingan() {
   const saveNilaiBimbingan = async (tugasAkhirId, data) => {
     try {
       const existingData = await fetchNilaiBimbingan(tugasAkhirId);
-      
+
       if (existingData && existingData.data) {
         return await updateNilaiBimbingan(tugasAkhirId, data);
       } else {
@@ -179,6 +182,6 @@ export function useNilaiBimbingan() {
     fetchNilaiBimbingan,
     createNilaiBimbingan,
     updateNilaiBimbingan,
-    saveNilaiBimbingan
+    saveNilaiBimbingan,
   };
 }
