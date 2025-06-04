@@ -1,0 +1,731 @@
+<template>
+    <div class="add-pk-container">
+        <div class="form-header">
+            <h1>Tambah Laporan Kejadian Mendesak</h1>
+        </div>
+
+        <form @submit.prevent="submitForm" class="pk-form">
+            <!-- Section 1: Detail Laporan -->
+            <div class="form-section">
+                <h2>Detail Laporan</h2>
+                <div class="form-row">
+                    <!-- Left column -->
+                    <div class="form-column">
+                        <div class="form-group">
+                            <label for="judul">Judul Laporan <span class="required">*</span></label>
+                            <input
+                                type="text"
+                                id="judul"
+                                v-model="formData.judul"
+                                class="form-control"
+                                :class="{ 'is-invalid': errors.judul }"
+                                required
+                            />
+                            <div v-if="errors.judul" class="invalid-feedback">{{ errors.judul[0] }}</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="image_path">Lampiran Foto <span class="required">*</span></label>
+                            <div class="custom-file-upload">
+                                <input
+                                    type="file"
+                                    id="image_path"
+                                    @change="handleFileUpload"
+                                    class="form-control"
+                                    :class="{ 'is-invalid': errors['image_path.0'] || errors.image_path }"
+                                    accept="image/*"
+                                    multiple
+                                    required
+                                />
+                                <div v-if="errors['image_path.0']" class="invalid-feedback">{{ errors['image_path.0'][0] }}</div>
+                                <div v-if="errors.image_path" class="invalid-feedback">{{ errors.image_path[0] }}</div>
+                                <div> 
+                                    <small class="text-muted">Anda dapat memilih beberapa foto sekaligus</small>
+                                </div>
+                            </div>
+                            <div v-if="imagePreviews.length > 0" class="image-previews">
+                                <div v-for="(preview, index) in imagePreviews" :key="index" class="image-preview-item">
+                                    <img :src="preview" alt="Preview" />
+                                    <button type="button" @click="removeImage(index)" class="remove-image">×</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right column -->
+                    <div class="form-column">
+                        <div class="form-group">
+                            <label for="tanggal_kejadian">Tanggal & Waktu Kejadian <span class="required">*</span></label>
+                            <input
+                                type="datetime-local"
+                                id="tanggal_kejadian"
+                                v-model="formData.tanggal_kejadian"
+                                class="form-control"
+                                :class="{ 'is-invalid': errors.tanggal_kejadian }"
+                                required
+                            />
+                            <div v-if="errors.tanggal_kejadian" class="invalid-feedback">{{ errors.tanggal_kejadian[0] }}</div>
+                        </div>
+                        <!-- Add this input field in your template, in a suitable location -->
+                        <div class="form-group">
+                            <label for="lampiran_link">Lampiran Link <span class="required">*</span></label>
+                            <input
+                                type="url"
+                                id="lampiran_link"
+                                v-model="formData.lampiran_link"
+                                class="form-control"
+                                :class="{ 'is-invalid': errors.lampiran_link }"
+                                placeholder="https://www.example.com"
+                                required
+                            />
+                            <div v-if="errors.lampiran_link" class="invalid-feedback">{{ errors.lampiran_link[0] }}</div>
+                            <small class="text-muted">Masukkan URL yang valid, contoh: https://www.example.com</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pernyataan -->
+            <div class="form-section">
+                <h2>Pernyataan</h2>
+                <div class="statement-box">
+                    <p>Dengan ini saya menyatakan bahwa:</p>
+                    <ol>
+                        <li>Segala informasi yang saya berikan dalam laporan ini adalah benar dan dapat dipertanggungjawabkan.</li>
+                        <li>Saya bersedia memberikan keterangan lebih lanjut apabila diperlukan untuk proses penanganan laporan.</li>
+                        <li>Saya memahami bahwa memberikan laporan palsu dapat dikenakan sanksi sesuai dengan peraturan yang berlaku.</li>
+                    </ol>
+                    <div class="form-check">
+                        <input
+                            type="checkbox"
+                            id="agreement"
+                            v-model="formData.agreement"
+                            class="form-check-input"
+                            required
+                        />
+                        <label for="agreement" class="form-check-label">
+                            Saya menyetujui pernyataan di atas <span class="required">*</span>
+                        </label>
+                        <div v-if="errors.agreement" class="invalid-feedback">{{ errors.agreement[0] }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" @click="goBack" class="btn btn-secondary">Kembali</button>
+                <button type="submit" class="btn btn-primary" :disabled="loading || !formData.agreement">
+                    <span v-if="loading">Mengirim...</span>
+                    <span v-else>Kirim Laporan</span>
+                </button>
+            </div>
+        </form>
+
+        <!-- Notification modal -->
+        <div v-if="showModal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header" :class="{ 'success': isSuccess, 'error': !isSuccess }">
+                    <h3>{{ modalTitle }}</h3>
+                </div>
+                <div class="modal-body">
+                    <p>{{ modalMessage }}</p>
+                </div>
+                <div class="modal-footer">
+                    <button @click="closeModal" class="btn btn-primary">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import axios from 'axios';
+import { decryptData } from '../../../../../services/encrypt';
+import VueCookies from "vue-cookies";
+import Swal from 'sweetalert2';
+
+export default {
+    name: 'AddPKMendesak',
+    data() {
+        return {
+            formData: {
+                judul: '',
+                category_id: null, // Will be set automatically to "Darurat dan Mendesak"
+                deskripsi: '-', // Default value
+                tanggal_kejadian: '',
+                image_path: [],
+                nama_pelapor: '',
+                ni_pelapor: '',
+                nomor_telepon: '',
+                lampiran_link: '-',
+                profesi: 'Dosen', // Default value
+                jenis_kelamin: 'laki-laki', // Default value
+                umur_pelapor: '20-40', // Default value
+                bukti_pelanggaran: ['foto_dokumentasi'], // Default value
+                terlapor: [
+                    {
+                        nama_lengkap: '-',
+                        email: '-',
+                        nomor_telepon: '-',
+                        status_warga: 'lainnya',
+                        unit_kerja: 'Fakultas Teknik',
+                        jenis_kelamin: 'laki-laki',
+                        umur_terlapor: '20-40'
+                    }
+                ],
+                saksi: [
+                    {
+                        nama_lengkap: '-',
+                        email: '-',
+                        nomor_telepon: '-'
+                    }
+                ],
+                agreement: false
+            },
+            buktiOptions: [
+                { value: 'bukti_transfer', label: 'Bukti transfer, cek, bukti penyetoran, dan rekening koran bank' },
+                { value: 'dokumen_rekaman', label: 'Dokumen dan/atau rekaman' },
+                { value: 'foto_dokumentasi', label: 'Foto dokumentasi' },
+                { value: 'surat_disposisi', label: 'Surat disposisi perintah' },
+                { value: 'identitas_sumber', label: 'Identitas sumber informasi' },
+                { value: 'lainnya', label: 'Lainnya' },
+            ],
+            imagePreviews: [],
+            categories: [],
+            emergencyCategoryId: null, // Will store the ID of "Darurat dan Mendesak" category
+            errors: {},
+            loading: false,
+            showModal: false,
+            modalTitle: '',
+            modalMessage: '',
+            isSuccess: false
+        };
+    },
+    mounted() {
+        this.fetchCategories();
+        this.loadUserData();
+    },
+    methods: {
+        loadUserData() {
+            const encryptedUserData = VueCookies.get("user_session");
+            if (encryptedUserData) {
+                const userData = decryptData(encryptedUserData);
+                this.formData.nama_pelapor = userData.name || '';
+                this.formData.ni_pelapor = userData.nim || userData.nik || '';
+                this.formData.nomor_telepon = userData.no_telp || '';
+            }
+        },
+        fetchCategories() {
+            axios.get('https://v3422040.mhs.d3tiuns.com/api/category')
+                .then(response => {
+                    this.categories = response.data;
+                    // Find the "Darurat dan Mendesak" category
+                    const emergencyCategory = this.categories.find(cat => cat.nama.includes("Darurat dan Mendesak"));
+                    if (emergencyCategory) {
+                        this.emergencyCategoryId = emergencyCategory.category_id;
+                        this.formData.category_id = emergencyCategory.category_id;
+                        console.log("Automatically selected category:", emergencyCategory.nama);
+                    } else {
+                        console.error('Emergency category not found');
+                        // If no "Darurat dan Mendesak" category found, use the first category as fallback
+                        if (this.categories.length > 0) {
+                            this.formData.category_id = this.categories[0].category_id;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching categories:', error);
+                    this.showNotification('Error', 'Gagal memuat kategori laporan.', false);
+                });
+        },
+        handleFileUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) {
+                return;
+            }
+            
+            if (!this.formData.image_path) {
+                this.formData.image_path = [];
+            }
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                this.formData.image_path.push(file);
+                
+                const reader = new FileReader();
+                reader.onload = e => {
+                    this.imagePreviews.push(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        },
+        removeImage(index) {
+            this.imagePreviews.splice(index, 1);
+            this.formData.image_path.splice(index, 1);
+        },
+        validateForm() {
+            let isValid = true;
+            this.errors = {};
+
+            if (!this.formData.judul) {
+                this.errors.judul = ['Judul laporan harus diisi'];
+                isValid = false;
+            }
+
+            if (!this.formData.tanggal_kejadian) {
+                this.errors.tanggal_kejadian = ['Tanggal dan waktu kejadian harus diisi'];
+                isValid = false;
+            }
+
+            if (!this.formData.image_path || this.formData.image_path.length === 0) {
+                this.errors.image_path = ['Lampiran foto harus diisi'];
+                isValid = false;
+            }
+
+            if (!this.formData.agreement) {
+                this.errors.agreement = ['Anda harus menyetujui pernyataan untuk melanjutkan'];
+                isValid = false;
+            }
+
+            return isValid;
+        },
+        submitForm() {
+        // Set loading state
+        this.loading = true;
+        this.errors = {};
+
+        // Auto-fill essential fields with dummy data if not provided
+        const formData = new FormData();
+
+        // 1. Required fields from error message
+        formData.append('judul', this.formData.judul || 'Laporan Kejadian Mendesak');
+        formData.append('category_id', this.formData.category_id || '1'); // Use default category ID
+        formData.append('deskripsi', this.formData.deskripsi || 'Laporan kejadian mendesak yang perlu segera ditangani');
+        formData.append('tanggal_kejadian', this.formData.tanggal_kejadian || new Date().toISOString().split('.')[0].replace('T', ' '));
+        formData.append('profesi', this.formData.profesi || 'Mahasiswa'); // Default profession
+        formData.append('jenis_kelamin', this.formData.jenis_kelamin || 'laki-laki'); // Default gender
+        formData.append('umur_pelapor', this.formData.umur_pelapor || '20-40'); // Default age range
+        
+        // Replace your current lampiran_link line with this
+        if (this.formData.lampiran_link) {
+            formData.append('lampiran_link', this.formData.lampiran_link);
+        } else {
+            // Show validation error if not provided
+            this.errors.lampiran_link = ['Lampiran link harus diisi dengan URL yang valid'];
+            this.loading = false;
+            return; // Stop submission if validation fails
+        }
+        
+        // 3. For image upload, if available
+        if (this.formData.image_path && this.formData.image_path.length > 0) {
+            this.formData.image_path.forEach((file, index) => {
+            formData.append('image_path[]', file);
+            });
+        }
+        
+        // 4. Handle terlapor with valid data
+        const terlapor = {
+            nama_lengkap: 'Nama Terlapor',
+            email: 'terlapor@example.com', // Valid email format
+            nomor_telepon: '081234567890',
+            status_warga: 'mahasiswa',
+            unit_kerja: 'Fakultas Teknik',
+            jenis_kelamin: 'laki-laki',
+            umur_terlapor: '20-40'
+        };
+        
+        // Add terlapor data
+        formData.append('terlapor[0][nama_lengkap]', terlapor.nama_lengkap);
+        formData.append('terlapor[0][email]', terlapor.email);
+        formData.append('terlapor[0][nomor_telepon]', terlapor.nomor_telepon);
+        formData.append('terlapor[0][status_warga]', terlapor.status_warga);
+        formData.append('terlapor[0][unit_kerja]', terlapor.unit_kerja);
+        formData.append('terlapor[0][jenis_kelamin]', terlapor.jenis_kelamin);
+        formData.append('terlapor[0][umur_terlapor]', terlapor.umur_terlapor);
+
+        // 5. Handle saksi with valid data
+        const saksi = {
+            nama_lengkap: 'Nama Saksi',
+            email: 'saksi@example.com', // Valid email format
+            nomor_telepon: '089876543210'
+        };
+        
+        // Add saksi data
+        formData.append('saksi[0][nama_lengkap]', saksi.nama_lengkap);
+        formData.append('saksi[0][email]', saksi.email);
+        formData.append('saksi[0][nomor_telepon]', saksi.nomor_telepon);
+        
+        // 6. Add bukti_pelanggaran from AddPK.vue
+        formData.append('bukti_pelanggaran[0]', 'foto_dokumentasi');
+        
+        // 7. Add agreement
+        formData.append('agreement', '1');
+
+        // Log what we're sending
+        console.log("Submitting form with auto-filled data");
+
+        // Use XMLHttpRequest for upload
+        this.uploadWithXHR(formData)
+            .then(response => {
+            this.loading = false;
+            console.log("Submission successful:", response);
+            this.$router.push('/pelaporan/kejadian');
+            })
+            .catch(error => {
+            this.loading = false;
+            console.error("Submission error:", error);
+            
+            // Parse and display errors if available
+            if (error.response) {
+                try {
+                const errorData = JSON.parse(error.response);
+                this.errors = errorData;
+                } catch (e) {
+                console.error("Error parsing server response:", e);
+                }
+            }
+            });
+        },
+        
+        uploadWithXHR(formData) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                
+                xhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan/add_laporan', true);
+                
+                // Get token from component data or from cookies
+                const authToken = this.token || this.$cookies.get('auth_token');
+                if (authToken) {
+                    xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+                }
+                
+                xhr.onload = function() {
+                    if (this.status >= 200 && this.status < 300) {
+                        try {
+                            resolve(JSON.parse(xhr.response));
+                        } catch (e) {
+                            resolve(xhr.response);
+                        }
+                    } else {
+                        console.error("Server error response:", xhr.response);
+                        reject({
+                            status: this.status,
+                            statusText: xhr.statusText,
+                            response: xhr.response
+                        });
+                    }
+                };
+                
+                xhr.onerror = function() {
+                    console.error("XHR network error");
+                    reject({
+                        status: this.status,
+                        statusText: xhr.statusText,
+                        response: 'Network error occurred'
+                    });
+                };
+                
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        const percentComplete = (e.loaded / e.total) * 100;
+                        console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
+                    }
+                };
+                
+                xhr.send(formData);
+            });
+        },
+
+        goBack() {
+            this.$router.go(-1);
+        },
+        showNotification(title, message, isSuccess) {
+            this.modalTitle = title;
+            this.modalMessage = message;
+            this.isSuccess = isSuccess;
+            this.showModal = true;
+        },
+        closeModal() {
+            this.showModal = false;
+            if (this.isSuccess) {
+                this.$router.push('/pelaporan/kejadian');
+            }
+        }
+    }
+};
+</script>
+
+<style scoped>
+.add-pk-container {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.form-header h1 {
+    font-size: 1.8rem;
+    color: #333;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.form-section h2 {
+    font-size: 1.4rem;
+    color: #333;
+    margin-bottom: 1.5rem;
+}
+
+.pk-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 2rem;
+}
+
+.form-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+label {
+    font-weight: 600;
+    color: #333;
+}
+
+.required {
+    color: #dc3545;
+}
+
+.form-control {
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.is-invalid {
+    border-color: #dc3545;
+}
+
+.invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.custom-file-upload {
+    position: relative;
+}
+
+.image-previews {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 1rem;
+}
+
+.image-preview-item {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+
+.image-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.remove-image {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(255, 255, 255, 0.7);
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: bold;
+    color: #dc3545;
+}
+
+.remove-image:hover {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.text-muted {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Styling untuk section pernyataan */
+.statement-box {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.statement-box p {
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.statement-box ol {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+}
+
+.statement-box ol li {
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.form-check {
+    display: flex;
+    align-items: flex-start;
+    margin-top: 1rem;
+}
+
+.form-check-input {
+    margin-top: 0.25rem;
+    margin-right: 0.5rem;
+}
+
+.form-check-label {
+    font-weight: 500;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: #0069d9;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: #5a6268;
+}
+
+/* Modal styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 90%;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    padding: 1rem;
+    text-align: center;
+}
+
+.modal-header.success {
+    background-color: #28a745;
+    color: white;
+}
+
+.modal-header.error {
+    background-color: #dc3545;
+    color: white;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.modal-footer {
+    padding: 1rem;
+    display: flex;
+    justify-content: center;
+}
+
+/* Responsive layout */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+</style>
