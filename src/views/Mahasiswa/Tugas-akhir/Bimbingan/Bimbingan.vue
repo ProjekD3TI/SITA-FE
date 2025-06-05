@@ -132,16 +132,16 @@ const closeDetailModal = () => {
     <!-- STATE 1: BELUM ADA TA AKTIF - FORM REQUEST PEMBIMBING -->
     <div
       v-if="!hasActiveTA && !hasPembimbing"
-      class="p-4 bg-white card-rounded lg:p-8"
+      class="p-4 bg-white card-rounded lg:p-8 shadow-custom"
     >
       <div class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
-        <h5 class="body3-bold sm:body2-bold lg:body1-bold">
+        <h5 class="body4-bold sm:body3-bold text-blackText">
           Anda belum memiliki pembimbing, silahkan pilih dosen untuk diminta
           menjadi pembimbing terlebih dahulu!
         </h5>
 
         <!-- Form Request Pembimbing -->
-        <form class="flex flex-col gap-4">
+        <form class="flex flex-col gap-4 mt-2">
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <!-- Input Kategori -->
             <InputDropdown
@@ -222,10 +222,10 @@ const closeDetailModal = () => {
     <!-- STATE 2: MENUNGGU RESPON DOSEN -->
     <div
       v-else-if="!hasPembimbing && waitingResponse"
-      class="p-4 bg-white card-rounded lg:p-8"
+      class="p-4 bg-white card-rounded lg:p-8 shadow-custom"
     >
       <div class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
-        <h5 class="body5-bold sm:body4-bold lg:body3-bold">
+        <h5 class="body4-bold sm:body3-bold text-blackText">
           Permintaan anda kepada dosen untuk menjadi pembimbing telah terkirim.
           Mohon tunggu untuk dosen merespon permintaan anda.
         </h5>
@@ -247,7 +247,7 @@ const closeDetailModal = () => {
     <!-- STATE 3: REQUEST DITOLAK DOSEN -->
     <div
       v-else-if="!hasPembimbing && declined"
-      class="p-4 bg-white card-rounded lg:p-8"
+      class="p-4 bg-white card-rounded lg:p-8 shadow-custom"
     >
       <div class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
         <h5 class="body3-bold sm:body2-bold lg:body1-bold">
@@ -271,7 +271,7 @@ const closeDetailModal = () => {
     <!-- STATE 4: PUNYA PEMBIMBING - TAMPILKAN DATA BIMBINGAN -->
     <div v-else-if="hasPembimbing">
       <!-- Header: Info Dosen & Progress BAB -->
-      <div class="p-6 bg-white card-rounded lg:p-8">
+      <div class="p-6 bg-white card-rounded lg:p-8 shadow-custom">
         <!-- Info Dosen Pembimbing -->
         <UserData
           class="max-w-screen-xl mx-auto mb-4"
@@ -340,7 +340,7 @@ const closeDetailModal = () => {
       </div>
 
       <!-- Tabel Riwayat Bimbingan -->
-      <div class="p-4 mt-4 bg-white card-rounded lg:p-8">
+      <div class="p-4 mt-4 bg-white card-rounded lg:p-8 shadow-custom">
         <Table
           :headers="['No', 'Tanggal', 'BAB', 'Catatan', 'Status']"
           :items="formattedBimbinganData"

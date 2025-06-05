@@ -2,7 +2,7 @@
   <div class="relative w-full">
     <label
       :for="id"
-      :class="`absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold max-w-[210px] sm:max-w-none truncate`"
+      :class="`absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold max-w-[210px] sm:max-w-none truncate text-blackText`"
     >
       {{ label }}
     </label>
@@ -10,7 +10,7 @@
       <div
         :id="id"
         :class="`border-y border-l border-placeholder rounded-l-[12px] px-4 sm:px-6 py-3 body5 sm:body4 flex-1 min-w-0 flex items-center overflow-hidden ${
-          !hasFile ? 'text-placeholder' : 'text-black'
+          !hasFile ? 'text-placeholder' : 'text-blackText'
         }`"
       >
         <div

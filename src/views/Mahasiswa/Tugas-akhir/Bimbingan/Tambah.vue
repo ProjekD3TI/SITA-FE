@@ -85,11 +85,11 @@ const handleSubmit = async () => {
   <Breadcrumb />
 
   <!-- Card Form Tambah Bimbingan -->
-  <div class="p-4 bg-white card-rounded lg:p-8">
+  <div class="p-4 bg-white card-rounded lg:p-8 shadow-custom">
     <div class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
       <!-- Judul Form -->
       <h5
-        class="font-bold body2-bold sm:font-bold sm:body1-bold lg:heading5 xl:heading4"
+        class="font-bold body2-bold sm:font-bold sm:body1-bold lg:heading5 text-blackText"
       >
         Tambah Bimbingan
       </h5>

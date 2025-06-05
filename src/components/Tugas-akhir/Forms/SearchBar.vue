@@ -1,7 +1,7 @@
 <template>
   <div class="relative flex-grow">
     <div
-      class="absolute top-2.5 sm:top-2.5 left-0 flex items-center pl-3 pointer-events-none"
+      class="absolute top-2 sm:top-2.5 left-0 flex items-center pl-3 pointer-events-none"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -23,7 +23,7 @@
       :placeholder="placeholder"
       :value="modelValue"
       @input="handleInput"
-      class="border border-placeholder input-rounded pl-10 pr-4 py-2 sm:py-2.5 w-full body4 sm:body3"
+      class="w-full py-2 pl-10 pr-4 border border-placeholder input-rounded sm:py-3 body5 sm:body4"
     />
     <div
       v-if="showClearButton && modelValue"

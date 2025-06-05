@@ -15,7 +15,7 @@ import {
   statusProperties,
   statuses,
   STATUS,
-  useDashboard
+  useDashboard,
 } from "@/services/TugasAkhir/Mhs/dashboard.js";
 
 const { loading, error } = useDashboard();
@@ -56,7 +56,8 @@ const statusCardConfig = computed(() => {
   const idx = StatusCardIdentifier.value;
   const config = cardConfig[idx] || cardConfig[0];
   const activeStatus = config.status();
-  const statusProps = statusProperties[activeStatus] || statusProperties[STATUS.WAITING];
+  const statusProps =
+    statusProperties[activeStatus] || statusProperties[STATUS.WAITING];
   return {
     title: config.title,
     icon: iconPaths[config.icon],
@@ -94,8 +95,10 @@ const flowSteps = [
   { name: "Ujian Tugas Akhir" },
 ];
 
-const showPlaceholder = computed(() =>
-  statuses.reqBimbingan?.value === STATUS.PLACEHOLDER && StatusCardIdentifier.value === 0
+const showPlaceholder = computed(
+  () =>
+    statuses.reqBimbingan?.value === STATUS.PLACEHOLDER &&
+    StatusCardIdentifier.value === 0
 );
 </script>
 
@@ -111,11 +114,17 @@ const showPlaceholder = computed(() =>
     <Breadcrumb />
 
     <!-- Flow bar card -->
-    <div class="p-4 bg-white card-rounded lg:p-8">
+    <div class="p-4 bg-white card-rounded lg:p-6 shadow-custom">
       <div class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
-        <h5 class="body2-bold sm:body1-bold">Flow Tugas Akhir</h5>
+        <h5 class="body3-bold 2xl:body2-bold text-blackText">
+          Flow Tugas Akhir
+        </h5>
         <div class="overflow-x-auto">
-          <FlowBar class="pb-16 mx-auto sm:pb-20" :current-step="currentFlowStep" :steps="flowSteps" />
+          <FlowBar
+            class="pb-16 mx-auto sm:pb-20"
+            :current-step="currentFlowStep"
+            :steps="flowSteps"
+          />
         </div>
       </div>
     </div>
@@ -124,29 +133,44 @@ const showPlaceholder = computed(() =>
     <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
       <!-- Status Card -->
       <!-- filepath: /var/www/html/Frontend-Port/src/views/Mahasiswa/Tugas-akhir/Dashboard.vue -->
-      <div class="flex-1 p-4 mt-4 bg-white card-rounded lg:p-8">
-
-        <StatusCard :title="statusCardConfig.title" :icon="statusCardConfig.icon"
-          :iconColor="statusCardConfig.iconColor" :statusLabel="statusCardConfig.statusLabel"
-          :statusType="statusCardConfig.statusType" labelSize="lg" />
+      <div class="flex-1 p-4 mt-4 bg-white card-rounded lg:p-6 shadow-custom">
+        <StatusCard
+          :title="statusCardConfig.title"
+          :icon="statusCardConfig.icon"
+          :iconColor="statusCardConfig.iconColor"
+          :statusLabel="statusCardConfig.statusLabel"
+          :statusType="statusCardConfig.statusType"
+          labelSize="lg"
+        />
       </div>
 
       <!-- Summary Cards -->
-      <div class="flex flex-col flex-grow p-4 bg-white card-rounded lg:p-8 sm:mt-4 sm:flex-row justify-evenly">
+      <div
+        class="flex flex-col flex-grow p-4 bg-white card-rounded lg:p-6 shadow-custom sm:mt-4 sm:flex-row justify-evenly"
+      >
         <template v-for="(card, index) in summaryCards" :key="index">
           <!-- Card -->
-          <SummaryCard :icon="card.icon" :iconColor="card.iconColor" :title="card.title || '-'"
-            :subtitle="card.subtitle" />
+          <SummaryCard
+            :icon="card.icon"
+            :iconColor="card.iconColor"
+            :title="card.title || '-'"
+            :subtitle="card.subtitle"
+          />
 
           <!-- Divider (except after last card) -->
           <template v-if="index < summaryCards.length - 1">
-            <div class="self-stretch hidden w-px h-auto mx-4 my-8 sm:flex bg-placeholder"></div>
-            <div class="sm:hidden max-w-[240px] w-10/12 h-px bg-placeholder mx-auto my-4"></div>
+            <div
+              class="self-stretch hidden w-px h-auto mx-4 my-8 sm:flex bg-placeholder"
+            ></div>
+            <div
+              class="sm:hidden max-w-[240px] w-10/12 h-px bg-placeholder mx-auto my-0"
+            ></div>
           </template>
         </template>
       </div>
     </div>
-    <div class="p-4 mt-4 bg-white card-rounded lg:p-8 min-h-fit">
-    </div>
+    <div
+      class="p-4 mt-4 bg-white card-rounded lg:p-6 shadow-custom min-h-fit"
+    ></div>
   </template>
 </template>

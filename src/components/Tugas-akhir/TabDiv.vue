@@ -71,8 +71,8 @@ defineExpose({
         class="flex items-center gap-2 py-3 transition-all duration-200 ease-in-out xl:py-4 body3-bold"
         :class="[
           internalActiveTab === tab.id
-            ? 'text-primary trapezium-tab z-10 pe-8 lg:pe-12 ps-4 lg:ps-6'
-            : 'hover:opacity-100 trapezium-tab opacity-50 pe-5 xl:pe-8 2xl:pe-12 ps-4 xl:ps-6',
+            ? 'text-primary trapezium-tab z-10 pe-8 lg:pe-10 ps-4 lg:ps-6'
+            : 'hover:opacity-100 trapezium-tab opacity-50 pe-8 lg:pe-10 ps-4 xl:ps-6 text-blackText',
         ]"
         @click="selectTab(tab.id)"
       >
@@ -93,7 +93,7 @@ defineExpose({
 
         <!-- Teks Tab -->
         <span
-          class="relative z-20 2xl:inline"
+          class="relative z-20 font-semibold md:inline body4"
           :class="[
             internalActiveTab === tab.id ? 'hidden sm:inline' : 'hidden',
           ]"
@@ -106,7 +106,7 @@ defineExpose({
               countValue(tab.count) !== undefined &&
               countValue(tab.count) !== 0
             "
-            class="text-sm px-2 py-0.5 ml-1 rounded-full text-white"
+            class="px-2 py-0.5 ml-1 rounded-full text-white body4"
             :class="[
               internalActiveTab === tab.id ? 'bg-secondary' : 'bg-placeholder',
               tab.countClass || '',
@@ -122,14 +122,14 @@ defineExpose({
             countValue(tab.count) !== 0 &&
             internalActiveTab != tab.id
           "
-          class="absolute z-20 w-3 h-3 duration-200 border-2 border-white rounded-full 2xl:hidden top-2 right-4 xl:top-4 xl:right-4 bg-secondary"
+          class="absolute z-20 w-3 h-3 duration-200 border-2 border-white rounded-full md:hidden top-2 right-4 xl:top-4 xl:right-4 bg-secondary"
         ></div>
       </button>
     </div>
 
     <!-- Tab Content - Animated -->
     <div
-      class="rounded-r-[16px] rounded-bl-[16px] bg-white p-4 lg:p-8 overflow-x-auto"
+      class="rounded-r-[16px] rounded-bl-[16px] bg-white p-4 lg:p-6 lg:pt-4 overflow-x-auto shadow-custom"
     >
       <slot v-if="!useNamedSlots" :active-tab="internalActiveTab"></slot>
       <template v-else>

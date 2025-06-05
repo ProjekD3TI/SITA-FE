@@ -43,15 +43,15 @@ const breadcrumbItems = computed(() => {
 
 <template>
   <div class="pb-2 sm:pb-4">
-    <div class="flex items-center gap-2 sm:gap-4">
+    <div class="flex items-center gap-2 align-middle">
       <svg
         v-if="homeIcon"
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
-        stroke-width="2"
+        stroke-width="1.5"
         stroke="currentColor"
-        class="w-4 h-4 text-black bg-transparent sm:w-5 sm:h-5"
+        class="w-4 h-4 text-[#384551] bg-transparent sm:w-5 sm:h-5"
       >
         <path
           stroke-linecap="round"
@@ -60,7 +60,7 @@ const breadcrumbItems = computed(() => {
         />
       </svg>
 
-      <ol class="flex items-center gap-2 sm:gap-4">
+      <ol class="flex items-center gap-2 pt-0.5 sm:pt-1">
         <li
           v-for="(item, index) in breadcrumbItems"
           :key="index"
@@ -68,7 +68,7 @@ const breadcrumbItems = computed(() => {
         >
           <template v-if="index !== 0">
             <svg
-              class="w-3.5 h-3.5 me-2 sm:me-4 text-black"
+              class="w-3.5 h-3.5 me-2 text-[#384551]"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -85,7 +85,7 @@ const breadcrumbItems = computed(() => {
           <router-link
             v-if="item.path && !item.active"
             :to="item.path"
-            class="body5 sm:body4 text-placeholder hover:text-primary"
+            class="text-[#384551] body5 sm:text-[13px] hover:text-primary"
           >
             {{ item.label }}
           </router-link>
@@ -95,8 +95,8 @@ const breadcrumbItems = computed(() => {
             :class="[
               '',
               item.active
-                ? 'text-primary body5-bold sm:body4-bold'
-                : 'text-placholder body5 sm:body4',
+                ? 'text-primary body5-bold sm:text-[13px]'
+                : 'text-placholder body5 sm:text-[13px]',
             ]"
           >
             {{ item.label }}

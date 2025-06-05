@@ -2,6 +2,7 @@
   <div class="min-h-screen bg-gray-100">
     <!-- Sidebar -->
     <aside
+      v-if="isSidebarReady"
       id="dosen-sidebar"
       :class="{
         'translate-x-0 w-64': showNavbar,
@@ -32,11 +33,15 @@
       </button>
 
       <!-- Sidebar Header -->
-      <div class="flex items-center justify-between p-4 duration-200">
+      <div
+        class="flex items-center justify-between p-4 duration-200"
+        :class="{ 'px-8': showNavbar, 'px-4': !showNavbar }"
+      >
         <router-link to="/">
           <img
             :src="D3TILogo"
             alt="D3TI Logo"
+            class="duration-200"
             :class="{ 'w-20': showNavbar, 'w-9 my-2': !showNavbar }"
           />
         </router-link>
@@ -134,6 +139,7 @@ const { logout } = authMahasiswa();
 const showBimbingan = ref(false);
 const showTugasAkhir = ref(false);
 const showNavbar = ref(false);
+const isSidebarReady = ref(false); // Tambahkan ini
 const showUser = ref(false);
 const isLgScreen = ref(false);
 const hasNotification = ref(false);
@@ -342,6 +348,7 @@ onMounted(() => {
   } else {
     showNavbar.value = savedSidebar === "true";
   }
+  isSidebarReady.value = true;
 
   // Get user data
   const userData = getUserData();

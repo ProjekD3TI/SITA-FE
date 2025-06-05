@@ -12,7 +12,7 @@
       />
       <span class="sr-only">Toggle Switch</span>
     </div>
-    <span class="ml-2 sm:ml-4 body4-bold sm:body3-bold">
+    <span class="ml-2 sm:ml-4 body4-bold sm:body3-bold text-blackText">
       {{ isOn ? "Form Dibuka" : "Form Ditutup" }}
     </span>
   </div>

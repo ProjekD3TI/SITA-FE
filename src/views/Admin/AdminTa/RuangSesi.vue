@@ -10,6 +10,7 @@ import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputTime from "@/components/Tugas-akhir/Forms/InputTime.vue";
 import Loading from "@/components/Loading.vue";
+import ErrorMsg from "@/components/ErrorMsg.vue";
 import { useToast } from "vue-toastification";
 import { useRuang } from "@/services/TugasAkhir/Admin/ruang";
 import { useSesi } from "@/services/TugasAkhir/Admin/sesi";
@@ -36,25 +37,25 @@ const searchQuery = ref("");
 const handleSearch = () => {};
 
 // === RUANG API ===
-const { 
-  data: ruangsData, 
-  loading: ruangLoading, 
-  error: ruangError, 
-  fetchData: fetchRuangs, 
-  addRuang, 
-  editRuang, 
-  deleteRuang 
+const {
+  data: ruangsData,
+  loading: ruangLoading,
+  error: ruangError,
+  fetchData: fetchRuangs,
+  addRuang,
+  editRuang,
+  deleteRuang,
 } = useRuang();
 
 // === SESI API ===
-const { 
-  data: sesisData, 
-  loading: sesiLoading, 
-  error: sesiError, 
-  fetchData: fetchSesis, 
-  addSesi, 
-  editSesi, 
-  deleteSesi 
+const {
+  data: sesisData,
+  loading: sesiLoading,
+  error: sesiError,
+  fetchData: fetchSesis,
+  addSesi,
+  editSesi,
+  deleteSesi,
 } = useSesi();
 
 // Data transformations
@@ -110,7 +111,7 @@ const saveRuang = async () => {
     toast.error("Nama ruang tidak boleh kosong");
     return;
   }
-  
+
   selectedRuang.value.nama_ruang = selectedRuang.value.nama_ruang.trim();
 
   try {
@@ -121,7 +122,7 @@ const saveRuang = async () => {
       await addRuang(selectedRuang.value);
       toast.success("Ruang berhasil ditambahkan");
     }
-    
+
     isModalOpen.value = false;
     await fetchRuangs();
   } catch (err) {
@@ -140,11 +141,13 @@ const deleteRuangHandler = async () => {
       await deleteRuang(ruangToDelete.value.id);
       toast.success("Ruang berhasil dihapus");
       await fetchRuangs();
-      
+
       ruangToDelete.value = null;
       isDeleteModalOpen.value = false;
     } catch (err) {
-      toast.error("Gagal menghapus ruang: " + (ruangError.value || err.message));
+      toast.error(
+        "Gagal menghapus ruang: " + (ruangError.value || err.message)
+      );
     }
   }
 };
@@ -152,14 +155,14 @@ const deleteRuangHandler = async () => {
 // === FUNGSI UNTUK SESI ===
 const openAddModalSesi = () => {
   const now = new Date();
-  const currentHour = now.getHours().toString().padStart(2, '0');
-  const currentMinute = now.getMinutes().toString().padStart(2, '0');
-  const nextHour = (now.getHours() + 1).toString().padStart(2, '0');
-  
-  selectedSesi.value = { 
-    nama_sesi: "", 
-    waktu_mulai: `${currentHour}:${currentMinute}`, 
-    waktu_selesai: `${nextHour}:${currentMinute}` 
+  const currentHour = now.getHours().toString().padStart(2, "0");
+  const currentMinute = now.getMinutes().toString().padStart(2, "0");
+  const nextHour = (now.getHours() + 1).toString().padStart(2, "0");
+
+  selectedSesi.value = {
+    nama_sesi: "",
+    waktu_mulai: `${currentHour}:${currentMinute}`,
+    waktu_selesai: `${nextHour}:${currentMinute}`,
   };
   isEditingSesi.value = false;
   isModalOpenSesi.value = true;
@@ -177,17 +180,17 @@ const saveSesi = async () => {
     toast.error("Nama sesi tidak boleh kosong");
     return;
   }
-  
+
   if (!selectedSesi.value.waktu_mulai) {
     toast.error("Waktu mulai harus diisi");
     return;
   }
-  
+
   if (!selectedSesi.value.waktu_selesai) {
     toast.error("Waktu selesai harus diisi");
     return;
   }
-  
+
   if (selectedSesi.value.waktu_mulai >= selectedSesi.value.waktu_selesai) {
     toast.error("Waktu selesai harus setelah waktu mulai");
     return;
@@ -197,9 +200,9 @@ const saveSesi = async () => {
     const payload = {
       nama_sesi: selectedSesi.value.nama_sesi.trim(),
       waktu_mulai: selectedSesi.value.waktu_mulai,
-      waktu_selesai: selectedSesi.value.waktu_selesai
+      waktu_selesai: selectedSesi.value.waktu_selesai,
     };
-    
+
     if (isEditingSesi.value) {
       await editSesi(selectedSesi.value.id, payload);
       toast.success("Sesi berhasil diperbarui");
@@ -207,7 +210,7 @@ const saveSesi = async () => {
       await addSesi(payload);
       toast.success("Sesi berhasil ditambahkan");
     }
-    
+
     await fetchSesis();
     isModalOpenSesi.value = false;
   } catch (err) {
@@ -226,7 +229,7 @@ const deleteSesiHandler = async () => {
       await deleteSesi(sesiToDelete.value.id);
       toast.success("Sesi berhasil dihapus");
       await fetchSesis();
-      
+
       sesiToDelete.value = null;
       isDeleteModalOpenSesi.value = false;
     } catch (err) {
@@ -243,254 +246,265 @@ onMounted(() => {
 </script>
 
 <template>
-    <div v-if="ruangLoading && sesiLoading" class="flex items-center justify-center min-h-[70dvh]">
-    <Loading />
+  <div>
+    <Breadcrumb :items="breadcrumbItems" />
+    <TabDiv :tabs="tabs" :use-named-slots="true">
+      <!-- === TAB 1: RUANG === -->
+      <template #tab1>
+        <div>
+          <div class="flex items-center justify-between mb-4 space-x-4">
+            <div class="w-4/5">
+              <SearchBar
+                v-model="searchQuery"
+                @search="handleSearch"
+                filterKey="ruang"
+              />
+            </div>
+            <div class="w-1/5">
+              <Button
+                variant="primary"
+                size="lg"
+                @click="openAddModalRuang"
+                leftIconPath="M12 4v16m8-8H4"
+                class="w-full"
+              >
+                Tambah Ruang
+              </Button>
+            </div>
+          </div>
+          <div v-if="ruangLoading" class="py-8">
+            <Loading />
+          </div>
+          <ErrorMsg v-else-if="ruangError" :message="error" />
+          <Table
+            v-else
+            :headers="tableHeadersRuang"
+            :items="filteredRuangs"
+            min-width="min-w-full"
+          >
+            <template #header>
+              <tr>
+                <th class="w-4/5 px-6 py-3 text-left">Nama Ruang</th>
+                <th class="w-1/5 px-6 py-3 text-center">Aksi</th>
+              </tr>
+            </template>
+
+            <template #row="{ item }">
+              <td class="w-4/5 px-6 py-3">{{ item.nama_ruang }}</td>
+              <td class="w-1/5 px-6 py-3 text-center">
+                <div class="flex justify-center gap-2">
+                  <Button
+                    variant="danger"
+                    size="md"
+                    @click.stop="confirmDeleteRuang(item)"
+                    leftIconPath="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                    class="!inline-flex !p-2 !min-h-0 !min-w-0"
+                  >
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    @click.stop="openEditModalRuang(item)"
+                    leftIconPath="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+                    class="!inline-flex !p-2 !min-h-0 !min-w-0"
+                  >
+                  </Button>
+                </div>
+              </td>
+            </template>
+          </Table>
+        </div>
+
+        <!-- Modal Tambah/Edit Ruang -->
+        <DefaultModal
+          v-if="isModalOpen"
+          :headText="isEditing ? 'Edit Ruang' : 'Tambah Ruang'"
+          bodyText=""
+          @close="isModalOpen = false"
+        >
+          <div class="mt-4">
+            <InputText
+              id="room-name"
+              label="Nama Ruang"
+              placeholder="Masukkan Nama ruang"
+              v-model="selectedRuang.nama_ruang"
+            />
+            <div class="flex justify-end gap-2 mt-4">
+              <Button variant="danger" @click="isModalOpen = false">
+                Batal
+              </Button>
+              <Button
+                variant="primary"
+                @click="saveRuang"
+                :disabled="ruangLoading"
+              >
+                <span v-if="ruangLoading">Memproses...</span>
+                <span v-else>{{ isEditing ? "Simpan" : "Tambah" }}</span>
+              </Button>
+            </div>
+          </div>
+        </DefaultModal>
+
+        <!-- Modal Konfirmasi Hapus Ruang -->
+        <ModalDeleteRuangSesi
+          :show="isDeleteModalOpen"
+          title="Konfirmasi Hapus Ruang"
+          :description="`Apakah anda yakin akan menghapus ruang '${
+            ruangToDelete?.nama_ruang || 'ini'
+          }'? Anda tidak dapat mengembalikan ruangan yang telah dihapus.`"
+          confirmText="Hapus"
+          @close="isDeleteModalOpen = false"
+          @confirm="deleteRuangHandler"
+        />
+      </template>
+
+      <!-- === TAB 2: SESI === -->
+      <template #tab2>
+        <div>
+          <div class="flex items-center justify-between mb-4 space-x-4">
+            <div class="w-4/5">
+              <SearchBar
+                v-model="searchQuery"
+                @search="handleSearch"
+                filterKey="sesi"
+              />
+            </div>
+            <div class="w-1/5">
+              <Button
+                variant="primary"
+                size="lg"
+                @click="openAddModalSesi"
+                leftIconPath="M12 4v16m8-8H4"
+                class="w-full"
+              >
+                Tambah Sesi
+              </Button>
+            </div>
+          </div>
+          <div v-if="sesiLoading" class="py-8">
+            <Loading />
+          </div>
+          <ErrorMsg v-else-if="sesiError" :message="error" />
+          <Table
+            v-else
+            :headers="tableHeadersSesi"
+            :items="filteredSesis"
+            min-width="min-w-full"
+          >
+            <template #header>
+              <tr>
+                <th class="w-2/5 px-6 py-3 text-left">Nama Sesi</th>
+                <th class="w-2/5 px-6 py-3 text-left">Waktu</th>
+                <th class="w-1/5 px-6 py-3 text-center">Aksi</th>
+              </tr>
+            </template>
+
+            <template #row="{ item }">
+              <td class="w-2/5 px-6 py-3">{{ item.nama_sesi }}</td>
+              <td class="w-2/5 px-6 py-3">
+                <div class="flex items-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-4 h-4 mr-1"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                    />
+                  </svg>
+                  {{ item.waktu_mulai }} - {{ item.waktu_selesai }}
+                </div>
+              </td>
+              <td class="w-1/5 px-6 py-3 text-center">
+                <div class="flex justify-center gap-2">
+                  <Button
+                    variant="danger"
+                    size="md"
+                    @click.stop="confirmDeleteSesi(item)"
+                    leftIconPath="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                    class="!inline-flex !p-2 !min-h-0 !min-w-0"
+                  >
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    @click.stop="openEditModalSesi(item)"
+                    leftIconPath="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+                    class="!inline-flex !p-2 !min-h-0 !min-w-0"
+                  >
+                  </Button>
+                </div>
+              </td>
+            </template>
+          </Table>
+        </div>
+
+        <!-- Modal Tambah/Edit Sesi -->
+        <DefaultModal
+          v-if="isModalOpenSesi"
+          :headText="isEditingSesi ? 'Edit Sesi' : 'Tambah Sesi'"
+          bodyText=""
+          @close="isModalOpenSesi = false"
+        >
+          <div class="mt-4">
+            <InputText
+              id="nama_sesi"
+              label="Nama Sesi"
+              placeholder="Masukkan nama sesi"
+              v-model="selectedSesi.nama_sesi"
+            />
+            <InputTime
+              id="waktu_mulai"
+              label="Waktu Mulai"
+              :value="selectedSesi.waktu_mulai"
+              @update:value="(val) => (selectedSesi.waktu_mulai = val)"
+            />
+
+            <InputTime
+              id="waktu_selesai"
+              label="Waktu Selesai"
+              :value="selectedSesi.waktu_selesai"
+              @update:value="(val) => (selectedSesi.waktu_selesai = val)"
+            />
+
+            <div class="flex justify-end gap-2 mt-4">
+              <Button
+                variant="danger"
+                @click="isModalOpenSesi = false"
+                :disabled="sesiLoading"
+              >
+                Batal
+              </Button>
+              <Button
+                variant="primary"
+                @click="saveSesi"
+                :disabled="sesiLoading"
+              >
+                {{ isEditingSesi ? "Simpan" : "Tambah" }}
+              </Button>
+            </div>
+          </div>
+        </DefaultModal>
+
+        <!-- Modal Konfirmasi Hapus Sesi -->
+        <ModalDeleteRuangSesi
+          :show="isDeleteModalOpenSesi"
+          title="Konfirmasi Hapus Sesi"
+          :description="`Apakah anda yakin akan menghapus sesi '${
+            sesiToDelete?.nama_sesi || 'ini'
+          }'? Anda tidak dapat mengembalikan sesi yang telah dihapus.`"
+          confirmText="Hapus"
+          @close="isDeleteModalOpenSesi = false"
+          @confirm="deleteSesiHandler"
+        />
+      </template>
+    </TabDiv>
   </div>
-  
-    <div v-else>
-      <Breadcrumb :items="breadcrumbItems" />
-      <TabDiv :tabs="tabs" :use-named-slots="true">
-    <!-- === TAB 1: RUANG === -->
-    <template #tab1>
-      <div>
-        <div class="flex justify-between items-center mb-4 space-x-4">
-          <div class="w-4/5">  
-            <SearchBar
-              v-model="searchQuery"
-              @search="handleSearch"
-              filterKey="ruang"
-            />
-          </div>
-          <div class="w-1/5">
-            <Button
-              variant="primary"
-              size="lg"
-              @click="openAddModalRuang"
-              leftIconPath="M12 4v16m8-8H4"
-              class="w-full"
-            >
-              Tambah Ruang
-            </Button>
-          </div>
-        </div>
-
-        <Table
-          :headers="tableHeadersRuang"
-          :items="filteredRuangs"
-          min-width="min-w-full"
-        >
-          <template #header>
-            <tr>
-              <th class="py-3 px-6 text-left w-4/5">Nama Ruang</th>
-              <th class="py-3 px-6 text-center w-1/5">Aksi</th>
-            </tr>
-          </template>
-          
-          <template #row="{ item }">
-            <td class="py-3 px-6 w-4/5">{{ item.nama_ruang }}</td>
-            <td class="py-3 px-6 text-center w-1/5">
-              <div class="flex gap-2 justify-center">
-                <Button
-                  variant="danger"
-                  size="md"
-                  @click.stop="confirmDeleteRuang(item)"
-                  leftIconPath="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-                  class="!inline-flex !p-2 !min-h-0 !min-w-0"
-                >
-                </Button>
-                <Button
-                  variant="primary"
-                  size="md"
-                  @click.stop="openEditModalRuang(item)"
-                  leftIconPath="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                  class="!inline-flex !p-2 !min-h-0 !min-w-0"
-                >
-                </Button>
-              </div>
-            </td>
-          </template>
-        </Table>
-      </div>
-
-      <!-- Modal Tambah/Edit Ruang -->
-      <DefaultModal
-        v-if="isModalOpen"
-        :headText="isEditing ? 'Edit Ruang' : 'Tambah Ruang'"
-        bodyText=""
-        @close="isModalOpen = false"
-      >
-        <div class="mt-4">
-          <InputText
-            id="room-name"
-            label="Nama Ruang"
-            placeholder="Masukkan Nama ruang"
-            v-model="selectedRuang.nama_ruang"
-          />
-          <div class="flex justify-end mt-4 gap-2">
-            <Button variant="danger" @click="isModalOpen = false">
-              Batal
-            </Button>
-            <Button 
-              variant="primary" 
-              @click="saveRuang"
-              :disabled="ruangLoading"
-            >
-              <span v-if="ruangLoading">Memproses...</span>
-              <span v-else>{{ isEditing ? "Simpan" : "Tambah" }}</span>
-            </Button>
-          </div>
-        </div>
-      </DefaultModal>
-
-      <!-- Modal Konfirmasi Hapus Ruang -->
-      <ModalDeleteRuangSesi
-        :show="isDeleteModalOpen"
-        title="Konfirmasi Hapus Ruang"
-        :description="`Apakah anda yakin akan menghapus ruang '${
-          ruangToDelete?.nama_ruang || 'ini'
-        }'? Anda tidak dapat mengembalikan ruangan yang telah dihapus.`"
-        confirmText="Hapus"
-        @close="isDeleteModalOpen = false"
-        @confirm="deleteRuangHandler"
-      />
-    </template>
-
-    <!-- === TAB 2: SESI === -->
-    <template #tab2>
-      <div>
-        <div class="flex justify-between items-center mb-4 space-x-4">
-          <div class="w-4/5">  
-            <SearchBar
-              v-model="searchQuery"
-              @search="handleSearch"
-              filterKey="sesi"
-            />
-          </div>
-          <div class="w-1/5">
-            <Button
-              variant="primary"
-              size="lg"
-              @click="openAddModalSesi"
-              leftIconPath="M12 4v16m8-8H4"
-              class="w-full"
-            >
-              Tambah Sesi
-            </Button>
-          </div>
-        </div>
-
-        <Table
-          :headers="tableHeadersSesi"
-          :items="filteredSesis"
-          min-width="min-w-full"
-        >
-          <template #header>
-            <tr>
-              <th class="py-3 px-6 text-left w-2/5">Nama Sesi</th>
-              <th class="py-3 px-6 text-left w-2/5">Waktu</th>
-              <th class="py-3 px-6 text-center w-1/5">Aksi</th>
-            </tr>
-          </template>
-          
-          <template #row="{ item }">
-            <td class="py-3 px-6 w-2/5">{{ item.nama_sesi }}</td>
-            <td class="py-3 px-6 w-2/5">
-              <div class="flex items-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                  class="w-4 h-4 mr-1"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                  />
-                </svg>
-                {{ item.waktu_mulai }} - {{ item.waktu_selesai }}
-              </div>
-            </td>
-            <td class="py-3 px-6 text-center w-1/5">
-              <div class="flex gap-2 justify-center">
-                <Button
-                  variant="danger"
-                  size="md"
-                  @click.stop="confirmDeleteSesi(item)"
-                  leftIconPath="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-                  class="!inline-flex !p-2 !min-h-0 !min-w-0"
-                >
-                </Button>
-                <Button
-                  variant="primary"
-                  size="md"
-                  @click.stop="openEditModalSesi(item)"
-                  leftIconPath="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                  class="!inline-flex !p-2 !min-h-0 !min-w-0"
-                >
-                </Button>
-              </div>
-            </td>
-          </template>
-        </Table>
-      </div>
-
-      <!-- Modal Tambah/Edit Sesi -->
-      <DefaultModal
-        v-if="isModalOpenSesi"
-        :headText="isEditingSesi ? 'Edit Sesi' : 'Tambah Sesi'"
-        bodyText=""
-        @close="isModalOpenSesi = false"
-      >
-        <div class="mt-4">
-          <InputText
-            id="nama_sesi"
-            label="Nama Sesi"
-            placeholder="Masukkan nama sesi"
-            v-model="selectedSesi.nama_sesi"
-          />
-          <InputTime
-            id="waktu_mulai"
-            label="Waktu Mulai"
-            :value="selectedSesi.waktu_mulai"
-            @update:value="(val) => selectedSesi.waktu_mulai = val"
-          />
-
-          <InputTime
-            id="waktu_selesai"
-            label="Waktu Selesai"
-            :value="selectedSesi.waktu_selesai"
-            @update:value="(val) => selectedSesi.waktu_selesai = val"
-          />
-
-          <div class="flex justify-end mt-4 gap-2">
-            <Button variant="danger" @click="isModalOpenSesi = false" :disabled="sesiLoading">
-              Batal
-            </Button>
-            <Button variant="primary" @click="saveSesi" :disabled="sesiLoading">
-              {{ isEditingSesi ? "Simpan" : "Tambah" }}
-            </Button>
-          </div>
-        </div>
-      </DefaultModal>
-
-      <!-- Modal Konfirmasi Hapus Sesi -->
-      <ModalDeleteRuangSesi
-        :show="isDeleteModalOpenSesi"
-        title="Konfirmasi Hapus Sesi"
-        :description="`Apakah anda yakin akan menghapus sesi '${
-          sesiToDelete?.nama_sesi || 'ini'
-        }'? Anda tidak dapat mengembalikan sesi yang telah dihapus.`"
-        confirmText="Hapus"
-        @close="isDeleteModalOpenSesi = false"
-        @confirm="deleteSesiHandler"
-      />
-    </template>
-  </TabDiv>
-    </div>
-
 </template>
 
 <style scoped>

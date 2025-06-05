@@ -1,6 +1,6 @@
 <template>
   <header
-    class="fixed z-40 flex items-center justify-between w-full p-4 bg-white"
+    class="fixed z-40 flex items-center justify-between w-full p-4 bg-white shadow-sm"
   >
     <div class="flex items-center gap-4">
       <router-link to="/">
@@ -17,7 +17,7 @@
           viewBox="0 0 24 24"
           stroke-width="1.5"
           stroke="currentColor"
-          class="w-5 h-5 lg:hidden"
+          class="w-5 h-5 lg:hidden text-[#384551]"
         >
           <path
             stroke-linecap="round"
@@ -34,7 +34,7 @@
         <button
           id="notification-button"
           @click="toggleNotification"
-          class="flex p-1 text-gray-500 duration-150 hover:text-gray-700 focus:outline-none active:scale-90"
+          class="flex p-1 px-2 text-[#384551] duration-150 hover:bg-gray-100 rounded-full focus:outline-none active:scale-90"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

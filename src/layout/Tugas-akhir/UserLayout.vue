@@ -32,12 +32,16 @@
         </button>
       </div>
 
-      <div class="flex items-center justify-between p-4 duration-200">
+      <div
+        class="flex items-center justify-between p-4 duration-200"
+        :class="{ 'px-8': showNavbar, 'px-4': !showNavbar }"
+      >
         <router-link to="/">
           <img
             :src="D3TILogo"
-            alt=""
-            v-bind:class="{ 'w-20': showNavbar, 'w-9 my-2': !showNavbar }"
+            alt="D3TI Logo"
+            class="duration-200"
+            :class="{ 'w-20': showNavbar, 'w-9 my-2': !showNavbar }"
           />
         </router-link>
         <div v-show="showNavbar">
@@ -362,11 +366,11 @@ onMounted(() => {
     // Fallback: try to get from localStorage directly
     try {
       const userInfo = JSON.parse(localStorage.getItem("user"));
-      
+
       if (userInfo) {
-        username.value = 
-          userInfo.name || 
-          userInfo.username || 
+        username.value =
+          userInfo.name ||
+          userInfo.username ||
           (userInfo.email ? userInfo.email.split("@")[0] : "User");
         email.value = userInfo.email || "";
         nim.value = userInfo.nim || "";

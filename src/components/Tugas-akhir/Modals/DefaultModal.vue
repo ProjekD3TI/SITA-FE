@@ -129,7 +129,7 @@ onBeforeUnmount(() => {
   <Transition name="modal-fade">
     <div
       @mousedown.self="handleBackdropClick"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 modal-backdrop"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 modal-backdrop text-blackText"
       @wheel.prevent
       @touchmove.prevent
     >

@@ -124,7 +124,7 @@ async function loadPdfPreview() {
               type="application/pdf"
               class="w-full h-[750px] mt-6 md:mt-0"
             >
-              <p class="p-4 text-center">
+              <p class="p-4 text-center text-blackText">
                 Browser Anda tidak mendukung tampilan PDF.
                 <a :href="pdfBlobUrl" target="_blank" class="text-primary"
                   >Klik di sini</a
@@ -135,7 +135,7 @@ async function loadPdfPreview() {
           </div>
 
           <!-- Details (Right Side) -->
-          <div class="flex flex-col gap-4 basis-5/12">
+          <div class="flex flex-col gap-4 basis-5/12 text-blackText">
             <!-- Detail items -->
             <div class="flex flex-col gap-2">
               <div class="flex w-full gap-2 mx-auto sm:gap-4">

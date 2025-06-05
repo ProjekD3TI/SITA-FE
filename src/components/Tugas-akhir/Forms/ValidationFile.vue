@@ -2,13 +2,13 @@
   <div class="relative w-full">
     <label
       :for="id"
-      class="absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold lg:body4-bold"
+      class="absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold lg:body4-bold text-blackText"
       >{{ label }}</label
     >
     <div class="flex">
       <div
         :id="id"
-        class="flex items-center justify-between w-full py-3 text-black border ps-4 pe-6 sm:px-6 border-placeholder input-rounded body4"
+        class="flex items-center justify-between w-full py-3 border text-blackText ps-4 pe-6 sm:px-6 border-placeholder input-rounded body4"
       >
         <button
           type="button"

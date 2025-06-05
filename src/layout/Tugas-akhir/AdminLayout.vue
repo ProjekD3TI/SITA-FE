@@ -2,6 +2,7 @@
   <div class="min-h-screen bg-gray-100">
     <!-- Sidebar -->
     <aside
+      v-if="isSidebarReady"
       id="admin-sidebar"
       :class="{
         'translate-x-0 w-64': showNavbar,
@@ -32,11 +33,15 @@
       </button>
 
       <!-- Sidebar Header -->
-      <div class="flex items-center justify-between p-4 duration-200">
+      <div
+        class="flex items-center justify-between p-4 duration-200"
+        :class="{ 'px-8': showNavbar, 'px-4': !showNavbar }"
+      >
         <router-link to="/">
           <img
             :src="D3TILogo"
             alt="D3TI Logo"
+            class="duration-200"
             :class="{ 'w-20': showNavbar, 'w-9 my-2': !showNavbar }"
           />
         </router-link>
@@ -65,6 +70,12 @@
 
       <!-- Navigation Links -->
       <div class="mt-5">
+        <div v-show="showNavbar" class="px-8">
+          <span class="py-3 uppercase text-primary body5-bold"
+            >Tugas Akhir</span
+          >
+        </div>
+
         <SidebarLink
           v-for="link in navigationLinks"
           :key="link.to"
@@ -76,10 +87,15 @@
         />
 
         <div
+          v-if="!showNavbar"
           v-for="(_, index) in navigationSeparators"
           :key="`separator-${index}`"
-          class="max-w-[240px] w-10/12 h-px bg-placeholder mx-auto my-4"
+          class="max-w-[240px] w-10/12 h-px bg-primary mx-auto my-5"
         ></div>
+
+        <div v-else class="px-8 mt-4">
+          <span class="py-3 uppercase text-primary body5-bold">Manajemen</span>
+        </div>
 
         <SidebarLink
           v-for="link in secondaryNavLinks"
@@ -148,6 +164,7 @@ const { logout } = authMahasiswa();
 const showBimbingan = ref(false);
 const showTugasAkhir = ref(false);
 const showNavbar = ref(false);
+const isSidebarReady = ref(false); // Tambahkan ini
 const showUser = ref(false);
 const isLgScreen = ref(false);
 const hasNotification = ref(false);
@@ -177,7 +194,7 @@ const navigationLinks = [
   },
   {
     to: "/ujian-ta",
-    label: "Ujian TA",
+    label: "Ujian",
     icon: "<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 0 1 9 9v.375M10.125 2.25A3.375 3.375 0 0 1 13.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 0 1 3.375 3.375M9 15l2.25 2.25L15 12' />",
     isActive: (route) => route.path.startsWith(withPrefix("/ujian-ta")),
   },
@@ -190,19 +207,19 @@ const navigationSeparators = [1];
 const secondaryNavLinks = [
   {
     to: "/mahasiswa-dosen-aktif",
-    label: "Mahasiswa & Dosen",
+    label: "User",
     icon: "<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z'/>",
     isActive: (route) => isActive(withPrefix(["/mahasiswa-dosen-aktif"])),
   },
   {
     to: "/ruang-sesi",
-    label: "Ruang & Sesi",
+    label: "Ruang",
     icon: "<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6.429 9.75 2.25 12l4.179 2.25m0-4.5 5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0 4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0-5.571 3-5.571-3' />",
     isActive: (route) => isActive(withPrefix(["/ruang-sesi"])),
   },
   {
     to: "/kategori",
-    label: "Kategori TA",
+    label: "Kategori",
     icon: "<path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125' />",
     isActive: (route) => isActive(withPrefix(["/kategori"])),
   },
@@ -276,7 +293,7 @@ const checkNotification = () => {
 // Toggle Functionality
 const toggleNavbar = () => {
   showNavbar.value = !showNavbar.value;
-  localStorage.setItem("adminSidebarOpen", showNavbar.value); 
+  localStorage.setItem("adminSidebarOpen", showNavbar.value);
   if (!isLgScreen.value) {
     showNotification.value = false;
     showUser.value = false;
@@ -361,13 +378,13 @@ const closeDropdownOnClickOutside = (event) => {
 
 // Lifecycle hooks
 onMounted(() => {
-  // Restore sidebar state from localStorage, default open if not set
   const savedSidebar = localStorage.getItem("adminSidebarOpen");
   if (savedSidebar === null) {
-    showNavbar.value = true; // default open
+    showNavbar.value = true;
   } else {
     showNavbar.value = savedSidebar === "true";
   }
+  isSidebarReady.value = true; // Set setelah showNavbar sudah benar
 
   // Get user data
   const userData = getUserData();

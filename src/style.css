@@ -71,7 +71,7 @@
     @apply text-[12px] font-medium;
   }
   .card-style {
-    @apply p-8 bg-white card-rounded shadow-custom;
+    @apply p-6 bg-white card-rounded shadow-custom;
   }
   .shadow-custom {
     box-shadow: var(--shadow-custom);

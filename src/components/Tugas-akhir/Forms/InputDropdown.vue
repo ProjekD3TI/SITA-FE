@@ -2,7 +2,7 @@
   <div class="relative w-full">
     <label
       :for="id"
-      class="absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold"
+      class="absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold text-blackText"
       >{{ label }}</label
     >
     <div
@@ -63,7 +63,7 @@
             </svg>
             <input
               type="text"
-              class="w-full outline-none"
+              class="w-full outline-none text-blackText"
               placeholder="Cari..."
               v-model="searchQuery"
               ref="searchInput"
@@ -79,9 +79,11 @@
             v-for="option in filteredOptions"
             :key="option.value"
             class="px-6 py-2 cursor-pointer hover:bg-gray-100"
-            :class="{
-              'bg-primary/10 font-semibold': selectedValue === option.value,
-            }"
+            :class="
+              selectedValue === option.value
+                ? 'text-primary font-medium'
+                : 'text-blackText'
+            "
             @click.stop="selectOption(option)"
           >
             {{ option.label }}

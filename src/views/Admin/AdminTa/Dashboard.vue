@@ -69,6 +69,12 @@ const summaryCards = [
     title: TotalBimbingan,
     subtitle: "Mahasiswa Terdaftar",
   },
+  {
+    icon: iconPaths.graduation,
+    iconColor: "primary",
+    title: 20,
+    subtitle: "Dosen Aktif",
+  },
 ];
 
 // Data dummy
@@ -82,16 +88,15 @@ const filteredPlottingProposal = computed(
 const handleRowClickProposal = (item) => {
   router.push({
     name: "DetailPengajuanForAdmin",
-    params: { nim: item.nim },
+    params: { proposal_id: item.proposal_id },
   });
   console.log("Row clicked:", item);
 };
 const handleRowClickUjianTA = (item) => {
   router.push({
     name: "DetailPendaftarForAdmin",
-    params: { nim: item.nim },
+    params: { tugas_akhir_id: item.tugas_akhir_id },
   });
-  console.log("Row clicked:", item);
 };
 
 import "vue3-carousel/carousel.css";
@@ -138,17 +143,34 @@ watch(data, (val) => {
   <div v-else>
     <Breadcrumb />
     <!-- Status card & Summary Cards -->
-    <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <!-- Summary Cards -->
+
+      <template v-for="(card, index) in summaryCards" :key="index">
+        <div
+          class="p-4 bg-white card-rounded lg:p-6 shadow-custom min-w-[170px] flex items-center"
+        >
+          <!-- Card -->
+          <SummaryCard
+            :icon="card.icon"
+            :iconColor="card.iconColor"
+            :title="card.title || '-'"
+            :subtitle="card.subtitle"
+          />
+        </div>
+      </template>
+    </div>
+    <div class="flex flex-wrap gap-4 mt-4">
       <!-- Doughnut Card -->
       <div
-        class="card-rounded bg-white p-4 pb-8 lg:p-8 flex-1 sm:min-w-[400px]"
+        class="card-rounded bg-white p-4 pb-8 lg:p-6 flex-1 min-w-[320px] shadow-custom"
       >
-        <h5 class="mb-4 body2-bold sm:body1-bold">Validasi Berkas</h5>
+        <h5 class="mb-4 text-blackText body3-bold">Validasi Berkas</h5>
         <Carousel v-bind="carouselConfig">
           <Slide>
             <div>
               <DoughnutChart
-                class="mb-4 w-44 h-44 sm:w-44 sm:h-44"
+                class="w-40 h-40 mb-4"
                 :labels="['Menunggu', 'Diterima']"
                 :dataValues="[proposalMenunggu, proposalValid]"
                 :centerTextValue="[
@@ -162,7 +184,7 @@ watch(data, (val) => {
           <Slide>
             <div>
               <DoughnutChart
-                class="mb-4 w-44 h-44 sm:w-44 sm:h-44"
+                class="w-40 h-40 mb-4"
                 :labels="['Menunggu', 'Diterima']"
                 :dataValues="[ujianMenunggu, ujianValid]"
                 :centerTextValue="[ujianValid, ujianMenunggu + ujianValid]"
@@ -171,48 +193,13 @@ watch(data, (val) => {
             </div>
           </Slide>
           <template #addons>
-            <!-- <CarouselNavigation>
-                <template #prev>
-                  <span>←</span>
-                </template>
-<template #next>
-                  <span>→</span>
-                </template>
-</CarouselNavigation> -->
             <CarouselPagination />
           </template>
         </Carousel>
       </div>
-
-      <!-- Summary Cards -->
-      <div
-        class="flex flex-col flex-grow p-4 bg-white card-rounded lg:p-8 sm:flex-row justify-evenly"
-      >
-        <template v-for="(card, index) in summaryCards" :key="index">
-          <!-- Card -->
-          <SummaryCard
-            :icon="card.icon"
-            :iconColor="card.iconColor"
-            :title="card.title || '-'"
-            :subtitle="card.subtitle"
-          />
-
-          <!-- Divider (except after last card) -->
-          <template v-if="index < summaryCards.length - 1">
-            <div
-              class="self-stretch hidden w-px h-auto mx-4 sm:flex my-14 bg-placeholder"
-            ></div>
-            <div
-              class="sm:hidden max-w-[240px] w-10/12 h-px bg-placeholder mx-auto my-4"
-            ></div>
-          </template>
-        </template>
-      </div>
-    </div>
-    <div class="flex flex-wrap gap-4">
-      <div class="flex-grow p-4 mt-4 bg-white card-rounded lg:p-8">
+      <div class="flex-grow p-4 bg-white card-rounded lg:p-6 shadow-custom">
         <div class="flex items-center justify-between mb-4">
-          <h5 class="body2-bold sm:body1-bold">
+          <h5 class="body3-bold text-blackText">
             Validasi Berkas Seminar Proposal
           </h5>
           <router-link class="text-secondary" to="tugas-akhir/proposal">
@@ -232,7 +219,26 @@ watch(data, (val) => {
             </svg>
           </router-link>
         </div>
-        <Table
+        <div v-if="filteredPlottingProposal.length">
+          <div
+            v-for="item in filteredPlottingProposal"
+            :key="item.nim"
+            class="flex items-center gap-4 rounded"
+          >
+            <button
+              @click="handleRowClickProposal(item)"
+              class="flex items-center w-full gap-2 p-2 border-b rounded-sm hover:bg-gray-100"
+            >
+              <img :src="DefaultAvatar" alt="" class="w-10 h-10" />
+              <div class="flex flex-col">
+                <p class="text-left body5 text-blackText">{{ item.nim }}</p>
+                <p class="body4 text-blackText">{{ item.mahasiswa }}</p>
+              </div>
+            </button>
+          </div>
+        </div>
+        <div v-else class="py-4 italic text-gray-400">Tidak ada data.</div>
+        <!-- <Table
           minWidth="min-w-[300px]"
           :headers="['NIM', 'Nama', 'Judul Proposal Tugas Akhir']"
           :items="filteredPlottingProposal"
@@ -261,11 +267,11 @@ watch(data, (val) => {
             </td>
           </template>
           <template #empty> </template>
-        </Table>
+        </Table> -->
       </div>
-      <div class="flex-grow p-4 mt-4 bg-white card-rounded lg:p-8">
-        <div class="flex items-center justify-between mb-4">
-          <h5 class="body2-bold sm:body1-bold">
+      <div class="flex-grow p-4 bg-white card-rounded lg:p-6 shadow-custom">
+        <div class="flex items-center justify-between mb-2">
+          <h5 class="body3-bold text-blackText">
             Validasi Berkas Ujian Tugas Akhir
           </h5>
           <router-link
@@ -288,40 +294,29 @@ watch(data, (val) => {
             </svg>
           </router-link>
         </div>
-        <Table
-          minWidth="min-w-[300px]"
-          :headers="['NIM', 'Nama', 'Judul Tugas Akhir']"
-          :items="filteredTugasAkhir"
-          :showPagination="false"
-          @rowClick="handleRowClickUjianTA"
-        >
-          <template #row="{ item }">
-            <td
-              class="px-1 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
+        <div v-if="filteredTugasAkhir.length">
+          <div
+            v-for="item in filteredTugasAkhir"
+            :key="item.nim"
+            class="flex items-center gap-4 rounded"
+          >
+            <button
+              @click="handleRowClickUjianTA(item)"
+              class="flex items-center w-full gap-2 p-2 border-b rounded-sm hover:bg-gray-100"
             >
-              {{ item.nim }}
-            </td>
-            <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
-              <div class="flex items-center gap-2">
-                <img
-                  v-if="item.img"
-                  :src="item.img"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                />
-                {{ item.mahasiswa }}
+              <img :src="DefaultAvatar" alt="" class="w-10 h-10" />
+              <div class="flex flex-col">
+                <p class="text-left body5 text-blackText">{{ item.nim }}</p>
+                <p class="body4 text-blackText">{{ item.mahasiswa }}</p>
               </div>
-            </td>
-            <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
-              {{ item.judul }}
-            </td>
-          </template>
-          <template #empty> </template>
-        </Table>
+            </button>
+          </div>
+        </div>
+        <div v-else class="py-4 italic text-gray-400">Tidak ada data.</div>
       </div>
     </div>
 
-    <div class="p-4 mt-4 bg-white card-rounded lg:p-8 h-96">
+    <div class="p-4 mt-4 bg-white card-rounded lg:p-8 h-96 shadow-custom">
       <BarChart
         :labels="BarChartData.labels"
         :datasets-label="BarChartData.datasetsLabel"

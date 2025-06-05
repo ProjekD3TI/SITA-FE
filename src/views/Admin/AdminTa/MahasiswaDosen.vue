@@ -7,7 +7,9 @@ import Table from "@/components/Tugas-akhir/Table.vue";
 import ModalFilter from "@/components/Tugas-akhir/Modals/ModalFilter.vue";
 import StatusLabel from "@/components/Tugas-akhir/Label.vue";
 import TabDiv from "@/components/Tugas-akhir/TabDiv.vue";
-import ModalSelected from "@/components/Tugas-akhir/Modals/ModalSelected.vue"; // Tambahkan ini
+import ModalSelected from "@/components/Tugas-akhir/Modals/ModalSelected.vue";
+import Loading from "@/components/Loading.vue";
+import ErrorMsg from "@/components/ErrorMsg.vue";
 
 // Data tab
 const tabs = [
@@ -25,11 +27,11 @@ const tabs = [
 
 // Search for Mahasiswa
 const searchQueryMahasiswa = ref("");
-const handleSearchMahasiswa = () => { };
+const handleSearchMahasiswa = () => {};
 
 // Search for Dosen
 const searchQueryDosen = ref("");
-const handleSearchDosen = () => { };
+const handleSearchDosen = () => {};
 
 // Data mahasiswa
 const students = ref([
@@ -262,54 +264,111 @@ const closeModalSelectedLecturer = () => {
   <TabDiv :tabs="tabs" :use-named-slots="true">
     <!-- === TAB 1: MAHASISWA === -->
     <template #tab1>
-      <div class="flex gap-2 lg:gap-4 justify-between items-center mb-4">
-        <ModalFilter title="Status" :items="statuses" filterType="status" @apply="handleFilterMahasiswa"
-          triggerText="Status" :preselectedValues="selectedStatusesMahasiswa" />
-        <SearchBar v-model="searchQueryMahasiswa" @search="handleSearchMahasiswa" filterKey="mahasiswa" />
+      <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
+        <ModalFilter
+          title="Status"
+          :items="statuses"
+          filterType="status"
+          @apply="handleFilterMahasiswa"
+          triggerText="Status"
+          :preselectedValues="selectedStatusesMahasiswa"
+        />
+        <SearchBar
+          v-model="searchQueryMahasiswa"
+          @search="handleSearchMahasiswa"
+          filterKey="mahasiswa"
+        />
       </div>
-
-      <Table :headers="tableHeadersMahasiswa" :items="filteredStudents" min-width="min-w-full" :showCheckbox="true"
-        :checkedItems="checkedMahasiswa" @update:checkedItems="checkedMahasiswa = $event">
+      <!-- <div v-if="loading" class="py-8">
+        <Loading />
+      </div>
+      <ErrorMsg v-else-if="error" :message="error" /> -->
+      <Table
+        :headers="tableHeadersMahasiswa"
+        :items="filteredStudents"
+        min-width="min-w-full"
+        :showCheckbox="true"
+        :checkedItems="checkedMahasiswa"
+        @update:checkedItems="checkedMahasiswa = $event"
+      >
         <template #row="{ item }">
-          <td class="py-3 px-6">{{ item.name }}</td>
-          <td class="py-3 px-6">{{ item.nim }}</td>
-          <td class="py-3 px-6">{{ item.angkatan }}</td>
-          <td class="py-3 px-6">{{ item.email }}</td>
-          <td class="py-3 px-6">
-            <StatusLabel class="w-fit hidden lg:block" :status="item.status"
-              :label="item.status === 'success' ? 'Aktif' : 'Non Aktif'" :customLabel="true" size="md" />
+          <td class="px-6 py-3">{{ item.name }}</td>
+          <td class="px-6 py-3">{{ item.nim }}</td>
+          <td class="px-6 py-3">{{ item.angkatan }}</td>
+          <td class="px-6 py-3">{{ item.email }}</td>
+          <td class="px-6 py-3">
+            <StatusLabel
+              class="hidden w-fit lg:block"
+              :status="item.status"
+              :label="item.status === 'success' ? 'Aktif' : 'Non Aktif'"
+              :customLabel="true"
+              size="md"
+            />
           </td>
         </template>
       </Table>
 
       <!-- ModalSelected muncul jika ada yang dicentang -->
-      <ModalSelected v-if="checkedMahasiswa.length > 0" :count="checkedMahasiswa.length" @close="closeModalSelected"
-        @setActive="setMahasiswaStatus('success')" @setInactive="setMahasiswaStatus('inactive')" />
+      <ModalSelected
+        v-if="checkedMahasiswa.length > 0"
+        :count="checkedMahasiswa.length"
+        @close="closeModalSelected"
+        @setActive="setMahasiswaStatus('success')"
+        @setInactive="setMahasiswaStatus('inactive')"
+      />
     </template>
 
     <!-- === TAB 2: DOSEN === -->
     <template #tab2>
-      <div class="flex gap-2 lg:gap-4 justify-between items-center mb-4">
-        <ModalFilter title="Status" :items="statuses" filterType="status" @apply="handleFilterDosen"
-          triggerText="Status" :preselectedValues="selectedStatusesDosen" />
-        <SearchBar v-model="searchQueryDosen" @search="handleSearchDosen" filterKey="dosen" />
+      <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
+        <ModalFilter
+          title="Status"
+          :items="statuses"
+          filterType="status"
+          @apply="handleFilterDosen"
+          triggerText="Status"
+          :preselectedValues="selectedStatusesDosen"
+        />
+        <SearchBar
+          v-model="searchQueryDosen"
+          @search="handleSearchDosen"
+          filterKey="dosen"
+        />
       </div>
-
-      <Table :headers="tableHeadersDosen" :items="filteredLecturers" min-width="min-w-full" :showCheckbox="true"
-        :checkedItems="checkedLecturers" @update:checkedItems="checkedLecturers = $event">
+      <!-- <div v-if="loading" class="py-8">
+        <Loading />
+      </div>
+      <ErrorMsg v-else-if="error" :message="error" /> -->
+      <Table
+        :headers="tableHeadersDosen"
+        :items="filteredLecturers"
+        min-width="min-w-full"
+        :showCheckbox="true"
+        :checkedItems="checkedLecturers"
+        @update:checkedItems="checkedLecturers = $event"
+      >
         <template #row="{ item }">
-          <td class="py-3 px-6">{{ item.name }}</td>
-          <td class="py-3 px-6">{{ item.nip }}</td>
-          <td class="py-3 px-6">{{ item.email }}</td>
-          <td class="py-3 px-6">
-            <StatusLabel class="w-fit hidden lg:block" :status="item.status"
-              :label="item.status === 'success' ? 'Aktif' : 'Non Aktif'" :customLabel="true" size="md" />
+          <td class="px-6 py-3">{{ item.name }}</td>
+          <td class="px-6 py-3">{{ item.nip }}</td>
+          <td class="px-6 py-3">{{ item.email }}</td>
+          <td class="px-6 py-3">
+            <StatusLabel
+              class="hidden w-fit lg:block"
+              :status="item.status"
+              :label="item.status === 'success' ? 'Aktif' : 'Non Aktif'"
+              :customLabel="true"
+              size="md"
+            />
           </td>
         </template>
       </Table>
-      <ModalSelected v-if="checkedLecturers.length > 0" :count="checkedLecturers.length"
-        @close="closeModalSelectedLecturer" @setActive="setLecturerStatus('success')"
-        @setInactive="setLecturerStatus('inactive')" />
+      <ModalSelected
+        v-if="checkedLecturers.length > 0"
+        :count="checkedLecturers.length"
+        @close="closeModalSelectedLecturer"
+        @setActive="setLecturerStatus('success')"
+        @setInactive="setLecturerStatus('inactive')"
+      />
     </template>
   </TabDiv>
 </template>

@@ -9,10 +9,10 @@
     >
       <div class="w-11/12 max-w-md p-6 bg-white card-rounded modal-content">
         <div class="flex items-center justify-between">
-          <p class="body2-bold">{{ headText }}</p>
+          <p class="body2-bold text-blackText">{{ headText }}</p>
           <button
             @click="close"
-            class="p-2 rounded-full hover:bg-placeholder/20"
+            class="p-2 rounded-full hover:bg-placeholder/20 text-blackText"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

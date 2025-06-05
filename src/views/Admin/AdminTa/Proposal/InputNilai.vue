@@ -164,7 +164,7 @@ const updateNilai = async () => {
       <div class="mx-auto max-w-screen-2xl">
         <div>
           <h5
-            class="font-bold body2-bold sm:font-bold sm:body1-bold lg:heading5 xl:heading4"
+            class="font-bold body2-bold sm:font-bold sm:body1-bold lg:heading5 xl:heading4 text-blackText"
           >
             Seminar Proposal
           </h5>

@@ -131,7 +131,7 @@ const variantClass = computed(() => {
     case "outlined-danger":
       return "border border-danger text-danger hover:bg-danger hover:text-white";
     case "outlined-black":
-      return "border border-placeholder text-black ";
+      return "border border-placeholder text-blackText ";
     case "transparent":
       return "text-secondary ";
     default:

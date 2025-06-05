@@ -106,9 +106,7 @@ const handleRowClickBimbingan = (item) => {
 // Filter pencarian untuk tab Plotting Pembimbing + kategori
 const filteredReqPembibingMhs = computed(() => {
   // Filter terlebih dahulu untuk hanya menampilkan yang request_pembimbing 1 atau 2
-  let data = tabelPlottingPembimbing.value.filter(
-    (item) => item.request_pembimbing === 1 || item.request_pembimbing === 2
-  );
+  let data = tabelPlottingPembimbing.value;
 
   // Filter kategori
   if (selectedCategoriesPlot.value.length > 0) {
@@ -196,16 +194,16 @@ watch(currentPage, (val) => {
     v-else-if="$route.path.includes('detail-bimbingan')"
   ></router-view>
 
-  <div
-    v-else-if="loadingBimbingan || loadingKategori || loadingPlotting"
+  <!-- <div
+    v-else-if="loadingBimbingan && loadingKategori && loadingPlotting"
     class="flex items-center justify-center min-h-[80dvh]"
   >
     <Loading />
-  </div>
+  </div> -->
 
-  <div v-else-if="errorBimbingan || errorKategori || errorPlotting" class="p-4">
+  <!-- <div v-else-if="errorBimbingan || errorKategori || errorPlotting" class="p-4">
     <ErrorMsg :message="errorBimbingan || errorKategori || errorPlotting" />
-  </div>
+  </div> -->
 
   <div v-else>
     <Breadcrumb />
@@ -227,7 +225,12 @@ watch(currentPage, (val) => {
           />
           <SearchBar v-model="searchQuery" filterKey="bimbingan" />
         </div>
+        <div v-if="loadingPlotting" class="py-8">
+          <Loading />
+        </div>
+        <ErrorMsg v-else-if="errorPlotting" :message="error" />
         <Table
+          v-else
           :headers="['NIM', 'Nama', 'Kategori', 'Dosen Pembimbing']"
           :items="filteredReqPembibingMhs"
           :pagination="paginationPlotting"
@@ -241,46 +244,31 @@ watch(currentPage, (val) => {
           <template #row="{ item }">
             <!-- Kolom NIM -->
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
+              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body4 text-blackText"
             >
               {{ item.nim }}
             </td>
 
             <!-- Kolom Nama -->
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-              <!-- <div class="flex items-center gap-2">
-                <img
-                  :src="DefaultAvatar"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                />
-              </div> -->
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               {{ item.mahasiswa }}
             </td>
 
             <!-- Kolom Judul Proposal -->
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               {{ item.kategori }}
             </td>
 
             <!-- Kolom Nilai -->
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
+              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body4 text-blackText"
               :class="item.dosen_pembimbing == null ? 'text-secondary' : ''"
             >
               <div v-if="item.dosen_pembimbing" class="flex items-center gap-2">
-                <!-- <img
-                  v-if="item.img"
-                  :src="item.img"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                />
-                <img
-                  v-else
-                  :src="DefaultAvatar"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                /> -->
                 {{ item.dosen_pembimbing }}
               </div>
               <div v-else class="text-secondary">Plot Pembimbing</div>
@@ -304,8 +292,10 @@ watch(currentPage, (val) => {
             filterKey="bimbingan"
           />
         </div>
-
-        <ErrorMsg v-if="errorBimbingan" :message="error" />
+        <div v-if="loadingBimbingan" class="py-8">
+          <Loading />
+        </div>
+        <ErrorMsg v-else-if="errorBimbingan" :message="error" />
 
         <Table
           v-else
@@ -328,13 +318,15 @@ watch(currentPage, (val) => {
           <template #row="{ item }">
             <!-- Kolom NIM -->
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
+              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body4 text-blackText"
             >
               {{ item.nim }}
             </td>
 
             <!-- Kolom Nama -->
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               <div class="flex items-center gap-2">
                 <!-- <img
                   :src="DefaultAvatar"
@@ -346,12 +338,16 @@ watch(currentPage, (val) => {
             </td>
 
             <!-- Kolom Judul Proposal -->
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               {{ item.kategori }}
             </td>
 
             <!-- Kolom Nilai -->
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               <div class="flex items-center gap-2">
                 <!-- <img
                   v-if="item.img"
@@ -370,13 +366,13 @@ watch(currentPage, (val) => {
             </td>
 
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
+              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body4"
               :class="
                 item.jumlah_bimbingan == null ||
                 item.jumlah_bimbingan === undefined ||
                 item.jumlah_bimbingan === 0
                   ? 'text-secondary'
-                  : ''
+                  : 'text-blackText'
               "
             >
               {{

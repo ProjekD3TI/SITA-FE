@@ -37,7 +37,7 @@ const props = defineProps({
           </svg> -->
           <img :src="DefaultAvatar" alt="" class="w-10 h-10 sm:w-14 sm:h-14" />
           <div class="">
-            <p class="body4 sm:body2">{{ examiner.name }}</p>
+            <p class="body4 sm:body2 text-blackText">{{ examiner.name }}</p>
             <p class="capitalize body4-bold sm:body2-bold text-primary">
               {{ examiner.role }}
             </p>
@@ -52,15 +52,15 @@ const props = defineProps({
       <!-- Informasi jadwal -->
       <div class="flex flex-col w-full gap-4 mt-4 basis-5/12 md:mt-0 md:w-auto">
         <div v-if="jadwal.date">
-          <p class="body4-bold sm:body2-bold">Hari & Tanggal</p>
+          <p class="body4-bold sm:body2-bold text-blackText">Hari & Tanggal</p>
           <p class="body4 sm:body2 text-primary">{{ jadwal.date }}</p>
         </div>
         <div v-if="jadwal.time">
-          <p class="body4-bold sm:body2-bold">Sesi</p>
+          <p class="body4-bold sm:body2-bold text-blackText">Sesi</p>
           <p class="body4 sm:body2 text-primary">{{ jadwal.time }}</p>
         </div>
         <div v-if="jadwal.room">
-          <p class="body4-bold sm:body2-bold">Ruang</p>
+          <p class="body4-bold sm:body2-bold text-blackText">Ruang</p>
           <p class="body4 sm:body2 text-primary">{{ jadwal.room }}</p>
         </div>
       </div>

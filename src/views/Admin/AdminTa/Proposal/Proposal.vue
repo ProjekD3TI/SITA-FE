@@ -289,16 +289,16 @@ const modalTimerBodyText = computed(() => {
     v-else-if="$route.path.includes('detail-proposal')"
   ></router-view>
 
-  <div
+  <!-- <div
     v-else-if="loadingTabelProposal"
     class="flex items-center justify-center min-h-[80dvh]"
   >
     <Loading />
-  </div>
+  </div> -->
 
-  <div v-else-if="errorTabelProposal" class="p-4">
+  <!-- <div v-else-if="errorTabelProposal" class="p-4">
     <ErrorMsg :message="errorTabelProposal" />
-  </div>
+  </div> -->
 
   <div v-else>
     <Breadcrumb />
@@ -325,7 +325,12 @@ const modalTimerBodyText = computed(() => {
             @update:modelValue="handleSliderChange"
           />
         </div>
+        <div v-if="loadingTabelProposal" class="py-8">
+          <Loading />
+        </div>
+        <ErrorMsg v-else-if="errorTabelProposal" :message="error" />
         <Table
+          v-else
           :headers="[
             'NIM',
             'Nama',
@@ -338,28 +343,27 @@ const modalTimerBodyText = computed(() => {
         >
           <template #row="{ item }">
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
+              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body4 text-blackText"
             >
               {{ item.nim }}
             </td>
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-              <div class="flex items-center gap-2">
-                <!-- <img
-                  :src="DefaultAvatar"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                /> -->
-              </div>
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               {{ item.mahasiswa }}
             </td>
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               {{ item.judul_proposal }}
             </td>
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               {{ item.tanggal_pengajuan }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
+              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body4 text-blackText"
             >
               <StatusLabel
                 class="hidden w-fit lg:block"
@@ -389,36 +393,44 @@ const modalTimerBodyText = computed(() => {
           />
           <SearchBar v-model="searchQuerySeminar" />
         </div>
+        <div v-if="loadingTabelProposal" class="py-8">
+          <Loading />
+        </div>
+        <ErrorMsg v-else-if="errorTabelProposal" :message="error" />
         <Table
+          v-else
           :headers="['NIM', 'Nama', 'Kategori', 'Judul Proposal ', 'Nilai']"
           :items="filteredProposalSeminar"
           @rowClick="handleRowClickSeminar"
         >
           <template #row="{ item }">
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
+              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body4 text-blackText"
             >
               {{ item.nim }}
             </td>
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-              <div class="flex items-center gap-2">
-                <!-- <img
-                  :src="DefaultAvatar"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                /> -->
-              </div>
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               {{ item.mahasiswa }}
             </td>
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               {{ item.kategori_ta?.nama_kategori }}
             </td>
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               {{ item.judul_proposal }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
-              :class="item.nilai_proposal == null ? 'text-secondary' : ''"
+              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body4"
+              :class="
+                item.nilai_proposal == null
+                  ? 'text-secondary'
+                  : 'text-blackText'
+              "
             >
               {{ item.nilai_proposal || "Belum Dinilai" }}
             </td>

@@ -666,7 +666,7 @@ const modalFileUjianTAFiles = ref({
   ></router-view>
   <router-view v-else-if="$route.path.includes('penjadwalan')"></router-view>
 
-  <div
+  <!-- <div
     v-else-if="
       loadingTabelPlottingPenguji ||
       loadingTabelPendaftar ||
@@ -690,7 +690,7 @@ const modalFileUjianTAFiles = ref({
         errorTabelPenjadwalan
       "
     />
-  </div>
+  </div> -->
 
   <div v-else>
     <Breadcrumb />
@@ -714,8 +714,12 @@ const modalFileUjianTAFiles = ref({
           />
           <SearchBar v-model="searchQueryTab1" />
         </div>
-
+        <div v-if="loadingTabelPlottingPenguji" class="py-8">
+          <Loading />
+        </div>
+        <ErrorMsg v-else-if="errorTabelPlottingPenguji" :message="error" />
         <Table
+          v-else
           :headers="[
             'NIM',
             'Nama',
@@ -734,49 +738,27 @@ const modalFileUjianTAFiles = ref({
         >
           <template #row="{ item }">
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
+              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body4 text-blackText"
             >
               {{ item.nim }}
             </td>
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-              <div class="flex items-center gap-2">
-                <!-- <img
-                  v-if="item.img"
-                  :src="item.img"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                />
-                <img
-                  v-else
-                  :src="DefaultAvatar"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                /> -->
-              </div>
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               {{ item.nama }}
             </td>
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               {{ item.judul_proposal_ta }}
             </td>
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-              <div class="flex items-center gap-2">
-                <!-- <img
-                  v-if="item.img"
-                  :src="item.img"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                />
-                <img
-                  v-else
-                  :src="DefaultAvatar"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                /> -->
-              </div>
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               {{ item.dosen_pembimbing }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
+              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body4 text-blackText"
             >
               <StatusLabel
                 class="hidden w-fit lg:block"
@@ -817,8 +799,12 @@ const modalFileUjianTAFiles = ref({
             @update:modelValue="handleSliderChange"
           />
         </div>
-
+        <div v-if="loadingTabelPendaftar" class="py-8">
+          <Loading />
+        </div>
+        <ErrorMsg v-else-if="errorTabelPendaftar" :message="error" />
         <Table
+          v-else
           :headers="[
             'NIM',
             'Nama',
@@ -837,49 +823,27 @@ const modalFileUjianTAFiles = ref({
         >
           <template #row="{ item }">
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
+              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body4 text-blackText"
             >
               {{ item.nim }}
             </td>
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-              <div class="flex items-center gap-2">
-                <!-- <img
-                  v-if="item.img"
-                  :src="item.img"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                />
-                <img
-                  v-else
-                  :src="DefaultAvatar"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                /> -->
-              </div>
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               {{ item.nama }}
             </td>
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               {{ item.judul_ta }}
             </td>
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
-              <div class="flex items-center gap-2">
-                <!-- <img
-                  v-if="item.img"
-                  :src="item.img"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                />
-                <img
-                  v-else
-                  :src="DefaultAvatar"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                /> -->
-              </div>
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               {{ item.dosen_pembimbing }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
+              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body4 text-blackText"
             >
               <StatusLabel
                 class="hidden w-fit lg:block"
@@ -910,8 +874,12 @@ const modalFileUjianTAFiles = ref({
           />
           <SearchBar v-model="searchQueryTab3" />
         </div>
-
+        <div v-if="loadingTabelPenjadwalan" class="py-8">
+          <Loading />
+        </div>
+        <ErrorMsg v-else-if="errorTabelPenjadwalan" :message="error" />
         <Table
+          v-else
           :headers="['NIM', 'Nama', 'Judul Tugas Akhir', 'Tanggal', 'Status']"
           :items="filteredPenjadwalan"
           :pagination="paginationTabelPenjadwalan"
@@ -924,11 +892,13 @@ const modalFileUjianTAFiles = ref({
         >
           <template #row="{ item }">
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
+              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body4 text-blackText"
             >
               {{ item.nim }}
             </td>
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               <div class="flex items-center gap-2">
                 <!-- <img
                   v-if="item.img"
@@ -939,16 +909,18 @@ const modalFileUjianTAFiles = ref({
               </div>
               {{ item.nama }}
             </td>
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+            <td
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+            >
               {{ item.judul_ta }}
             </td>
             <td
-              class="py-3 px-3 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-3 sm:px-6 border-r border-white"
+              class="py-3 px-3 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-4 sm:px-6 body4 text-blackText border-r border-white"
             >
               {{ item.tanggal }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
+              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body4 text-blackText"
             >
               <div v-if="!item.status_kelulusan">
                 <StatusLabel
@@ -1067,10 +1039,12 @@ const modalFileUjianTAFiles = ref({
           "
         />
         <InputTextarea
+          v-if="catatan"
           id="catatan"
           label="Catatan"
-          placeholder="Masukkan catatan"
+          placeholder=""
           v-model="catatan"
+          :disabled="true"
         />
       </div>
     </DefaultModal>

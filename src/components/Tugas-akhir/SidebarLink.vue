@@ -2,48 +2,51 @@
 defineProps({
   to: {
     type: String,
-    required: true
+    required: true,
   },
   icon: {
     type: String,
-    required: true
+    required: true,
   },
   label: {
     type: String,
-    required: true
+    required: true,
   },
   active: {
     type: Boolean,
-    default: false
+    default: false,
   },
   showLabel: {
     type: Boolean,
-    default: true
-  }
+    default: true,
+  },
 });
 </script>
 
 <template>
-  <div class="ms-4 me-4 py-1">
-    <router-link 
+  <div class="py-1 ms-4 me-4">
+    <router-link
       :to="to"
-      :class="active ? 'border-l-[6px] border-primary bg-primary-bg text-primary hover:bg-primary-bg px-2' : 'hover:text-primary'" 
-      class="py-2 rounded duration-150 justify-start flex items-center active:scale-95"
+      :class="
+        active
+          ? 'border-l-[6px] border-primary bg-primary-bg text-primary hover:bg-primary-bg body4-bold'
+          : 'hover:text-primary text-[#242C3A] body4'
+      "
+      class="flex items-center justify-start px-3 py-2 capitalize duration-150 rounded-md active:scale-95"
     >
-      <div class="mr-0 py-1">
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          class="h-5 w-5 mr-2" 
-          fill="none" 
-          viewBox="0 0 24 24" 
+      <div class="py-1 mr-0">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="w-5 h-5 mr-2"
+          fill="none"
+          viewBox="0 0 24 24"
           stroke="currentColor"
           v-html="icon"
         ></svg>
       </div>
-      <span 
-        :class="{'inline': showLabel, 'hidden': !showLabel}" 
-        class="uppercase body3-bold"
-      >{{ label }}</span>
+      <span :class="{ inline: showLabel, hidden: !showLabel }">{{
+        label
+      }}</span>
     </router-link>
   </div>
 </template>
