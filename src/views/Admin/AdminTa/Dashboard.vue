@@ -237,37 +237,9 @@ watch(data, (val) => {
             </button>
           </div>
         </div>
-        <div v-else class="py-4 italic text-gray-400">Tidak ada data.</div>
-        <!-- <Table
-          minWidth="min-w-[300px]"
-          :headers="['NIM', 'Nama', 'Judul Proposal Tugas Akhir']"
-          :items="filteredPlottingProposal"
-          :showPagination="false"
-          @rowClick="handleRowClickProposal"
-        >
-          <template #row="{ item }">
-            <td
-              class="px-1 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
-            >
-              {{ item.nim }}
-            </td>
-            <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
-              <div class="flex items-center gap-2">
-                <img
-                  v-if="item.img"
-                  :src="item.img"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                />
-                {{ item.mahasiswa }}
-              </div>
-            </td>
-            <td class="px-1 py-3 border-r border-white sm:py-3 sm:px-6">
-              {{ item.judul }}
-            </td>
-          </template>
-          <template #empty> </template>
-        </Table> -->
+        <div v-else class="py-4 mx-auto text-center text-gray-400 body4">
+          Tidak ada data.
+        </div>
       </div>
       <div class="flex-grow p-4 bg-white card-rounded lg:p-6 shadow-custom">
         <div class="flex items-center justify-between mb-2">
@@ -312,7 +284,9 @@ watch(data, (val) => {
             </button>
           </div>
         </div>
-        <div v-else class="py-4 italic text-gray-400">Tidak ada data.</div>
+        <div v-else class="py-4 mx-auto text-center text-gray-400 body4">
+          Tidak ada data.
+        </div>
       </div>
     </div>
 

@@ -349,24 +349,28 @@ const closeDetailModal = () => {
           <template #row="{ item }">
             <!-- Kolom No -->
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
+              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.no }}
             </td>
 
             <!-- Kolom Tanggal -->
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+            <td
+              class="px-3 py-3 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
+            >
               {{ item.tanggal }}
             </td>
 
             <!-- Kolom BAB -->
-            <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+            <td
+              class="px-3 py-3 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
+            >
               BAB {{ toRoman(item.bab) }}
             </td>
 
             <!-- Kolom Catatan -->
             <td
-              class="py-3 px-3 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-3 sm:px-6 border-r border-white"
+              class="py-3 px-3 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-3 sm:px-6 border-r border-white body5 sm:body4 text-blackText"
             >
               {{ item.catatan }}
             </td>

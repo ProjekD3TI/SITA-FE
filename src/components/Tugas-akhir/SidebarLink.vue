@@ -29,10 +29,10 @@ defineProps({
       :to="to"
       :class="
         active
-          ? 'border-l-[6px] border-primary bg-primary-bg text-primary hover:bg-primary-bg body4-bold'
-          : 'hover:text-primary text-[#242C3A] body4'
+          ? 'border-l-[6px]  border-primary bg-primary-bg text-primary hover:bg-primary-bg body4-bold'
+          : 'hover:text-primary text-[#242C3A] body4 hover:bg-primary-bg'
       "
-      class="flex items-center justify-start px-3 py-2 capitalize duration-150 rounded-md active:scale-95"
+      class="flex items-center justify-start px-3 py-2 capitalize duration-100 ease-in-out rounded-md active:scale-95"
     >
       <div class="py-1 mr-0">
         <svg

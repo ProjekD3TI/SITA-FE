@@ -52,7 +52,7 @@
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
-              class="w-5 h-5 mr-2 text-gray-500"
+              class="w-5 h-5 mr-2 text-placeholder"
             >
               <path
                 stroke-linecap="round"
@@ -63,7 +63,7 @@
             </svg>
             <input
               type="text"
-              class="w-full outline-none text-blackText"
+              class="w-full outline-none text-blackText body4 sm:body3"
               placeholder="Cari..."
               v-model="searchQuery"
               ref="searchInput"
@@ -78,7 +78,7 @@
           <div
             v-for="option in filteredOptions"
             :key="option.value"
-            class="px-6 py-2 cursor-pointer hover:bg-gray-100"
+            class="px-6 py-2 cursor-pointer body5 sm:body4 hover:bg-gray-100"
             :class="
               selectedValue === option.value
                 ? 'text-primary font-medium'

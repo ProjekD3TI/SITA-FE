@@ -193,18 +193,6 @@ watch(currentPage, (val) => {
   <router-view
     v-else-if="$route.path.includes('detail-bimbingan')"
   ></router-view>
-
-  <!-- <div
-    v-else-if="loadingBimbingan && loadingKategori && loadingPlotting"
-    class="flex items-center justify-center min-h-[80dvh]"
-  >
-    <Loading />
-  </div> -->
-
-  <!-- <div v-else-if="errorBimbingan || errorKategori || errorPlotting" class="p-4">
-    <ErrorMsg :message="errorBimbingan || errorKategori || errorPlotting" />
-  </div> -->
-
   <div v-else>
     <Breadcrumb />
     <TabDiv
@@ -244,28 +232,28 @@ watch(currentPage, (val) => {
           <template #row="{ item }">
             <!-- Kolom NIM -->
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body4 text-blackText"
+              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.nim }}
             </td>
 
             <!-- Kolom Nama -->
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.mahasiswa }}
             </td>
 
             <!-- Kolom Judul Proposal -->
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.kategori }}
             </td>
 
             <!-- Kolom Nilai -->
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body4 text-blackText"
+              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
               :class="item.dosen_pembimbing == null ? 'text-secondary' : ''"
             >
               <div v-if="item.dosen_pembimbing" class="flex items-center gap-2">
@@ -318,14 +306,14 @@ watch(currentPage, (val) => {
           <template #row="{ item }">
             <!-- Kolom NIM -->
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body4 text-blackText"
+              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.nim }}
             </td>
 
             <!-- Kolom Nama -->
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
               <div class="flex items-center gap-2">
                 <!-- <img
@@ -339,14 +327,14 @@ watch(currentPage, (val) => {
 
             <!-- Kolom Judul Proposal -->
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.kategori }}
             </td>
 
             <!-- Kolom Nilai -->
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
               <div class="flex items-center gap-2">
                 <!-- <img
@@ -366,7 +354,7 @@ watch(currentPage, (val) => {
             </td>
 
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body4"
+              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body5 sm:body4"
               :class="
                 item.jumlah_bimbingan == null ||
                 item.jumlah_bimbingan === undefined ||

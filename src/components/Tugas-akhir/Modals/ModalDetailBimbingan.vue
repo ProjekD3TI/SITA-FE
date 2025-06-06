@@ -7,7 +7,7 @@
       @wheel.prevent
       @touchmove.prevent
     >
-      <div class="w-11/12 max-w-xl p-6 bg-white card-rounded modal-content">
+      <div class="w-11/12 max-w-md p-6 bg-white card-rounded modal-content">
         <div class="flex items-center justify-between mb-4">
           <div class="flex justify-between w-full">
             <div class="flex items-center">
@@ -63,12 +63,16 @@
             </svg>
           </button>
         </div>
-        <div class="mt-2 text-black/60 body4-bold">
-          <p>Bimbingan ke : {{ bimbinganKe }}</p>
-          <p>Tanggal : {{ tanggalBimbingan }}</p>
-          <p>Progress : BAB {{ bab }}</p>
+        <div class="mt-2 text-black/60 body4">
+          <p>
+            <span class="font-medium">Bimbingan ke :</span> {{ bimbinganKe }}
+          </p>
+          <p>
+            <span class="font-medium">Tanggal :</span> {{ tanggalBimbingan }}
+          </p>
+          <p><span class="font-medium">Progress :</span> BAB {{ bab }}</p>
           <p class="mt-2">
-            Catatan : <br />
+            <span class="font-medium">Catatan :</span> <br />
             {{ catatan }}
           </p>
         </div>

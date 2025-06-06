@@ -207,31 +207,35 @@ const closeDetailModal = () => {
         <template #row="{ item }">
           <!-- Kolom No -->
           <td
-            class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6"
+            class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6 body5 sm:body4"
           >
             {{ item.no }}
           </td>
 
           <!-- Kolom Tanggal -->
-          <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+          <td
+            class="px-3 py-3 border-r border-white sm:py-3 sm:px-6 body5 sm:body4"
+          >
             {{ item.tanggal_bimbingan }}
           </td>
 
           <!-- Kolom BAB -->
-          <td class="px-3 py-3 border-r border-white sm:py-3 sm:px-6">
+          <td
+            class="px-3 py-3 border-r border-white sm:py-3 sm:px-6 body5 sm:body4"
+          >
             BAB {{ toRoman(item.bab) }}
           </td>
 
           <!-- Kolom Catatan -->
           <td
-            class="py-3 px-3 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-3 sm:px-6 border-r border-white"
+            class="body5 sm:body4 py-3 px-3 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-3 sm:px-6 border-r border-white"
           >
             {{ item.catatan }}
           </td>
 
           <!-- Kolom Status -->
           <td
-            class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6"
+            class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6body5 sm:body4"
           >
             <!-- Desktop Status -->
             <StatusLabel

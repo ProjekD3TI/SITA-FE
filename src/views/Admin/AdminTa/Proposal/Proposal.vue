@@ -288,18 +288,6 @@ const modalTimerBodyText = computed(() => {
   <router-view
     v-else-if="$route.path.includes('detail-proposal')"
   ></router-view>
-
-  <!-- <div
-    v-else-if="loadingTabelProposal"
-    class="flex items-center justify-center min-h-[80dvh]"
-  >
-    <Loading />
-  </div> -->
-
-  <!-- <div v-else-if="errorTabelProposal" class="p-4">
-    <ErrorMsg :message="errorTabelProposal" />
-  </div> -->
-
   <div v-else>
     <Breadcrumb />
     <TabDiv :tabs="tabs" :use-named-slots="true" @tab-changed="handleTabChange">
@@ -343,27 +331,27 @@ const modalTimerBodyText = computed(() => {
         >
           <template #row="{ item }">
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body4 text-blackText"
+              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.nim }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.mahasiswa }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.judul_proposal }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.tanggal_pengajuan }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body4 text-blackText"
+              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
               <StatusLabel
                 class="hidden w-fit lg:block"
@@ -405,27 +393,27 @@ const modalTimerBodyText = computed(() => {
         >
           <template #row="{ item }">
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body4 text-blackText"
+              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.nim }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.mahasiswa }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.kategori_ta?.nama_kategori }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body4 text-blackText"
+              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.judul_proposal }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body4"
+              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body5 sm:body4"
               :class="
                 item.nilai_proposal == null
                   ? 'text-secondary'

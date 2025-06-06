@@ -18,10 +18,8 @@ export function useRuang() {
         },
       });
       data.value = response.data.data;
-      console.log("Fetched ruang data:", response.data.data);
     } catch (err) {
       error.value = err.response?.data?.message || "Terjadi kesalahan";
-      console.error("Error fetching ruang:", err);
     } finally {
       loading.value = false;
     }
@@ -35,21 +33,14 @@ export function useRuang() {
     loading.value = true;
     try {
       const token = VueCookies.get("auth_token");
-      console.log("Adding ruang with payload:", payload);
-      const response = await axios.post(
-        "api/admin_ta/ruang", 
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        }
-      );
-      console.log("Add ruang response:", response.data);
+      const response = await axios.post("api/admin_ta/ruang", payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
       return response.data;
     } catch (err) {
-      console.error("Error adding ruang:", err);
       error.value = err.response?.data?.message || "Terjadi kesalahan";
       throw err;
     } finally {
@@ -61,9 +52,8 @@ export function useRuang() {
     loading.value = true;
     try {
       const token = VueCookies.get("auth_token");
-      console.log("Editing ruang with ID:", id, "and payload:", payload);
       const response = await axios.put(
-        `api/admin_ta/ruang/${id}`,  // Update to match your backend route
+        `api/admin_ta/ruang/${id}`, // Update to match your backend route
         payload,
         {
           headers: {
@@ -72,10 +62,8 @@ export function useRuang() {
           },
         }
       );
-      console.log("Edit ruang response:", response.data);
       return response.data;
     } catch (err) {
-      console.error("Error editing ruang:", err);
       error.value = err.response?.data?.message || "Terjadi kesalahan";
       throw err;
     } finally {
@@ -87,9 +75,8 @@ export function useRuang() {
     loading.value = true;
     try {
       const token = VueCookies.get("auth_token");
-      console.log("Deleting ruang with ID:", id);
       const response = await axios.delete(
-        `api/admin_ta/ruang/${id}`,  // Update to match your backend route
+        `api/admin_ta/ruang/${id}`, // Update to match your backend route
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -97,10 +84,8 @@ export function useRuang() {
           },
         }
       );
-      console.log("Delete ruang response:", response.data);
       return response.data;
     } catch (err) {
-      console.error("Error deleting ruang:", err);
       error.value = err.response?.data?.message || "Terjadi kesalahan";
       throw err;
     } finally {

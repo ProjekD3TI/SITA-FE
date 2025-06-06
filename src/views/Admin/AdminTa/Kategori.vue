@@ -121,14 +121,14 @@ const confirmDeleteKategori = (category) => {
 };
 
 // Table headers
-const tableHeaders = ["Kategori"];
+const tableHeaders = ["Kategori", "Aksi"];
 </script>
 
 <template>
-  <Breadcrumb :items="breadcrumbItems" />
+  <Breadcrumb />
 
-  <div class="p-4 bg-white shadow-custom card-rounded lg:p-8">
-    <div class="flex justify-between mb-4 space-x-4">
+  <div class="p-4 bg-white shadow-custom card-rounded lg:p-6">
+    <div class="flex justify-between gap-2 mb-4 sm:gap-4">
       <SearchBar
         v-model="searchQuery"
         @search="handleSearch"
@@ -138,10 +138,19 @@ const tableHeaders = ["Kategori"];
 
       <Button
         variant="primary"
-        size="sm"
+        size="md"
         @click="openAddModalKategori"
         leftIconPath="M12 4v16m8-8H4"
-        class=""
+        class="sm:hidden"
+      >
+        Kategori
+      </Button>
+      <Button
+        variant="primary"
+        size="lg"
+        @click="openAddModalKategori"
+        leftIconPath="M12 4v16m8-8H4"
+        class="hidden sm:flex"
       >
         Kategori
       </Button>
@@ -159,10 +168,12 @@ const tableHeaders = ["Kategori"];
     >
       <template #header> </template>
       <template #row="{ item }">
-        <td class="flex justify-between px-6 py-3">
+        <td class="w-4/5 px-3 py-3 sm:px-6 text-blackText body5 sm:body4">
           <span>
             {{ item.name }}
           </span>
+        </td>
+        <td class="flex justify-center px-3 py-3 my-auto sm:px-6">
           <Button
             variant="transparent"
             size="md"

@@ -146,7 +146,7 @@ const showPlaceholder = computed(
 
       <!-- Summary Cards -->
       <div
-        class="flex flex-col flex-grow p-4 bg-white card-rounded lg:p-6 shadow-custom sm:mt-4 sm:flex-row justify-evenly"
+        class="flex flex-col flex-grow gap-4 p-4 bg-white sm:gap-0 card-rounded lg:p-6 shadow-custom sm:mt-4 sm:flex-row justify-evenly"
       >
         <template v-for="(card, index) in summaryCards" :key="index">
           <!-- Card -->
@@ -163,14 +163,14 @@ const showPlaceholder = computed(
               class="self-stretch hidden w-px h-auto mx-4 my-8 sm:flex bg-placeholder"
             ></div>
             <div
-              class="sm:hidden max-w-[240px] w-10/12 h-px bg-placeholder mx-auto my-0"
+              class="sm:hidden max-w-[400px] w-10/12 h-px bg-placeholder mx-auto my-0"
             ></div>
           </template>
         </template>
       </div>
     </div>
-    <div
+    <!-- <div
       class="p-4 mt-4 bg-white card-rounded lg:p-6 shadow-custom min-h-fit"
-    ></div>
+    ></div> -->
   </template>
 </template>

@@ -259,7 +259,7 @@ const closeModalSelectedLecturer = () => {
 </script>
 
 <template>
-  <Breadcrumb :items="breadcrumbItems" />
+  <Breadcrumb />
 
   <TabDiv :tabs="tabs" :use-named-slots="true">
     <!-- === TAB 1: MAHASISWA === -->
@@ -286,19 +286,26 @@ const closeModalSelectedLecturer = () => {
       <Table
         :headers="tableHeadersMahasiswa"
         :items="filteredStudents"
-        min-width="min-w-full"
         :showCheckbox="true"
         :checkedItems="checkedMahasiswa"
         @update:checkedItems="checkedMahasiswa = $event"
       >
         <template #row="{ item }">
-          <td class="px-6 py-3">{{ item.name }}</td>
-          <td class="px-6 py-3">{{ item.nim }}</td>
-          <td class="px-6 py-3">{{ item.angkatan }}</td>
-          <td class="px-6 py-3">{{ item.email }}</td>
-          <td class="px-6 py-3">
+          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+            {{ item.name }}
+          </td>
+          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+            {{ item.nim }}
+          </td>
+          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+            {{ item.angkatan }}
+          </td>
+          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+            {{ item.email }}
+          </td>
+          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
             <StatusLabel
-              class="hidden w-fit lg:block"
+              class="w-fit"
               :status="item.status"
               :label="item.status === 'success' ? 'Aktif' : 'Non Aktif'"
               :customLabel="true"
@@ -342,18 +349,23 @@ const closeModalSelectedLecturer = () => {
       <Table
         :headers="tableHeadersDosen"
         :items="filteredLecturers"
-        min-width="min-w-full"
         :showCheckbox="true"
         :checkedItems="checkedLecturers"
         @update:checkedItems="checkedLecturers = $event"
       >
         <template #row="{ item }">
-          <td class="px-6 py-3">{{ item.name }}</td>
-          <td class="px-6 py-3">{{ item.nip }}</td>
-          <td class="px-6 py-3">{{ item.email }}</td>
-          <td class="px-6 py-3">
+          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+            {{ item.name }}
+          </td>
+          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+            {{ item.nip }}
+          </td>
+          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+            {{ item.email }}
+          </td>
+          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
             <StatusLabel
-              class="hidden w-fit lg:block"
+              class="w-fit"
               :status="item.status"
               :label="item.status === 'success' ? 'Aktif' : 'Non Aktif'"
               :customLabel="true"

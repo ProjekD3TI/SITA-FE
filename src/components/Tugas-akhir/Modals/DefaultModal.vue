@@ -71,9 +71,9 @@ const lockScroll = () => {
   document.body.style.height = "100vh";
 
   // Tambahkan event listener untuk wheel, touchmove, dan keydown
-  window.addEventListener("wheel", preventScroll, { passive: false });
-  window.addEventListener("touchmove", preventScroll, { passive: false });
-  window.addEventListener("keydown", preventScrollKeys, { passive: false });
+  // window.addEventListener("wheel", preventScroll, { passive: false });
+  // window.addEventListener("touchmove", preventScroll, { passive: false });
+  // window.addEventListener("keydown", preventScrollKeys, { passive: false });
 };
 
 // Mencegah scroll dengan keyboard (arrow keys, space, page up/down)
@@ -107,9 +107,9 @@ const unlockScroll = () => {
   }
 
   // Hapus event listener
-  window.removeEventListener("wheel", preventScroll);
-  window.removeEventListener("touchmove", preventScroll);
-  window.removeEventListener("keydown", preventScrollKeys);
+  // window.removeEventListener("wheel", preventScroll);
+  // window.removeEventListener("touchmove", preventScroll);
+  // window.removeEventListener("keydown", preventScrollKeys);
 
   // Kembalikan posisi scroll
   window.scrollTo(0, scrollPosition.value);
@@ -130,8 +130,6 @@ onBeforeUnmount(() => {
     <div
       @mousedown.self="handleBackdropClick"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 modal-backdrop text-blackText"
-      @wheel.prevent
-      @touchmove.prevent
     >
       <div
         class="w-11/12 max-w-screen-md p-8 bg-white card-rounded modal-content"
@@ -170,7 +168,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .modal-backdrop {
-  touch-action: none; /* Mencegah touch scroll pada iOS */
+  /* touch-action: none; Mencegah touch scroll pada iOS */
   overscroll-behavior: contain;
 }
 

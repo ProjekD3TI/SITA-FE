@@ -247,30 +247,36 @@ onMounted(() => {
 
 <template>
   <div>
-    <Breadcrumb :items="breadcrumbItems" />
+    <Breadcrumb />
     <TabDiv :tabs="tabs" :use-named-slots="true">
       <!-- === TAB 1: RUANG === -->
       <template #tab1>
         <div>
-          <div class="flex items-center justify-between mb-4 space-x-4">
-            <div class="w-4/5">
-              <SearchBar
-                v-model="searchQuery"
-                @search="handleSearch"
-                filterKey="ruang"
-              />
-            </div>
-            <div class="w-1/5">
-              <Button
-                variant="primary"
-                size="lg"
-                @click="openAddModalRuang"
-                leftIconPath="M12 4v16m8-8H4"
-                class="w-full"
-              >
-                Tambah Ruang
-              </Button>
-            </div>
+          <div class="flex items-stretch justify-between gap-2 mb-4 sm:gap-4">
+            <SearchBar
+              class="flex-grow"
+              v-model="searchQuery"
+              @search="handleSearch"
+              filterKey="ruang"
+            />
+            <Button
+              variant="primary"
+              size="sm"
+              @click="openAddModalRuang"
+              leftIconPath="M12 4v16m8-8H4"
+              class="sm:hidden w-fit"
+            >
+              <span class="">Tambah</span>
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              @click="openAddModalRuang"
+              leftIconPath="M12 4v16m8-8H4"
+              class="hidden sm:flex w-fit"
+            >
+              Tambah
+            </Button>
           </div>
           <div v-if="ruangLoading" class="py-8">
             <Loading />
@@ -282,15 +288,10 @@ onMounted(() => {
             :items="filteredRuangs"
             min-width="min-w-full"
           >
-            <template #header>
-              <tr>
-                <th class="w-4/5 px-6 py-3 text-left">Nama Ruang</th>
-                <th class="w-1/5 px-6 py-3 text-center">Aksi</th>
-              </tr>
-            </template>
-
             <template #row="{ item }">
-              <td class="w-4/5 px-6 py-3">{{ item.nama_ruang }}</td>
+              <td class="w-4/5 px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+                {{ item.nama_ruang }}
+              </td>
               <td class="w-1/5 px-6 py-3 text-center">
                 <div class="flex justify-center gap-2">
                   <Button
@@ -302,7 +303,7 @@ onMounted(() => {
                   >
                   </Button>
                   <Button
-                    variant="primary"
+                    variant="warning"
                     size="md"
                     @click.stop="openEditModalRuang(item)"
                     leftIconPath="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
@@ -361,25 +362,30 @@ onMounted(() => {
       <!-- === TAB 2: SESI === -->
       <template #tab2>
         <div>
-          <div class="flex items-center justify-between mb-4 space-x-4">
-            <div class="w-4/5">
-              <SearchBar
-                v-model="searchQuery"
-                @search="handleSearch"
-                filterKey="sesi"
-              />
-            </div>
-            <div class="w-1/5">
-              <Button
-                variant="primary"
-                size="lg"
-                @click="openAddModalSesi"
-                leftIconPath="M12 4v16m8-8H4"
-                class="w-full"
-              >
-                Tambah Sesi
-              </Button>
-            </div>
+          <div class="flex justify-between gap-2 mb-4 sm:gap-4 items-strech">
+            <SearchBar
+              v-model="searchQuery"
+              @search="handleSearch"
+              filterKey="sesi"
+            />
+            <Button
+              variant="primary"
+              size="sm"
+              @click="openAddModalSesi"
+              leftIconPath="M12 4v16m8-8H4"
+              class="sm:hidden w-fit"
+            >
+              Tambah
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              @click="openAddModalSesi"
+              leftIconPath="M12 4v16m8-8H4"
+              class="hidden sm:flex w-fit"
+            >
+              Tambah
+            </Button>
           </div>
           <div v-if="sesiLoading" class="py-8">
             <Loading />
@@ -389,19 +395,13 @@ onMounted(() => {
             v-else
             :headers="tableHeadersSesi"
             :items="filteredSesis"
-            min-width="min-w-full"
+            minWidth="min-w-[400px]"
           >
-            <template #header>
-              <tr>
-                <th class="w-2/5 px-6 py-3 text-left">Nama Sesi</th>
-                <th class="w-2/5 px-6 py-3 text-left">Waktu</th>
-                <th class="w-1/5 px-6 py-3 text-center">Aksi</th>
-              </tr>
-            </template>
-
             <template #row="{ item }">
-              <td class="w-2/5 px-6 py-3">{{ item.nama_sesi }}</td>
-              <td class="w-2/5 px-6 py-3">
+              <td class="w-2/5 px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+                {{ item.nama_sesi }}
+              </td>
+              <td class="w-2/5 px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
                 <div class="flex items-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -431,7 +431,7 @@ onMounted(() => {
                   >
                   </Button>
                   <Button
-                    variant="primary"
+                    variant="warning"
                     size="md"
                     @click.stop="openEditModalSesi(item)"
                     leftIconPath="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"

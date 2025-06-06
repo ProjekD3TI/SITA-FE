@@ -160,7 +160,7 @@ const updateNilai = async () => {
   </div>
   <div v-else>
     <Breadcrumb />
-    <div class="p-6 mt-6 bg-white card-rounded lg:p-8">
+    <div class="p-6 bg-white card-rounded lg:p-8">
       <div class="mx-auto max-w-screen-2xl">
         <div>
           <h5

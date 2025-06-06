@@ -116,6 +116,8 @@ const variantClass = computed(() => {
       return "bg-secondary text-white hover:opacity-90";
     case "danger":
       return "bg-danger text-white hover:opacity-90";
+    case "warning":
+      return "bg-warning text-white hover:opacity-90";
     case "primary":
       return "bg-primary text-white hover:opacity-90";
     case "success":
@@ -130,6 +132,8 @@ const variantClass = computed(() => {
       return "border border-success text-success hover:bg-success hover:text-white";
     case "outlined-danger":
       return "border border-danger text-danger hover:bg-danger hover:text-white";
+    case "outlined-warning":
+      return "border border-warning text-warning hover:bg-warning hover:text-white";
     case "outlined-black":
       return "border border-placeholder text-blackText ";
     case "transparent":
