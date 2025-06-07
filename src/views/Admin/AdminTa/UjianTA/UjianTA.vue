@@ -341,16 +341,38 @@ const getStatusClass = (status) => {
 
 const getStatusClassBeritaAcara = (status) => {
   switch (status) {
-    case 1:
+    case "lulus_tanpa_revisi":
       return "success-outline";
-    case 2:
+    case "lulus_revisi_tanpa_diujikan":
       return "success-outline";
-    case 3:
+    case "belum_lulus_revisi_diujikan_lagi":
       return "warning-outline";
-    case 4:
+    case "tidak_lulus_ulang_ta_diujikan_lagi":
       return "danger-outline";
+    case "menunggu":
+      return "warning";
+    case "terjadwal":
+      return "success";
     default:
       return "default";
+  }
+};
+const getStatusLabelBeritaAcara = (status) => {
+  switch (status) {
+    case "lulus_tanpa_revisi":
+      return "Lulus";
+    case "lulus_revisi_tanpa_diujikan":
+      return "Lulus(Revisi)";
+    case "belum_lulus_revisi_diujikan_lagi":
+      return "Revisi";
+    case "tidak_lulus_ulang_ta_diujikan_lagi":
+      return "Tidak Lulus";
+    case "menunggu":
+      return "Menunggu";
+    case "terjadwal":
+      return "Terjadwal";
+    default:
+      return "Tidak Diketahui";
   }
 };
 
@@ -378,20 +400,7 @@ const getStatusLabelPendaftar = (status) => {
       return "Tidak Diketahui";
   }
 };
-const getStatusLabelBeritaAcara = (status) => {
-  switch (status) {
-    case 1:
-      return "Lulus";
-    case 2:
-      return "Lulus(Revisi)";
-    case 3:
-      return "Revisi";
-    case 4:
-      return "Tidak Lulus";
-    default:
-      return "Tidak Diketahui";
-  }
-};
+
 const getFileName = (filePath) => {
   return filePath ? decodeURIComponent(filePath.split("/").pop()) : "";
 };
@@ -892,32 +901,18 @@ const modalFileUjianTAFiles = ref({
             <td
               class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              <div v-if="!item.status_kelulusan">
+              <div>
                 <StatusLabel
                   class="hidden w-fit lg:block"
-                  :status="item.jadwal ? 'success' : 'warning'"
+                  :status="getStatusClassBeritaAcara(item.status_kategori)"
                   size="md"
-                  :label="item.jadwal ? 'Terjadwal' : 'Menunggu'"
+                  :label="getStatusLabelBeritaAcara(item.status_kategori)"
                 />
                 <StatusLabel
                   class="block w-fit lg:hidden"
-                  :status="item.jadwal ? 'success' : 'warning'"
+                  :status="getStatusClassBeritaAcara(item.status_kategori)"
                   size="sm"
-                  :label="item.jadwal ? 'Terjadwal' : 'Menunggu'"
-                />
-              </div>
-              <div v-else>
-                <StatusLabel
-                  class="hidden w-fit lg:block"
-                  :status="getStatusClassBeritaAcara(item.status_kelulusan)"
-                  size="md"
-                  :label="getStatusLabelBeritaAcara(item.status_kelulusan)"
-                />
-                <StatusLabel
-                  class="block w-fit lg:hidden"
-                  :status="getStatusClassBeritaAcara(item.status_kelulusan)"
-                  size="sm"
-                  :label="getStatusLabelBeritaAcara(item.status_kelulusan)"
+                  :label="getStatusLabelBeritaAcara(item.status_kategori)"
                 />
               </div>
             </td>

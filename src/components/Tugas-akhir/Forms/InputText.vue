@@ -3,7 +3,7 @@
     <label
       :for="id"
       class="absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold max-w-[250px] sm:max-w-none truncate text-blackText"
-      >{{ label }}</label
+      >{{ label }} <span v-if="required" class="text-secondary">*</span></label
     >
     <input
       :id="id"
@@ -13,6 +13,7 @@
       :value="modelValue"
       @input="$emit('update:modelValue', $event.target.value)"
       :disabled="disabled"
+      :required="required"
     />
   </div>
 </template>
@@ -25,5 +26,6 @@ defineProps({
   modelValue: { type: [String, Number], required: true },
   disabled: { type: Boolean, default: false },
   type: { type: String, default: "text" },
+  required: { type: Boolean, default: false },
 });
 </script>

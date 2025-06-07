@@ -26,6 +26,7 @@ import {
   formConfig,
   STATUS,
   judulProposalTA,
+  statusForm,
 } from "@/services/TugasAkhir/Mhs/proposal.js";
 import { getUserData } from "@/services/authMahasiswa.js";
 import { useToast } from "vue-toastification"; // Tambahkan ini
@@ -196,8 +197,22 @@ watch(
       </router-link>
     </div>
 
+    <div
+      v-else-if="
+        (dataProposal?.status_form?.is_open == false &&
+          dataProposal?.tugas_akhir?.proposal_id == null) ||
+        0
+      "
+      class="h-[80vh] flex flex-col justify-center items-center gap-4"
+    >
+      <h1 class="text-center heading5 sm:heading4 lg:heading3 text-placeholder">
+        Form proposal tugas akhir saat ini tidak dibuka, silakan tunggu
+        pengumuman selanjutnya.
+      </h1>
+    </div>
+
     <!-- Has Pembimbing States -->
-    <template v-if="hasPembimbing">
+    <template v-else>
       <Breadcrumb />
 
       <div class="p-4 bg-white card-rounded lg:p-8">
@@ -216,6 +231,7 @@ watch(
               placeholder="Masukkan judul proposal tugas akhir"
               v-model="judulProposal"
               :disabled="formConfig.isDisabled"
+              :required="true"
             />
             <InputFile
               :class="`${formConfig.wrapperClass} ${
@@ -227,6 +243,7 @@ watch(
               :existingFileName="naskahProposalTA"
               :existingFileUrl="fileNaskahProposalTA"
               :disabled="isNaskahDisabled"
+              :required="true"
             />
             <InputFile
               :class="`${formConfig.wrapperClass} ${
@@ -238,6 +255,7 @@ watch(
               :existingFileName="transkripNilaiMahasiswa"
               :existingFileUrl="fileTranskripNilaiMahasiswa"
               :disabled="isTranskripDisabled"
+              :required="true"
             />
             <InputTextarea
               v-if="catatanPerbaikan"

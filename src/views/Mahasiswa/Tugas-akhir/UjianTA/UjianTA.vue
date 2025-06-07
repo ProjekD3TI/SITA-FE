@@ -136,7 +136,8 @@ const formConfig = computed(() => {
   return {
     isDisabled,
     wrapperClass: isDisabled ? "opacity-50" : "",
-    showSubmitButton: status === STATUS.NULL || status === STATUS.REJECTED,
+    showSubmitButton: status === STATUS.NULL,
+    showSubmitAgainButton: status === STATUS.REJECTED,
     status,
   };
 });
@@ -371,8 +372,23 @@ watch(
         </router-link>
       </div>
 
+      <div
+        v-else-if="
+          dataTugasAkhir?.status_form?.is_open == false &&
+          dataTugasAkhir?.tugas_akhir?.status_valid == null
+        "
+        class="h-[80vh] flex flex-col justify-center items-center gap-4"
+      >
+        <h1
+          class="text-center heading5 sm:heading4 lg:heading3 text-placeholder"
+        >
+          Form ujian tugas akhir saat ini tidak dibuka, silakan tunggu
+          pengumuman selanjutnya.
+        </h1>
+      </div>
+
       <!-- Main Content when minimal bimbingan is met -->
-      <template v-if="minimalBimbingan">
+      <template v-else>
         <Breadcrumb />
 
         <div class="p-4 bg-white card-rounded lg:p-8">
@@ -395,6 +411,7 @@ watch(
                 placeholder="Masukkan judul tugas akhir"
                 v-model="judulTA"
                 :disabled="formConfig.isDisabled"
+                :required="true"
               />
 
               <!-- All the file uploads -->
@@ -408,6 +425,7 @@ watch(
                 :existingFileName="naskahTA"
                 :existingFileUrl="fileNaskahTA"
                 :disabled="isNaskahDisabled"
+                :required="true"
               />
 
               <InputFile
@@ -420,6 +438,7 @@ watch(
                 :existingFileName="krs"
                 :existingFileUrl="fileKRS"
                 :disabled="isKRSDisabled"
+                :required="true"
               />
 
               <InputFile
@@ -432,6 +451,7 @@ watch(
                 :existingFileName="buktiPersetujuanPembimbing"
                 :existingFileUrl="fileBuktiPersetujuanPembimbing"
                 :disabled="isBuktiPersetujuanPembimbingDisabled"
+                :required="true"
               />
 
               <InputFile
@@ -444,6 +464,7 @@ watch(
                 :existingFileName="transkripNilai"
                 :existingFileUrl="fileTranskripNilai"
                 :disabled="isTranskripDisabled"
+                :required="true"
               />
 
               <InputFile
@@ -456,6 +477,7 @@ watch(
                 :existingFileName="buktiSertifikatKompetensi"
                 :existingFileUrl="fileBuktiSertifikatKompetensi"
                 :disabled="isBuktiSertifikatKompetensiDisabled"
+                :required="true"
               />
 
               <InputFile
@@ -468,6 +490,7 @@ watch(
                 :existingFileName="sertifikatTOEIC"
                 :existingFileUrl="fileSertifikatTOEIC"
                 :disabled="isSertifikatTOEICDisabled"
+                :required="true"
               />
 
               <InputFile
@@ -480,6 +503,7 @@ watch(
                 :existingFileName="beritaAcaraSeminarHasil"
                 :existingFileUrl="fileBeritaAcaraSeminarHasil"
                 :disabled="isBeritaAcaraSeminarHasilDisabled"
+                :required="true"
               />
 
               <!-- Optional field -->
@@ -488,7 +512,7 @@ watch(
                   isSuratPerpanjanganMasaStudiDisabled ? 'opacity-50' : ''
                 }`"
                 id="surat-perpanjangan-masa-studi"
-                label="Surat Perpanjangan Masa Studi (Opsional)"
+                label="Surat Perpanjangan Masa Studi"
                 v-model="filePerpanjanganMasaStudi"
                 :existingFileName="suratPerpanjanganMasaStudi"
                 :existingFileUrl="fileSuratPerpanjanganMasaStudi"
@@ -499,13 +523,7 @@ watch(
             <!-- Action Buttons -->
             <div class="flex items-center self-end gap-2 sm:gap-4">
               <!-- Submit Button - show for new or rejected application -->
-              <template
-                v-if="
-                  formConfig.showSubmitButton &&
-                  statusBerkasNaskahTA === null &&
-                  statusBerkasTranskripNilai === null
-                "
-              >
+              <template v-if="formConfig.showSubmitButton">
                 <Button
                   variant="primary"
                   size="lg"
@@ -527,13 +545,7 @@ watch(
               </template>
 
               <!-- Tombol Update untuk pengajuan ditolak -->
-              <template
-                v-if="
-                  formConfig.showSubmitButton &&
-                  (statusBerkasNaskahTA === 2 ||
-                    statusBerkasTranskripNilai === 2)
-                "
-              >
+              <template v-if="formConfig.showSubmitAgainButton">
                 <Button
                   variant="primary"
                   size="lg"

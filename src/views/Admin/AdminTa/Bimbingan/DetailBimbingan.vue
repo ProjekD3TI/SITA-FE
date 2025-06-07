@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, nextTick } from "vue";
+import { ref, computed, onMounted, nextTick, watch } from "vue";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import Table from "@/components/Tugas-akhir/Table.vue";
 import ProgressBarBAB from "@/components/Tugas-akhir/ProgressBarBAB.vue";
@@ -19,13 +19,26 @@ const {
   fetchData,
   loadingShowBimbingan,
   errorShowBimbingan,
+  paginationShowBimbingan,
 } = useShowBimbingan();
 
 const route = useRoute();
+const currentPageNum = ref(1);
 
-onMounted(() => {
+// Fungsi untuk fetch data dengan parameter yang benar
+const loadData = () => {
   if (route.params.tugas_akhir_id) {
-    fetchData(route.params.tugas_akhir_id);
+    fetchData(route.params.tugas_akhir_id, currentPageNum.value);
+  }
+};
+
+onMounted(loadData);
+
+// Watch hanya untuk perubahan halaman setelah mounted
+watch(currentPageNum, (newPage, oldPage) => {
+  // Hanya fetch jika page benar-benar berubah dan bukan initial load
+  if (newPage !== oldPage && oldPage !== undefined) {
+    loadData();
   }
 });
 
@@ -37,17 +50,11 @@ const showNilaiModal = ref(false);
 const showBimbinganModal = ref(false);
 const selectedBimbingan = ref(null);
 
-const formattedBimbinganData = computed(() => {
-  if (!dataShowBimbingan.value?.bimbingan) return [];
-  return dataShowBimbingan.value.bimbingan.map((item, idx) => ({
-    no: idx + 1,
-    id: item.id,
-    tugas_akhir_id: item.tugas_akhir_id,
-    catatan: item.catatan,
-    bab: item.bab,
-    status_verifikasi: item.status_verifikasi,
-    tanggal_bimbingan: item.tanggal_bimbingan,
-  }));
+const listBimbingan = computed(() => {
+  // Data dari API ada di dataTabelBimbingan.value.data
+  return Array.isArray(dataShowBimbingan.value?.bimbingan)
+    ? dataShowBimbingan.value?.bimbingan
+    : [];
 });
 
 // Format tanggal dari YYYY-MM-DD menjadi DD MMM YYYY
@@ -85,12 +92,7 @@ function getStatusLabel(status) {
 }
 // Bab tertinggi yang sudah diterima
 const highestChapter = computed(() => {
-  // Ambil hanya bimbingan yang status_verifikasi === 1 (diterima)
-  const accepted = formattedBimbinganData.value.filter(
-    (item) => item.status_verifikasi === 1
-  );
-  if (accepted.length === 0) return 0;
-  return Math.max(...accepted.map((item) => parseInt(item.bab, 10)));
+  return dataShowBimbingan.value?.bab_tertinggi || 0;
 });
 
 const buttonClasses = computed(() => {
@@ -111,7 +113,20 @@ const closeDetailModal = () => {
   showBimbinganModal.value = false;
   selectedBimbingan.value = null;
 };
+
+// Ganti listBimbingan dengan numberedBimbingan yang sudah include nomor urut
+const numberedBimbingan = computed(() => {
+  const currentPage = Number(currentPageNum.value) || 1;
+  const perPage = Number(paginationShowBimbingan.value?.per_page) || 10;
+  const startNumber = perPage * (currentPage - 1) + 1;
+
+  return listBimbingan.value.map((item, index) => ({
+    ...item,
+    rowNumber: startNumber + index,
+  }));
+});
 </script>
+
 <template>
   <div
     v-if="loadingShowBimbingan"
@@ -205,15 +220,21 @@ const closeDetailModal = () => {
     <div class="p-4 mt-4 bg-white card-rounded lg:p-8">
       <Table
         :headers="['No', 'Tanggal', 'BAB', 'Catatan', 'Status']"
-        :items="formattedBimbinganData"
+        :items="numberedBimbingan"
         @rowClick="handleRowClick"
+        :pagination="paginationShowBimbingan"
+        @pageChange="
+          (page) => {
+            currentPageNum = page;
+          }
+        "
       >
         <template #row="{ item }">
           <!-- Kolom No -->
           <td
             class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6 body5 sm:body4"
           >
-            {{ item.no }}
+            {{ item.rowNumber }}
           </td>
 
           <!-- Kolom Tanggal -->
@@ -241,7 +262,6 @@ const closeDetailModal = () => {
           <td
             class="px-3 py-3 border-r border-white rounded-r-lg sm:py-3 sm:px-6body5 sm:body4"
           >
-            <!-- Desktop Status -->
             <StatusLabel
               class="hidden w-fit lg:block"
               :status="getStatusClass(item.status_verifikasi)"
@@ -249,7 +269,6 @@ const closeDetailModal = () => {
               :label="getStatusLabel(item.status_verifikasi)"
             />
 
-            <!-- Mobile Status -->
             <StatusLabel
               class="block w-fit lg:hidden"
               :status="getStatusClass(item.status_verifikasi)"
@@ -311,7 +330,7 @@ const closeDetailModal = () => {
   <ModalDetailBimbingan
     ref="modalDetailRef"
     v-if="showBimbinganModal && selectedBimbingan"
-    :bimbinganKe="selectedBimbingan.no"
+    :bimbinganKe="selectedBimbingan.rowNumber"
     :tanggalBimbingan="selectedBimbingan.tanggal_bimbingan"
     :bab="selectedBimbingan.bab"
     :catatan="selectedBimbingan.catatan"

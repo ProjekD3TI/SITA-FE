@@ -95,12 +95,12 @@
       class="absolute z-50 w-64 mt-2 duration-200 bg-white rounded-lg shadow-lg top-12 right-5"
       v-show="showUser"
     >
-      <div class="p-4">
+      <div class="p-3 sm:p-4">
         <ul>
           <li>
             <router-link
               to="/"
-              class="flex items-center w-full px-4 py-2 text-left duration-200 active:scale-90 hover:bg-gray-100 button-rounded"
+              class="flex items-center w-full px-4 py-2 text-left duration-200 active:scale-90 hover:bg-gray-100 button-rounded body4 sm:body3"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -122,7 +122,7 @@
           <li>
             <router-link
               to=""
-              class="flex items-center w-full px-4 py-2 text-left duration-200 active:scale-90 hover:bg-gray-100 button-rounded"
+              class="flex items-center w-full px-4 py-2 text-left duration-200 body4 sm:body3 active:scale-90 hover:bg-gray-100 button-rounded"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -143,7 +143,7 @@
           </li>
           <li>
             <button
-              class="flex items-center w-full px-4 py-2 text-left duration-200 text-danger active:scale-90 hover:bg-gray-100 button-rounded"
+              class="flex items-center w-full px-4 py-2 text-left duration-200 body4 sm:body3 text-danger active:scale-90 hover:bg-gray-100 button-rounded"
               @click="handleLogout"
             >
               <svg

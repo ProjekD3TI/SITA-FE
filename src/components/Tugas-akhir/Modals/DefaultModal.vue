@@ -132,7 +132,7 @@ onBeforeUnmount(() => {
       class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 modal-backdrop text-blackText"
     >
       <div
-        class="w-11/12 max-w-screen-md p-8 bg-white card-rounded modal-content"
+        class="w-11/12 max-w-screen-lg p-8 bg-white card-rounded modal-content"
         :class="{ 'modal-slide-active': true }"
       >
         <div class="flex items-center justify-between mb-2">

@@ -441,9 +441,7 @@ export function useShowPenjadwalan() {
 
       const response = await axios.get(
         `/api/admin_ta/penjadwalan-ujian/${id}`,
-        {
-          headers,
-        }
+        { headers }
       );
       dataShowPenjadwalan.value = response.data.data;
     } catch (err) {
@@ -453,7 +451,85 @@ export function useShowPenjadwalan() {
     }
   };
 
-  // const submitPenjadwalan
+  // Tambahkan function untuk check availability
+  const checkAvailability = async (tugasAkhirId, filters = {}) => {
+    try {
+      const auth_token = VueCookies.get("auth_token");
+      const headers = {
+        Authorization: `Bearer ${auth_token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+
+      const response = await axios.post(
+        `/api/admin_ta/penjadwalan-ujian/${tugasAkhirId}/cek-jadwal-tersedia`,
+        filters,
+        { headers }
+      );
+      return response.data.data;
+    } catch (err) {
+      handleError(err);
+      throw err;
+    }
+  };
+
+  // Tambahkan function untuk submit jadwal
+  const submitPenjadwalan = async (data) => {
+    loadingShowPenjadwalan.value = true;
+    try {
+      const auth_token = VueCookies.get("auth_token");
+      const headers = {
+        Authorization: `Bearer ${auth_token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+
+      const response = await axios.post(
+        `/api/admin_ta/penjadwalan-ujian/`,
+        data,
+        {
+          headers,
+        }
+      );
+      toast.success(response.data.message || "Jadwal ujian berhasil disimpan!");
+      return response.data;
+    } catch (err) {
+      handleError(err);
+      throw err;
+    } finally {
+      loadingShowPenjadwalan.value = false;
+    }
+  };
+
+  // Tambahkan function untuk update jadwal (jika sudah ada)
+  const updatePenjadwalan = async (ujianTaId, data) => {
+    loadingShowPenjadwalan.value = true;
+    try {
+      const auth_token = VueCookies.get("auth_token");
+      const headers = {
+        Authorization: `Bearer ${auth_token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+
+      const response = await axios.put(
+        `/api/admin_ta/penjadwalan-ujian/${ujianTaId}`,
+        data,
+        {
+          headers,
+        }
+      );
+      toast.success(
+        response.data.message || "Jadwal ujian berhasil diperbarui!"
+      );
+      return response.data;
+    } catch (err) {
+      handleError(err);
+      throw err;
+    } finally {
+      loadingShowPenjadwalan.value = false;
+    }
+  };
 
   const handleError = (err) => {
     if (err.response?.status === 401) {
@@ -481,5 +557,8 @@ export function useShowPenjadwalan() {
     loadingShowPenjadwalan,
     errorShowPenjadwalan,
     fetchShowPenjadwalan,
+    checkAvailability,
+    submitPenjadwalan,
+    updatePenjadwalan,
   };
 }

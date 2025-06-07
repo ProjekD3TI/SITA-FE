@@ -50,7 +50,7 @@ onMounted(() => {
     () => route.query.refresh,
     (newValue) => {
       if (newValue && route.params.proposal_id) {
-        console.log("Refreshing data after nilai update...");
+        // console.log("Refreshing data after nilai update...");
         fetchData(route.params.proposal_id);
       }
     }

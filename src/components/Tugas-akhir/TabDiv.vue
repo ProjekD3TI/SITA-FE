@@ -72,7 +72,7 @@ defineExpose({
         :class="[
           internalActiveTab === tab.id
             ? 'text-primary trapezium-tab z-10 pe-8 lg:pe-10 ps-4 lg:ps-6'
-            : 'hover:opacity-100 trapezium-tab opacity-50 pe-8 lg:pe-10 ps-4 xl:ps-6 text-blackText',
+            : 'group hover:opacity-100 hover:text-secondary trapezium-tab opacity-50 pe-8 lg:pe-10 ps-4 xl:ps-6 text-blackText',
         ]"
         @click="selectTab(tab.id)"
       >
@@ -108,7 +108,9 @@ defineExpose({
             "
             class="px-2 py-0.5 ml-1 rounded-full text-white body4"
             :class="[
-              internalActiveTab === tab.id ? 'bg-secondary' : 'bg-placeholder',
+              internalActiveTab === tab.id
+                ? 'bg-secondary'
+                : 'bg-placeholder group-hover:bg-secondary',
               tab.countClass || '',
             ]"
           >

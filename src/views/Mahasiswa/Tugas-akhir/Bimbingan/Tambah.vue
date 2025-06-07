@@ -66,11 +66,11 @@ const handleSubmit = async () => {
       catatan: catatan.value,
     });
     if (success) {
-      // Optional: reset form
-      // bimbinganDate.value = today.value;
-      // selectedBAB.value = '';
-      // catatan.value = '';
-      router.push("/mahasiswa/tugas-akhir/bimbingan");
+      // Tambahkan query parameter untuk trigger refresh
+      router.push({
+        path: "/mahasiswa/tugas-akhir/bimbingan",
+        query: { refresh: Date.now().toString() },
+      });
     }
   } catch (e) {
     toast.error("Terjadi kesalahan saat submit.");

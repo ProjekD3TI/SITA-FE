@@ -3,7 +3,7 @@
     <label
       :for="id"
       class="absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold text-blackText"
-      >{{ label }}</label
+      >{{ label }} <span v-if="required" class="text-secondary">*</span></label
     >
     <div
       class="flex items-center w-full px-4 py-3 bg-white border border-placeholder input-rounded sm:px-6 body5 sm:body4"
@@ -123,6 +123,7 @@ const props = defineProps({
     required: true,
     default: () => [],
   },
+  required: { type: Boolean, default: false },
 });
 
 const selectedValue = ref(props.modelValue);

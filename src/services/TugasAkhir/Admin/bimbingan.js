@@ -265,7 +265,8 @@ export function useShowBimbingan() {
   const loadingShowBimbingan = ref(false);
   const errorShowBimbingan = ref(null);
   const dataShowBimbingan = ref(null);
-  const fetchData = async (id) => {
+  const paginationShowBimbingan = ref({});
+  const fetchData = async (id, page = 1) => {
     loadingShowBimbingan.value = true;
     try {
       const authToken = VueCookies.get("auth_token");
@@ -276,10 +277,11 @@ export function useShowBimbingan() {
       };
 
       const response = await axios.get(
-        `/api/admin_ta/tugas-akhir/detail-bimbingan/${id}`,
+        `/api/admin_ta/tugas-akhir/detail-bimbingan/${id}?page=${page}`,
         { headers }
       );
       dataShowBimbingan.value = response.data.data;
+      paginationShowBimbingan.value = response.data.data.pagination;
     } catch (err) {
       handleError(err);
     } finally {
@@ -308,6 +310,7 @@ export function useShowBimbingan() {
     loadingShowBimbingan,
     errorShowBimbingan,
     dataShowBimbingan,
+    paginationShowBimbingan,
     fetchData,
   };
 }

@@ -24,7 +24,7 @@ const updateValue = (event) => {
       :for="id"
       class="absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold max-w-[250px] sm:max-w-none truncate text-blackText"
     >
-      {{ label }}
+      {{ label }} <span v-if="required" class="text-secondary">*</span>
     </label>
     <textarea
       :id="id"

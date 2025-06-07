@@ -4,7 +4,7 @@
       :for="id"
       :class="`absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold max-w-[210px] sm:max-w-none truncate text-blackText`"
     >
-      {{ label }}
+      {{ label }} <span v-if="required" class="text-secondary">*</span>
     </label>
     <div class="flex w-full">
       <div
@@ -60,7 +60,7 @@
       class="hidden"
       @change="handleFileChange"
       :disabled="disabled"
-      required
+      :required="required"
       accept=".pdf"
     />
   </div>
@@ -77,6 +77,7 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
   existingFileName: { type: String, default: "" },
   existingFileUrl: { type: String, default: "" },
+  required: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["update:modelValue"]);

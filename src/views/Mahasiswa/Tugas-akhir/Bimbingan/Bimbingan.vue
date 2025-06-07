@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, nextTick } from "vue";
+import { ref, computed, onMounted, nextTick, watch } from "vue";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputDropdown from "@/components/Tugas-akhir/Forms/InputDropdown.vue";
@@ -29,7 +29,8 @@ import {
   tahunAjaranTA,
   pembimbings,
   selectedDosenData,
-  formattedBimbinganData,
+  // formattedBimbinganData,
+  listBimbingan,
   categories,
   selectedPembimbing,
   namaPembimbing,
@@ -37,11 +38,21 @@ import {
 } from "@/services/TugasAkhir/Mhs/bimbingan.js";
 import { getUserData } from "@/services/authMahasiswa";
 import { useToast } from "vue-toastification";
+import { useRoute, useRouter } from "vue-router";
+
+const route = useRoute();
+const router = useRouter();
 
 const userData = getUserData();
 const username = userData?.name || userData?.email?.split("@")[0] || "User";
 const nim = userData?.nim || "";
-const { loadingBimbingan, errorBimbingan, highestBAB } = useBimbingan();
+const {
+  loadingBimbingan,
+  errorBimbingan,
+  highestBAB,
+  paginationBimbingan,
+  fetchData,
+} = useBimbingan();
 
 const {
   loadingRequest,
@@ -56,6 +67,7 @@ const {
 // KONFIGURASI AWAL DAN STATE MANAGEMENT
 // ============================================
 
+const currentPage = ref(1);
 const selectedCategory = ref("");
 const timerModalRef = ref(null);
 const showBimbinganModal = ref(false);
@@ -109,6 +121,39 @@ const closeDetailModal = () => {
   showBimbinganModal.value = false;
   selectedBimbingan.value = null;
 };
+// Ganti listBimbingan dengan numberedBimbingan yang sudah include nomor urut
+const numberedBimbingan = computed(() => {
+  const currentPageValue = Number(currentPage.value) || 1;
+  const perPage = Number(paginationBimbingan.value?.per_page) || 10;
+  const startNumber = perPage * (currentPageValue - 1) + 1;
+
+  return listBimbingan.value.map((item, index) => ({
+    ...item,
+    rowNumber: startNumber + index,
+  }));
+});
+// ============================================
+// LIFECYCLE HOOKS
+onMounted(() => {
+  fetchData(currentPage.value);
+});
+watch(currentPage, (val) => {
+  fetchData(val);
+});
+// Watch untuk route query refresh
+watch(
+  () => route.query.refresh,
+  (newValue) => {
+    if (newValue) {
+      // Reset ke halaman 1 dan fetch data
+      currentPage.value = 1;
+      fetchData(1);
+      // Clean query parameter
+      router.replace({ path: route.path });
+    }
+  }
+);
+// ============================================
 </script>
 
 <template>
@@ -150,6 +195,7 @@ const closeDetailModal = () => {
               :options="categories"
               placeholder="Pilih kategori tugas akhir"
               v-model="selectedCategory"
+              required
             />
 
             <!-- Input Tahun Ajaran (Disabled) -->
@@ -169,6 +215,7 @@ const closeDetailModal = () => {
               :options="pembimbings"
               placeholder="Pilih dosen pembimbing"
               v-model="selectedPembimbing"
+              required
             />
           </div>
 
@@ -343,22 +390,28 @@ const closeDetailModal = () => {
       <div class="p-4 mt-4 bg-white card-rounded lg:p-8 shadow-custom">
         <Table
           :headers="['No', 'Tanggal', 'BAB', 'Catatan', 'Status']"
-          :items="formattedBimbinganData"
+          :items="numberedBimbingan"
           @rowClick="handleRowClick"
+          :pagination="paginationBimbingan"
+          @pageChange="
+            (page) => {
+              currentPage = page;
+            }
+          "
         >
           <template #row="{ item }">
             <!-- Kolom No -->
             <td
               class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.no }}
+              {{ item.rowNumber }}
             </td>
 
             <!-- Kolom Tanggal -->
             <td
               class="px-3 py-3 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.tanggal }}
+              {{ item.tanggal_bimbingan }}
             </td>
 
             <!-- Kolom BAB -->
@@ -382,17 +435,17 @@ const closeDetailModal = () => {
               <!-- Desktop Status -->
               <StatusLabel
                 class="hidden w-fit lg:block"
-                :status="getStatusClass(item.status)"
+                :status="getStatusClass(item.status_verifikasi)"
                 size="md"
-                :label="getStatusLabel(item.status)"
+                :label="getStatusLabel(item.status_verifikasi)"
               />
 
               <!-- Mobile Status -->
               <StatusLabel
                 class="block w-fit lg:hidden"
-                :status="getStatusClass(item.status)"
+                :status="getStatusClass(item.status_verifikasi)"
                 size="sm"
-                :label="getStatusLabel(item.status)"
+                :label="getStatusLabel(item.status_verifikasi)"
               />
             </td>
           </template>
@@ -445,12 +498,12 @@ const closeDetailModal = () => {
       <ModalDetailBimbingan
         ref="modalDetailRef"
         v-if="showBimbinganModal && selectedBimbingan"
-        :bimbinganKe="selectedBimbingan.no"
-        :tanggalBimbingan="selectedBimbingan.tanggal"
+        :bimbinganKe="selectedBimbingan.rowNumber"
+        :tanggalBimbingan="selectedBimbingan.tanggal_bimbingan"
         :bab="selectedBimbingan.bab"
         :catatan="selectedBimbingan.catatan"
-        :status="getStatusClass(selectedBimbingan.status)"
-        :statusLabel="getStatusLabel(selectedBimbingan.status)"
+        :status="getStatusClass(selectedBimbingan.status_verifikasi)"
+        :statusLabel="getStatusLabel(selectedBimbingan.status_verifikasi)"
         @close="closeDetailModal"
       />
     </div>

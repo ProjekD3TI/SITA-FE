@@ -15,7 +15,8 @@ export function useBimbingan() {
   const toast = useToast();
   const loadingBimbingan = ref(false);
   const errorBimbingan = ref(null);
-  const fetchData = async () => {
+  const paginationBimbingan = ref({});
+  const fetchData = async (page = 1) => {
     loadingBimbingan.value = true;
     try {
       const authToken = VueCookies.get("auth_token");
@@ -26,10 +27,11 @@ export function useBimbingan() {
       };
 
       const response = await axios.get(
-        "/api/mahasiswa/bimbingan/list-bimbingan",
+        `/api/mahasiswa/bimbingan/list-bimbingan?page=${page}`,
         { headers }
       );
       dataBimbingan.value = response.data.data;
+      paginationBimbingan.value = response.data.data.pagination;
     } catch (err) {
       handleError(err);
     } finally {
@@ -80,27 +82,11 @@ export function useBimbingan() {
 
   // Computed property untuk BAB tertinggi
   const highestBAB = computed(() => {
-    if (
-      !dataBimbingan.value?.bimbingan ||
-      dataBimbingan.value?.bimbingan.length === 0
-    ) {
-      return 0;
-    }
-
-    // Filter data yang terverifikasi
-    const verifiedBimbingan = dataBimbingan.value?.bimbingan.filter(
-      (item) => item.status_verifikasi === 1
-    );
-
-    if (verifiedBimbingan.length === 0) {
-      return 0;
-    }
-
-    return Math.max(...verifiedBimbingan.map((item) => item.bab));
+    return dataBimbingan.value?.bab_tertinggi || 0;
   });
 
   onMounted(() => {
-    fetchData();
+    // fetchData();
   });
 
   onUnmounted(() => {
@@ -112,6 +98,7 @@ export function useBimbingan() {
     highestBAB,
     errorBimbingan,
     dataBimbingan,
+    paginationBimbingan,
     fetchData,
     submitBimbingan,
   };
@@ -307,18 +294,22 @@ export const declined = computed(
     dataRequestPembimbing.value?.tugas_akhir?.request_pembimbing
       ?.status_request === 2
 );
-
-export const formattedBimbinganData = computed(() => {
-  if (!dataBimbingan.value?.bimbingan || !dataBimbingan.value?.bimbingan.length)
-    return [];
-  return dataBimbingan.value?.bimbingan.map((item, index) => ({
-    no: (index + 1).toString(),
-    tanggal: item.tanggal_bimbingan,
-    bab: item.bab ? item.bab.toString() : "-",
-    catatan: item.catatan || "-",
-    status: item.status_verifikasi,
-  }));
+export const listBimbingan = computed(() => {
+  return Array.isArray(dataBimbingan.value?.bimbingan)
+    ? dataBimbingan.value?.bimbingan
+    : [];
 });
+// export const formattedBimbinganData = computed(() => {
+//   if (!dataBimbingan.value?.bimbingan || !dataBimbingan.value?.bimbingan.length)
+//     return [];
+//   return dataBimbingan.value?.bimbingan.map((item, index) => ({
+//     no: (index + 1).toString(),
+//     tanggal: item.tanggal_bimbingan,
+//     bab: item.bab ? item.bab.toString() : "-",
+//     catatan: item.catatan || "-",
+//     status: item.status_verifikasi,
+//   }));
+// });
 
 export const dataNilaiBimbingan = computed(
   () => dataBimbingan.value?.nilai_bimbingan ?? null

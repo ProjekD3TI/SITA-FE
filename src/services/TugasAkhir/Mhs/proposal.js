@@ -130,6 +130,9 @@ function getFileName(filePath) {
 export const hasPembimbing = computed(
   () => dataProposal.value?.tugas_akhir?.dosen_pembimbing?.id != null || 0
 );
+export const statusForm = computed(
+  () => dataProposal.value?.status_form?.is_open == 1
+);
 export const dinilai = computed(
   () => dataProposal.value?.tugas_akhir?.nilai_proposal != null
 );
