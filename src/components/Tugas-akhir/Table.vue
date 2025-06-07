@@ -35,10 +35,12 @@
           <template v-if="items.length">
             <tr
               v-for="(item, index) in items"
-              :key="item.id || index"
+              :key="item[rowKey] || index"
               class="even:bg-even odd:bg-odd hover:bg-gray-200 text-left body5 sm:body4 rounded-lg active:scale-[0.99] duration-200 cursor-pointer"
               @click="
-                showCheckbox ? toggleItem(item.id) : $emit('rowClick', item)
+                showCheckbox
+                  ? toggleItem(item[rowKey])
+                  : $emit('rowClick', item)
               "
             >
               <!-- Checkbox Row -->
@@ -49,8 +51,8 @@
               >
                 <input
                   type="checkbox"
-                  :checked="checkedItems.includes(item.id)"
-                  @change.stop="toggleItem(item.id)"
+                  :checked="checkedItems.includes(item[rowKey])"
+                  @change.stop="toggleItem(item[rowKey])"
                   data-testid="body-checkbox"
                 />
               </td>
@@ -175,6 +177,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  rowKey: {
+    type: String,
+    default: "id",
+  },
 });
 
 const emit = defineEmits(["rowClick", "pageChange", "update:checkedItems"]);
@@ -195,7 +201,7 @@ const emitPageChange = (page) => {
 const isAllChecked = computed(() => {
   return (
     props.items.length > 0 &&
-    props.items.every((item) => props.checkedItems.includes(item.id))
+    props.items.every((item) => props.checkedItems.includes(item[props.rowKey]))
   );
 });
 
@@ -203,7 +209,7 @@ const toggleAll = (e) => {
   if (e.target.checked) {
     emit(
       "update:checkedItems",
-      props.items.map((item) => item.id)
+      props.items.map((item) => item[props.rowKey])
     );
   } else {
     emit("update:checkedItems", []);

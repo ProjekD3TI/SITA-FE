@@ -13,7 +13,11 @@ export function useTabelPlottingPenguji() {
   const loadingTabelPlottingPenguji = ref(false);
   const errorTabelPlottingPenguji = ref(null);
 
-  const fetchTabelPlottingPenguji = async (page = 1) => {
+  const fetchTabelPlottingPenguji = async (
+    page = 1,
+    search = "",
+    status = ""
+  ) => {
     loadingTabelPlottingPenguji.value = true;
     try {
       const auth_token = VueCookies.get("auth_token");
@@ -22,10 +26,12 @@ export function useTabelPlottingPenguji() {
         "Content-Type": "application/json",
         Accept: "application/json",
       };
-
+      const params = {};
+      if (search) params.search = search;
+      if (status) params.status = status;
       const response = await axios.get(
-        `/api/admin_ta/list-plotting-penguji?page=${page}`,
-        { headers }
+        `/api/admin_ta/plotting-penguji?page=${page}`,
+        { headers, params }
       );
       dataTabelPlottingPenguji.value = response.data.data.data;
       paginationTabelPlottingPenguji.value = response.data.data.pagination;
@@ -190,7 +196,7 @@ export function useTabelPendaftar() {
   const loadingTabelPendaftar = ref(false);
   const errorTabelPendaftar = ref(null);
 
-  const fetchTabelPendaftar = async (page = 1) => {
+  const fetchTabelPendaftar = async (page = 1, search = "", status = "") => {
     loadingTabelPendaftar.value = true;
     try {
       const auth_token = VueCookies.get("auth_token");
@@ -199,10 +205,12 @@ export function useTabelPendaftar() {
         "Content-Type": "application/json",
         Accept: "application/json",
       };
-
+      const params = {};
+      if (search) params.search = search;
+      if (status) params.status = status;
       const response = await axios.get(
-        `/api/admin_ta/list-pendaftar-ujian?page=${page}`,
-        { headers }
+        `/api/admin_ta/pendaftar-ujian?page=${page}`,
+        { headers, params }
       );
       dataTabelPendaftar.value = response.data.data;
       paginationTabelPendaftar.value = response.data.data.pagination;
@@ -358,7 +366,7 @@ export function useTabelPenjadwalan() {
   const loadingTabelPenjadwalan = ref(false);
   const errorTabelPenjadwalan = ref(null);
 
-  const fetchTabelPenjadwalan = async (page = 1) => {
+  const fetchTabelPenjadwalan = async (page = 1, search = "", status = "") => {
     loadingTabelPenjadwalan.value = true;
     try {
       const auth_token = VueCookies.get("auth_token");
@@ -367,10 +375,12 @@ export function useTabelPenjadwalan() {
         "Content-Type": "application/json",
         Accept: "application/json",
       };
-
+      const params = {};
+      if (search) params.search = search;
+      if (status) params.status = status;
       const response = await axios.get(
-        `/api/admin_ta/list-penjadwalan-ujian?page=${page}`,
-        { headers }
+        `/api/admin_ta/penjadwalan-ujian?page=${page}`,
+        { headers, params }
       );
       dataTabelPenjadwalan.value = response.data.data.data;
       paginationTabelPenjadwalan.value = response.data.data.pagination;

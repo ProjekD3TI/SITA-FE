@@ -30,7 +30,7 @@ onMounted(() => {
 });
 
 const dinilai = computed(() => {
-  return !!dataShowBimbingan.value?.nilai_bimbingan?.id;
+  return dataShowBimbingan.value?.nilai_bimbingan?.nilai_bimbingan_id;
 });
 const modalDetailRef = ref(null);
 const showNilaiModal = ref(false);
@@ -129,15 +129,19 @@ const closeDetailModal = () => {
       <!-- Info Dosen Pembimbing -->
       <UserData
         class="max-w-screen-xl mx-auto mb-4"
-        :headText="dataShowBimbingan?.nama_mahasiswa || 'Nama Mahasiswa'"
-        :bodyText="dataShowBimbingan?.nim || 'NIM Mahasiswa'"
+        :headText="dataShowBimbingan?.mahasiswa?.name || 'Nama Mahasiswa'"
+        :bodyText="dataShowBimbingan?.mahasiswa?.nim || 'NIM Mahasiswa'"
         headText2="Dosen Pembimbing"
         :bodyText2="
-          dataShowBimbingan?.dosen_pembimbing || 'Nama Dosen Pembimbing'
+          dataShowBimbingan?.dosen_pembimbing?.name || 'Nama Dosen Pembimbing'
         "
         headText3="Kategori"
-        :bodyText3="dataShowBimbingan?.kategori || 'Kategori Tugas Akhir'"
-        :tahunAjaran="dataShowBimbingan?.tahun_ajaran || 'Tahun Ajaran'"
+        :bodyText3="
+          dataShowBimbingan?.kategori?.nama_kategori || 'Kategori Tugas Akhir'
+        "
+        :tahunAjaran="
+          dataShowBimbingan?.tahun_ajaran?.tahun_ajaran || 'Tahun Ajaran'
+        "
       />
 
       <!-- Progress BAB & Tombol Tambah -->
@@ -262,7 +266,7 @@ const closeDetailModal = () => {
   <DefaultModal
     v-if="showNilaiModal"
     headText="Nilai Bimbingan"
-    :bodyText="`${dataShowBimbingan?.nama_mahasiswa} | ${dataShowBimbingan?.nim}`"
+    :bodyText="`${dataShowBimbingan?.mahasiswa?.name} | ${dataShowBimbingan?.mahasiswa?.nim}`"
     @close="showNilaiModal = false"
   >
     <div class="flex flex-wrap gap-4">

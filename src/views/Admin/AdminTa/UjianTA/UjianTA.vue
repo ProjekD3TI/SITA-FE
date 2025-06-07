@@ -70,6 +70,7 @@ const dataSertifikatTOEIC = ref({});
 const dataBeritaAcaraSemhas = ref({});
 const dataMasaPerpanjanganStudi = ref({});
 
+const catatan_perbaikan = ref("");
 const modalHeadText = ref("");
 const modalBodyText = ref("");
 const fileNaskahTA = ref(null);
@@ -125,20 +126,24 @@ watch(
   { immediate: true }
 );
 
-// Untuk data pendaftar, akses arraynya:
-const pendaftarUjianWithStatus = computed(() =>
-  (dataTabelPendaftar.value?.data || []).map((item) => ({
-    tugas_akhir_id: item.tugas_akhir_id,
-    nim: item.mahasiswa?.nim || "-",
-    nama: item.mahasiswa?.name || "-",
-    judul_ta: item.judul_tugas_akhir || "-",
-    dosen_pembimbing: item.dosen_pembimbing || "-",
-    tanggal: item.tanggal || "-", // tambahkan jika ada field tanggal
-    status: String(item.status_valid ?? "0"),
-    tugas_akhir_id: item.tugas_akhir_id,
-    berkas: item.berkas || [], // <-- TAMBAHKAN INI!
-  }))
-);
+const listPlottingPenguji = computed(() => {
+  return Array.isArray(dataTabelPlottingPenguji.value)
+    ? dataTabelPlottingPenguji.value
+    : [];
+});
+
+const listPendaftarUjian = computed(() => {
+  return Array.isArray(dataTabelPendaftar.value?.data)
+    ? dataTabelPendaftar.value?.data
+    : [];
+});
+
+const listPenjadwalan = computed(() => {
+  return Array.isArray(dataTabelPenjadwalan.value)
+    ? dataTabelPenjadwalan.value
+    : [];
+});
+
 onMounted(() => {
   if (route.query.tab && tabs.some((t) => t.id === route.query.tab)) {
     selectedTab.value = route.query.tab;
@@ -164,10 +169,22 @@ onMounted(async () => {
   }
 });
 
-const statuses = [
-  { value: "1", label: "Disetujui" },
+const plottingStatuses = [
+  { value: "1", label: "Terplotting" },
+  { value: "0", label: "Menunggu" },
+];
+const pendaftarStatuses = [
+  { value: "1", label: "Diterima" },
   { value: "0", label: "Menunggu" },
   { value: "2", label: "Ditolak" },
+];
+const penjadwalanStatuses = [
+  { value: "terjadwal", label: "Terjadwal" },
+  { value: "menunggu", label: "Menunggu" },
+  { value: "1", label: "Lulus" },
+  { value: "2", label: "Lulus(Revisi)" },
+  { value: "3", label: "Ulang(Revisi)" },
+  { value: "4", label: "Tidak Lulus" },
 ];
 
 const daftarPenguji = computed(() => {
@@ -237,113 +254,57 @@ const tabs = [
 const searchQueryTab1 = ref("");
 const searchQueryTab2 = ref("");
 const searchQueryTab3 = ref("");
-const selectedStatusesTab1 = ref([]);
-const selectedStatusesTab2 = ref([]);
-const selectedStatusesTab3 = ref([]);
+const selectedStatusesPlotting = ref([]);
+const selectedStatusesPendaftar = ref([]);
+const selectedStatusesPenjadwalan = ref([]);
 
-const plottingPengujiWithStatus = computed(() =>
-  (dataTabelPlottingPenguji.value || []).map((item) => ({
-    nim: item.mahasiswa?.nim || "-",
-    nama: item.mahasiswa?.name || "-",
-    judul_proposal_ta: item.judul_proposal || "-",
-    dosen_pembimbing: item.dosen_pembimbing || "-",
-    dosen_penguji: item.dosen_penguji || [],
-    status: item.dosen_penguji && item.dosen_penguji.length === 3 ? "1" : "0", // 1=Disetujui, 0=Menunggu
-    tugas_akhir_id: item.tugas_akhir_id,
-  }))
-);
-
-const filteredPlottingPengujiWithStatus = computed(() => {
-  let data = plottingPengujiWithStatus.value;
-  if (selectedStatusesTab1.value.length > 0) {
-    data = data.filter((item) =>
-      selectedStatusesTab1.value.includes(item.status)
-    );
-  }
-  const q =
-    typeof searchQueryTab1.value === "string"
-      ? searchQueryTab1.value.toLowerCase()
-      : "";
-  if (!q) return data;
-  return data.filter(
-    (item) =>
-      item.nim.toLowerCase().includes(q) ||
-      item.nama.toLowerCase().includes(q) ||
-      (item.judul_proposal_ta &&
-        item.judul_proposal_ta.toLowerCase().includes(q)) ||
-      (item.dosen_pembimbing && item.dosen_pembimbing.toLowerCase().includes(q))
+function handleFilterPlotting({ values }) {
+  selectedStatusesPlotting.value = values;
+  currentPageTabelPlottingPenguji.value = 1;
+  fetchTabelPlottingPenguji(
+    1,
+    searchQueryTab1.value,
+    getSelectedStatusValue(values)
   );
-});
-
-const filteredPendaftarUjian = computed(() => {
-  let data = pendaftarUjianWithStatus.value;
-  if (selectedStatusesTab2.value.length > 0) {
-    data = data.filter((item) =>
-      selectedStatusesTab2.value.includes(item.status)
-    );
-  }
-  const q =
-    typeof searchQueryTab2.value === "string"
-      ? searchQueryTab2.value.toLowerCase()
-      : "";
-  if (!q) return data;
-  return data.filter(
-    (item) =>
-      item.nim.toLowerCase().includes(q) ||
-      item.nama.toLowerCase().includes(q) ||
-      (item.judul_ta && item.judul_ta.toLowerCase().includes(q))
-  );
-});
-
-const penjadwalanWithStatus = computed(() =>
-  (dataTabelPenjadwalan.value || []).map((item) => ({
-    nim: item.mahasiswa?.nim || "-",
-    nama: item.mahasiswa?.name || "-",
-    judul_ta: item.judul_tugas_akhir || "-",
-    dosen_pembimbing: item.dosen_pembimbing?.name || "-",
-    tanggal: item.ujian_ta?.tanggal_ujian || "-",
-    waktu_mulai: item.ujian_ta?.waktu_mulai || "-",
-    waktu_selesai: item.ujian_ta?.waktu_selesai || "-",
-    ruang: item.ujian_ta?.ruang || "-",
-    status: item.ujian_ta ? "1" : "0", // '1' jika sudah ada jadwal, '0' jika belum
-    tugas_akhir_id: item.tugas_akhir_id,
-    dosen_penguji: item.dosen_penguji || [],
-    jadwal: item.ujian_ta?.id || null,
-    status_kelulusan: item.status_kelulusan || null,
-    ujian_ta: item.ujian_ta || null,
-  }))
-);
-
-const filteredPenjadwalan = computed(() => {
-  let data = penjadwalanWithStatus.value;
-  if (selectedStatusesTab3.value.length > 0) {
-    data = data.filter((item) =>
-      selectedStatusesTab3.value.includes(item.status)
-    );
-  }
-  const q =
-    typeof searchQueryTab3.value === "string"
-      ? searchQueryTab3.value.toLowerCase()
-      : "";
-  if (!q) return data;
-  return data.filter(
-    (item) =>
-      item.nim.toLowerCase().includes(q) ||
-      item.nama.toLowerCase().includes(q) ||
-      (item.judul_ta && item.judul_ta.toLowerCase().includes(q)) ||
-      (item.dosen_pembimbing && item.dosen_pembimbing.toLowerCase().includes(q))
-  );
-});
-
-// Handler filter & search tiap tab
-function handleFilterTab1({ values }) {
-  selectedStatusesTab1.value = values;
 }
-function handleFilterTab2({ values }) {
-  selectedStatusesTab2.value = values;
+function handleFilterPendaftar({ values }) {
+  selectedStatusesPendaftar.value = values;
+  currentPageTabelPendaftar.value = 1;
+  fetchTabelPendaftar(1, searchQueryTab2.value, getSelectedStatusValue(values));
 }
-function handleFilterTab3({ values }) {
-  selectedStatusesTab3.value = values;
+function handleFilterPenjadwalan({ values }) {
+  selectedStatusesPenjadwalan.value = values;
+  currentPageTabelPenjadwalan.value = 1;
+  fetchTabelPenjadwalan(
+    1,
+    searchQueryTab3.value,
+    getSelectedStatusValue(values)
+  );
+}
+
+function onSearchPlotting({ value }) {
+  currentPageTabelPlottingPenguji.value = 1;
+  fetchTabelPlottingPenguji(
+    1,
+    value,
+    getSelectedStatusValue(selectedStatusesPlotting.value)
+  );
+}
+function onSearchPendaftar({ value }) {
+  currentPageTabelPendaftar.value = 1;
+  fetchTabelPendaftar(
+    1,
+    value,
+    getSelectedStatusValue(selectedStatusesPendaftar.value)
+  );
+}
+function onSearchPenjadwalan({ value }) {
+  currentPageTabelPenjadwalan.value = 1;
+  fetchTabelPenjadwalan(
+    1,
+    value,
+    getSelectedStatusValue(selectedStatusesPenjadwalan.value)
+  );
 }
 
 // Handler tab change: reset search & filter tiap tab
@@ -353,37 +314,25 @@ function handleTabChange(tabId) {
   searchQueryTab1.value = "";
   searchQueryTab2.value = "";
   searchQueryTab3.value = "";
-  selectedStatusesTab1.value = [];
-  selectedStatusesTab2.value = [];
-  selectedStatusesTab3.value = [];
+  selectedStatusesPlotting.value = [];
+  selectedStatusesPendaftar.value = [];
+  selectedStatusesPenjadwalan.value = [];
 }
 
-const formatTanggal = (tanggal) => {
-  const bulan = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "Mei",
-    "Jun",
-    "Jul",
-    "Agu",
-    "Sep",
-    "Okt",
-    "Nov",
-    "Des",
-  ];
-  const [year, month, day] = tanggal.split("-");
-  return `${day} ${bulan[parseInt(month, 10) - 1]} ${year}`;
-};
+function getSelectedStatusValue(selectedStatuses) {
+  if (selectedStatuses.length > 0) {
+    return selectedStatuses.map(String).join(",");
+  }
+  return "";
+}
 
 const getStatusClass = (status) => {
   switch (status) {
-    case "1":
+    case 1:
       return "success";
-    case "0":
+    case 0:
       return "warning";
-    case "2":
+    case 2:
       return "danger";
     default:
       return "default";
@@ -407,11 +356,11 @@ const getStatusClassBeritaAcara = (status) => {
 
 const getStatusLabelPlotting = (status) => {
   switch (status) {
-    case "1":
+    case 1:
       return "Terplotting";
-    case "0":
+    case 0:
       return "Menunggu";
-    case "2":
+    case 2:
       return "Ditolak";
     default:
       return "Tidak Diketahui";
@@ -419,11 +368,11 @@ const getStatusLabelPlotting = (status) => {
 };
 const getStatusLabelPendaftar = (status) => {
   switch (status) {
-    case "1":
+    case 1:
       return "Diterima";
-    case "0":
+    case 0:
       return "Menunggu";
-    case "2":
+    case 2:
       return "Ditolak";
     default:
       return "Tidak Diketahui";
@@ -453,7 +402,7 @@ const handleRowClickPlot = (item) => {
   });
 };
 const handleRowClickDaftar = (item) => {
-  if (item.status === "0") {
+  if (item.status_valid === 0) {
     router.push({
       name: "DetailPendaftarForAdmin",
       params: { tugas_akhir_id: item.tugas_akhir_id },
@@ -554,12 +503,17 @@ const handleRowClickDaftar = (item) => {
       masa_perpanjangan_studi_status_valid:
         dataMasaPerpanjanganStudi?.status_valid ?? null,
     };
-    catatan.value = item.catatan || "";
+    catatan_perbaikan.value = item.catatan_perbaikan || "";
     modalRef2.value = true;
   }
 };
+
 const handleRowClickJadwal = (item) => {
-  if (item.jadwal) {
+  if (
+    item.ujian_ta &&
+    !Array.isArray(item.ujian_ta) &&
+    item.ujian_ta.ujian_ta_id
+  ) {
     selectedJadwalItem.value = item;
     modalRef1.value = true;
   } else {
@@ -580,7 +534,6 @@ const handleEditJadwal = () => {
 
 const pendingStatusForm = ref(0);
 // State untuk modal timer
-const modalTimerVisible = ref(false);
 const timerModalRef = ref(null);
 
 // Saat slider dicoba diubah
@@ -624,13 +577,25 @@ onMounted(() => {
   fetchTabelPenjadwalan(currentPageTabelPenjadwalan.value);
 });
 watch(currentPageTabelPlottingPenguji, (val) => {
-  fetchTabelPlottingPenguji(val);
+  fetchTabelPlottingPenguji(
+    val,
+    searchQueryTab1.value,
+    getSelectedStatusValue(selectedStatusesPlotting.value)
+  );
 });
 watch(currentPageTabelPendaftar, (val) => {
-  fetchTabelPendaftar(val);
+  fetchTabelPendaftar(
+    val,
+    searchQueryTab2.value,
+    getSelectedStatusValue(selectedStatusesPendaftar.value)
+  );
 });
 watch(currentPageTabelPenjadwalan, (val) => {
-  fetchTabelPenjadwalan(val);
+  fetchTabelPenjadwalan(
+    val,
+    searchQueryTab3.value,
+    getSelectedStatusValue(selectedStatusesPenjadwalan.value)
+  );
 });
 watch(
   () => router.currentRoute.value.query.refreshPlottingPenguji,
@@ -642,6 +607,7 @@ watch(
   () => router.currentRoute.value.query.refreshPendaftar,
   () => {
     fetchTabelPendaftar(currentPageTabelPendaftar.value);
+    fetchTabelPenjadwalan(currentPageTabelPenjadwalan.value);
   }
 );
 const modalFileUjianTAVisible = ref(false);
@@ -666,32 +632,6 @@ const modalFileUjianTAFiles = ref({
   ></router-view>
   <router-view v-else-if="$route.path.includes('penjadwalan')"></router-view>
 
-  <!-- <div
-    v-else-if="
-      loadingTabelPlottingPenguji ||
-      loadingTabelPendaftar ||
-      loadingTabelPenjadwalan
-    "
-    class="flex items-center justify-center min-h-[80dvh]"
-  >
-    <Loading />
-  </div>
-
-  <div
-    v-else-if="
-      errorTabelPlottingPenguji || errorTabelPendaftar || errorTabelPenjadwalan
-    "
-    class="p-4"
-  >
-    <ErrorMsg
-      :message="
-        errorTabelPlottingPenguji ||
-        errorTabelPendaftar ||
-        errorTabelPenjadwalan
-      "
-    />
-  </div> -->
-
   <div v-else>
     <Breadcrumb />
 
@@ -706,13 +646,17 @@ const modalFileUjianTAFiles = ref({
           <ModalFilter
             class=""
             title="Status"
-            :items="statuses"
+            :items="plottingStatuses"
             filterType="status"
-            @apply="handleFilterTab1"
+            @apply="handleFilterPlotting"
             triggerText="Status"
-            :preselectedValues="selectedStatusesTab1"
+            :preselectedValues="selectedStatusesPlotting"
           />
-          <SearchBar v-model="searchQueryTab1" />
+          <SearchBar
+            v-model="searchQueryTab1"
+            @search="onSearchPlotting"
+            filterKey="plotting"
+          />
         </div>
         <div v-if="loadingTabelPlottingPenguji" class="py-8">
           <Loading />
@@ -727,7 +671,7 @@ const modalFileUjianTAFiles = ref({
             'Dosen Pembimbing',
             'Status',
           ]"
-          :items="filteredPlottingPengujiWithStatus"
+          :items="listPlottingPenguji"
           :pagination="paginationTabelPlottingPenguji"
           @pageChange="
             (page) => {
@@ -740,17 +684,17 @@ const modalFileUjianTAFiles = ref({
             <td
               class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.nim }}
+              {{ item.mahasiswa?.nim }}
             </td>
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.nama }}
+              {{ item.mahasiswa?.name }}
             </td>
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.judul_proposal_ta }}
+              {{ item.proposal?.judul_proposal }}
             </td>
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
@@ -762,15 +706,43 @@ const modalFileUjianTAFiles = ref({
             >
               <StatusLabel
                 class="hidden w-fit lg:block"
-                :status="getStatusClass(item.status)"
+                :status="
+                  getStatusClass(
+                    Array.isArray(item.dosen_penguji) &&
+                      item.dosen_penguji.length >= 3
+                      ? 1
+                      : 0
+                  )
+                "
                 size="md"
-                :label="getStatusLabelPlotting(item.status)"
+                :label="
+                  getStatusLabelPlotting(
+                    Array.isArray(item.dosen_penguji) &&
+                      item.dosen_penguji.length >= 3
+                      ? 1
+                      : 0
+                  )
+                "
               />
               <StatusLabel
                 class="block w-fit lg:hidden"
-                :status="getStatusClass(item.status)"
+                :status="
+                  getStatusClass(
+                    Array.isArray(item.dosen_penguji) &&
+                      item.dosen_penguji.length >= 3
+                      ? 1
+                      : 0
+                  )
+                "
                 size="sm"
-                :label="getStatusLabelPlotting(item.status)"
+                :label="
+                  getStatusLabelPlotting(
+                    Array.isArray(item.dosen_penguji) &&
+                      item.dosen_penguji.length >= 3
+                      ? 1
+                      : 0
+                  )
+                "
               />
             </td>
           </template>
@@ -784,15 +756,17 @@ const modalFileUjianTAFiles = ref({
           <ModalFilter
             class="flex-grow md:flex-none"
             title="Status"
-            :items="statuses"
+            :items="pendaftarStatuses"
             filterType="status"
-            @apply="handleFilterTab2"
+            @apply="handleFilterPendaftar"
             triggerText="Status"
-            :preselectedValues="selectedStatusesTab2"
+            :preselectedValues="selectedStatusesPendaftar"
           />
           <SearchBar
             class="order-last md:order-none sm:min-w-[367px]"
             v-model="searchQueryTab2"
+            @search="onSearchPendaftar"
+            filterKey="pendaftar"
           />
           <Slider
             :modelValue="statusForm"
@@ -812,7 +786,7 @@ const modalFileUjianTAFiles = ref({
             'Dosen Pembimbing',
             'Status',
           ]"
-          :items="filteredPendaftarUjian"
+          :items="listPendaftarUjian"
           :pagination="paginationTabelPendaftar"
           @pageChange="
             (page) => {
@@ -825,37 +799,37 @@ const modalFileUjianTAFiles = ref({
             <td
               class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.nim }}
+              {{ item.mahasiswa?.nim }}
             </td>
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.nama }}
+              {{ item.mahasiswa?.name }}
             </td>
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.judul_ta }}
+              {{ item.judul_tugas_akhir }}
             </td>
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.dosen_pembimbing }}
+              {{ item.dosen_pembimbing?.name }}
             </td>
             <td
               class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
               <StatusLabel
                 class="hidden w-fit lg:block"
-                :status="getStatusClass(item.status)"
+                :status="getStatusClass(item.status_valid)"
                 size="md"
-                :label="getStatusLabelPendaftar(item.status)"
+                :label="getStatusLabelPendaftar(item.status_valid)"
               />
               <StatusLabel
                 class="block w-fit lg:hidden"
-                :status="getStatusClass(item.status)"
+                :status="getStatusClass(item.status_valid)"
                 size="sm"
-                :label="getStatusLabelPendaftar(item.status)"
+                :label="getStatusLabelPendaftar(item.status_valid)"
               />
             </td>
           </template>
@@ -866,13 +840,17 @@ const modalFileUjianTAFiles = ref({
         <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
           <ModalFilter
             title="Status"
-            :items="statuses"
+            :items="penjadwalanStatuses"
             filterType="status"
-            @apply="handleFilterTab3"
+            @apply="handleFilterPenjadwalan"
             triggerText="Status"
-            :preselectedValues="selectedStatusesTab3"
+            :preselectedValues="selectedStatusesPenjadwalan"
           />
-          <SearchBar v-model="searchQueryTab3" />
+          <SearchBar
+            v-model="searchQueryTab3"
+            @search="onSearchPenjadwalan"
+            filterKey="penjadwalan"
+          />
         </div>
         <div v-if="loadingTabelPenjadwalan" class="py-8">
           <Loading />
@@ -881,7 +859,7 @@ const modalFileUjianTAFiles = ref({
         <Table
           v-else
           :headers="['NIM', 'Nama', 'Judul Tugas Akhir', 'Tanggal', 'Status']"
-          :items="filteredPenjadwalan"
+          :items="listPenjadwalan"
           :pagination="paginationTabelPenjadwalan"
           @pageChange="
             (page) => {
@@ -894,30 +872,22 @@ const modalFileUjianTAFiles = ref({
             <td
               class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.nim }}
+              {{ item.mahasiswa?.nim }}
             </td>
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              <div class="flex items-center gap-2">
-                <!-- <img
-                  v-if="item.img"
-                  :src="item.img"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                /> -->
-              </div>
-              {{ item.nama }}
+              {{ item.mahasiswa?.name }}
             </td>
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.judul_ta }}
+              {{ item.judul_tugas_akhir }}
             </td>
             <td
               class="py-3 px-3 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-4 sm:px-6 body5 sm:body4 text-blackText border-r border-white"
             >
-              {{ item.tanggal }}
+              {{ item.ujian_ta?.tanggal_ujian || "-" }}
             </td>
             <td
               class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
@@ -1039,11 +1009,11 @@ const modalFileUjianTAFiles = ref({
           "
         />
         <InputTextarea
-          v-if="catatan"
+          v-if="catatan_perbaikan"
           id="catatan"
           label="Catatan"
           placeholder=""
-          v-model="catatan"
+          v-model="catatan_perbaikan"
           :disabled="true"
         />
       </div>
@@ -1067,7 +1037,7 @@ const modalFileUjianTAFiles = ref({
       v-if="modalRef1 && selectedJadwalItem"
       @close="modalRef1 = false"
       :headText="`Jadwal Ujian Tugas Akhir`"
-      :bodyText="`${selectedJadwalItem.nama} | ${selectedJadwalItem.nim} | ${selectedJadwalItem.judul_ta}`"
+      :bodyText="`${selectedJadwalItem.mahasiswa?.name} | ${selectedJadwalItem.mahasiswa?.nim} | ${selectedJadwalItem.judul_tugas_akhir}`"
     >
       <div class="flex flex-col gap-4">
         <JadwalUjian
@@ -1133,72 +1103,6 @@ const modalFileUjianTAFiles = ref({
             Lembar Revisi
           </Button>
         </div>
-      </div>
-    </DefaultModal>
-
-    <!-- Modal File Ujian TA -->
-    <DefaultModal
-      v-if="modalFileUjianTAVisible"
-      @close="modalFileUjianTAVisible = false"
-      :headText="modalFileUjianTAHeadText"
-      :bodyText="modalFileUjianTABodyText"
-    >
-      <div class="flex flex-col gap-4 mt-4">
-        <ValidationFile
-          id="naskah-ta"
-          label="Naskah Tugas Akhir"
-          :fileFromDatabase="modalFileUjianTAFiles.naskah_ta"
-          :isDisabled="true"
-        />
-        <ValidationFile
-          id="transkrip-nilai-mahasiswa"
-          label="Transkrip Nilai Mahasiswa"
-          :fileFromDatabase="modalFileUjianTAFiles.transkrip"
-          :isDisabled="true"
-        />
-        <ValidationFile
-          id="krs"
-          label="KRS"
-          :fileFromDatabase="modalFileUjianTAFiles.krs"
-          :isDisabled="true"
-        />
-        <ValidationFile
-          id="persetujuan-dosen-pembimbing"
-          label="Persetujuan Dosen Pembimbing"
-          :fileFromDatabase="modalFileUjianTAFiles.persetujuan_pembimbing"
-          :isDisabled="true"
-        />
-        <ValidationFile
-          id="sertifikat-kompetensi"
-          label="Sertifikat Kompetensi"
-          :fileFromDatabase="modalFileUjianTAFiles.sertifikat_kompetensi"
-          :isDisabled="true"
-        />
-        <ValidationFile
-          id="sertifikat-toeic"
-          label="Sertifikat TOEIC"
-          :fileFromDatabase="modalFileUjianTAFiles.toeic"
-          :isDisabled="true"
-        />
-        <ValidationFile
-          id="berita-acara-semhas"
-          label="Berita Acara Semhas"
-          :fileFromDatabase="modalFileUjianTAFiles.berita_acara_semhas"
-          :isDisabled="true"
-        />
-        <ValidationFile
-          id="masa-perpanjangan-studi"
-          label="Masa Perpanjangan Studi"
-          :fileFromDatabase="modalFileUjianTAFiles.masa_perpanjangan_studi"
-          :isDisabled="true"
-        />
-        <InputTextarea
-          id="catatan"
-          label="Catatan"
-          placeholder="Masukkan catatan"
-          v-model="modalFileUjianTACatatan"
-          disabled="true"
-        />
       </div>
     </DefaultModal>
   </div>

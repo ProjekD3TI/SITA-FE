@@ -102,7 +102,11 @@ export function updateStatusCard() {
       return;
     }
     if (req.status_request === 0) {
-      statuses.reqBimbingan.value = STATUS.WAITING;
+      if (req.dosen_pembimbing) {
+        statuses.reqBimbingan.value = STATUS.PLOTTED;
+      } else {
+        statuses.reqBimbingan.value = STATUS.WAITING;
+      }
       return;
     }
     statuses.reqBimbingan.value = STATUS.PLACEHOLDER;

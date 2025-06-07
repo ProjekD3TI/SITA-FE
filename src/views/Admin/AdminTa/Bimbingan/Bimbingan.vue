@@ -5,7 +5,6 @@ import Table from "@/components/Tugas-akhir/Table.vue";
 import TabDiv from "@/components/Tugas-akhir/TabDiv.vue";
 import ModalFilter from "@/components/Tugas-akhir/Modals/ModalFilter.vue";
 import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
-import DefaultAvatar from "@/assets/images/Profile Avatar.svg";
 import router from "@/router";
 import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
@@ -40,10 +39,14 @@ onMounted(() => {
 });
 
 watch(currentPage, (val) => {
-  fetchBimbingan(val);
+  fetchBimbingan(val, searchQueryBimbingan.value, getSelectedKategoriLabel());
 });
 watch(currentPagePlotting, (val) => {
-  fetchPlottingPembimbing(val);
+  fetchPlottingPembimbing(
+    val,
+    searchQuery.value,
+    getSelectedKategoriLabel(selectedCategoriesPlot.value)
+  );
 });
 // Komputed untuk data tabel plotting pembimbing
 const tabelPlottingPembimbing = computed(() => {
@@ -99,41 +102,9 @@ const handleRowClickPlot = (item) => {
 const handleRowClickBimbingan = (item) => {
   router.push({
     name: "DetailBimbinganForAdmin",
-    params: { tugas_akhir_id: item.id },
+    params: { tugas_akhir_id: item.tugas_akhir_id },
   });
 };
-
-// Filter pencarian untuk tab Plotting Pembimbing + kategori
-const filteredReqPembibingMhs = computed(() => {
-  // Filter terlebih dahulu untuk hanya menampilkan yang request_pembimbing 1 atau 2
-  let data = tabelPlottingPembimbing.value;
-
-  // Filter kategori
-  if (selectedCategoriesPlot.value.length > 0) {
-    // Ambil label kategori yang dipilih berdasarkan value (id)
-    const selectedLabels = categories.value
-      .filter((cat) => selectedCategoriesPlot.value.includes(cat.value))
-      .map((cat) => cat.label);
-
-    data = data.filter((item) => selectedLabels.includes(item.kategori));
-  }
-
-  // Filter search
-  if (!searchQuery.value) return data;
-  return data.filter(
-    (item) =>
-      item.nim?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      item.mahasiswa?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      (item.kategori &&
-        item.kategori
-          .toLowerCase()
-          .includes(searchQuery.value.toLowerCase())) ||
-      (item.dosen_pembimbing &&
-        item.dosen_pembimbing
-          .toLowerCase()
-          .includes(searchQuery.value.toLowerCase()))
-  );
-});
 
 const selectedTab = ref(1);
 function handleTabChange(tabId) {
@@ -143,50 +114,66 @@ function handleTabChange(tabId) {
   selectedCategoriesBimbingan.value = [];
   selectedCategoriesPlot.value = [];
 }
-// Handler filter kategori masing-masing tab
-function handleFilterPlot({ values }) {
-  selectedCategoriesPlot.value = values;
-}
 
+function onSearchPlotting({ value }) {
+  // Reset ke halaman 1 setiap kali search berubah
+  currentPage.value = 1;
+  fetchPlottingPembimbing(
+    1,
+    value,
+    getSelectedKategoriLabel(selectedCategoriesPlot.value)
+  );
+}
 function onSearchBimbingan({ value }) {
   // Reset ke halaman 1 setiap kali search berubah
   currentPage.value = 1;
-  fetchBimbingan(1, value, getSelectedKategoriLabel());
+  fetchBimbingan(
+    1,
+    value,
+    getSelectedKategoriLabel(selectedCategoriesBimbingan.value)
+  );
 }
-function getSelectedKategoriLabel() {
-  if (selectedCategoriesBimbingan.value.length > 0) {
-    // Ambil semua label kategori yang dipilih (bukan hanya yang pertama)
-    const selectedLabels = selectedCategoriesBimbingan.value
+function getSelectedKategoriLabel(selectedCategories) {
+  if (selectedCategories.length > 0) {
+    // Ambil semua label kategori yang dipilih
+    const selectedLabels = selectedCategories
       .map((catId) => {
         const cat = categories.value.find((c) => c.value === catId);
         return cat ? cat.label : "";
       })
-      .filter(Boolean); // Filter nilai kosong
-
-    // Gabungkan dengan koma
+      .filter(Boolean);
     return selectedLabels.join(",");
   }
   return "";
 }
+// Handler filter kategori masing-masing tab
+function handleFilterPlot({ values }) {
+  selectedCategoriesPlot.value = values;
+  currentPagePlotting.value = 1;
+  const kategoriStr = getSelectedKategoriLabel(selectedCategoriesPlot.value);
+  fetchPlottingPembimbing(1, searchQuery.value, kategoriStr);
+}
+
 function handleFilterBimbingan({ values }) {
   selectedCategoriesBimbingan.value = values;
   currentPage.value = 1;
-
-  // Ambil semua kategori yang dipilih
-  const kategoriStr = getSelectedKategoriLabel();
-
-  // Kirim ke API
+  const kategoriStr = getSelectedKategoriLabel(
+    selectedCategoriesBimbingan.value
+  );
   fetchBimbingan(1, searchQueryBimbingan.value, kategoriStr);
 }
+
 watch(
   () => router.currentRoute.value.query.refresh,
   () => {
-    fetchPlottingPembimbing();
+    currentPagePlotting.value = 1;
+    fetchPlottingPembimbing(
+      1,
+      searchQuery.value,
+      getSelectedKategoriLabel(selectedCategoriesPlot.value)
+    );
   }
 );
-watch(currentPage, (val) => {
-  fetchBimbingan(val, searchQueryBimbingan.value, getSelectedKategoriLabel());
-});
 </script>
 <template>
   <router-view v-if="$route.path.includes('plot-pembimbing')"></router-view>
@@ -211,7 +198,11 @@ watch(currentPage, (val) => {
             triggerText="Kategori"
             :preselectedValues="selectedCategoriesPlot"
           />
-          <SearchBar v-model="searchQuery" filterKey="bimbingan" />
+          <SearchBar
+            v-model="searchQuery"
+            @search="onSearchPlotting"
+            filterKey="plotting"
+          />
         </div>
         <div v-if="loadingPlotting" class="py-8">
           <Loading />
@@ -220,7 +211,7 @@ watch(currentPage, (val) => {
         <Table
           v-else
           :headers="['NIM', 'Nama', 'Kategori', 'Dosen Pembimbing']"
-          :items="filteredReqPembibingMhs"
+          :items="tabelPlottingPembimbing"
           :pagination="paginationPlotting"
           @rowClick="handleRowClickPlot"
           @pageChange="
@@ -234,30 +225,37 @@ watch(currentPage, (val) => {
             <td
               class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.nim }}
+              {{ item.mahasiswa?.nim }}
             </td>
 
             <!-- Kolom Nama -->
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.mahasiswa }}
+              {{ item.mahasiswa?.name }}
             </td>
 
             <!-- Kolom Judul Proposal -->
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.kategori }}
+              {{ item.kategori?.nama_kategori }}
             </td>
 
             <!-- Kolom Nilai -->
             <td
               class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
-              :class="item.dosen_pembimbing == null ? 'text-secondary' : ''"
+              :class="
+                item.dosen_pembimbing?.dosen_pembimbing_id == null
+                  ? 'text-secondary'
+                  : ''
+              "
             >
-              <div v-if="item.dosen_pembimbing" class="flex items-center gap-2">
-                {{ item.dosen_pembimbing }}
+              <div
+                v-if="item.dosen_pembimbing?.dosen_pembimbing_id"
+                class="flex items-center gap-2"
+              >
+                {{ item.dosen_pembimbing?.name }}
               </div>
               <div v-else class="text-secondary">Plot Pembimbing</div>
             </td>
@@ -308,49 +306,28 @@ watch(currentPage, (val) => {
             <td
               class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.nim }}
+              {{ item.mahasiswa?.nim }}
             </td>
 
             <!-- Kolom Nama -->
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              <div class="flex items-center gap-2">
-                <!-- <img
-                  :src="DefaultAvatar"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                /> -->
-              </div>
-              {{ item.mahasiswa }}
+              {{ item.mahasiswa?.name }}
             </td>
 
             <!-- Kolom Judul Proposal -->
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.kategori }}
+              {{ item.kategori?.nama_kategori }}
             </td>
 
             <!-- Kolom Nilai -->
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              <div class="flex items-center gap-2">
-                <!-- <img
-                  v-if="item.img"
-                  :src="item.img"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                />
-                <img
-                  v-else
-                  :src="DefaultAvatar"
-                  alt="Profile Image"
-                  class="w-8 h-8 rounded-full"
-                /> -->
-                {{ item.dosen_pembimbing }}
-              </div>
+              {{ item.dosen_pembimbing?.name }}
             </td>
 
             <td

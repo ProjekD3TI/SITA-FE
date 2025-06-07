@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import ModalDelete from "@/components/Tugas-akhir/Modals/ModalDeleteRuang&sesi.vue";
 import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
@@ -14,35 +14,33 @@ import { useToast } from "vue-toastification";
 const toast = useToast();
 // Ambil data kategori dari service
 
-const { data, loading, error, fetchData, addKategori, editKategori } =
-  useKategori();
+const {
+  data,
+  loading,
+  error,
+  pagination,
+  fetchData,
+  addKategori,
+  editKategori,
+} = useKategori();
 
 // Search
 const searchQuery = ref("");
-const handleSearch = () => {};
+const currentPage = ref(1);
+function handleSearch({ value }) {
+  currentPage.value = 1;
+  fetchData(1, value);
+}
 // Data kategori
-const categories = computed(() =>
-  (data.value || []).map((item) => ({
-    id: item.id,
-    name: item.nama_kategori,
-  }))
-);
 
-// Filter pencarian kategori
-const filteredCategories = computed(() =>
-  categories.value.filter(
-    (category) =>
-      typeof category.name === "string" &&
-      category.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
-);
+const categories = computed(() => {
+  return Array.isArray(data.value) ? data.value : [];
+});
 
 // Modal & aksi kategori
 const selectedCategory = ref(null);
 const isEditing = ref(false);
 const isModalOpen = ref(false);
-const isDeleteModalOpen = ref(false);
-const categoryToDelete = ref(null);
 
 // Fungsi untuk kategori
 const openAddModalKategori = () => {
@@ -82,46 +80,27 @@ const saveKategori = async () => {
     }
   } else {
     try {
-      const result = await addKategori({
+      await addKategori({
         nama_kategori: selectedCategory.value.name,
       });
-      if (data.value) {
-        data.value.push({
-          id: result.data.id,
-          nama_kategori: result.data.nama_kategori,
-        });
-      } else {
-        data.value = [
-          {
-            id: result.data.id,
-            nama_kategori: result.data.nama_kategori,
-          },
-        ];
-      }
       isModalOpen.value = false;
       toast.success("Kategori berhasil ditambahkan!");
+      fetchData(currentPage.value);
     } catch (e) {
       toast.error("Gagal menambahkan kategori: " + (error.value || e.message));
     }
   }
 };
-const deleteKategori = () => {
-  if (categoryToDelete.value) {
-    categories.value = categories.value.filter(
-      (category) => category.id !== categoryToDelete.value.id
-    );
-    categoryToDelete.value = null;
-  }
-  isDeleteModalOpen.value = false;
-};
-
-const confirmDeleteKategori = (category) => {
-  categoryToDelete.value = category;
-  isDeleteModalOpen.value = true;
-};
 
 // Table headers
 const tableHeaders = ["Kategori", "Aksi"];
+
+onMounted(() => {
+  fetchData(currentPage.value);
+});
+watch(currentPage, (val) => {
+  fetchData(val, searchQuery.value);
+});
 </script>
 
 <template>
@@ -138,7 +117,7 @@ const tableHeaders = ["Kategori", "Aksi"];
 
       <Button
         variant="primary"
-        size="md"
+        size="sm"
         @click="openAddModalKategori"
         leftIconPath="M12 4v16m8-8H4"
         class="sm:hidden"
@@ -147,7 +126,7 @@ const tableHeaders = ["Kategori", "Aksi"];
       </Button>
       <Button
         variant="primary"
-        size="lg"
+        size="md"
         @click="openAddModalKategori"
         leftIconPath="M12 4v16m8-8H4"
         class="hidden sm:flex"
@@ -162,15 +141,21 @@ const tableHeaders = ["Kategori", "Aksi"];
     <Table
       v-else
       :headers="tableHeaders"
-      :items="filteredCategories"
+      :items="categories"
       min-width="min-w-full"
       class="table-custom"
+      :pagination="pagination"
+      @pageChange="
+        (page) => {
+          currentPage = page;
+        }
+      "
     >
       <template #header> </template>
       <template #row="{ item }">
         <td class="w-4/5 px-3 py-3 sm:px-6 text-blackText body5 sm:body4">
           <span>
-            {{ item.name }}
+            {{ item.nama_kategori }}
           </span>
         </td>
         <td class="flex justify-center px-3 py-3 my-auto sm:px-6">

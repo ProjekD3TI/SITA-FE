@@ -19,7 +19,7 @@ const props = defineProps({
         "success",
         "danger",
         "warning",
-        "success-ouline",
+        "success-outline",
         "danger-outline",
         "warning-outline",
         "inactive",

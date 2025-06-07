@@ -332,12 +332,12 @@ watch(
     <Loading />
   </div>
 
-  <div
+  <!-- <div
     v-else-if="errorTugasAkhir || errorBerkasTA || errorJadwalUjianTA"
     class="p-4"
   >
     <ErrorMsg :msg="errorTugasAkhir || errorBerkasTA || errorJadwalUjianTA" />
-  </div>
+  </div> -->
 
   <div v-else>
     <div>

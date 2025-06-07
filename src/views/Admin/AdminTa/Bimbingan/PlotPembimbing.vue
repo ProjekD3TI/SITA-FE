@@ -22,8 +22,6 @@ const {
   loadingShowPlotting,
   errorShowPlotting,
 } = useShowPlottingPembimbing(route.params.id);
-const loading = ref(false);
-const error = ref(null);
 
 onMounted(() => {
   if (route.params.tugas_akhir_id) {
@@ -84,8 +82,11 @@ watch(
       Array.isArray(data.mahasiswa) &&
       data.mahasiswa[0]?.dosen_pembimbing
     ) {
-      selectedDosenPembimbingValue.value =
-        data.mahasiswa[0].dosen_pembimbing.id;
+      if (!selectedDosenPembimbingValue.value) {
+        selectedDosenPembimbingValue.value =
+          data.mahasiswa[0].dosen_pembimbing.dosen_pembimbing_id ??
+          data.mahasiswa[0].dosen_pembimbing.id;
+      }
     }
   },
   { immediate: true }
@@ -98,16 +99,16 @@ const handleSubmit = async () => {
     return;
   }
   try {
-    loading.value = true;
+    loadingShowPlotting.value = true;
     await submitPlotting({
-      tugas_akhir_id: mahasiswa.id,
-      dosen_id: selectedDosenPembimbingValue.value,
+      tugas_akhir_id: mahasiswa.tugas_akhir_id,
+      dosen_pembimbing_id: selectedDosenPembimbingValue.value,
     });
     router.push({ name: "BimbinganforAdmin", query: { refresh: Date.now() } });
   } catch (e) {
-    // toast.error('Gagal menyimpan plotting pembimbing.');
+    toast.error("Gagal menyimpan plotting pembimbing.");
   } finally {
-    loading.value = false;
+    loadingShowPlotting.value = false;
   }
 };
 
@@ -118,30 +119,30 @@ const handleUpdate = async () => {
     return;
   }
   try {
-    loading.value = true;
+    loadingShowPlotting.value = true;
     await updatePlotting({
-      tugas_akhir_id: mahasiswa.id,
-      dosen_id: selectedDosenPembimbingValue.value,
+      tugas_akhir_id: mahasiswa.tugas_akhir_id,
+      dosen_pembimbing_id: selectedDosenPembimbingValue.value,
     });
     // toast.success('Plotting pembimbing berhasil diupdate!');
     router.push({ name: "BimbinganforAdmin", query: { refresh: Date.now() } });
   } catch (e) {
-    toast.error("Gagal mengupdate plotting pembimbing.");
+    toast.error("Gagal memperbarui plotting pembimbing.");
   } finally {
-    loading.value = false;
+    loadingShowPlotting.value = false;
   }
 };
 </script>
 <template>
   <div
-    v-if="loadingShowPlotting || loading"
+    v-if="loadingShowPlotting"
     class="flex items-center justify-center min-h-[80dvh]"
   >
     <Loading />
   </div>
 
-  <div v-else-if="errorShowPlotting || error" class="p-4">
-    <ErrorMsg :message="errorShowPlotting || error" />
+  <div v-else-if="errorShowPlotting" class="p-4">
+    <ErrorMsg :message="errorShowPlotting" />
   </div>
 
   <div v-else>
@@ -149,10 +150,12 @@ const handleUpdate = async () => {
     <div class="p-6 bg-white card-rounded lg:p-8">
       <div class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
         <UserData
-          :headText="mahasiswaData?.mahasiswa || 'Nama Mahasiswa'"
-          :bodyText="mahasiswaData?.nim || 'NIM Mahasiswa'"
+          :headText="mahasiswaData?.mahasiswa?.name || 'Nama Mahasiswa'"
+          :bodyText="mahasiswaData?.mahasiswa?.nim || 'NIM Mahasiswa'"
           headText2="Kategori"
-          :bodyText2="mahasiswaData?.kategori || 'Kategori Tugas Akhir'"
+          :bodyText2="
+            mahasiswaData?.kategori?.nama_kategori || 'Kategori Tugas Akhir'
+          "
           :tahunAjaran="
             mahasiswaData?.tahun_ajaran || 'Tahun Ajaran Tugas Akhir'
           "
@@ -204,7 +207,7 @@ const handleUpdate = async () => {
           Update
         </Button>
         <Button
-          v-if="!mahasiswaData?.dosen_pembimbing"
+          v-if="!mahasiswaData?.dosen_pembimbing?.dosen_pembimbing_id"
           variant="primary"
           size="md"
           class="self-end w-fit sm:hidden"

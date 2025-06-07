@@ -5,19 +5,19 @@ import Button from "@/components/Tugas-akhir/Button.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputTextArea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import { useRoute, useRouter } from "vue-router";
-import { useShowProposal } from "@/services/TugasAkhir/Admin/proposal.js";
+import { useShowSeminarProposal } from "@/services/TugasAkhir/Admin/proposal.js";
 import { useToast } from "vue-toastification";
 import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
 
 // Ambil inputNilaiProposal dari composable
 const {
-  dataProposal,
+  dataSeminarProposal,
   fetchData,
   inputNilaiProposal,
-  loadingProposal,
-  errorProposal,
-} = useShowProposal();
+  loadingSeminarProposal,
+  errorSeminarProposal,
+} = useShowSeminarProposal();
 const toast = useToast();
 
 const nilaiInput = ref("");
@@ -29,22 +29,22 @@ const router = useRouter();
 
 // Buat computed properties untuk data yang dibutuhkan
 const namaMahasiswa = computed(
-  () => dataProposal.value?.mahasiswa || "Tidak diketahui"
+  () => dataSeminarProposal.value?.mahasiswa?.name || "Tidak diketahui"
 );
 
 const nimMahasiswa = computed(
-  () => dataProposal.value?.nim || "Tidak diketahui"
+  () => dataSeminarProposal.value?.mahasiswa?.nim || "Tidak diketahui"
 );
 
 const judulProposal = computed(
-  () => dataProposal.value?.judul_proposal || "Tidak diketahui"
+  () => dataSeminarProposal.value?.judul_proposal || "Tidak diketahui"
 );
 
 // Cek apakah data nilai sudah ada (untuk menentukan submit atau update)
 const isUpdateMode = computed(
   () =>
-    dataProposal.value?.nilai_proposal !== null &&
-    dataProposal.value?.catatan_proposal !== null
+    dataSeminarProposal.value?.nilai_proposal !== null &&
+    dataSeminarProposal.value?.catatan_proposal !== null
 );
 
 onMounted(async () => {
@@ -54,8 +54,8 @@ onMounted(async () => {
 
       // Isi form dengan nilai yang sudah ada jika mode update
       if (isUpdateMode.value) {
-        nilaiInput.value = dataProposal.value.nilai_proposal;
-        catatanInput.value = dataProposal.value.catatan_proposal;
+        nilaiInput.value = dataSeminarProposal.value.nilai_proposal;
+        catatanInput.value = dataSeminarProposal.value.catatan_proposal;
       }
     } catch (error) {
       toast.error("Gagal memuat data proposal");
@@ -150,13 +150,13 @@ const updateNilai = async () => {
 
 <template>
   <div
-    v-if="loadingProposal"
+    v-if="loadingSeminarProposal"
     class="flex items-center justify-center min-h-[80dvh]"
   >
     <Loading />
   </div>
-  <div v-else-if="errorProposal" class="p-4">
-    <ErrorMsg :message="errorProposal" />
+  <div v-else-if="errorSeminarProposal" class="p-4">
+    <ErrorMsg :message="errorSeminarProposal" />
   </div>
   <div v-else>
     <Breadcrumb />

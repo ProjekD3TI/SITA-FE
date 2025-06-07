@@ -16,23 +16,37 @@ import { useRoute, useRouter } from "vue-router";
 import ValidationFile from "@/components/Tugas-akhir/Forms/ValidationFile.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import { useToast } from "vue-toastification";
-import { useTabelProposal } from "@/services/TugasAkhir/Admin/proposal.js";
+import {
+  useTabelPendaftarProposal,
+  useTabelSeminarProposal,
+} from "@/services/TugasAkhir/Admin/proposal.js";
 
 const {
-  dataTabelProposal,
-  loadingTabelProposal,
-  errorTabelProposal,
+  dataTabelPendaftarProposal,
+  loadingTabelPendaftarProposal,
+  errorTabelPendaftarProposal,
   updateStatusForm,
-  fetchData,
-} = useTabelProposal();
+  fetchData: fetchPendaftarProposal,
+  paginationTabelPendaftarProposal,
+} = useTabelPendaftarProposal();
+
+const {
+  dataTabelSeminarProposal,
+  loadingTabelSeminarProposal,
+  errorTabelSeminarProposal,
+  paginationTabelSeminarProposal,
+  fetchData: fetchSeminarProposal,
+} = useTabelSeminarProposal();
 
 // Search dan filter state
-const statusForm = ref(dataTabelProposal.value?.status_form?.is_open ?? 0);
+const statusForm = ref(
+  dataTabelPendaftarProposal.value?.status_form?.is_open ?? 0
+);
 
 const route = useRoute();
 const router = useRouter();
 watch(
-  () => dataTabelProposal.value?.status_form?.is_open,
+  () => dataTabelPendaftarProposal.value?.status_form?.is_open,
   (val) => {
     if (typeof val !== "undefined") statusForm.value = val;
   },
@@ -43,6 +57,9 @@ const searchQueryPengajuan = ref("");
 const searchQuerySeminar = ref("");
 const selectedStatusesPengajuan = ref([]);
 const selectedCategoriesSeminar = ref([]);
+
+const currentPagePendaftar = ref(1);
+const currentPageSeminar = ref(1);
 
 const modalRef = ref(false);
 const timerModalRef = ref(null);
@@ -58,7 +75,7 @@ const tempValidasi = ref({
   naskah_proposal_status_valid: null,
   file_transkrip_status_valid: null,
 });
-const catatan = ref("");
+const catatan_perbaikan = ref("");
 
 function getFileName(filePath) {
   return filePath ? decodeURIComponent(filePath.split("/").pop()) : "";
@@ -71,8 +88,8 @@ const statuses = [
 ];
 
 const categories = computed(() => {
-  return (dataTabelProposal.value?.list_kategori || []).map((cat) => ({
-    value: String(cat.id),
+  return (dataTabelSeminarProposal.value?.list_kategori || []).map((cat) => ({
+    value: String(cat.kategori_id),
     label: cat.nama_kategori,
   }));
 });
@@ -105,7 +122,7 @@ const getStatusLabel = (status) => {
 
 const countStatus0 = computed(
   () =>
-    (dataTabelProposal.value?.list_proposal || []).filter(
+    (dataTabelPendaftarProposal.value?.data || []).filter(
       (item) => String(item.status_proposal) === "0"
     ).length
 );
@@ -124,64 +141,71 @@ const tabs = [
   },
 ];
 
-const listProposal = computed(
-  () => dataTabelProposal.value?.list_proposal || []
-);
-
-// Mapping untuk table tab Pengajuan
-const filteredProposalPengajuan = computed(() => {
-  let data = listProposal.value;
-  if (selectedStatusesPengajuan.value.length > 0) {
-    data = data.filter((item) =>
-      selectedStatusesPengajuan.value.includes(String(item.status_proposal))
-    );
-  }
-  const q =
-    typeof searchQueryPengajuan.value === "string"
-      ? searchQueryPengajuan.value.toLowerCase()
-      : "";
-  if (!q) return data;
-  return data.filter(
-    (item) =>
-      item.nim?.toLowerCase().includes(q) ||
-      item.mahasiswa?.toLowerCase().includes(q) ||
-      (item.judul_proposal && item.judul_proposal.toLowerCase().includes(q))
-  );
+const listPendaftarProposal = computed(() => {
+  // Data dari API ada di dataTabelPendaftarProposal.value.data
+  return Array.isArray(dataTabelPendaftarProposal.value?.data)
+    ? dataTabelPendaftarProposal.value?.data
+    : [];
 });
-
-const filteredProposalSeminar = computed(() => {
-  // Hanya ambil proposal dengan status_proposal = 1 (Disetujui)
-  let data = listProposal.value.filter((item) => item.status_proposal === 1);
-
-  // Filter berdasarkan kategori jika dipilih
-  if (selectedCategoriesSeminar.value.length > 0) {
-    data = data.filter((item) =>
-      selectedCategoriesSeminar.value.includes(String(item.kategori_ta?.id))
-    );
-  }
-
-  // Filter berdasarkan search query
-  const q =
-    typeof searchQuerySeminar.value === "string"
-      ? searchQuerySeminar.value.toLowerCase()
-      : "";
-  if (!q) return data;
-
-  return data.filter(
-    (item) =>
-      item.nim?.toLowerCase().includes(q) ||
-      item.mahasiswa?.toLowerCase().includes(q) ||
-      (item.judul_proposal && item.judul_proposal.toLowerCase().includes(q))
-  );
+const listTabelSeminarProposal = computed(() => {
+  // Data dari API ada di dataTabelPendaftarProposal.value.data
+  return Array.isArray(dataTabelSeminarProposal.value?.data)
+    ? dataTabelSeminarProposal.value?.data
+    : [];
 });
+function getSelectedStatusValue(selectedStatuses) {
+  if (selectedStatuses.length > 0) {
+    return selectedStatuses.map(String).join(",");
+  }
+  return "";
+}
+function getSelectedKategoriLabel(selectedCategories) {
+  if (selectedCategories.length > 0) {
+    // Ambil semua label kategori yang dipilih
+    const selectedLabels = selectedCategories
+      .map((catId) => {
+        const cat = categories.value.find((c) => c.value === catId);
+        return cat ? cat.label : "";
+      })
+      .filter(Boolean);
+    return selectedLabels.join(",");
+  }
+  return "";
+}
+function onSearchPendaftar({ value }) {
+  currentPagePendaftar.value = 1;
+  fetchPendaftarProposal(
+    1,
+    value,
+    getSelectedStatusValue(selectedStatusesPengajuan.value)
+  );
+}
+function onSearchSeminar({ value }) {
+  // Reset ke halaman 1 setiap kali search berubah
+  currentPageSeminar.value = 1;
+  fetchSeminarProposal(
+    1,
+    value,
+    getSelectedKategoriLabel(selectedCategoriesSeminar.value)
+  );
+}
 
 // Handler filter dan search
 function handleFilterPengajuan({ values }) {
   selectedStatusesPengajuan.value = values;
+  currentPagePendaftar.value = 1;
+  fetchPendaftarProposal(
+    1,
+    searchQueryPengajuan.value,
+    getSelectedStatusValue(values)
+  );
 }
 // Handler filter kategori seminar
 function handleFilterSeminar({ values }) {
   selectedCategoriesSeminar.value = values;
+  currentPageSeminar.value = 1;
+  const kategoriStr = getSelectedKategoriLabel(selectedCategoriesSeminar.value);
+  fetchSeminarProposal(1, searchQuerySeminar.value, kategoriStr);
 }
 
 // Tab change reset
@@ -198,7 +222,7 @@ function handleTabChange(tabId) {
 const handleRowClickSeminar = (item) => {
   router.push({
     name: "DetailProposalForAdmin",
-    params: { proposal_id: item.id },
+    params: { proposal_id: item.proposal_id },
   });
 };
 // Handler row click untuk tab Pengajuan
@@ -207,12 +231,12 @@ const handleRowClickPengajuan = (item) => {
     // Status menunggu, redirect ke detail
     router.push({
       name: "DetailPengajuanForAdmin",
-      params: { proposal_id: item.id },
+      params: { proposal_id: item.proposal_id },
     });
   } else {
     // Status diterima/ditolak, buka modal
     modalHeadText.value = `Detail Proposal`;
-    modalBodyText.value = `${item.nim} | ${item.mahasiswa} | ${item.judul_proposal}`;
+    modalBodyText.value = `${item.mahasiswa?.nim} | ${item.mahasiswa?.name} | ${item.judul_proposal}`;
     // Siapkan data file untuk modal
     dataNaskahProposal.value = item.berkas.find((b) =>
       b.nama_berkas.includes("Naskah Proposal")
@@ -238,7 +262,7 @@ const handleRowClickPengajuan = (item) => {
         dataNaskahProposal.value?.status_valid ?? null,
       file_transkrip_status_valid: dataTranskrip.value?.status_valid ?? null,
     };
-    catatan.value = item.catatan_perbaikan || "";
+    catatan_perbaikan.value = item.catatan_perbaikan || "";
     modalRef.value = true;
   }
 };
@@ -252,7 +276,8 @@ function handleSliderChange(val) {
 watch(
   () => route.fullPath,
   () => {
-    fetchData();
+    fetchPendaftarProposal();
+    fetchSeminarProposal();
   }
 );
 
@@ -261,7 +286,6 @@ async function handleModalSubmit() {
     await updateStatusForm(pendingStatusForm.value); // hanya kirim 0/1
     statusForm.value = pendingStatusForm.value;
     toast.success("Status form berhasil diubah.");
-    await fetchData(); // refresh data setelah update
     modalTimerVisible.value = false;
   } catch (e) {
     toast.error("Gagal mengubah status form.");
@@ -281,6 +305,25 @@ const modalTimerBodyText = computed(() => {
   return statusForm.value === 0
     ? "Apakah anda yakin ingin membuka form pengajuan proposal tugas akhir?"
     : "Apakah anda yakin ingin menutup form pengajuan proposal tugas akhir?";
+});
+onMounted(() => {
+  fetchPendaftarProposal(currentPagePendaftar.value);
+  fetchSeminarProposal(currentPageSeminar.value);
+});
+
+watch(currentPageSeminar, (val) => {
+  fetchSeminarProposal(
+    val,
+    searchQuerySeminar.value,
+    getSelectedKategoriLabel(selectedCategoriesSeminar.value)
+  );
+});
+watch(currentPagePendaftar, (val) => {
+  fetchPendaftarProposal(
+    val,
+    searchQueryPengajuan.value,
+    getSelectedStatusValue(selectedStatusesPengajuan.value)
+  );
 });
 </script>
 <template>
@@ -307,16 +350,18 @@ const modalTimerBodyText = computed(() => {
           <SearchBar
             class="order-last md:order-none sm:min-w-[367px]"
             v-model="searchQueryPengajuan"
+            @search="onSearchPendaftar"
+            filterKey="pendaftar"
           />
           <Slider
             :modelValue="statusForm"
             @update:modelValue="handleSliderChange"
           />
         </div>
-        <div v-if="loadingTabelProposal" class="py-8">
+        <div v-if="loadingTabelPendaftarProposal" class="py-8">
           <Loading />
         </div>
-        <ErrorMsg v-else-if="errorTabelProposal" :message="error" />
+        <ErrorMsg v-else-if="errorTabelPendaftarProposal" :message="error" />
         <Table
           v-else
           :headers="[
@@ -326,19 +371,25 @@ const modalTimerBodyText = computed(() => {
             'Tanggal Pengajuan',
             'Status',
           ]"
-          :items="filteredProposalPengajuan"
+          :items="listPendaftarProposal"
           @rowClick="handleRowClickPengajuan"
+          :pagination="paginationTabelPendaftarProposal"
+          @pageChange="
+            (page) => {
+              currentPage = page;
+            }
+          "
         >
           <template #row="{ item }">
             <td
               class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.nim }}
+              {{ item.mahasiswa?.nim }}
             </td>
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.mahasiswa }}
+              {{ item.mahasiswa?.name }}
             </td>
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
@@ -379,33 +430,43 @@ const modalTimerBodyText = computed(() => {
             triggerText="Kategori"
             :preselectedValues="selectedCategoriesSeminar"
           />
-          <SearchBar v-model="searchQuerySeminar" />
+          <SearchBar
+            v-model="searchQuerySeminar"
+            @search="onSearchSeminar"
+            filterKey="seminar"
+          />
         </div>
-        <div v-if="loadingTabelProposal" class="py-8">
+        <div v-if="loadingTabelSeminarProposal" class="py-8">
           <Loading />
         </div>
-        <ErrorMsg v-else-if="errorTabelProposal" :message="error" />
+        <ErrorMsg v-else-if="errorTabelSeminarProposal" :message="error" />
         <Table
           v-else
           :headers="['NIM', 'Nama', 'Kategori', 'Judul Proposal ', 'Nilai']"
-          :items="filteredProposalSeminar"
+          :items="listTabelSeminarProposal"
           @rowClick="handleRowClickSeminar"
+          :pagination="paginationTabelSeminarProposal"
+          @pageChange="
+            (page) => {
+              currentPage = page;
+            }
+          "
         >
           <template #row="{ item }">
             <td
               class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.nim }}
+              {{ item.mahasiswa?.nim }}
             </td>
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.mahasiswa }}
+              {{ item.mahasiswa?.name }}
             </td>
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.kategori_ta?.nama_kategori }}
+              {{ item.kategori?.nama_kategori }}
             </td>
             <td
               class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
@@ -451,11 +512,11 @@ const modalTimerBodyText = computed(() => {
         @update:statusValid="tempValidasi.file_transkrip_status_valid = $event"
       />
       <InputTextarea
-        v-if="catatan"
+        v-if="catatan_perbaikan"
         id="catatan"
         label="Catatan Perbaikan"
         placeholder="Masukkan catatan"
-        v-model="catatan"
+        v-model="catatan_perbaikan"
         :disabled="true"
       />
     </div>

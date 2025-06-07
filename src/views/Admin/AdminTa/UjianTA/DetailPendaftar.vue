@@ -227,12 +227,15 @@ const handleSubmitValidasi = async () => {
         <UserData
           :headText="dataShowPendaftar?.mahasiswa?.nim || 'NIM mahasiswa'"
           :bodyText="dataShowPendaftar?.mahasiswa?.name || 'Nama Mahasiswa'"
-          :headText2="dataShowPendaftar?.kategori || 'Kategori Tugas Akhir'"
+          :headText2="
+            dataShowPendaftar?.kategori?.nama_kategori || 'Kategori Tugas Akhir'
+          "
           :bodyText2="
             dataShowPendaftar?.judul_tugas_akhir || 'Judul Tugas Akhir'
           "
           :tahunAjaran="
-            dataShowPendaftar?.tahun_ajaran || 'Tahun Ajaran Tugas Akhir'
+            dataShowPendaftar?.tahun_ajaran?.tahun_ajaran ||
+            'Tahun Ajaran Tugas Akhir'
           "
         />
         <!-- All the file uploads -->

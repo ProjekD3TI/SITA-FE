@@ -69,8 +69,14 @@ watch(
       const penguji = val.dosen_penguji.find(
         (d) => d.jabatan_penguji === "penguji"
       );
-      selectedKetuaPenguji.value = ketua ? ketua.id.toString() : "";
-      selectedPenguji.value = penguji ? penguji.id.toString() : "";
+      selectedKetuaPenguji.value =
+        ketua && ketua.dosenPenguji_id != null
+          ? ketua.dosenPenguji_id.toString()
+          : "";
+      selectedPenguji.value =
+        penguji && penguji.dosenPenguji_id != null
+          ? penguji.dosenPenguji_id.toString()
+          : "";
     } else {
       selectedKetuaPenguji.value = "";
       selectedPenguji.value = "";
@@ -85,7 +91,9 @@ const list_dosen = computed(() => {
     return [];
   }
   // Ambil id dosen pembimbing (sekretaris)
-  const pembimbingId = mahasiswaData.value?.dosen_pembimbing?.id?.toString();
+  const pembimbingId =
+    mahasiswaData.value?.dosen_pembimbing?.dosen_pembimbing_id?.toString();
+  ("");
   return dosens.value
     .filter((dosen) => dosen.id.toString() !== pembimbingId)
     .map((dosen) => ({
@@ -205,7 +213,8 @@ const handleUpdate = async () => {
 watch(
   () => mahasiswaData.value?.dosen_pembimbing,
   (val) => {
-    selectedSekretarisPenguji.value = val?.id?.toString() || "";
+    selectedSekretarisPenguji.value =
+      val?.dosen_pembimbing_id?.toString() || val?.id?.toString() || "";
   },
   { immediate: true }
 );
@@ -229,10 +238,13 @@ watch(
         <UserData
           :headText="mahasiswaData?.mahasiswa?.nim || 'NIM Mahasiswa'"
           :bodyText="mahasiswaData?.mahasiswa?.name || 'Nama Mahasiswa'"
-          :headText2="mahasiswaData?.kategori || 'Kategori Tugas Akhir'"
+          :headText2="
+            mahasiswaData?.kategori?.nama_kategori || 'Kategori Tugas Akhir'
+          "
           :bodyText2="mahasiswaData?.judul_proposal || 'Judul Tugas Akhir'"
           :tahunAjaran="
-            mahasiswaData?.tahun_ajaran || 'Tahun Ajaran Tugas Akhir'
+            mahasiswaData?.tahun_ajaran?.tahun_ajaran ||
+            'Tahun Ajaran Tugas Akhir'
           "
         />
         <div class="flex flex-col gap-4 mt-4">

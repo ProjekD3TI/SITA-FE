@@ -7,8 +7,8 @@
     >
       <div class="w-full text-center truncate body2-bold sm:body1-bold">
         <span v-if="showCenterTextValue">
-          <span class="text-primary">{{ centerText[0] }}</span
-          >/<span class="text-secondary">{{ centerText[1] }}</span>
+          <span class="text-primary">{{ centerText[0] || "-" }}</span
+          >/<span class="text-secondary">{{ centerText[1] || "-" }}</span>
         </span>
         <br v-if="showInsideText && showCenterTextValue" />
         <span v-if="showInsideText" class="body5">{{ insideText }}</span>

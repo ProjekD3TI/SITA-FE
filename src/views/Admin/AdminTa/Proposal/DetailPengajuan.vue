@@ -104,9 +104,16 @@ const handleSubmitValidasi = async () => {
   const transkripStatus = transkripRef.value.localValue;
   const statusValidBerkas = [Number(naskahStatus), Number(transkripStatus)];
 
+  if (
+    ![1, 2].includes(Number(naskahStatus)) ||
+    ![1, 2].includes(Number(transkripStatus))
+  ) {
+    toast.error("Status validasi harus dipilih untuk kedua berkas.");
+    return;
+  }
   // Submit ke backend
   await validateProposal(
-    dataProposal.value.id,
+    dataProposal.value.proposal_id,
     statusValidBerkas,
     catatan.value
   );
@@ -149,11 +156,13 @@ watch(
     <div class="p-4 bg-white card-rounded lg:p-8">
       <div class="flex flex-col gap-4 mx-auto max-w-screen-2xl">
         <UserData
-          :headText="dataProposal?.nim"
-          :bodyText="dataProposal?.mahasiswa"
-          :headText2="dataProposal?.kategori_ta?.nama_kategori"
-          :bodyText2="dataProposal?.judul_proposal"
-          :tahunAjaran="dataProposal?.tahun_ajaran?.tahun_ajaran"
+          :headText="dataProposal?.mahasiswa?.nim || 'NIM mahasiswa'"
+          :bodyText="dataProposal?.mahasiswa?.name || 'Nama mahasiswa'"
+          :headText2="dataProposal?.kategori?.nama_kategori || 'Kategori'"
+          :bodyText2="dataProposal?.judul_proposal || 'Judul Proposal'"
+          :tahunAjaran="
+            dataProposal?.tahun_ajaran?.tahun_ajaran || 'Tahun Ajaran'
+          "
         />
         <!-- All the file uploads -->
         <ValidationFile

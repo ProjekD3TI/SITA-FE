@@ -9,34 +9,35 @@ import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
 import { useRoute, useRouter } from "vue-router";
-import { useShowProposal } from "@/services/TugasAkhir/Admin/proposal.js";
+import { useShowSeminarProposal } from "@/services/TugasAkhir/Admin/proposal.js";
+
 const {
-  loadingProposal,
-  errorProposal,
-  dataProposal,
-  fetchData,
+  loadingSeminarProposal,
+  errorSeminarProposal,
+  dataSeminarProposal,
   getSecureFileBlobUrl,
-} = useShowProposal();
+  fetchData,
+} = useShowSeminarProposal();
 
 const pdfBlobUrl = ref("");
 const loadingPdf = ref(false);
 
 const nilai_proposal = computed(() => {
-  return dataProposal.value?.nilai_proposal || "Tidak ada catatan";
+  return dataSeminarProposal.value?.nilai_proposal || "Tidak ada catatan";
 });
 const catatan_proposal = computed(() => {
-  return dataProposal.value?.catatan_proposal || "Belum dinilai";
+  return dataSeminarProposal.value?.catatan_proposal || "Belum dinilai";
 });
 const namaMahasiswa = computed(() => {
-  return dataProposal.value?.mahasiswa || "Tidak diketahui";
+  return dataSeminarProposal.value?.mahasiswa?.name || "Tidak diketahui";
 });
 const nimMahasiswa = computed(() => {
-  return dataProposal.value?.nim || "Tidak diketahui";
+  return dataSeminarProposal.value?.mahasiswa?.nim || "Tidak diketahui";
 });
 const judulProposal = computed(() => {
-  return dataProposal.value?.judul_proposal || "Tidak diketahui";
+  return dataSeminarProposal.value?.judul_proposal || "Tidak diketahui";
 });
-// Panggil saat dataProposal berubah
+// Panggil saat dataSeminarProposal berubah
 const route = useRoute();
 const router = useRouter();
 onMounted(() => {
@@ -64,22 +65,22 @@ const openNilaiModal = () => {
 
 const isNilaiKosong = computed(
   () =>
-    dataProposal.value?.nilai_proposal == null &&
-    dataProposal.value?.catatan_proposal == null
+    dataSeminarProposal.value?.nilai_proposal == null &&
+    dataSeminarProposal.value?.catatan_proposal == null
 );
 
 const goToInputNilai = () => {
   router.push({
     name: "InputNilaiProposalForAdmin",
-    params: { proposal_id: dataProposal.value?.id },
+    params: { proposal_id: dataSeminarProposal.value?.proposal_id },
   });
   showNilaiModal.value = false;
 };
 
 // Mapping berkas array ke object agar mudah diakses
 const berkasObj = computed(() => {
-  if (!dataProposal.value?.berkas) return {};
-  return dataProposal.value.berkas.reduce((obj, item) => {
+  if (!dataSeminarProposal.value?.berkas) return {};
+  return dataSeminarProposal.value.berkas.reduce((obj, item) => {
     obj[item.nama_berkas] = item;
     return obj;
   }, {});
@@ -104,13 +105,13 @@ async function loadPdfPreview() {
   <router-view v-if="$route.path.includes('input-nilai')"></router-view>
 
   <div
-    v-else-if="loadingProposal"
+    v-else-if="loadingSeminarProposal"
     class="flex items-center justify-center min-h-[80dvh]"
   >
     <Loading />
   </div>
-  <div v-else-if="errorProposal" class="p-4">
-    <ErrorMsg :message="errorProposal" />
+  <div v-else-if="errorSeminarProposal" class="p-4">
+    <ErrorMsg :message="errorSeminarProposal" />
   </div>
   <div v-else>
     <Breadcrumb />
@@ -146,38 +147,38 @@ async function loadPdfPreview() {
                 />
                 <div>
                   <h5 class="body3-bold sm:body2-bold">
-                    {{ dataProposal?.mahasiswa }}
+                    {{ dataSeminarProposal?.mahasiswa?.name }}
                   </h5>
                   <p class="body3 sm:body2 text-primary">
-                    {{ dataProposal?.nim }}
+                    {{ dataSeminarProposal?.mahasiswa?.nim }}
                   </p>
                 </div>
               </div>
               <div>
                 <h5 class="body3-bold sm:body2-bold">Judul Tugas Akhir</h5>
                 <p class="body3 sm:body2 text-primary">
-                  {{ dataProposal?.judul_proposal }}
+                  {{ dataSeminarProposal?.judul_proposal }}
                 </p>
               </div>
 
               <div>
                 <h5 class="body3-bold sm:body2-bold">Kategori</h5>
                 <p class="body3 sm:body2 text-primary">
-                  {{ dataProposal?.kategori_ta?.nama_kategori }}
+                  {{ dataSeminarProposal?.kategori?.nama_kategori }}
                 </p>
               </div>
 
               <div>
                 <h5 class="body3-bold sm:body2-bold">Dosen Pembimbing</h5>
                 <p class="body3 sm:body2 text-primary">
-                  {{ dataProposal?.dosen_pembimbing?.nama }}
+                  {{ dataSeminarProposal?.dosen_pembimbing?.name }}
                 </p>
               </div>
 
               <div>
                 <h5 class="body3-bold sm:body2-bold">Tahun Ajaran</h5>
                 <p class="body3 sm:body2 text-secondary">
-                  {{ dataProposal?.tahun_ajaran?.tahun_ajaran }}
+                  {{ dataSeminarProposal?.tahun_ajaran?.tahun_ajaran }}
                 </p>
               </div>
             </div>

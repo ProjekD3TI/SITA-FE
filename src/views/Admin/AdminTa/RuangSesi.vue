@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import TabDiv from "@/components/Tugas-akhir/TabDiv.vue";
 import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
@@ -17,7 +17,8 @@ import { useSesi } from "@/services/TugasAkhir/Admin/sesi";
 
 // Toast notifications
 const toast = useToast();
-
+const currentPageRuang = ref(1);
+const currentPageSesi = ref(1);
 // Data tab
 const tabs = [
   {
@@ -33,8 +34,14 @@ const tabs = [
 ];
 
 // Search
-const searchQuery = ref("");
-const handleSearch = () => {};
+function onSearchRuang({ value }) {
+  currentPageRuang.value = 1;
+  fetchRuangs(1, value);
+}
+function onSearchSesi({ value }) {
+  currentPageSesi.value = 1;
+  fetchSesis(1, value);
+}
 
 // === RUANG API ===
 const {
@@ -42,6 +49,7 @@ const {
   loading: ruangLoading,
   error: ruangError,
   fetchData: fetchRuangs,
+  pagination: paginationRuang,
   addRuang,
   editRuang,
   deleteRuang,
@@ -53,6 +61,7 @@ const {
   loading: sesiLoading,
   error: sesiError,
   fetchData: fetchSesis,
+  pagination: paginationSesi,
   addSesi,
   editSesi,
   deleteSesi,
@@ -62,18 +71,12 @@ const {
 const ruangs = computed(() => ruangsData.value || []);
 const sesis = computed(() => sesisData.value || []);
 
-// Filtered data for search
-const filteredRuangs = computed(() =>
-  ruangs.value.filter((ruang) =>
-    ruang.nama_ruang?.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
-);
-
-const filteredSesis = computed(() =>
-  sesis.value.filter((sesi) =>
-    sesi.nama_sesi?.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
-);
+const listRuang = computed(() => {
+  return Array.isArray(ruangs.value) ? ruangs.value : [];
+});
+const listSesi = computed(() => {
+  return Array.isArray(sesis.value) ? sesis.value : [];
+});
 
 // Modal states
 const selectedRuang = ref(null);
@@ -237,11 +240,18 @@ const deleteSesiHandler = async () => {
     }
   }
 };
-
+const searchQueryRuang = ref("");
+const searchQuerySesi = ref("");
 // Load data on mount
 onMounted(() => {
-  fetchRuangs();
-  fetchSesis();
+  fetchRuangs(currentPageRuang.value);
+  fetchSesis(currentPageSesi.value);
+});
+watch(currentPageRuang, (val) => {
+  fetchRuangs(val, searchQueryRuang.value);
+});
+watch(currentPageSesi, (val) => {
+  fetchSesis(val, searchQuerySesi.value);
 });
 </script>
 
@@ -255,8 +265,8 @@ onMounted(() => {
           <div class="flex items-stretch justify-between gap-2 mb-4 sm:gap-4">
             <SearchBar
               class="flex-grow"
-              v-model="searchQuery"
-              @search="handleSearch"
+              v-model="searchQueryRuang"
+              @search="onSearchRuang"
               filterKey="ruang"
             />
             <Button
@@ -285,8 +295,14 @@ onMounted(() => {
           <Table
             v-else
             :headers="tableHeadersRuang"
-            :items="filteredRuangs"
+            :items="listRuang"
             min-width="min-w-full"
+            :pagination="paginationRuang"
+            @pageChange="
+              (page) => {
+                currentPageRuang = page;
+              }
+            "
           >
             <template #row="{ item }">
               <td class="w-4/5 px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
@@ -364,8 +380,8 @@ onMounted(() => {
         <div>
           <div class="flex justify-between gap-2 mb-4 sm:gap-4 items-strech">
             <SearchBar
-              v-model="searchQuery"
-              @search="handleSearch"
+              v-model="searchQuerySesi"
+              @search="onSearchSesi"
               filterKey="sesi"
             />
             <Button
@@ -394,8 +410,14 @@ onMounted(() => {
           <Table
             v-else
             :headers="tableHeadersSesi"
-            :items="filteredSesis"
+            :items="listSesi"
             minWidth="min-w-[400px]"
+            :pagination="paginationSesi"
+            @pageChange="
+              (page) => {
+                currentPageSesi = page;
+              }
+            "
           >
             <template #row="{ item }">
               <td class="w-2/5 px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">

@@ -1,7 +1,6 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
-import Button from "@/components/Tugas-akhir/Button.vue";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import Table from "@/components/Tugas-akhir/Table.vue";
 import ModalFilter from "@/components/Tugas-akhir/Modals/ModalFilter.vue";
@@ -10,6 +9,38 @@ import TabDiv from "@/components/Tugas-akhir/TabDiv.vue";
 import ModalSelected from "@/components/Tugas-akhir/Modals/ModalSelected.vue";
 import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
+import { useRoute, useRouter } from "vue-router";
+import { useToast } from "vue-toastification";
+import {
+  useTabelMahasiswa,
+  useTabelDosen,
+} from "@/services/TugasAkhir/Admin/MahasiswaDosen.js";
+
+const {
+  dataTabelMahasiswa,
+  loadingTabelMahasiswa,
+  errorTabelMahasiswa,
+  fetchDataTabelMahasiswa,
+  paginationTabelMahasiswa,
+  updateAksesMahasiswa,
+} = useTabelMahasiswa();
+
+const {
+  dataTabelDosen,
+  loadingTabelDosen,
+  errorTabelDosen,
+  fetchDataTabelDosen,
+  paginationTabelDosen,
+  updateAksesDosen,
+} = useTabelDosen();
+
+const route = useRoute();
+const router = useRouter();
+const toast = useToast();
+const activeTab = ref("tab1");
+
+const currentPageTabelMahasiswa = ref(1);
+const currentPageTabelDosen = ref(1);
 
 // Data tab
 const tabs = [
@@ -27,189 +58,26 @@ const tabs = [
 
 // Search for Mahasiswa
 const searchQueryMahasiswa = ref("");
-const handleSearchMahasiswa = () => {};
-
-// Search for Dosen
 const searchQueryDosen = ref("");
-const handleSearchDosen = () => {};
 
-// Data mahasiswa
-const students = ref([
-  {
-    id: 1,
-    name: "Budi Santoso",
-    nim: "V3423000",
-    angkatan: "2023",
-    email: "budi.santoso@student.uns.ac.id",
-    status: "success", // Untuk "Aktif"
-  },
-  {
-    id: 2,
-    name: "Siti Rahma",
-    nim: "V3423000",
-    angkatan: "2023",
-    email: "siti.rahma@student.uns.ac.id",
-    status: "success",
-  },
-  {
-    id: 3,
-    name: "Ahmad Fauzi",
-    nim: "V3423000",
-    angkatan: "2023",
-    email: "ahmad.fauzi@student.uns.ac.id",
-    status: "success",
-  },
-  {
-    id: 4,
-    name: "Maya Indah",
-    nim: "V3423000",
-    angkatan: "2023",
-    email: "maya.indah@student.uns.ac.id",
-    status: "inactive", // Untuk "Non Aktif"
-  },
-  {
-    id: 5,
-    name: "Doni Kusuma",
-    nim: "V3423000",
-    angkatan: "2023",
-    email: "doni.kusuma@student.uns.ac.id",
-    status: "inactive",
-  },
-]);
+const listMahasiswa = computed(() => {
+  return Array.isArray(dataTabelMahasiswa.value)
+    ? dataTabelMahasiswa.value
+    : [];
+});
 
-// Data dosen
-const lecturers = ref([
-  {
-    id: 1,
-    name: "Budi Santoso",
-    nip: "00913945587",
-    email: "budi.santoso@staff.uns.ac.id",
-    status: "success", // Untuk "Aktif"
-  },
-  {
-    id: 2,
-    name: "Siti Rahma",
-    nip: "00913945587",
-    email: "siti.rahma@staff.uns.ac.id",
-    status: "success",
-  },
-  {
-    id: 3,
-    name: "Ahmad Fauzi",
-    nip: "00913945587",
-    email: "ahmad.fauzi@staff.uns.ac.id",
-    status: "success",
-  },
-  {
-    id: 4,
-    name: "Maya Indah",
-    nip: "00913945587",
-    email: "maya.indah@staff.uns.ac.id",
-    status: "inactive", // Untuk "Non Aktif"
-  },
-  {
-    id: 5,
-    name: "Doni Kusuma",
-    nip: "00913945587",
-    email: "doni.kusuma@staff.uns.ac.id",
-    status: "inactive",
-  },
-]);
+const listDosen = computed(() => {
+  return Array.isArray(dataTabelDosen.value) ? dataTabelDosen.value : [];
+});
 
 // Status options for filter
 const statuses = [
-  { value: "success", label: "Aktif" },
-  { value: "inactive", label: "Non Aktif" },
+  { value: "1", label: "Aktif" },
+  { value: "0", label: "Non Aktif" },
 ];
 
-// Filter untuk Mahasiswa
 const selectedStatusesMahasiswa = ref([]);
-const handleFilterMahasiswa = (filterData) => {
-  console.log("Filter data received for mahasiswa:", filterData);
-  selectedStatusesMahasiswa.value = filterData.values || [];
-};
-
-// Filter untuk Dosen
 const selectedStatusesDosen = ref([]);
-const handleFilterDosen = (filterData) => {
-  console.log("Filter data received for dosen:", filterData);
-  selectedStatusesDosen.value = filterData.values || [];
-};
-
-// Filter pencarian mahasiswa with status filters
-const filteredStudents = computed(() => {
-  let result = [...students.value];
-
-  // Apply text search filter
-  if (searchQueryMahasiswa.value && searchQueryMahasiswa.value.trim() !== "") {
-    const searchLower = searchQueryMahasiswa.value.toLowerCase().trim();
-    result = result.filter(
-      (student) =>
-        student.name.toLowerCase().includes(searchLower) ||
-        student.nim.toLowerCase().includes(searchLower) ||
-        student.email.toLowerCase().includes(searchLower)
-    );
-  }
-
-  // Apply status filter if any statuses are selected
-  if (
-    selectedStatusesMahasiswa.value &&
-    selectedStatusesMahasiswa.value.length > 0
-  ) {
-    console.log("Filtering by statuses:", selectedStatusesMahasiswa.value);
-    result = result.filter((student) =>
-      selectedStatusesMahasiswa.value.includes(student.status)
-    );
-  }
-
-  return result;
-});
-
-// Filter pencarian dosen with status filters
-const filteredLecturers = computed(() => {
-  let result = [...lecturers.value];
-
-  // Apply text search filter
-  if (searchQueryDosen.value && searchQueryDosen.value.trim() !== "") {
-    const searchLower = searchQueryDosen.value.toLowerCase().trim();
-    result = result.filter(
-      (lecturer) =>
-        lecturer.name.toLowerCase().includes(searchLower) ||
-        lecturer.nip.toLowerCase().includes(searchLower) ||
-        lecturer.email.toLowerCase().includes(searchLower)
-    );
-  }
-
-  // Apply status filter if any statuses are selected
-  if (selectedStatusesDosen.value && selectedStatusesDosen.value.length > 0) {
-    console.log("Filtering by statuses:", selectedStatusesDosen.value);
-    result = result.filter((lecturer) =>
-      selectedStatusesDosen.value.includes(lecturer.status)
-    );
-  }
-
-  return result;
-});
-
-// Function to toggle student status
-const toggleStudentStatus = (student) => {
-  const index = students.value.findIndex((s) => s.id === student.id);
-  if (index !== -1) {
-    // Toggle status between active and inactive
-    students.value[index].status =
-      student.status === "success" ? "inactive" : "success";
-  }
-};
-
-// Function to toggle lecturer status
-const toggleLecturerStatus = (lecturer) => {
-  const index = lecturers.value.findIndex((l) => l.id === lecturer.id);
-  if (index !== -1) {
-    // Toggle status between active and inactive
-    lecturers.value[index].status =
-      lecturer.status === "success" ? "inactive" : "success";
-  }
-};
 
 // Table headers
 const tableHeadersMahasiswa = [
@@ -219,32 +87,48 @@ const tableHeadersMahasiswa = [
   "Email",
   "Status",
 ];
-const tableHeadersDosen = ["Nama Lengkap", "NIP", "Email", "Status"];
+const tableHeadersDosen = ["Nama Lengkap", "NIK", "Email", "Status"];
 
 // Checked items for mahasiswa
 const checkedMahasiswa = ref([]);
-const checkedLecturers = ref([]); // TAMBAHKAN
+const checkedDosen = ref([]); // TAMBAHKAN
 
 // Fungsi untuk mengubah status massal mahasiswa
-const setMahasiswaStatus = (status) => {
-  students.value = students.value.map((student) => {
-    if (checkedMahasiswa.value.includes(student.id)) {
-      return { ...student, status };
-    }
-    return student;
-  });
-  checkedMahasiswa.value = [];
+const setMahasiswaStatus = async (status) => {
+  // status: 'success' (aktif) atau 'inactive' (non aktif)
+  const akses_ta = status === "success";
+  try {
+    await updateAksesMahasiswa(checkedMahasiswa.value, akses_ta);
+    // toast.success("Status mahasiswa berhasil diubah!");
+    // Refresh data
+    fetchDataTabelMahasiswa(
+      currentPageTabelMahasiswa.value,
+      searchQueryMahasiswa.value,
+      getSelectedStatusValue(selectedStatusesMahasiswa.value)
+    );
+  } catch (e) {
+    // error sudah di-handle di service
+  } finally {
+    checkedMahasiswa.value = [];
+  }
 };
 
 // Fungsi untuk mengubah status massal dosen
-const setLecturerStatus = (status) => {
-  lecturers.value = lecturers.value.map((lecturer) => {
-    if (checkedLecturers.value.includes(lecturer.id)) {
-      return { ...lecturer, status };
-    }
-    return lecturer;
-  });
-  checkedLecturers.value = [];
+const setDosenStatus = async (status) => {
+  const akses_ta = status === "success";
+  try {
+    await updateAksesDosen(checkedDosen.value, akses_ta); // BENAR
+    // Refresh data
+    fetchDataTabelDosen(
+      currentPageTabelDosen.value,
+      searchQueryDosen.value,
+      getSelectedStatusValue(selectedStatusesDosen.value)
+    );
+  } catch (e) {
+    // error sudah di-handle di service
+  } finally {
+    checkedDosen.value = []; // BENAR
+  }
 };
 
 // Untuk menutup modal
@@ -253,15 +137,124 @@ const closeModalSelected = () => {
 };
 
 // Untuk menutup modal dosen
-const closeModalSelectedLecturer = () => {
-  checkedLecturers.value = [];
+const closeModalSelectedDosen = () => {
+  checkedDosen.value = [];
 };
+
+function getSelectedStatusValue(selectedStatuses) {
+  if (Array.isArray(selectedStatuses) && selectedStatuses.length > 0) {
+    return selectedStatuses.map(String).join(",");
+  }
+  return "";
+}
+
+function onSearchMahasiswa({ value }) {
+  currentPageTabelMahasiswa.value = 1;
+  fetchDataTabelMahasiswa(
+    1,
+    value,
+    getSelectedStatusValue(selectedStatusesMahasiswa.value)
+  );
+}
+function onSearchDosen({ value }) {
+  currentPageTabelDosen.value = 1;
+  fetchDataTabelDosen(
+    1,
+    value,
+    getSelectedStatusValue(selectedStatusesDosen.value)
+  );
+}
+
+function handleFilterMahasiswa({ values }) {
+  selectedStatusesMahasiswa.value = values;
+  currentPageTabelMahasiswa.value = 1;
+  fetchDataTabelMahasiswa(
+    1,
+    searchQueryMahasiswa.value,
+    getSelectedStatusValue(values)
+  );
+}
+
+function handleFilterDosen({ values }) {
+  selectedStatusesDosen.value = values;
+  currentPageTabelDosen.value = 1;
+  fetchDataTabelDosen(
+    1,
+    searchQueryDosen.value,
+    getSelectedStatusValue(values)
+  );
+}
+
+onMounted(() => {
+  // Fetch data when component is mounted
+  fetchDataTabelMahasiswa(
+    currentPageTabelMahasiswa.value,
+    searchQueryMahasiswa.value,
+    getSelectedStatusValue(selectedStatusesMahasiswa.value)
+  );
+  fetchDataTabelDosen(
+    currentPageTabelDosen.value,
+    searchQueryDosen.value,
+    getSelectedStatusValue(selectedStatusesDosen.value)
+  );
+});
+watch(currentPageTabelMahasiswa, (val) => {
+  fetchDataTabelMahasiswa(
+    val,
+    searchQueryMahasiswa.value,
+    getSelectedStatusValue(selectedStatusesMahasiswa.value)
+  );
+});
+watch(currentPageTabelDosen, (val) => {
+  fetchDataTabelDosen(
+    val,
+    searchQueryDosen.value,
+    getSelectedStatusValue(selectedStatusesDosen.value)
+  );
+});
+const getStatusClass = (status) => {
+  switch (status) {
+    case 1:
+      return "success";
+    case 0:
+      return "danger";
+    default:
+      return "placeholder";
+  }
+};
+
+const getStatusLabel = (status) => {
+  switch (status) {
+    case 1:
+      return "Aktif";
+    case 0:
+      return "Non Aktif";
+    default:
+      return "Tidak Diketahui";
+  }
+};
+watch(activeTab, (val) => {
+  if (val === "tab1") {
+    checkedDosen.value = [];
+  } else if (val === "tab2") {
+    checkedMahasiswa.value = [];
+  }
+});
+function handleTabChanged(tabId) {
+  checkedMahasiswa.value = [];
+  checkedDosen.value = [];
+}
 </script>
 
 <template>
   <Breadcrumb />
 
-  <TabDiv :tabs="tabs" :use-named-slots="true">
+  <TabDiv
+    :tabs="tabs"
+    :use-named-slots="true"
+    v-model="activeTab"
+    @tab-changed="handleTabChanged"
+  >
     <!-- === TAB 1: MAHASISWA === -->
     <template #tab1>
       <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
@@ -269,26 +262,37 @@ const closeModalSelectedLecturer = () => {
           title="Status"
           :items="statuses"
           filterType="status"
-          @apply="handleFilterMahasiswa"
           triggerText="Status"
           :preselectedValues="selectedStatusesMahasiswa"
+          @apply="handleFilterMahasiswa"
         />
         <SearchBar
           v-model="searchQueryMahasiswa"
-          @search="handleSearchMahasiswa"
+          @search="onSearchMahasiswa"
           filterKey="mahasiswa"
         />
       </div>
-      <!-- <div v-if="loading" class="py-8">
+      <div v-if="loadingTabelMahasiswa" class="py-8">
         <Loading />
       </div>
-      <ErrorMsg v-else-if="error" :message="error" /> -->
+      <ErrorMsg
+        v-else-if="errorTabelMahasiswa"
+        :message="errorTabelMahasiswa"
+      />
       <Table
+        v-else
         :headers="tableHeadersMahasiswa"
-        :items="filteredStudents"
+        :items="listMahasiswa"
         :showCheckbox="true"
         :checkedItems="checkedMahasiswa"
+        rowKey="mahasiswa_id"
         @update:checkedItems="checkedMahasiswa = $event"
+        :pagination="paginationTabelMahasiswa"
+        @pageChange="
+          (page) => {
+            currentPageTabelMahasiswa = page;
+          }
+        "
       >
         <template #row="{ item }">
           <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
@@ -306,23 +310,14 @@ const closeModalSelectedLecturer = () => {
           <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
             <StatusLabel
               class="w-fit"
-              :status="item.status"
-              :label="item.status === 'success' ? 'Aktif' : 'Non Aktif'"
+              :status="getStatusClass(item.akses_ta)"
+              :label="getStatusLabel(item.akses_ta)"
               :customLabel="true"
               size="md"
             />
           </td>
         </template>
       </Table>
-
-      <!-- ModalSelected muncul jika ada yang dicentang -->
-      <ModalSelected
-        v-if="checkedMahasiswa.length > 0"
-        :count="checkedMahasiswa.length"
-        @close="closeModalSelected"
-        @setActive="setMahasiswaStatus('success')"
-        @setInactive="setMahasiswaStatus('inactive')"
-      />
     </template>
 
     <!-- === TAB 2: DOSEN === -->
@@ -332,33 +327,41 @@ const closeModalSelectedLecturer = () => {
           title="Status"
           :items="statuses"
           filterType="status"
-          @apply="handleFilterDosen"
           triggerText="Status"
+          @apply="handleFilterDosen"
           :preselectedValues="selectedStatusesDosen"
         />
         <SearchBar
           v-model="searchQueryDosen"
-          @search="handleSearchDosen"
+          @search="onSearchDosen"
           filterKey="dosen"
         />
       </div>
-      <!-- <div v-if="loading" class="py-8">
+      <div v-if="loadingTabelDosen" class="py-8">
         <Loading />
       </div>
-      <ErrorMsg v-else-if="error" :message="error" /> -->
+      <ErrorMsg v-else-if="errorTabelDosen" :message="errorTabelDosen" />
       <Table
+        v-else
         :headers="tableHeadersDosen"
-        :items="filteredLecturers"
+        :items="listDosen"
         :showCheckbox="true"
-        :checkedItems="checkedLecturers"
-        @update:checkedItems="checkedLecturers = $event"
+        :checkedItems="checkedDosen"
+        rowKey="dosen_id"
+        @update:checkedItems="checkedDosen = $event"
+        :pagination="paginationTabelDosen"
+        @pageChange="
+          (page) => {
+            currentPageTabelDosen = page;
+          }
+        "
       >
         <template #row="{ item }">
           <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
             {{ item.name }}
           </td>
           <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
-            {{ item.nip }}
+            {{ item.nik }}
           </td>
           <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
             {{ item.email }}
@@ -366,21 +369,29 @@ const closeModalSelectedLecturer = () => {
           <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
             <StatusLabel
               class="w-fit"
-              :status="item.status"
-              :label="item.status === 'success' ? 'Aktif' : 'Non Aktif'"
+              :status="getStatusClass(item.akses_ta)"
+              :label="getStatusLabel(item.akses_ta)"
               :customLabel="true"
               size="md"
             />
           </td>
         </template>
       </Table>
-      <ModalSelected
-        v-if="checkedLecturers.length > 0"
-        :count="checkedLecturers.length"
-        @close="closeModalSelectedLecturer"
-        @setActive="setLecturerStatus('success')"
-        @setInactive="setLecturerStatus('inactive')"
-      />
     </template>
   </TabDiv>
+  <!-- ModalSelected muncul jika ada yang dicentang -->
+  <ModalSelected
+    v-if="checkedMahasiswa.length > 0"
+    :count="checkedMahasiswa.length"
+    @close="closeModalSelected"
+    @setActive="setMahasiswaStatus('success')"
+    @setInactive="setMahasiswaStatus('inactive')"
+  />
+  <ModalSelected
+    v-if="checkedDosen.length > 0"
+    :count="checkedDosen.length"
+    @close="closeModalSelectedDosen"
+    @setActive="setDosenStatus('success')"
+    @setInactive="setDosenStatus('inactive')"
+  />
 </template>

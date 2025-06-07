@@ -162,9 +162,9 @@ watch(
     <Loading />
   </div>
 
-  <div v-else-if="errorProposal" class="p-4">
+  <!-- <div v-else-if="errorProposal" class="p-4">
     <ErrorMsg :msg="errorProposal" />
-  </div>
+  </div> -->
 
   <template v-else>
     <!-- No Pembimbing State -->

@@ -6,18 +6,23 @@ export function useRuang() {
   const data = ref(null);
   const loading = ref(false);
   const error = ref(null);
+  const pagination = ref({});
 
-  const fetchData = async () => {
+  const fetchData = async (page = 1, search = "") => {
     loading.value = true;
     try {
       const token = VueCookies.get("auth_token");
-      const response = await axios.get("api/admin_ta/ruang", {
+      const params = {};
+      if (search) params.search = search;
+      const response = await axios.get(`api/admin_ta/ruang?page=${page}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
         },
+        params,
       });
-      data.value = response.data.data;
+      data.value = response.data.data.data;
+      pagination.value = response.data.data.pagination;
     } catch (err) {
       error.value = err.response?.data?.message || "Terjadi kesalahan";
     } finally {
@@ -26,7 +31,7 @@ export function useRuang() {
   };
 
   onMounted(() => {
-    fetchData();
+    // fetchData();
   });
 
   const addRuang = async (payload) => {
@@ -97,6 +102,7 @@ export function useRuang() {
     data,
     loading,
     error,
+    pagination,
     fetchData,
     addRuang,
     editRuang,

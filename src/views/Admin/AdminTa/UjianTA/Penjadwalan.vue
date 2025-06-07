@@ -56,12 +56,16 @@ onMounted(() => {
         <UserData
           :headText="dataShowPenjadwalan?.mahasiswa?.nim || 'NIM Mahasiswa'"
           :bodyText="dataShowPenjadwalan?.mahasiswa?.name || 'Nama Mahasiswa'"
-          :headText2="dataShowPenjadwalan?.kategori || 'Kategori Tugas Akhir'"
+          :headText2="
+            dataShowPenjadwalan?.kategori?.nama_kategori ||
+            'Kategori Tugas Akhir'
+          "
           :bodyText2="
             dataShowPenjadwalan?.judul_tugas_akhir || 'Judul Tugas Akhir'
           "
           :tahunAjaran="
-            dataShowPenjadwalan?.tahun_ajaran || 'Tahun Ajaran Tugas Akhir'
+            dataShowPenjadwalan?.tahun_ajaran?.tahun_ajaran ||
+            'Tahun Ajaran Tugas Akhir'
           "
         />
         <div class="flex flex-col gap-4 mt-4">
