@@ -19,6 +19,10 @@ const {
   currentPage,
   fetchUjianTA,
   changePage,
+  search,
+  filterBySesi,
+  searchQuery,
+  selectedSesi,
 } = useUjianTAForDosen();
 
 const {
@@ -28,13 +32,10 @@ const {
   fetchSessions,
 } = useSesiForDosen();
 
-const searchQuery = ref("");
-const selectedFilters = ref([]);
-
 // Table headers for the Table component
 const tableHeaders = [
   "NIM",
-  "Nama",
+  "Nama Lengkap",
   "Judul Tugas Akhir",
   "Tanggal",
   "Sesi",
@@ -45,51 +46,22 @@ const tableHeaders = [
 // Computed property to get session filter options
 const filterSessions = computed(() => {
   if (sessions.value && sessions.value.length > 0) {
-    return sessions.value.map(
-      (session) => `${session.waktu_mulai} - ${session.waktu_selesai}`
-    );
+    return sessions.value.map((session) => session.nama_sesi);
   }
   return loadingSessions.value ? ["Memuat sesi..."] : [];
 });
 
 // Handler for filter application
 const applyFilter = (filterData) => {
-  selectedFilters.value = filterData.values;
-  console.log("Filter diterapkan:", selectedFilters.value);
+  const selectedSesiValue =
+    filterData.values.length > 0 ? filterData.values[0] : "";
+  filterBySesi(selectedSesiValue);
 };
 
-const filteredItems = computed(() => {
-  if (!ujianTAData.value) return [];
-
-  let filtered = ujianTAData.value;
-
-  // Apply text search filter
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    filtered = filtered.filter((item) => {
-      return (
-        item.mahasiswa?.name?.toLowerCase().includes(query) ||
-        item.mahasiswa?.nim?.toLowerCase().includes(query) ||
-        item.judul_tugas_akhir?.toLowerCase().includes(query) ||
-        item.tanggal_ujian?.toLowerCase().includes(query) ||
-        `${item.sesi?.waktu_mulai} - ${item.sesi?.waktu_selesai}`
-          .toLowerCase()
-          .includes(query) ||
-        item.ruang?.toLowerCase().includes(query)
-      );
-    });
-  }
-
-  // Apply session filter if any selected
-  if (selectedFilters.value.length > 0) {
-    filtered = filtered.filter((item) => {
-      const sessionTime = `${item.sesi?.waktu_mulai} - ${item.sesi?.waktu_selesai}`;
-      return selectedFilters.value.includes(sessionTime);
-    });
-  }
-
-  return filtered;
-});
+// Handle search input
+const handleSearch = (data) => {
+  search(data.value);
+};
 
 // Handle page change from table component
 const handlePageChange = (page) => {
@@ -133,7 +105,7 @@ onMounted(() => {
             v-else
             title="Sesi"
             :items="filterSessions"
-            :preselectedValues="selectedFilters"
+            :preselectedValues="selectedSesi ? [selectedSesi] : []"
             filterType="session"
             triggerText="Sesi"
             triggerVariant="outlined-black"
@@ -147,8 +119,8 @@ onMounted(() => {
         <div class="flex-grow w-full">
           <SearchBar
             v-model="searchQuery"
-            placeholder="Search..."
-            @search="(data) => (searchQuery = data.value)"
+            placeholder="Search by name, NIM, or title..."
+            @search="handleSearch"
           />
         </div>
       </div>
@@ -192,35 +164,10 @@ onMounted(() => {
 
       <!-- When we have data to display -->
       <div v-else class="relative overflow-x-auto">
-        <!-- Empty filtered results state -->
-        <div
-          v-if="filteredItems.length === 0"
-          class="text-center py-8 bg-gray-50 rounded-lg"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-12 w-12 mx-auto text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-            />
-          </svg>
-          <p class="mt-2 text-gray-600">
-            Tidak ada jadwal ujian yang sesuai dengan filter
-          </p>
-        </div>
-
         <!-- Table with built-in pagination -->
         <Table
-          v-else
           :headers="tableHeaders"
-          :items="filteredItems"
+          :items="ujianTAData"
           :pagination="pagination"
           @pageChange="handlePageChange"
         >
@@ -240,7 +187,10 @@ onMounted(() => {
               {{ item.tanggal_ujian }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              {{ item.sesi?.waktu_mulai }} - {{ item.sesi?.waktu_selesai }}
+              {{
+                item.sesi?.nama_sesi ||
+                `${item.sesi?.waktu_mulai} - ${item.sesi?.waktu_selesai}`
+              }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               {{ item.ruang }}
@@ -256,6 +206,7 @@ onMounted(() => {
                     title: item.judul_tugas_akhir || 'Judul Tidak Tersedia',
                     date: item.tanggal_ujian || '',
                     session:
+                      item.sesi?.nama_sesi ||
                       `${item.sesi?.waktu_mulai} - ${item.sesi?.waktu_selesai}` ||
                       '',
                     room: item.ruang || '',

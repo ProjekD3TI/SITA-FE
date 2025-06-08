@@ -8,15 +8,17 @@ export function useUjianTAForDosen() {
   const loading = ref(false);
   const error = ref(null);
   const currentPage = ref(1);
+  const searchQuery = ref("");
+  const selectedSesi = ref(null);
 
-  const fetchUjianTA = async (page = 1) => {
+  const fetchUjianTA = async (page = 1, search = "", sesi = "") => {
     loading.value = true;
     error.value = null;
 
     try {
       const token = VueCookies.get("auth_token");
       const response = await axios.get(
-        `/api/dosen/list-ujian-ta?page=${page}`,
+        `/api/dosen/list-ujian-ta?page=${page}&search=${search}&sesi=${sesi}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -39,7 +41,17 @@ export function useUjianTAForDosen() {
 
   const changePage = (page) => {
     currentPage.value = page;
-    fetchUjianTA(page);
+    fetchUjianTA(page, searchQuery.value, selectedSesi.value);
+  };
+
+  const search = (query) => {
+    searchQuery.value = query;
+    fetchUjianTA(1, query, selectedSesi.value);
+  };
+
+  const filterBySesi = (sesi) => {
+    selectedSesi.value = sesi;
+    fetchUjianTA(1, searchQuery.value, sesi);
   };
 
   onMounted(() => {
@@ -52,7 +64,11 @@ export function useUjianTAForDosen() {
     loading,
     error,
     currentPage,
+    searchQuery,
+    selectedSesi,
     fetchUjianTA,
     changePage,
+    search,
+    filterBySesi,
   };
 }

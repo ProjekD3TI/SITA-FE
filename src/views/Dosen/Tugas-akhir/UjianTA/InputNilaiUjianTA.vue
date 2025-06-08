@@ -6,22 +6,20 @@ import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Loading from "@/components/Loading.vue";
-import { useNilaiUjianTA } from "@/services/TugasAkhir/Dosen/nilaiUjianTA";
+import { useNilaiUjianTA } from "@/services/TugasAkhir/Dosen/nilaiUjianTA.js";
+import { useDetailUjianTA } from "@/services/TugasAkhir/Dosen/detailUjianTA.js";
 import { useToast } from "vue-toastification";
 
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
-
-// Service untuk mengelola nilai ujian TA
+const { submitNilaiUjian, updateStatusKelulusan, loading, error } =
+  useNilaiUjianTA();
 const {
-  nilaiUjianTA,
-  userRole,
-  loading,
-  saveNilaiUjianTA,
-  fetchNilaiUjianTA,
-  isKetuaPenguji,
-} = useNilaiUjianTA();
+  detailUjian,
+  loading: loadingDetail,
+  fetchDetailUjian,
+} = useDetailUjianTA();
 
 // Data mahasiswa dari query parameters
 const studentInfo = ref({
@@ -29,25 +27,37 @@ const studentInfo = ref({
   name: "",
   category: "",
   title: "",
-  tugasAkhirId: "", // ID tugas akhir untuk API calls
 });
-
-// Flag untuk menandai apakah pengguna adalah ketua penguji
-const isKetua = ref(false);
 
 // Inisialisasi nilai form
 const statusKelulusan = ref("");
-const disiplin = ref("");
-const komunikasi = ref("");
-const pengetahuan = ref("");
-const tingkahLaku = ref("");
-
-// Tambahan variabel form yang diperlukan
 const tataLaporan = ref("");
 const kemampuanTeknis = ref("");
 const hasilProduk = ref("");
 const presentasi = ref("");
 const catatanRevisi = ref("");
+const isEdit = ref(false);
+
+// Total nilai computed property based on weighted average
+const totalNilai = computed(() => {
+  if (
+    !tataLaporan.value ||
+    !kemampuanTeknis.value ||
+    !hasilProduk.value ||
+    !presentasi.value
+  ) {
+    return "";
+  }
+
+  // Calculate weighted average based on percentages
+  const total =
+    parseFloat(tataLaporan.value) * 0.15 +
+    parseFloat(kemampuanTeknis.value) * 0.35 +
+    parseFloat(hasilProduk.value) * 0.25 +
+    parseFloat(presentasi.value) * 0.25;
+
+  return total.toFixed(2);
+});
 
 // Error tracking for validation
 const errors = ref({
@@ -62,36 +72,36 @@ const errors = ref({
 // Track if form has been submitted at least once
 const formSubmitted = ref(false);
 
-// Computed property untuk mengontrol apakah input status kelulusan dapat diubah
-const isStatusKelulusanDisabled = computed(() => {
-  return !isKetua.value;
+// Check if current user is Secretary (can edit status kelulusan)
+const isSecretary = computed(() => {
+  if (!detailUjian.value) return false;
+
+  // Check if current user is a Secretary among the examiners
+  const isSecretaryExaminer = detailUjian.value.dosen_penguji?.some(
+    (penguji) => {
+      // The API marks current user by providing their nilai_ujian_ta data
+      const isCurrentUser = penguji.nilai_ujian_ta !== null;
+      const isSecretary =
+        penguji.jabatan_penguji?.toLowerCase() === "sekretaris";
+      return isCurrentUser && isSecretary;
+    }
+  );
+
+  // Check if current user is the supervising lecturer
+  const isSupervisingLecturer =
+    detailUjian.value.dosen_pembimbing?.dosen_pembimbing_id ===
+    detailUjian.value.dosen_penguji?.find((p) => p.nilai_ujian_ta !== null)
+      ?.dosen_penguji_id;
+
+  return isSecretaryExaminer || isSupervisingLecturer;
 });
 
 // Computed property untuk mengontrol status disabled pada textarea catatan revisi
 const isCatatanRevisiDisabled = computed(() => {
-  // Disabled jika bukan ketua penguji
-  if (!isKetua.value) {
-    return true;
-  }
-  // Atau disabled berdasarkan status kelulusan yang dipilih
   return (
-    statusKelulusan.value === "Lulus tanpa revisi" ||
-    statusKelulusan.value === "Tidak lulus"
+    statusKelulusan.value === "1" || // Lulus tanpa revisi
+    statusKelulusan.value === "4" // Tidak lulus
   );
-});
-
-// Computed property untuk menampilkan pesan jika bukan ketua penguji
-const ketaStatusMessage = computed(() => {
-  return !isKetua.value
-    ? "Status kelulusan hanya dapat diisi oleh ketua penguji"
-    : "";
-});
-
-const catatanRevisiMessage = computed(() => {
-  if (!isKetua.value) {
-    return "Catatan revisi hanya dapat diisi oleh ketua penguji";
-  }
-  return "";
 });
 
 // Validate all required fields
@@ -108,8 +118,8 @@ const validateForm = () => {
     catatanRevisi: false,
   };
 
-  // Check status kelulusan (only validate if current user is ketua)
-  if (isKetua.value && !statusKelulusan.value) {
+  // Check status kelulusan (only if secretary)
+  if (isSecretary.value && !statusKelulusan.value) {
     errors.value.statusKelulusan = true;
     isValid = false;
   }
@@ -118,7 +128,10 @@ const validateForm = () => {
   if (
     tataLaporan.value === "" ||
     tataLaporan.value === null ||
-    tataLaporan.value === undefined
+    tataLaporan.value === undefined ||
+    isNaN(parseFloat(tataLaporan.value)) ||
+    parseFloat(tataLaporan.value) < 0 ||
+    parseFloat(tataLaporan.value) > 100
   ) {
     errors.value.tataLaporan = true;
     isValid = false;
@@ -127,7 +140,10 @@ const validateForm = () => {
   if (
     kemampuanTeknis.value === "" ||
     kemampuanTeknis.value === null ||
-    kemampuanTeknis.value === undefined
+    kemampuanTeknis.value === undefined ||
+    isNaN(parseFloat(kemampuanTeknis.value)) ||
+    parseFloat(kemampuanTeknis.value) < 0 ||
+    parseFloat(kemampuanTeknis.value) > 100
   ) {
     errors.value.kemampuanTeknis = true;
     isValid = false;
@@ -136,7 +152,10 @@ const validateForm = () => {
   if (
     hasilProduk.value === "" ||
     hasilProduk.value === null ||
-    hasilProduk.value === undefined
+    hasilProduk.value === undefined ||
+    isNaN(parseFloat(hasilProduk.value)) ||
+    parseFloat(hasilProduk.value) < 0 ||
+    parseFloat(hasilProduk.value) > 100
   ) {
     errors.value.hasilProduk = true;
     isValid = false;
@@ -145,16 +164,19 @@ const validateForm = () => {
   if (
     presentasi.value === "" ||
     presentasi.value === null ||
-    presentasi.value === undefined
+    presentasi.value === undefined ||
+    isNaN(parseFloat(presentasi.value)) ||
+    parseFloat(presentasi.value) < 0 ||
+    parseFloat(presentasi.value) > 100
   ) {
     errors.value.presentasi = true;
     isValid = false;
   }
 
-  // Only validate catatan revisi if user is ketua AND it's enabled
+  // Only validate catatan revisi if it's enabled and required
   if (
-    isKetua.value &&
     !isCatatanRevisiDisabled.value &&
+    statusKelulusan.value === "2" && // Lulus dengan revisi
     (catatanRevisi.value === "" ||
       catatanRevisi.value === null ||
       catatanRevisi.value === undefined)
@@ -166,50 +188,49 @@ const validateForm = () => {
   return isValid;
 };
 
-// Ambil data dari query parameters dan check role penguji
-onMounted(async () => {
-  const nim = route.query.nim;
-  const name = route.query.name;
-  const category = route.query.category;
-  const title = route.query.title;
-  const tugasAkhirId = route.query.tugasAkhirId;
+// Load data from API or query params
+const loadData = async () => {
+  const tugasAkhirId = route.query.tugas_akhir_id;
 
-  console.log("Query params:", { nim, name, category, title, tugasAkhirId });
+  if (tugasAkhirId) {
+    await fetchDetailUjian(tugasAkhirId);
 
-  if (nim && tugasAkhirId) {
-    studentInfo.value = {
-      nim,
-      name,
-      category,
-      title,
-      tugasAkhirId,
-    };
+    const nim = route.query.nim || detailUjian.value?.mahasiswa?.nim;
+    const name = route.query.name || detailUjian.value?.mahasiswa?.name;
+    const category =
+      route.query.category || detailUjian.value?.kategori?.nama_kategori;
+    const title = route.query.title || detailUjian.value?.judul_tugas_akhir;
 
-    try {
-      // Fetch data dan periksa role dosen
-      await fetchNilaiUjianTA(tugasAkhirId);
-      isKetua.value = isKetuaPenguji();
+    if (nim) {
+      studentInfo.value = { nim, name, category, title };
+    }
 
-      console.log("Is ketua penguji:", isKetua.value);
+    // Check if we're in edit mode
+    isEdit.value = route.query.edit === "true";
 
-      // Jika bukan ketua, tampilkan pesan
-      if (!isKetua.value) {
-        toast.info(
-          "Anda hanya dapat mengisi nilai ujian. Status kelulusan dan catatan revisi hanya dapat diisi oleh ketua penguji."
-        );
+    // If editing, pre-populate form with existing data
+    if (isEdit.value && detailUjian.value) {
+      // Find current user's data from API response
+      const currentDosenPenguji = detailUjian.value.dosen_penguji.find(
+        (penguji) => penguji.nilai_ujian_ta !== null
+      );
+
+      if (currentDosenPenguji) {
+        const nilai = currentDosenPenguji.nilai_ujian_ta;
+        tataLaporan.value = nilai?.kualitas_tata_laporan || "";
+        kemampuanTeknis.value = nilai?.kemampuan_teknis || "";
+        hasilProduk.value = nilai?.kualitas_produk || "";
+        presentasi.value = nilai?.presentasi || "";
+        catatanRevisi.value = currentDosenPenguji.revisi || "";
+
+        // Only set status kelulusan if user is secretary
+        if (isSecretary.value) {
+          statusKelulusan.value = detailUjian.value.status_kelulusan || "";
+        }
       }
-
-      // Isi nilai yang sudah ada jika ada
-      if (nilaiUjianTA.value) {
-        // Fill existing data if available
-        // This depends on your API response structure
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      toast.error("Gagal memuat data ujian TA. Silakan coba lagi.");
     }
   }
-});
+};
 
 // Handle submit nilai
 const handleSubmit = async () => {
@@ -225,38 +246,41 @@ const handleSubmit = async () => {
     return;
   }
 
-  // Prepare data untuk submit
-  const formData = {
-    statusKelulusan: statusKelulusan.value,
+  const nilaiData = {
+    tugas_akhir_id: route.query.tugas_akhir_id,
     tataLaporan: tataLaporan.value,
     kemampuanTeknis: kemampuanTeknis.value,
     hasilProduk: hasilProduk.value,
     presentasi: presentasi.value,
+    totalNilai: totalNilai.value,
     catatanRevisi: catatanRevisi.value,
   };
 
-  try {
-    // Submit form - pass isKetua to determine api calls
-    await saveNilaiUjianTA(
-      studentInfo.value.tugasAkhirId,
-      formData,
-      isKetua.value
-    );
+  // Submit nilai ujian
+  const result = await submitNilaiUjian(nilaiData, isEdit.value);
 
-    // Kembali ke halaman detail ujian TA
+  // If secretary, also update status kelulusan
+  if (isSecretary.value && statusKelulusan.value) {
+    await updateStatusKelulusan(
+      route.query.tugas_akhir_id,
+      statusKelulusan.value
+    );
+  }
+
+  if (!error.value) {
+    // Add timestamp for cache busting and success parameter
+    const timestamp = new Date().getTime();
+
+    // Kembali ke halaman detail ujian dengan parameter sukses
     router.push({
       path: "/dosen/tugas-akhir/ujian-ta/detail-ujian-ta",
       query: {
-        nim: studentInfo.value.nim,
-        name: studentInfo.value.name,
-        category: studentInfo.value.category,
-        title: studentInfo.value.title,
-        tugasAkhirId: studentInfo.value.tugasAkhirId,
+        tugas_akhir_id: route.query.tugas_akhir_id,
+        success: "true",
+        action: isEdit.value ? "update" : "input",
+        _t: timestamp,
       },
     });
-  } catch (error) {
-    console.error("Error submitting form:", error);
-    toast.error("Gagal menyimpan data. Silakan coba lagi.");
   }
 };
 
@@ -274,11 +298,20 @@ watch(hasilProduk, () => resetValidationError("hasilProduk"));
 watch(presentasi, () => resetValidationError("presentasi"));
 watch(catatanRevisi, () => resetValidationError("catatanRevisi"));
 watch(statusKelulusan, () => resetValidationError("statusKelulusan"));
+
+// Load data when component is mounted
+onMounted(() => {
+  loadData();
+});
 </script>
 <template>
-  <div v-if="loading" class="flex items-center justify-center min-h-[80dvh]">
+  <div
+    v-if="loading || loadingDetail"
+    class="flex items-center justify-center min-h-[80dvh]"
+  >
     <Loading />
   </div>
+
   <div v-else>
     <Breadcrumb :items="breadcrumbItems" />
     <div class="card-rounded bg-white p-6 lg:p-8">
@@ -296,17 +329,18 @@ watch(statusKelulusan, () => resetValidationError("statusKelulusan"));
         </div>
       </div>
 
+      <!-- API error message -->
+      <div v-if="error" class="bg-red-100 p-4 rounded-lg mb-4">
+        <p class="text-red-700">{{ error }}</p>
+      </div>
+
       <!-- Form Section -->
       <div>
-        <div class="my-5" :class="{ 'opacity-50': isStatusKelulusanDisabled }">
-          <div class="flex items-center gap-2">
-            <p class="heading5 text-[#00A2EA] font-semibold mb-3">
-              Status Kelulusan <span class="text-red-500">*</span>
-            </p>
-            <p v-if="ketaStatusMessage" class="text-orange-500 text-sm italic">
-              ({{ ketaStatusMessage }})
-            </p>
-          </div>
+        <!-- Status Kelulusan (only visible to secretary) -->
+        <div v-if="isSecretary" class="my-5">
+          <p class="heading5 text-[#00A2EA] font-semibold mb-3">
+            Status Kelulusan <span class="text-red-500">*</span>
+          </p>
           <div class="w-full flex flex-col sm:flex-row sm:justify-between">
             <div class="flex items-center mb-3 sm:mb-0 sm:flex-1">
               <div class="relative inline-flex items-center">
@@ -314,14 +348,12 @@ watch(statusKelulusan, () => resetValidationError("statusKelulusan"));
                   type="radio"
                   id="lulusTanpaRevisi"
                   name="statusKelulusan"
-                  value="Lulus tanpa revisi"
+                  value="1"
                   v-model="statusKelulusan"
-                  :disabled="isStatusKelulusanDisabled"
                   class="w-7 h-7 cursor-pointer appearance-none border-2 border-gray-300 rounded-full checked:border-[#00B69B] checked:bg-[#00B69B] focus:outline-none"
-                  :class="{ 'cursor-not-allowed': isStatusKelulusanDisabled }"
                 />
                 <svg
-                  v-if="statusKelulusan === 'Lulus tanpa revisi'"
+                  v-if="statusKelulusan === '1'"
                   class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-white pointer-events-none"
                   fill="currentColor"
                   viewBox="0 0 20 20"
@@ -336,10 +368,8 @@ watch(statusKelulusan, () => resetValidationError("statusKelulusan"));
               <label
                 for="lulusTanpaRevisi"
                 class="ml-2 body3-bold text-gray-700"
-                :class="{ 'cursor-not-allowed': isStatusKelulusanDisabled }"
+                >Lulus tanpa revisi</label
               >
-                Lulus tanpa revisi
-              </label>
             </div>
 
             <div class="flex items-center mb-3 sm:mb-0 sm:flex-1">
@@ -348,14 +378,12 @@ watch(statusKelulusan, () => resetValidationError("statusKelulusan"));
                   type="radio"
                   id="lulusDenganRevisi"
                   name="statusKelulusan"
-                  value="Lulus dengan revisi"
+                  value="2"
                   v-model="statusKelulusan"
-                  :disabled="isStatusKelulusanDisabled"
                   class="w-7 h-7 cursor-pointer appearance-none border-2 border-gray-300 rounded-full checked:border-[#00B69B] checked:bg-[#00B69B] focus:outline-none"
-                  :class="{ 'cursor-not-allowed': isStatusKelulusanDisabled }"
                 />
                 <svg
-                  v-if="statusKelulusan === 'Lulus dengan revisi'"
+                  v-if="statusKelulusan === '2'"
                   class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-white pointer-events-none"
                   fill="currentColor"
                   viewBox="0 0 20 20"
@@ -370,10 +398,8 @@ watch(statusKelulusan, () => resetValidationError("statusKelulusan"));
               <label
                 for="lulusDenganRevisi"
                 class="ml-2 body3-bold text-gray-700"
-                :class="{ 'cursor-not-allowed': isStatusKelulusanDisabled }"
+                >Lulus dengan revisi</label
               >
-                Lulus dengan revisi
-              </label>
             </div>
 
             <div class="flex items-center mb-3 sm:mb-0 sm:flex-1">
@@ -382,14 +408,12 @@ watch(statusKelulusan, () => resetValidationError("statusKelulusan"));
                   type="radio"
                   id="belumLulus"
                   name="statusKelulusan"
-                  value="Belum lulus perlu diuji lagi"
+                  value="3"
                   v-model="statusKelulusan"
-                  :disabled="isStatusKelulusanDisabled"
                   class="w-7 h-7 cursor-pointer appearance-none border-2 border-gray-300 rounded-full checked:border-[#00B69B] checked:bg-[#00B69B] focus:outline-none"
-                  :class="{ 'cursor-not-allowed': isStatusKelulusanDisabled }"
                 />
                 <svg
-                  v-if="statusKelulusan === 'Belum lulus perlu diuji lagi'"
+                  v-if="statusKelulusan === '3'"
                   class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-white pointer-events-none"
                   fill="currentColor"
                   viewBox="0 0 20 20"
@@ -401,13 +425,9 @@ watch(statusKelulusan, () => resetValidationError("statusKelulusan"));
                   ></path>
                 </svg>
               </div>
-              <label
-                for="belumLulus"
-                class="ml-2 body3-bold text-gray-700"
-                :class="{ 'cursor-not-allowed': isStatusKelulusanDisabled }"
+              <label for="belumLulus" class="ml-2 body3-bold text-gray-700"
+                >Belum lulus perlu diuji lagi</label
               >
-                Belum lulus perlu diuji lagi
-              </label>
             </div>
 
             <div class="flex items-center sm:flex-1">
@@ -416,14 +436,12 @@ watch(statusKelulusan, () => resetValidationError("statusKelulusan"));
                   type="radio"
                   id="tidakLulus"
                   name="statusKelulusan"
-                  value="Tidak lulus"
+                  value="4"
                   v-model="statusKelulusan"
-                  :disabled="isStatusKelulusanDisabled"
                   class="w-7 h-7 cursor-pointer appearance-none border-2 border-gray-300 rounded-full checked:border-[#00B69B] checked:bg-[#00B69B] focus:outline-none"
-                  :class="{ 'cursor-not-allowed': isStatusKelulusanDisabled }"
                 />
                 <svg
-                  v-if="statusKelulusan === 'Tidak lulus'"
+                  v-if="statusKelulusan === '4'"
                   class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-white pointer-events-none"
                   fill="currentColor"
                   viewBox="0 0 20 20"
@@ -435,22 +453,19 @@ watch(statusKelulusan, () => resetValidationError("statusKelulusan"));
                   ></path>
                 </svg>
               </div>
-              <label
-                for="tidakLulus"
-                class="ml-2 body3-bold text-gray-700"
-                :class="{ 'cursor-not-allowed': isStatusKelulusanDisabled }"
+              <label for="tidakLulus" class="ml-2 body3-bold text-gray-700"
+                >Tidak lulus</label
               >
-                Tidak lulus
-              </label>
             </div>
           </div>
           <p
-            v-if="isKetua && formSubmitted && errors.statusKelulusan"
+            v-if="formSubmitted && errors.statusKelulusan"
             class="text-red-500 mt-2 error-text"
           >
             Status kelulusan wajib dipilih
           </p>
         </div>
+
         <div class="my-5">
           <p class="heading5 text-[#00A2EA] font-semibold mb-5">
             Nilai Ujian <span class="text-red-500">*</span>
@@ -471,14 +486,14 @@ watch(statusKelulusan, () => resetValidationError("statusKelulusan"));
                 v-if="formSubmitted && errors.tataLaporan"
                 class="text-red-500 mt-1 error-text"
               >
-                Nilai tata laporan wajib diisi
+                Nilai tata laporan wajib diisi (0-100)
               </p>
             </div>
 
             <div class="w-full sm:w-[calc(50%-0.5rem)]">
               <InputNumber
                 id="kemampuanTeknis"
-                label="KemampuanTeknis (35%) *"
+                label="Kemampuan Teknis (35%) *"
                 placeholder="Masukkan nilai kemampuan teknis"
                 v-model="kemampuanTeknis"
                 :class="{
@@ -490,7 +505,7 @@ watch(statusKelulusan, () => resetValidationError("statusKelulusan"));
                 v-if="formSubmitted && errors.kemampuanTeknis"
                 class="text-red-500 mt-1 error-text"
               >
-                Nilai kemampuan teknis wajib diisi
+                Nilai kemampuan teknis wajib diisi (0-100)
               </p>
             </div>
 
@@ -509,7 +524,7 @@ watch(statusKelulusan, () => resetValidationError("statusKelulusan"));
                 v-if="formSubmitted && errors.hasilProduk"
                 class="text-red-500 mt-1 error-text"
               >
-                Nilai hasil produk wajib diisi
+                Nilai hasil produk wajib diisi (0-100)
               </p>
             </div>
 
@@ -528,28 +543,29 @@ watch(statusKelulusan, () => resetValidationError("statusKelulusan"));
                 v-if="formSubmitted && errors.presentasi"
                 class="text-red-500 mt-1 error-text"
               >
-                Nilai presentasi wajib diisi
+                Nilai presentasi wajib diisi (0-100)
               </p>
             </div>
           </div>
-        </div>
-        <div class="my-5" :class="{ 'opacity-50': isCatatanRevisiDisabled }">
-          <div class="flex items-center gap-2">
-            <p class="heading5 text-[#00A2EA] font-semibold mb-5">
-              Catatan Revisi
-              <span
-                v-if="!isCatatanRevisiDisabled && isKetua"
-                class="text-red-500"
-                >*</span
-              >
-            </p>
-            <p
-              v-if="catatanRevisiMessage"
-              class="text-orange-500 text-sm italic mb-5"
-            >
-              ({{ catatanRevisiMessage }})
+
+          <!-- Show calculated total -->
+          <div class="mt-4">
+            <p class="body1-bold">
+              Nilai Rata-rata:
+              <span class="text-primary">{{ totalNilai || "-" }}</span>
             </p>
           </div>
+        </div>
+
+        <div class="my-5" :class="{ 'opacity-50': isCatatanRevisiDisabled }">
+          <p class="heading5 text-[#00A2EA] font-semibold mb-5">
+            Catatan Revisi
+            <span
+              v-if="!isCatatanRevisiDisabled && statusKelulusan === '2'"
+              class="text-red-500"
+              >*</span
+            >
+          </p>
           <InputTextarea
             id="catatanRevisi"
             label="Catatan Revisi"
@@ -560,7 +576,7 @@ watch(statusKelulusan, () => resetValidationError("statusKelulusan"));
             required
           ></InputTextarea>
           <p
-            v-if="isKetua && formSubmitted && errors.catatanRevisi"
+            v-if="formSubmitted && errors.catatanRevisi"
             class="text-red-500 mt-1 error-text"
           >
             Catatan revisi wajib diisi
@@ -574,9 +590,9 @@ watch(statusKelulusan, () => resetValidationError("statusKelulusan"));
           variant="primary"
           size="lg"
           @click="handleSubmit"
-          :loading="loading"
+          :disabled="loading"
         >
-          Simpan Nilai
+          {{ isEdit ? "Update Nilai" : "Simpan Nilai" }}
         </Button>
       </div>
     </div>
@@ -594,7 +610,7 @@ input[type="radio"] {
 }
 
 /* Hover state */
-input[type="radio"]:not(:disabled):hover {
+input[type="radio"]:hover {
   border-color: #00b69b;
 }
 
@@ -602,12 +618,6 @@ input[type="radio"]:not(:disabled):hover {
 input[type="radio"]:focus {
   border-color: #00b69b;
   box-shadow: 0 0 0 2px rgba(0, 182, 155, 0.2);
-}
-
-/* Disabled state */
-input[type="radio"]:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 /* Add smooth transition for opacity changes */

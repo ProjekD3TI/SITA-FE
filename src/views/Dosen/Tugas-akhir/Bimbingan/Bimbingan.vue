@@ -10,7 +10,7 @@ import ModalFilter from "@/components/Tugas-akhir/Modals/ModalFilter.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Loading from "@/components/Loading.vue";
 import { useRequestPembimbing } from "@/services/TugasAkhir/Dosen/requestPembimbing";
-import { useDibimbing } from "@/services/TugasAkhir/Dosen/dibimbing";
+import { useDibimbing } from "@/services/TugasAkhir/Dosen/bimbingan";
 import { useKategori } from "@/services/TugasAkhir/Dosen/kategori";
 
 const activeTab = ref("permintaan");

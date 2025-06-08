@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import JadwalUjian from "@/components/Tugas-akhir/JadwalUjian.vue";
@@ -9,156 +9,184 @@ import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Loading from "@/components/Loading.vue";
+import router from "@/router";
+import { useDetailUjianTA } from "@/services/TugasAkhir/Dosen/detailUjianTA.js";
+import { useToast } from "vue-toastification";
 
 const route = useRoute();
+const { detailUjian, loading, error, fetchDetailUjian, refreshDetailUjian } =
+  useDetailUjianTA();
+const toast = useToast();
 
 // App State
-const dinilai = ref(true); // Changed to true to show the student has been graded
 const showNilaiModal = ref(false);
 
-// PDF handling
-const pdfUrl =
-  "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf";
+// Watch the route params for changes and reload data when needed
+watch(
+  () => route.query,
+  (newQuery) => {
+    if (newQuery.tugas_akhir_id) {
+      fetchDetailUjian(newQuery.tugas_akhir_id);
 
-// Data untuk komponen penguji
-const examiners = [
-  { name: "John Batubara, A. Xioo, M. Si, A. Cer", role: "Ketua" },
-  { name: "Dr. Sinta Wijaya, M.Kom", role: "Sekretaris" },
-  { name: "Prof. Ahmad Rizal, Ph.D", role: "Dosen Penguji" },
-];
+      // Show toast notification if returning from successful submission - simplified version
+      if (newQuery.success === "true") {
+        const message =
+          newQuery.action === "update"
+            ? "Nilai berhasil diperbarui"
+            : "Nilai berhasil disimpan";
+        toast.success(message);
 
-// Jadwal ujian dari query parameters
-const schedule = ref({
-  date: "",
-  time: "",
-  room: "",
+        // Remove success param from URL to prevent showing toast on refresh
+        const newRoute = {
+          path: route.path,
+          query: { ...route.query },
+        };
+        delete newRoute.query.success;
+        delete newRoute.query.action;
+        router.replace(newRoute);
+      }
+    }
+  },
+  { deep: true, immediate: true }
+);
+
+// Check if current user is Secretary or Supervising Lecturer
+const isSecretary = computed(() => {
+  if (!detailUjian.value) return false;
+
+  // Check if current user is a Secretary among the examiners
+  const isSecretaryExaminer = detailUjian.value.dosen_penguji?.some(
+    (penguji) => {
+      // The API marks current user by providing their nilai_ujian_ta data
+      const isCurrentUser = penguji.nilai_ujian_ta !== null;
+      const isSecretary =
+        penguji.jabatan_penguji?.toLowerCase() === "sekretaris";
+      return isCurrentUser && isSecretary;
+    }
+  );
+
+  // Check if current user is the supervising lecturer
+  const isSupervisingLecturer =
+    detailUjian.value.dosen_pembimbing?.dosen_pembimbing_id ===
+    detailUjian.value.dosen_penguji?.find((p) => p.nilai_ujian_ta !== null)
+      ?.dosen_penguji_id;
+
+  return isSecretaryExaminer || isSupervisingLecturer;
 });
 
-// TA details dari query parameters
-const tugasAkhirDetails = ref({
-  nim: "",
-  nama: "",
-  judul: "",
-  kategori: "",
-  dosenPembimbing: "Agus Kotak S.Ht", // Default, bisa diganti dengan data sebenarnya
-  tahunAjaran: "2023/2024",
-  nilai: 90,
-  catatan:
-    "Tugas akhir sangat baik, presentasi lancar, dan mahasiswa dapat menjawab semua pertanyaan dengan tepat.",
+// Get nilai status - check if current user has given grade
+const hasGiven = computed(() => {
+  if (!detailUjian.value) return false;
+
+  // Find if current user has already given grades
+  const currentDosenPenguji = detailUjian.value.dosen_penguji.find(
+    (penguji) => penguji.nilai_ujian_ta !== null
+  );
+
+  return !!currentDosenPenguji?.nilai_ujian_ta;
+});
+
+// PDF handling
+const pdfUrl = computed(() => {
+  if (detailUjian.value?.berkas && detailUjian.value.berkas.length > 0) {
+    return detailUjian.value.berkas[0].file_path;
+  }
+  return null;
+});
+
+// Computed for examiners list
+const examiners = computed(() => {
+  if (!detailUjian.value?.dosen_penguji) return [];
+
+  return detailUjian.value.dosen_penguji.map((penguji) => ({
+    name: penguji.name,
+    role: penguji.jabatan_penguji || "Dosen Penguji",
+  }));
+});
+
+// Compute jadwal ujian from the API data
+const schedule = computed(() => {
+  if (!detailUjian.value?.ujian_ta) return { date: "", time: "", room: "" };
+
+  const ujian = detailUjian.value.ujian_ta;
+  return {
+    date: ujian.tanggal_ujian || "",
+    time:
+      ujian.waktu_mulai && ujian.waktu_selesai
+        ? `${ujian.waktu_mulai} - ${ujian.waktu_selesai}`
+        : "",
+    room: ujian.ruang || "",
+  };
+});
+
+// Compute TA details from API data
+const tugasAkhirDetails = computed(() => {
+  if (!detailUjian.value) return {};
+
+  return {
+    nim: detailUjian.value.mahasiswa?.nim || "",
+    nama: detailUjian.value.mahasiswa?.name || "",
+    judul: detailUjian.value.judul_tugas_akhir || "",
+    kategori: detailUjian.value.kategori?.nama_kategori || "",
+    dosenPembimbing: detailUjian.value.dosen_pembimbing?.name || "",
+    tahunAjaran: detailUjian.value.tahun_ajaran?.tahun_ajaran || "",
+  };
+});
+
+// Get nilai data for the current dosen
+const nilaiData = computed(() => {
+  if (!detailUjian.value?.dosen_penguji) return null;
+
+  const currentDosenPenguji = detailUjian.value.dosen_penguji.find(
+    (penguji) => penguji.nilai_ujian_ta !== null
+  );
+
+  return currentDosenPenguji?.nilai_ujian_ta || null;
+});
+
+// Convert numeric status kelulusan to text
+const statusKelulusanText = computed(() => {
+  if (!detailUjian.value) return "";
+
+  const statusMap = {
+    1: "Lulus tanpa revisi",
+    2: "Lulus dengan revisi",
+    3: "Belum lulus perlu diuji lagi",
+    4: "Tidak lulus",
+  };
+
+  return statusMap[detailUjian.value.status_kelulusan] || "Belum ada status";
 });
 
 // Data nilai mahasiswa untuk ditampilkan
-const statusKelulusan = ref("Lulus dengan revisi");
-const tataLaporan = ref(85);
-const kemampuanTeknis = ref(90);
-const hasilProduk = ref(88);
-const presentasi = ref(92);
-const catatanRevisi = ref(
-  "Perbaiki format penulisan pada BAB II dan tambahkan detail pada bab metodologi. Referensi perlu diperbaharui dengan sumber terbaru (maksimal 5 tahun terakhir)."
-);
+const tataLaporan = computed(() => nilaiData.value?.kualitas_tata_laporan || 0);
+const kemampuanTeknis = computed(() => nilaiData.value?.kemampuan_teknis || 0);
+const hasilProduk = computed(() => nilaiData.value?.kualitas_produk || 0);
+const presentasi = computed(() => nilaiData.value?.presentasi || 0);
+const totalNilai = computed(() => nilaiData.value?.rerata_ujian_ta || 0);
 
-// Computed untuk total nilai
-const totalNilai = computed(() => {
-  return (
-    tataLaporan.value * 0.15 +
-    kemampuanTeknis.value * 0.35 +
-    hasilProduk.value * 0.25 +
-    presentasi.value * 0.25
-  ).toFixed(2);
+// Get revision comments
+const catatanRevisi = computed(() => {
+  if (!detailUjian.value?.dosen_penguji) return "";
+
+  const currentDosenPenguji = detailUjian.value.dosen_penguji.find(
+    (penguji) => penguji.nilai_ujian_ta !== null
+  );
+
+  return currentDosenPenguji?.revisi || "";
 });
 
-// Load data from query parameters
+// Load data when component is mounted
 onMounted(() => {
-  // Get data from query params
-  const { nim, name, category, title, date, session, room } = route.query;
-
-  console.log("Query parameters received:", route.query);
-
-  // Update schedule data with formatted date to include day
-  if (date && session && room) {
-    schedule.value = {
-      date: formatDateWithDay(date), // Menambahkan nama hari
-      time: session,
-      room: room,
-    };
-  }
-
-  // Update tugasAkhirDetails
-  if (name && title) {
-    tugasAkhirDetails.value = {
-      ...tugasAkhirDetails.value,
-      nim: nim || "V3423999",
-      nama: name,
-      judul: title,
-      kategori: category || "Internet Of Things",
-    };
+  const tugasAkhirId = route.query.tugas_akhir_id;
+  if (tugasAkhirId) {
+    fetchDetailUjian(tugasAkhirId);
   }
 });
 
-// Helper function untuk konversi format tanggal dan menampilkan hari
-const formatDateWithDay = (dateString) => {
-  try {
-    // Array untuk nama hari dalam bahasa Indonesia
-    const days = [
-      "Minggu",
-      "Senin",
-      "Selasa",
-      "Rabu",
-      "Kamis",
-      "Jumat",
-      "Sabtu",
-    ];
-
-    // Array untuk nama bulan dalam bahasa Indonesia
-    const months = [
-      "Januari",
-      "Februari",
-      "Maret",
-      "April",
-      "Mei",
-      "Juni",
-      "Juli",
-      "Agustus",
-      "September",
-      "Oktober",
-      "November",
-      "Desember",
-    ];
-
-    // Parse date string (format: "31 Mei 2024")
-    const parts = dateString.split(" ");
-    if (parts.length !== 3) {
-      return dateString; // Return original if not in expected format
-    }
-
-    const day = parseInt(parts[0]);
-    const monthIndex = months.findIndex((m) => m === parts[1]);
-    const year = parseInt(parts[2]);
-
-    if (monthIndex === -1 || isNaN(day) || isNaN(year)) {
-      return dateString; // Return original if parsing failed
-    }
-
-    // Create date object
-    const date = new Date(year, monthIndex, day);
-
-    // Check if date is valid
-    if (isNaN(date.getTime())) {
-      return dateString; // Return original if invalid date
-    }
-
-    // Get day of week
-    const dayName = days[date.getDay()];
-
-    // Format: "Senin, 31 Mei 2024"
-    return `${dayName}, ${dateString}`;
-  } catch (error) {
-    console.error("Error formatting date:", error);
-    return dateString; // Return original string if error occurs
-  }
-};
 // Methods
 const openNilaiModal = () => {
+  // Just open the modal without fetching data again
   showNilaiModal.value = true;
 };
 
@@ -166,10 +194,26 @@ const closeNilaiModal = () => {
   showNilaiModal.value = false;
 };
 
-// Computed properties
-const buttonClasses = computed(() => {
-  return dinilai.value ? "opacity-100" : "opacity-50";
-});
+// Methods for edit nilai functionality
+const goToEditNilai = () => {
+  closeNilaiModal();
+
+  // Add timestamp to query for cache busting
+  const timestamp = Date.now();
+
+  router.push({
+    path: "/dosen/tugas-akhir/ujian-ta/detail-ujian-ta/input-nilai-ujian-ta",
+    query: {
+      tugas_akhir_id: route.query.tugas_akhir_id,
+      nim: tugasAkhirDetails.value.nim,
+      name: tugasAkhirDetails.value.nama,
+      category: tugasAkhirDetails.value.kategori,
+      title: tugasAkhirDetails.value.judul,
+      edit: true,
+      _t: timestamp, // Add timestamp for cache busting
+    },
+  });
+};
 
 // Computed for modal body text
 const modalBodyText = computed(() => {
@@ -178,10 +222,25 @@ const modalBodyText = computed(() => {
 </script>
 
 <template>
+  <!-- Loading state -->
   <div v-if="loading" class="flex items-center justify-center min-h-[80dvh]">
     <Loading />
   </div>
-  <div v-else-if="!$route.path.includes('input-nilai-ujian-ta')">
+
+  <!-- Error state -->
+  <div v-else-if="error" class="bg-red-100 p-4 rounded-lg mt-4">
+    <p class="text-red-700">{{ error }}</p>
+    <Button
+      @click="fetchDetailUjian(route.query.tugas_akhir_id)"
+      variant="outlined"
+      size="sm"
+      class="mt-2"
+    >
+      Coba Lagi
+    </Button>
+  </div>
+
+  <div v-else-if="!$route.path.includes('input-nilai-ujian-ta') && detailUjian">
     <Breadcrumb :items="breadcrumbItems" />
     <!-- Jadwal Section -->
     <div class="card-rounded bg-white p-6 lg:p-8">
@@ -197,6 +256,7 @@ const modalBodyText = computed(() => {
           <!-- PDF Preview (Left Side) -->
           <div class="basis-7/12 md:pe-8 order-last md:order-first">
             <object
+              v-if="pdfUrl"
               :data="pdfUrl"
               type="application/pdf"
               class="w-full h-[750px] mt-6 md:mt-0"
@@ -209,6 +269,12 @@ const modalBodyText = computed(() => {
                 untuk membuka PDF.
               </p>
             </object>
+            <div
+              v-else
+              class="w-full h-[750px] bg-gray-100 flex items-center justify-center"
+            >
+              <p class="text-gray-500">Berkas PDF tidak tersedia</p>
+            </div>
           </div>
 
           <!-- Details (Right Side) -->
@@ -252,43 +318,75 @@ const modalBodyText = computed(() => {
               </div>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="flex self-end gap-4 items-center">
-              <router-link
-                :to="{
-                  path: '/dosen/tugas-akhir/ujian-ta/detail-ujian-ta/input-nilai-ujian-ta',
-                  query: {
-                    nim: tugasAkhirDetails.nim,
-                    name: tugasAkhirDetails.nama,
-                    category: tugasAkhirDetails.kategori,
-                    title: tugasAkhirDetails.judul,
-                  },
-                }"
-              >
+            <!-- Action Buttons - Modified to show either Input or View button -->
+            <div class="flex flex-col gap-4">
+              <div class="flex self-end gap-4 items-center">
+                <!-- If nilai exists, show Lihat Nilai button -->
                 <Button
-                  variant="primary"
+                  v-if="hasGiven"
+                  @click="openNilaiModal"
+                  variant="success"
                   size="lg"
                   class="w-fit sm:flex hidden"
                 >
-                  Input Nilai
+                  Lihat Nilai
                 </Button>
-              </router-link>
 
-              <router-link
-                :to="{
-                  path: '/dosen/tugas-akhir/ujian-ta/detail-ujian-ta/input-nilai-ujian-ta',
-                  query: {
-                    nim: tugasAkhirDetails.nim,
-                    name: tugasAkhirDetails.nama,
-                    category: tugasAkhirDetails.kategori,
-                    title: tugasAkhirDetails.judul,
-                  },
-                }"
-              >
-                <Button variant="primary" size="md" class="w-fit sm:hidden">
-                  Input Nilai
+                <Button
+                  v-if="hasGiven"
+                  @click="openNilaiModal"
+                  variant="success"
+                  size="md"
+                  class="w-fit sm:hidden"
+                >
+                  Lihat Nilai
                 </Button>
-              </router-link>
+
+                <!-- If nilai doesn't exist, show Input Nilai button -->
+                <router-link
+                  v-else
+                  :to="{
+                    path: '/dosen/tugas-akhir/ujian-ta/detail-ujian-ta/input-nilai-ujian-ta',
+                    query: {
+                      tugas_akhir_id: route.query.tugas_akhir_id,
+                      nim: tugasAkhirDetails.nim,
+                      name: tugasAkhirDetails.nama,
+                      category: tugasAkhirDetails.kategori,
+                      title: tugasAkhirDetails.judul,
+                    },
+                  }"
+                >
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    class="w-fit sm:flex hidden"
+                  >
+                    Input Nilai
+                  </Button>
+                </router-link>
+
+                <router-link
+                  v-else
+                  :to="{
+                    path: '/dosen/tugas-akhir/ujian-ta/detail-ujian-ta/input-nilai-ujian-ta',
+                    query: {
+                      tugas_akhir_id: route.query.tugas_akhir_id,
+                      nim: tugasAkhirDetails.nim,
+                      name: tugasAkhirDetails.nama,
+                      category: tugasAkhirDetails.kategori,
+                      title: tugasAkhirDetails.judul,
+                    },
+                  }"
+                >
+                  <Button variant="primary" size="md" class="w-fit sm:hidden">
+                    Input Nilai
+                  </Button>
+                </router-link>
+              </div>
+
+              <div v-if="hasGiven" class="text-green-600 text-sm self-end">
+                Anda sudah memberikan nilai untuk ujian ini
+              </div>
             </div>
           </div>
         </div>
@@ -297,7 +395,7 @@ const modalBodyText = computed(() => {
   </div>
   <router-view v-else></router-view>
 
-  <!-- Modal Lihat Nilai -->
+  <!-- Modal Lihat Nilai - Similar to DetailBimbingan implementation -->
   <DefaultModal
     v-if="showNilaiModal"
     @close="closeNilaiModal"
@@ -305,11 +403,11 @@ const modalBodyText = computed(() => {
     :bodyText="modalBodyText"
   >
     <div>
-      <div class="my-5">
-        <p class="heading5 text-[#00A2EA] font-semibold mb-3">
+      <div v-if="isSecretary" class="my-3">
+        <p class="heading5 text-[#00A2EA] font-semibold mb-2">
           Status Kelulusan
         </p>
-        <p class="body1 font-medium">{{ statusKelulusan }}</p>
+        <p class="body1 font-medium">{{ statusKelulusanText }}</p>
       </div>
       <div class="my-5">
         <p class="heading5 text-[#00A2EA] font-semibold mb-5">Nilai Ujian</p>
@@ -354,8 +452,8 @@ const modalBodyText = computed(() => {
             />
           </div>
         </div>
-        <div class="my-5">
-          <p class="heading5 text-[#00A2EA] font-semibold mb-3">
+        <div class="my-3">
+          <p class="heading5 text-[#00A2EA] font-semibold mb-2">
             Nilai Rata-Rata
           </p>
           <p class="body1 font-bold text-xl">{{ totalNilai }}</p>
@@ -366,10 +464,22 @@ const modalBodyText = computed(() => {
         <InputTextarea
           id="catatanRevisi"
           label=""
-          placeholder="Perbaiki format penulisan pada BAB II dan tambahkan detail pada bab metodologi. Referensi perlu diperbaharui dengan sumber terbaru (maksimal 5 tahun terakhir)."
+          placeholder="Masukkan catatan revisi"
           v-model="catatanRevisi"
           disabled
         ></InputTextarea>
+      </div>
+
+      <!-- Add Edit Nilai button -->
+      <div class="mt-6 flex justify-end">
+        <Button
+          @click="goToEditNilai"
+          variant="secondary"
+          size="md"
+          class="w-fit"
+        >
+          Edit Nilai
+        </Button>
       </div>
     </div>
   </DefaultModal>

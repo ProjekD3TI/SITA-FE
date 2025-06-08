@@ -11,7 +11,7 @@ import VueCookies from "vue-cookies";
 export function useKategori() {
   const router = useRouter();
   const toast = useToast();
-  
+
   const categories = ref([]);
   const loading = ref(false);
   const error = ref(null);
@@ -35,15 +35,15 @@ export function useKategori() {
   const fetchCategories = async () => {
     loading.value = true;
     error.value = null;
-    
+
     try {
       const authToken = VueCookies.get("auth_token");
       const headers = {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        Authorization: `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
       };
-      
+
       const response = await axios.get("/api/dosen/kategori", { headers });
 
       categories.value = response.data.data || [];
@@ -61,6 +61,6 @@ export function useKategori() {
     categories,
     loading,
     error,
-    fetchCategories
+    fetchCategories,
   };
 }

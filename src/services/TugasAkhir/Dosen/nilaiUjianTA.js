@@ -1,24 +1,17 @@
-// Masih Belum Bisa
-
 import { ref } from "vue";
 import axios from "axios";
-import { useRouter } from "vue-router";
-import { useToast } from "vue-toastification";
 import VueCookies from "vue-cookies";
+import { useToast } from "vue-toastification";
+import { useRouter } from "vue-router";
 
-export function useNilaiUjianTA() {
-  const router = useRouter();
-  const toast = useToast();
-
-  const nilaiUjianTA = ref(null);
-  const userRole = ref(null);
+export const useNilaiUjianTA = () => {
   const loading = ref(false);
   const error = ref(null);
-  const success = ref(null);
+  const success = ref(false);
+  const toast = useToast();
+  const router = useRouter();
 
-  /**
-   * Fungsi untuk menangani error dari API
-   */
+  // Handle error with toast notification
   const handleError = (err) => {
     if (err.response?.status === 401) {
       toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
@@ -29,227 +22,110 @@ export function useNilaiUjianTA() {
     }
   };
 
-  /**
-   * Mengambil data nilai ujian TA dan role dosen pada ujian tersebut
-   */
-  const fetchNilaiUjianTA = async (tugasAkhirId) => {
-    if (!tugasAkhirId) {
-      error.value = "ID Tugas Akhir tidak valid";
-      return null;
-    }
-
+  // Submit or update nilai ujian TA
+  const submitNilaiUjian = async (data, isEdit = false) => {
     loading.value = true;
     error.value = null;
+    success.value = false;
+
+    const token = VueCookies.get("auth_token");
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    };
 
     try {
-      const authToken = VueCookies.get("auth_token");
-      const headers = {
-        Authorization: `Bearer ${authToken}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
+      let response;
+
+      // Create payload - same for both create and update
+      const payload = {
+        kualitas_tata_laporan: parseFloat(data.tataLaporan),
+        kemampuan_teknis: parseFloat(data.kemampuanTeknis),
+        kualitas_produk: parseFloat(data.hasilProduk),
+        presentasi: parseFloat(data.presentasi),
+        rerata_ujian_ta: parseFloat(data.totalNilai),
+        revisi: data.catatanRevisi,
       };
 
-      const response = await axios.get(
-        `/api/dosen/tugas-akhir/${tugasAkhirId}`,
-        { headers }
-      );
-
-      // Set nilai ujian dan role dosen (apakah ketua penguji atau bukan)
-      nilaiUjianTA.value = response.data.data;
-
-      // Set role penguji (ketua atau anggota)
-      if (response.data.data.dosen_role === "ketua") {
-        userRole.value = "ketua";
-      } else {
-        userRole.value = "anggota";
-      }
-
-      return response.data;
-    } catch (err) {
-      console.error("Error fetching nilai ujian TA:", err);
-
-      if (err.response?.status === 404) {
-        nilaiUjianTA.value = null;
-        return null;
-      }
-
-      handleError(err);
-      throw err;
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  /**
-   * Memberikan nilai ujian TA (untuk semua dosen penguji)
-   */
-  const memberiNilaiTA = async (tugasAkhirId, data) => {
-    if (!tugasAkhirId) {
-      error.value = "ID Tugas Akhir tidak valid";
-      return null;
-    }
-
-    loading.value = true;
-    error.value = null;
-    success.value = null;
-
-    try {
-      const authToken = VueCookies.get("auth_token");
-      const headers = {
-        Authorization: `Bearer ${authToken}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      };
-
-      const response = await axios.put(
-        `/api/dosen/tugas-akhir/${tugasAkhirId}/nilai`,
-        data,
-        { headers }
-      );
-
-      success.value = "Nilai ujian berhasil disimpan";
-      toast.success("Nilai ujian berhasil disimpan");
-
-      return response.data;
-    } catch (err) {
-      console.error("Error memberikan nilai ujian TA:", err);
-      handleError(err);
-      throw err;
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  /**
-   * Memperbarui status kelulusan (hanya untuk ketua penguji)
-   */
-  const updateStatusKelulusan = async (tugasAkhirId, status) => {
-    if (!tugasAkhirId) {
-      error.value = "ID Tugas Akhir tidak valid";
-      return null;
-    }
-
-    loading.value = true;
-    error.value = null;
-    success.value = null;
-
-    try {
-      const authToken = VueCookies.get("auth_token");
-      const headers = {
-        Authorization: `Bearer ${authToken}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      };
-
-      const response = await axios.put(
-        `/api/dosen/status-kelulusan/${tugasAkhirId}`,
-        { status_kelulusan: status },
-        { headers }
-      );
-
-      success.value = "Status kelulusan berhasil diperbarui";
-      toast.success("Status kelulusan berhasil diperbarui");
-
-      return response.data;
-    } catch (err) {
-      console.error("Error updating status kelulusan:", err);
-
-      if (err.response?.status === 403) {
-        toast.error(
-          "Anda tidak memiliki hak akses untuk memperbarui status kelulusan"
+      if (isEdit) {
+        // Update nilai
+        response = await axios.put(
+          `/api/dosen/nilai-ujian-ta/${data.tugas_akhir_id}`,
+          payload,
+          { headers }
         );
       } else {
-        handleError(err);
+        // Create nilai
+        response = await axios.post(
+          `/api/dosen/nilai-ujian-ta/`,
+          {
+            tugas_akhir_id: data.tugas_akhir_id,
+            ...payload,
+          },
+          { headers }
+        );
       }
 
-      throw err;
+      if (response.data.status === "success") {
+        success.value = true;
+        return response.data;
+      } else {
+        error.value = response.data.message || "Gagal menyimpan nilai";
+        toast.error(error.value);
+        return null;
+      }
+    } catch (err) {
+      console.error("Error submitting ujian TA nilai:", err);
+      handleError(err);
+      return null;
     } finally {
       loading.value = false;
     }
   };
 
-  /**
-   * Simpan nilai ujian dan status kelulusan (jika dosen adalah ketua penguji)
-   */
-  const saveNilaiUjianTA = async (tugasAkhirId, data, isKetua) => {
+  // Update status kelulusan (only for secretary role)
+  const updateStatusKelulusan = async (tugasAkhirId, status) => {
+    loading.value = true;
+    error.value = null;
+
+    const token = VueCookies.get("auth_token");
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    };
+
     try {
-      // Kirim nilai ujian (untuk semua dosen)
-      await memberiNilaiTA(tugasAkhirId, {
-        nilai_ujian_ta: calculateFinalScore(data),
-        revisi: data.catatanRevisi || "",
-      });
+      const response = await axios.put(
+        `/api/dosen/status-kelulusan/${tugasAkhirId}`,
+        {
+          status_kelulusan: status,
+        },
+        { headers }
+      );
 
-      // Jika dosen adalah ketua penguji, update status kelulusan
-      if (isKetua && data.statusKelulusan) {
-        // Convert string status to numeric status as per backend requirements
-        let statusCode;
-        switch (data.statusKelulusan) {
-          case "Lulus tanpa revisi":
-            statusCode = 1;
-            break;
-          case "Lulus dengan revisi":
-            statusCode = 2;
-            break;
-          case "Belum lulus perlu diuji lagi":
-            statusCode = 3;
-            break;
-          case "Tidak lulus":
-            statusCode = 4;
-            break;
-          default:
-            statusCode = null;
-        }
-
-        if (statusCode) {
-          await updateStatusKelulusan(tugasAkhirId, statusCode);
-        }
+      if (response.data.status === "success") {
+        success.value = true;
+        return response.data;
+      } else {
+        error.value =
+          response.data.message || "Gagal mengupdate status kelulusan";
+        toast.error(error.value);
+        return null;
       }
-
-      success.value = "Nilai ujian berhasil disimpan";
-      return true;
     } catch (err) {
-      console.error("Error saving nilai ujian TA:", err);
-      throw err;
+      console.error("Error updating status kelulusan:", err);
+      handleError(err);
+      return null;
+    } finally {
+      loading.value = false;
     }
-  };
-
-  /**
-   * Menghitung nilai akhir dari komponen-komponen nilai
-   */
-  const calculateFinalScore = (data) => {
-    // Weights as per the form (15%, 35%, 25%, 25%)
-    const tataLaporanWeight = 0.15;
-    const kemampuanTeknisWeight = 0.35;
-    const hasilProdukWeight = 0.25;
-    const presentasiWeight = 0.25;
-
-    // Convert values to numbers and calculate weighted sum
-    const tataLaporanScore = Number(data.tataLaporan || 0) * tataLaporanWeight;
-    const kemampuanTeknisScore =
-      Number(data.kemampuanTeknis || 0) * kemampuanTeknisWeight;
-    const hasilProdukScore = Number(data.hasilProduk || 0) * hasilProdukWeight;
-    const presentasiScore = Number(data.presentasi || 0) * presentasiWeight;
-
-    // Calculate final score (rounded to 2 decimal places)
-    const finalScore =
-      tataLaporanScore +
-      kemampuanTeknisScore +
-      hasilProdukScore +
-      presentasiScore;
-    return Math.round(finalScore * 100) / 100;
   };
 
   return {
-    nilaiUjianTA,
-    userRole,
     loading,
     error,
     success,
-    fetchNilaiUjianTA,
-    memberiNilaiTA,
+    submitNilaiUjian,
     updateStatusKelulusan,
-    saveNilaiUjianTA,
-    calculateFinalScore,
-    isKetuaPenguji: () => userRole.value === "ketua",
   };
-}
+};
