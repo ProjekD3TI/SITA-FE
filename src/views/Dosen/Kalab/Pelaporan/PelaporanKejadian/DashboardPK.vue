@@ -336,8 +336,8 @@ const search = ref(''); // Replace or use alongside searchQuery if you prefer
 const totalFilteredCount = ref(0); // New property to store total filtered count
 const exportInProgress = ref(false); // Flag to prevent multiple exports at once
 const dataToExport = ref([]); // Data that will be exported to PDF
-const sortKey = ref(''); // Add this for tracking sort column
-const sortOrder = ref('asc'); // Add this for tracking sort direction
+const sortKey = ref('created_at');  // Default sort by creation date
+const sortOrder = ref('desc');      // Default to descending (newest first)
 
 // Computed properties
 const filteredLaporan = computed(() => {
@@ -591,27 +591,22 @@ const fetchData = async () => {
   }
 };
 
+// Modify your sortBy function (if it exists) or add it
 const sortBy = (key) => {
-  // If clicking the same column, toggle sort order
   if (sortKey.value === key) {
+    // Toggle order if clicking the same column
     sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
   } else {
-    // If clicking a different column, set it as the new sort key and default to ascending
+    // New column, default to descending for dates, ascending for others
     sortKey.value = key;
-    sortOrder.value = 'asc';
+    sortOrder.value = key === 'created_at' ? 'desc' : 'asc';
   }
-  
-  // Reset to first page when sorting changes
-  currentPage.value = 1;
 };
 
+// Update your getSortIcon function if it exists
 const getSortIcon = (key) => {
-  if (sortKey.value !== key) {
-    return 'fas fa-sort'; // Default icon when column is not being sorted
-  }
-  return sortOrder.value === 'asc' 
-    ? 'fas fa-sort-up' 
-    : 'fas fa-sort-down';
+  if (sortKey.value !== key) return 'fas fa-sort';
+  return sortOrder.value === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
 };
 
 const getCategoryName = (categoryId) => {

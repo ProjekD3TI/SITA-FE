@@ -24,6 +24,7 @@
                 <div class="laporan-number">{{ laporan.nomor_laporan }}</div>
                 <div class="action-btn-container">
                     <button 
+                        v-if="laporan && laporan.status !== 'finished'" 
                         class="edit-button"
                         @click="goToEditLaporan"
                         title="Lengkapi atau ubah data laporan">
