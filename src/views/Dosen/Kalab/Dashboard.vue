@@ -72,26 +72,26 @@
           </div>
           
           <div class="bg-green-50 p-4 rounded-lg">
-            <h3 class="text-lg font-medium text-gray-800 mb-2">Selesai Ditangani</h3>
-            <p class="text-3xl font-bold text-green-600">{{ statusCounts.selesai }}</p>
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Selesai</h3>
+            <p class="text-3xl font-bold text-green-600">{{ statusCounts.finished }}</p>
             <p class="text-sm text-gray-500">
-              {{ totalLaporan > 0 ? Math.round((statusCounts.selesai / totalLaporan) * 100) : 0 }}% dari total
+              {{ totalLaporan > 0 ? Math.round((statusCounts.finished / totalLaporan) * 100) : 0 }}% dari total
             </p>
           </div>
           
           <div class="bg-yellow-50 p-4 rounded-lg">
-            <h3 class="text-lg font-medium text-gray-800 mb-2">Sedang Diproses</h3>
-            <p class="text-3xl font-bold text-yellow-600">{{ statusCounts.proses }}</p>
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Terverifikasi</h3>
+            <p class="text-3xl font-bold text-yellow-600">{{ statusCounts.verified }}</p>
             <p class="text-sm text-gray-500">
-              {{ totalLaporan > 0 ? Math.round((statusCounts.proses / totalLaporan) * 100) : 0 }}% dari total
+              {{ totalLaporan > 0 ? Math.round((statusCounts.verified / totalLaporan) * 100) : 0 }}% dari total
             </p>
           </div>
           
           <div class="bg-red-50 p-4 rounded-lg">
-            <h3 class="text-lg font-medium text-gray-800 mb-2">Belum Ditangani</h3>
-            <p class="text-3xl font-bold text-red-600">{{ statusCounts.belum }}</p>
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Belum Terverifikasi</h3>
+            <p class="text-3xl font-bold text-red-600">{{ statusCounts.unverified }}</p>
             <p class="text-sm text-gray-500">
-              {{ totalLaporan > 0 ? Math.round((statusCounts.belum / totalLaporan) * 100) : 0 }}% dari total
+              {{ totalLaporan > 0 ? Math.round((statusCounts.unverified / totalLaporan) * 100) : 0 }}% dari total
             </p>
           </div>
         </div>
@@ -121,16 +121,16 @@
           </div>
         </div>
         
-        <!-- Recent Reports -->
+        <!-- Recent Reports - Updated table headers -->
         <div class="bg-gray-50 rounded-lg p-4">
           <h3 class="text-lg font-medium text-gray-800 mb-4">Laporan Terbaru</h3>
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-100">
                 <tr>
-                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nomor Laporan</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
-                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
                 </tr>
@@ -140,19 +140,19 @@
                   <td colspan="5" class="px-4 py-4 text-center text-gray-500">Tidak ada data</td>
                 </tr>
                 <tr v-for="report in recentReports" :key="report.id" class="hover:bg-gray-50">
-                  <td class="px-4 py-2 whitespace-nowrap">{{ report.id }}</td>
+                  <td class="px-4 py-2 whitespace-nowrap">{{ report.nomor_laporan || report.id }}</td>
                   <td class="px-4 py-2 whitespace-nowrap">{{ formatDate(report.created_at) }}</td>
-                  <td class="px-4 py-2 whitespace-nowrap">{{ report.lokasi || 'Tidak disebutkan' }}</td>
+                  <td class="px-4 py-2 whitespace-nowrap">{{ report.judul || 'Tidak disebutkan' }}</td>
                   <td class="px-4 py-2 whitespace-nowrap">
                     <span 
                       :class="[
                         'px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full',
-                        report.status === 'Selesai' ? 'bg-green-100 text-green-800' : 
-                        report.status === 'Diproses' ? 'bg-yellow-100 text-yellow-800' : 
+                        report.status === 'finished' ? 'bg-green-100 text-green-800' : 
+                        report.status === 'verified' ? 'bg-yellow-100 text-yellow-800' : 
                         'bg-red-100 text-red-800'
                       ]"
                     >
-                      {{ report.status || 'Belum ditangani' }}
+                      {{ formatStatus(report.status) }}
                     </span>
                   </td>
                   <td class="px-4 py-2">
@@ -187,9 +187,9 @@ const statusChartRef = ref(null);
 const categoryChartRef = ref(null);
 const selectedYear = ref(new Date().getFullYear());
 const statusCounts = ref({
-  selesai: 0,
-  proses: 0,
-  belum: 0
+  finished: 0,
+  verified: 0,
+  unverified: 0
 });
 const recentReports = ref([]);
 
@@ -214,56 +214,70 @@ let categoryChart = null;
 const dummyLaporan = [
   { 
     id: 1, 
+    nomor_laporan: "LP-2025-001",
     created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 2).toISOString(),
-    status: "Selesai",
+    status: "finished",
+    judul: "Kerusakan Peralatan Lab",
     lokasi: "Ruang Lab Komputer",
     category_id: 1,
     deskripsi: "Kerusakan komputer lab nomor 5"
   },
   { 
     id: 2, 
+    nomor_laporan: "LP-2025-002",
     created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 3).toISOString(),
-    status: "Diproses",
+    status: "verified",
+    judul: "Masalah AC Server",
     lokasi: "Ruang Server",
     category_id: 2,
     deskripsi: "AC ruang server tidak berfungsi optimal"
   },
   { 
     id: 3, 
+    nomor_laporan: "LP-2025-003",
     created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 4).toISOString(),
-    status: "Belum ditangani",
+    status: "unverified",
+    judul: "Peralatan Rusak",
     lokasi: "Ruang Lab Fisika",
     category_id: 3,
     deskripsi: "Alat praktikum rusak"
   },
   { 
     id: 4, 
+    nomor_laporan: "LP-2025-004",
     created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 10).toISOString(),
-    status: "Selesai",
+    status: "finished",
+    judul: "Proyektor Rusak",
     lokasi: "Ruang Kuliah 101",
     category_id: 4,
     deskripsi: "Proyektor tidak bisa menyala"
   },
   { 
     id: 5, 
+    nomor_laporan: "LP-2025-005",
     created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 15).toISOString(),
-    status: "Diproses",
+    status: "verified",
+    judul: "Kebocoran Pipa",
     lokasi: "Ruang Lab Kimia",
     category_id: 1,
     deskripsi: "Kebocoran pipa air"
   },
   { 
     id: 6, 
+    nomor_laporan: "LP-2025-006",
     created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 20).toISOString(),
-    status: "Selesai",
+    status: "finished",
+    judul: "Internet Bermasalah",
     lokasi: "Perpustakaan Lantai 2",
     category_id: 2,
     deskripsi: "Masalah koneksi internet"
   },
   { 
     id: 7, 
+    nomor_laporan: "LP-2025-007",
     created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 25).toISOString(),
-    status: "Belum ditangani",
+    status: "unverified",
+    judul: "Sound System Error",
     lokasi: "Aula Utama",
     category_id: 3,
     deskripsi: "Sound system bermasalah saat digunakan"
@@ -271,16 +285,20 @@ const dummyLaporan = [
   // Tambahkan data untuk tahun sebelumnya
   { 
     id: 8, 
+    nomor_laporan: "LP-2024-008",
     created_at: new Date(currentYear-1, 2, 15).toISOString(),
-    status: "Selesai",
+    status: "finished",
+    judul: "Upgrade Software",
     lokasi: "Ruang Lab Komputer",
     category_id: 1,
     deskripsi: "Upgrade software komputer lab"
   },
   { 
     id: 9, 
+    nomor_laporan: "LP-2024-009",
     created_at: new Date(currentYear-1, 5, 22).toISOString(),
-    status: "Selesai",
+    status: "finished",
+    judul: "Headset Rusak",
     lokasi: "Ruang Lab Bahasa",
     category_id: 4,
     deskripsi: "Headset rusak 10 unit"
@@ -441,12 +459,41 @@ const processData = async () => {
   totalLaporan.value = filteredData.length;
   console.log("Filtered laporan count:", totalLaporan.value);
   
-  // Count by status
+  // Fix: Perbaiki perhitungan status untuk menangani status baru: unverified, verified, finished
   statusCounts.value = {
-    selesai: filteredData.filter(item => item.status === "Selesai").length,
-    proses: filteredData.filter(item => item.status === "Diproses").length,
-    belum: filteredData.filter(item => !item.status || item.status === "Belum ditangani").length
+    // Untuk status "finished"
+    finished: filteredData.filter(item => 
+      item.status === "finished" || 
+      item.status?.toLowerCase() === "finished"
+    ).length,
+    
+    // Untuk status "verified" 
+    verified: filteredData.filter(item => 
+      item.status === "verified" || 
+      item.status?.toLowerCase() === "verified"
+    ).length,
+    
+    // Untuk status "unverified" atau tanpa status
+    unverified: filteredData.filter(item => 
+      !item.status || 
+      item.status === "" || 
+      item.status === "unverified" || 
+      item.status?.toLowerCase() === "unverified"
+    ).length
   };
+  
+  // Verifikasi total status dengan total laporan
+  const totalStatuses = statusCounts.value.finished + statusCounts.value.verified + statusCounts.value.unverified;
+  
+  // Jika total status tidak sama dengan total laporan, distribusikan item yang tidak terhitung
+  if (totalStatuses !== totalLaporan.value) {
+    console.warn(`Status counts (${totalStatuses}) don't match total count (${totalLaporan.value}). Distributing unaccounted items.`);
+    
+    // Jika ada laporan tapi semua statusCounts.value nol, isi statusCounts.value.unverified dengan totalLaporan.value
+    if (totalStatuses === 0 && totalLaporan.value > 0) {
+      statusCounts.value.unverified = totalLaporan.value;
+    }
+  }
   
   // Process category counts
   processCategoryCounts(filteredData);
@@ -593,9 +640,9 @@ const updateStatusChart = async () => {
     statusChart = new Chart(ctx, {
       type: 'doughnut',
       data: {
-        labels: ['Selesai', 'Diproses', 'Belum Ditangani'],
+        labels: ['Selesai', 'Terverifikasi', 'Belum Terverifikasi'],
         datasets: [{
-          data: [statusCounts.value.selesai, statusCounts.value.proses, statusCounts.value.belum],
+          data: [statusCounts.value.finished, statusCounts.value.verified, statusCounts.value.unverified],
           backgroundColor: [
             'rgba(34, 197, 94, 0.7)', // green
             'rgba(234, 179, 8, 0.7)',  // yellow
@@ -817,6 +864,22 @@ const formatDate = (dateString) => {
   } catch (e) {
     console.error("Error formatting date:", e);
     return "Invalid Date";
+  }
+};
+
+// Function to format status for display
+const formatStatus = (status) => {
+  if (!status) return 'Belum Terverifikasi';
+  
+  switch(status.toLowerCase()) {
+    case 'finished':
+      return 'Selesai';
+    case 'verified':
+      return 'Terverifikasi';
+    case 'unverified':
+      return 'Belum Terverifikasi';
+    default:
+      return status;
   }
 };
 
