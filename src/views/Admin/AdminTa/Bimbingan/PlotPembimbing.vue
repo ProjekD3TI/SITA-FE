@@ -45,18 +45,34 @@ const mahasiswaData = computed(() => {
 });
 
 const dosen_list = computed(() => {
-  // dataDetailPlotting.value bisa berupa array, ambil elemen pertama
   const data = Array.isArray(dataShowPlotting.value)
     ? dataShowPlotting.value[0]
     : dataShowPlotting.value;
   if (!data || !data.daftar_dosen) return [];
-  return data.daftar_dosen.map((d) => ({
-    value: d.id,
-    label: d.name,
-    nik: d.nik,
-  }));
-});
 
+  return data.daftar_dosen.map((dosen) => {
+    const hasAccess = dosen.akses_ta === 1;
+    return {
+      value: dosen.id,
+      label: hasAccess ? `${dosen.name} ` : `${dosen.name} - (Non-Aktif)`,
+      disabled: !hasAccess, // ✅ Disable jika akses_ta = 0
+      akses_ta: dosen.akses_ta,
+      nik: dosen.nik,
+      name: dosen.name,
+      raw_dosen: dosen, // ✅ Simpan data dosen lengkap
+    };
+  });
+});
+const validateDosenAccess = () => {
+  const selectedDosen = selectedDosenPembimbing.value;
+
+  if (selectedDosen && selectedDosen.akses_ta !== 1) {
+    toast.error("Dosen yang dipilih tidak memiliki akses Tugas Akhir!");
+    return false;
+  }
+
+  return true;
+};
 const selectedDosenPembimbingValue = ref(null);
 
 const selectedDosenPembimbing = computed(() => {
@@ -98,6 +114,10 @@ const handleSubmit = async () => {
     toast.error("Pilih dosen pembimbing terlebih dahulu!");
     return;
   }
+  // ✅ TAMBAHAN: Validasi akses TA
+  if (!validateDosenAccess()) {
+    return;
+  }
   try {
     loadingShowPlotting.value = true;
     await submitPlotting({
@@ -116,6 +136,10 @@ const handleUpdate = async () => {
   const mahasiswa = mahasiswaData.value;
   if (!mahasiswa || !selectedDosenPembimbingValue.value) {
     toast.error("Pilih dosen pembimbing terlebih dahulu!");
+    return;
+  }
+  // ✅ TAMBAHAN: Validasi akses TA
+  if (!validateDosenAccess()) {
     return;
   }
   try {
@@ -166,7 +190,16 @@ const handleUpdate = async () => {
           :options="dosen_list"
           placeholder="Pilih Dosen Pembimbing"
           v-model="selectedDosenPembimbingValue"
+          required
         />
+        <div
+          v-if="
+            selectedDosenPembimbing && selectedDosenPembimbing.akses_ta !== 1
+          "
+          class="p-2 px-6 text-red-700 bg-red-100 border border-red-400 input-rounded body4"
+        >
+          Dosen yang dipilih non-aktif!
+        </div>
         <div v-if="selectedDosenPembimbing" class="flex gap-2 sm:gap-4">
           <div class="flex gap-2 sm:gap-4">
             <!-- Icon Dosen -->

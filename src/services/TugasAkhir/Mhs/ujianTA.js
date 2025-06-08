@@ -191,58 +191,6 @@ export function useBerkasTA() {
       });
       dataBerkasTA.value = response.data.data;
       // await new Promise(resolve => setTimeout(resolve, 1000));
-      // dataBerkasTA.value = {
-      //     berkas: [
-      //         {
-      //             id: null,//1,
-      //             nama_berkas: null,//"Naskah Tugas Akhir",
-      //             file_path: null,//filePDF,
-      //             status_valid: null,//1,
-      //         },
-      //         {
-      //             id: null,//2,
-      //             nama_berkas: null,//"Transkrip Nilai Mahasiswa",
-      //             file_path: null,//filePDF,
-      //             status_valid: null,//1,
-      //         },
-      //         {
-      //             id: null,//3,
-      //             nama_berkas: null,//"Scan KRS Semester Akhir",
-      //             file_path: null,//filePDF,
-      //             status_valid: null,//1,
-      //         },
-      //         {
-      //             id: null,//4,
-      //             nama_berkas: null,//"Bukti Persetujuan Pembimbing",
-      //             file_path: null,//filePDF,
-      //             status_valid: null,//1,
-      //         },
-      //         {
-      //             id: null,//5,
-      //             nama_berkas: null,//"Bukti Sertifikat Kompetensi",
-      //             file_path: null,//filePDF,
-      //             status_valid: null,//1,
-      //         },
-      //         {
-      //             id: null,//6,
-      //             nama_berkas: null,//"Sertifikat TOEIC",
-      //             file_path: null,//filePDF,
-      //             status_valid: null,//1,
-      //         },
-      //         {
-      //             id: null,//7,
-      //             nama_berkas: null,//"Berita Acara Seminar Hasil",
-      //             file_path: null,//filePDF,
-      //             status_valid: null,//1,
-      //         },
-      //         {
-      //             id: null,//8,
-      //             nama_berkas: null,//"Surat Perpanjangan Masa Studi",
-      //             file_path: null,//filePDF,
-      //             status_valid: null,//1,
-      //         }
-      //     ]
-      // }
     } catch (err) {
       handleError(err);
     } finally {
@@ -512,7 +460,9 @@ export const suratPerpanjanganMasaStudi = computed(() => {
   )?.file_path;
   return getFileName(filePath);
 });
-
+export const catatanPerbaikan = computed(() => {
+  return dataBerkasTA.value?.catatan_perbaikan || null;
+});
 // download url berkas
 
 export const fileNaskahTA = computed(() => {

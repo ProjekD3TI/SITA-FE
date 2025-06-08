@@ -282,6 +282,7 @@ onMounted(() => {
                 :min="dateRange.min"
                 :max="dateRange.max"
                 @update:value="selectedTanggal = $event"
+                required
               />
               <div
                 v-if="selectedTanggal && !isDateAvailable(selectedTanggal)"
@@ -303,6 +304,7 @@ onMounted(() => {
               :options="ruangOptions"
               :modelValue="selectedRuang"
               @update:modelValue="selectedRuang = $event"
+              required
             />
             <InputDropdown
               id="sesi"
@@ -311,6 +313,7 @@ onMounted(() => {
               :options="sesiOptions"
               :modelValue="selectedSesi"
               @update:modelValue="selectedSesi = $event"
+              required
             />
           </div>
           <Button

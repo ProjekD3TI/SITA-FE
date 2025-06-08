@@ -25,6 +25,7 @@ import InputNilaiProposalForAdmin from "../views/Admin/AdminTa/Proposal/InputNil
 import DetailBimbinganForAdmin from "../views/Admin/AdminTa/Bimbingan/DetailBimbingan.vue";
 import PlotPembimbingForAdmin from "../views/Admin/AdminTa/Bimbingan/PlotPembimbing.vue";
 import MahasiswaDosenForAdmin from "../views/Admin/AdminTa/MahasiswaDosen.vue";
+import TahunAjaranForAdmin from "../views/Admin/AdminTa/TahunAjaran.vue";
 // Route Mhs TA
 import DashboardTAMhs from "../views/Mahasiswa/Tugas-akhir/Dashboard.vue";
 import BimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan/Bimbingan.vue";
@@ -532,6 +533,13 @@ const routes = [
         component: MahasiswaDosenForAdmin,
         meta: {
           breadcrumb: "Mahasiswa & Dosen Aktif",
+        },
+      },
+      {
+        path: "semester-tahun-ajaran",
+        component: TahunAjaranForAdmin,
+        meta: {
+          breadcrumb: "Semester & Tahun Ajaran",
         },
       },
     ],

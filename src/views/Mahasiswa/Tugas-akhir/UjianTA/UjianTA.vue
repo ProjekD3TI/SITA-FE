@@ -2,6 +2,7 @@
 import { ref, computed, reactive, watch } from "vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
+import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import InputFile from "@/components/Tugas-akhir/Forms/InputFile.vue";
 import UserData from "@/components/Tugas-akhir/UserData.vue";
 import Loading from "@/components/Loading.vue";
@@ -46,6 +47,7 @@ import {
   statusBerkasSuratPerpanjanganMasaStudi,
   jadwalUjianTA,
   daftarPenguji,
+  catatanPerbaikan,
 } from "@/services/TugasAkhir/Mhs/ujianTA.js";
 import { getUserData } from "@/services/authMahasiswa";
 import { useToast } from "vue-toastification";
@@ -517,6 +519,14 @@ watch(
                 :existingFileName="suratPerpanjanganMasaStudi"
                 :existingFileUrl="fileSuratPerpanjanganMasaStudi"
                 :disabled="isSuratPerpanjanganMasaStudiDisabled"
+              />
+              <InputTextarea
+                v-if="catatanPerbaikan"
+                :class="formConfig.wrapperClass"
+                id="catatan-perbaikan-ta"
+                label="Catatan Perbaikan"
+                v-model="catatanPerbaikan"
+                disabled
               />
             </div>
 

@@ -233,10 +233,27 @@ export const selectedDosenData = computed(() => {
 export const pembimbings = computed(() => {
   if (!dataRequestPembimbing.value?.list_dosen) return [];
 
-  return dataRequestPembimbing.value.list_dosen.map((dosen) => ({
-    value: dosen.id.toString(),
-    label: `${dosen.name} (${dosen.nik})`,
-  }));
+  return dataRequestPembimbing.value.list_dosen.map((dosen) => {
+    // ✅ Pastikan semua field ada dengan default values
+    const dosenId = dosen.id;
+    const dosenName = dosen.name || "Nama Tidak Diketahui";
+    const dosenNik = dosen.nik || "NIK Tidak Diketahui";
+    const hasAccess = dosen.akses_ta === 1;
+
+    // ✅ Buat label yang aman
+    const baseLabel = `${dosenName}`;
+    const fullLabel = hasAccess ? baseLabel : `${baseLabel} - (Non-Aktif)`;
+
+    return {
+      value: dosenId,
+      label: fullLabel,
+      disabled: !hasAccess,
+      akses_ta: dosen.akses_ta || 0,
+      name: dosenName,
+      nik: dosenNik,
+      raw_dosen: dosen,
+    };
+  });
 });
 
 export const namaDosenRequestPembimbing = computed(

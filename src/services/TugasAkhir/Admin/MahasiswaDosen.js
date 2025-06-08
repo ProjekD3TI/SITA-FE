@@ -66,7 +66,6 @@ export function useTabelMahasiswa() {
         { headers }
       );
       toast.success("Status mahasiswa berhasil diubah!");
-      return response.data;
     } catch (err) {
       handleError(err);
       throw err;
@@ -156,8 +155,7 @@ export function useTabelDosen() {
         data,
         { headers }
       );
-      toast.success(response.data.message || "Status dosen berhasil diubah!");
-      return response.data;
+      toast.success("Status dosen berhasil diubah!");
     } catch (err) {
       handleError(err);
       throw err;

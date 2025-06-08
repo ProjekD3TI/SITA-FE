@@ -107,9 +107,19 @@ const fileMasaPerpanjanganStudi = computed(() => {
   const berkas = dataShowPendaftar.value?.berkas?.find(
     (b) => b.nama_berkas === "Surat Perpanjangan Masa Studi"
   );
+
+  // ✅ Return berkas jika ada, atau undefined jika tidak ada
   return berkas
     ? { name: getFileName(berkas.file_path), url: berkas.download_url }
-    : {};
+    : undefined; // ✅ Kembalikan undefined, bukan object kosong
+});
+// ✅ TAMBAHAN: Computed untuk check apakah file ada
+const hasMasaPerpanjanganStudi = computed(() => {
+  return (
+    dataShowPendaftar.value?.berkas?.some(
+      (b) => b.nama_berkas === "Surat Perpanjangan Masa Studi"
+    ) || false
+  );
 });
 watch(
   dataShowPendaftar,
@@ -304,7 +314,7 @@ const handleSubmitValidasi = async () => {
           "
         />
         <ValidationFile
-          v-if="dataShowPendaftar?.value?.masa_perpanjangan_studi"
+          v-if="hasMasaPerpanjanganStudi"
           ref="masaPerpanjanganStudiRef"
           id="surat-perpanjangan-masa-studi"
           label="Surat Perpanjangan Masa Studi"

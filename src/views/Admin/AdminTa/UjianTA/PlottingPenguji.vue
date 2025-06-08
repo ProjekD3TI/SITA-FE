@@ -93,13 +93,19 @@ const list_dosen = computed(() => {
   // Ambil id dosen pembimbing (sekretaris)
   const pembimbingId =
     mahasiswaData.value?.dosen_pembimbing?.dosen_pembimbing_id?.toString();
-  ("");
+
   return dosens.value
     .filter((dosen) => dosen.id.toString() !== pembimbingId)
-    .map((dosen) => ({
-      value: dosen.id.toString(),
-      label: `${dosen.name} (${dosen.nik})`,
-    }));
+    .map((dosen) => {
+      const hasAccess = dosen.akses_ta === 1;
+      return {
+        value: dosen.id.toString(),
+        label: hasAccess ? `${dosen.name}` : `${dosen.name} - (Non-Aktif)`,
+        disabled: !hasAccess, // ✅ Disable jika akses_ta = 0
+        akses_ta: dosen.akses_ta,
+        raw_dosen: dosen, // ✅ Simpan data dosen lengkap untuk referensi
+      };
+    });
 });
 
 // Mendapatkan data dosen yang dipilih untuk Ketua Penguji
@@ -133,6 +139,10 @@ const handleSubmit = async () => {
     !selectedPenguji.value
   ) {
     toast.error("Semua jabatan penguji harus dipilih!");
+    return;
+  }
+  // ✅ TAMBAHAN: Validasi akses TA
+  if (!validateDosenAccess()) {
     return;
   }
   const mahasiswa = mahasiswaData.value;
@@ -175,6 +185,10 @@ const handleUpdate = async () => {
     toast.error("Semua jabatan penguji harus dipilih!");
     return;
   }
+  // ✅ TAMBAHAN: Validasi akses TA
+  if (!validateDosenAccess()) {
+    return;
+  }
   const mahasiswa = mahasiswaData.value;
   // Pastikan hanya 3 dosen, tidak lebih!
   const payload = {
@@ -209,7 +223,26 @@ const handleUpdate = async () => {
     loadingShowPlottingPenguji.value = false;
   }
 };
+const validateDosenAccess = () => {
+  const ketuaDosen = dosens.value.find(
+    (d) => d.id.toString() === selectedKetuaPenguji.value
+  );
+  const pengujiDosen = dosens.value.find(
+    (d) => d.id.toString() === selectedPenguji.value
+  );
 
+  if (ketuaDosen && ketuaDosen.akses_ta !== 1) {
+    toast.error("Ketua Penguji yang dipilih tidak memiliki akses Tugas Akhir!");
+    return false;
+  }
+
+  if (pengujiDosen && pengujiDosen.akses_ta !== 1) {
+    toast.error("Penguji yang dipilih tidak memiliki akses Tugas Akhir!");
+    return false;
+  }
+
+  return true;
+};
 watch(
   () => mahasiswaData.value?.dosen_pembimbing,
   (val) => {
@@ -255,7 +288,16 @@ watch(
               placeholder="Pilih Dosen"
               :options="list_dosen"
               v-model="selectedKetuaPenguji"
+              required
             />
+            <div
+              v-if="
+                selectedKetuaDosenData && selectedKetuaDosenData.akses_ta !== 1
+              "
+              class="p-2 px-6 text-sm text-red-700 bg-red-100 border border-red-400 input-rounded body4"
+            >
+              Dosen yang dipilih non-aktif!
+            </div>
             <div v-if="selectedKetuaDosenData" class="flex gap-2 mb-2 sm:gap-4">
               <div class="flex gap-2 sm:gap-4">
                 <!-- Icon Dosen -->
@@ -318,6 +360,7 @@ watch(
               placeholder="Pilih Dosen"
               :options="list_dosen"
               v-model="selectedPenguji"
+              required
             />
             <div
               v-if="selectedPengujiDosenData"

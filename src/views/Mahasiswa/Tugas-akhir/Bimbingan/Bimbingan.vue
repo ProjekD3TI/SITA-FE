@@ -78,7 +78,20 @@ const showNilaiModal = ref(false);
 // ============================================
 // COMPUTED PROPERTIES
 // ============================================
+const enhancedSelectedDosenData = computed(() => {
+  if (!selectedDosenData.value) return null;
 
+  // Cari data lengkap dari pembimbings
+  const enhancedDosen = pembimbings.value.find(
+    (dosen) => dosen.value?.toString() === selectedPembimbing.value?.toString()
+  );
+
+  return {
+    ...selectedDosenData.value,
+    akses_ta: enhancedDosen?.akses_ta || 1,
+    disabled: enhancedDosen?.disabled || false,
+  };
+});
 const isSubmitDisabled = computed(
   () =>
     !selectedDosenData.value || !selectedCategory.value || loadingRequest.value
@@ -97,8 +110,21 @@ function toRoman(num) {
   return romans[num - 1] || num;
 }
 const toast = useToast(); // Tambahkan ini
+const validateDosenAccess = () => {
+  const selectedDosen = enhancedSelectedDosenData.value;
+
+  if (selectedDosen && selectedDosen.akses_ta !== 1) {
+    toast.error("Dosen yang dipilih tidak memiliki akses Tugas Akhir!");
+    return false;
+  }
+
+  return true;
+};
 const handleSubmit = async () => {
   if (!selectedCategory.value || !selectedPembimbing.value) return;
+  if (!validateDosenAccess()) {
+    return;
+  }
   const payload = {
     kategori_id: selectedCategory.value,
     dosen_id: selectedPembimbing.value,
@@ -217,6 +243,15 @@ watch(
               v-model="selectedPembimbing"
               required
             />
+          </div>
+          <div
+            v-if="
+              enhancedSelectedDosenData &&
+              enhancedSelectedDosenData.akses_ta !== 1
+            "
+            class="p-2 px-6 text-red-700 bg-red-100 border border-red-400 body4 input-rounded"
+          >
+            Dosen yang dipilih Non-aktif
           </div>
 
           <!-- Preview Dosen Terpilih -->

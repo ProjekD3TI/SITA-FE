@@ -610,6 +610,7 @@ watch(
   () => router.currentRoute.value.query.refreshPlottingPenguji,
   () => {
     fetchTabelPlottingPenguji(currentPageTabelPlottingPenguji.value);
+    fetchTabelPenjadwalan(currentPageTabelPenjadwalan.value);
   }
 );
 watch(

@@ -180,6 +180,7 @@ const updateNilai = async () => {
             label="Nilai Proposal"
             placeholder="Masukkan Nilai"
             :disabled="isSubmitting"
+            required
           />
           <InputTextArea
             id="catatan-proposal"
@@ -187,6 +188,7 @@ const updateNilai = async () => {
             label="Catatan Proposal"
             placeholder="Masukkan Catatan"
             :disabled="isSubmitting"
+            required
           />
           <Button
             v-if="!isUpdateMode"

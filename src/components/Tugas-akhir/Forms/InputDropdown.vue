@@ -79,12 +79,17 @@
             v-for="option in filteredOptions"
             :key="option.value"
             class="px-6 py-2 cursor-pointer body5 sm:body4 hover:bg-gray-100"
-            :class="
-              selectedValue === option.value
-                ? 'text-primary font-medium'
-                : 'text-blackText'
-            "
-            @click.stop="selectOption(option)"
+            :class="[
+              option.disabled
+                ? 'cursor-not-allowed text-gray-400 bg-gray-50'
+                : 'cursor-pointer hover:bg-gray-100',
+              selectedValue === option.value && !option.disabled
+                ? 'text-primary font-medium bg-blue-50'
+                : option.disabled
+                ? 'text-gray-400'
+                : 'text-blackText',
+            ]"
+            @click.stop="!option.disabled && selectOption(option)"
           >
             {{ option.label }}
           </div>
@@ -124,6 +129,7 @@ const props = defineProps({
     default: () => [],
   },
   required: { type: Boolean, default: false },
+  disabled: { type: Boolean, default: false },
 });
 
 const selectedValue = ref(props.modelValue);
@@ -188,6 +194,11 @@ const filteredOptions = computed(() =>
 
 // Function to select an option
 const selectOption = (option) => {
+  // ✅ Cegah selection jika option disabled
+  if (option.disabled) {
+    return;
+  }
+
   selectedValue.value = option.value;
   isDropdownOpen.value = false;
   emit("update:modelValue", option.value);
