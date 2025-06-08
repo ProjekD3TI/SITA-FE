@@ -17,21 +17,21 @@
         
         <!-- Statistik Laporan -->
         <div class="mt-4 pt-3 border-t border-gray-200">
-          <h2 class="font-semibold text-lg text-gray-700 mb-2">Statistik Laporan</h2>
+          <h2 class="font-semibold text-lg text-gray-700 mb-2">Statistik Laporan Saya</h2>
           <div v-if="isLoadingLaporan" class="text-sm text-gray-500">
             Memuat data laporan...
           </div>
           <div v-else class="grid grid-cols-2 gap-4">
             <div class="bg-blue-50 p-3 rounded-md">
-              <p class="text-sm text-blue-700">Total Laporan Kejadian</p>
+              <p class="text-sm text-blue-700">Total Laporan Kejadian Saya</p>
               <p class="text-2xl font-bold text-blue-800">{{ jumlahLaporan }}</p>
             </div>
             <div class="bg-red-50 p-3 rounded-md">
-              <p class="text-sm text-red-700">Total Laporan Kekerasan</p>
+              <p class="text-sm text-red-700">Total Laporan Kekerasan Saya</p>
               <p class="text-2xl font-bold text-red-800">{{ jumlahLaporanKekerasan }}</p>
             </div>
             <div class="col-span-2 bg-purple-50 p-3 rounded-md">
-              <p class="text-sm text-purple-700">Total Semua Laporan</p>
+              <p class="text-sm text-purple-700">Total Semua Laporan Saya</p>
               <p class="text-2xl font-bold text-purple-800">{{ jumlahLaporan + jumlahLaporanKekerasan }}</p>
             </div>
           </div>
@@ -91,8 +91,38 @@ const barChart = ref(null);
 let doughnutChartInstance = null;
 let barChartInstance = null;
 
+// Helper function untuk memeriksa apakah laporan dimiliki oleh dosen yang login
+const isLaporanMatchingDosen = (laporan, dosenName) => {
+  if (!laporan || !dosenName) return false;
+  
+  // Field yang mungkin berisi nama pelapor
+  const possibleReporterFields = [
+    'nama_pelapor',
+    'pelapor',
+    'nama_dosen',
+    'dosen_nama',
+    'dosen',
+    'reporter',
+    'reported_by',
+    'nama',
+    'name'
+  ];
+  
+  // Cek apakah ada field yang cocok dengan nama dosen
+  for (const field of possibleReporterFields) {
+    if (
+      laporan[field] && 
+      typeof laporan[field] === 'string' &&
+      laporan[field].toLowerCase() === dosenName.toLowerCase()
+    ) {
+      return true;
+    }
+  }
+  
+  return false;
+};
+
 // Fungsi untuk mengambil dan memproses data laporan
-// Fungsi fetchLaporan yang difilter berdasarkan pengguna yang login
 const fetchLaporan = async () => {
   try {
     if (!userData.value) {
@@ -100,47 +130,35 @@ const fetchLaporan = async () => {
       return;
     }
     
-    console.log('User data:', userData.value);
     const dosenName = userData.value.name;
-    const dosenNik = userData.value.nik;
-    const dosenId = userData.value.id; // Jika ada
-    const dosenEmail = userData.value.email; // Jika ada
+    console.log('User data:', userData.value);
+    console.log('Filtering laporan for dosen:', dosenName);
     
     // Ambil data laporan umum
     const responseLaporan = await axios.get("https://v3422040.mhs.d3tiuns.com/api/laporan");
     console.log('Response Laporan:', responseLaporan.data);
     
-    if (responseLaporan.data && responseLaporan.data.length > 0) {
+    if (responseLaporan.data && Array.isArray(responseLaporan.data)) {
       // Log contoh laporan untuk memeriksa struktur
-      console.log('Contoh struktur laporan:', responseLaporan.data[0]);
+      if (responseLaporan.data.length > 0) {
+        console.log('Contoh struktur laporan:', responseLaporan.data[0]);
+        
+        // Coba deteksi field yang mungkin berisi informasi pelapor
+        const sampleLaporan = responseLaporan.data[0];
+        console.log('Field di laporan yang mungkin berisi informasi pelapor:');
+        ['nama_pelapor', 'pelapor', 'nama_dosen', 'dosen_nama', 'dosen', 'reporter', 'reported_by', 'nama', 'name'].forEach(field => {
+          if (sampleLaporan[field]) {
+            console.log(`- ${field}: ${sampleLaporan[field]}`);
+          }
+        });
+      }
       
-      // Filter laporan berdasarkan kemungkinan field yang terkait dengan dosen
-      const filteredLaporan = responseLaporan.data.filter(laporan => {
-        // Periksa semua kemungkinan field yang mungkin mengaitkan laporan dengan dosen
-        return (
-          // Periksa nama dosen
-          (laporan.nama_dosen && laporan.nama_dosen.toLowerCase() === dosenName?.toLowerCase()) ||
-          (laporan.dosen_nama && laporan.dosen_nama.toLowerCase() === dosenName?.toLowerCase()) ||
-          (laporan.dosen && laporan.dosen.toLowerCase() === dosenName?.toLowerCase()) ||
-          
-          // Periksa NIK dosen
-          (laporan.nik_dosen && laporan.nik_dosen === dosenNik) ||
-          (laporan.dosen_nik && laporan.dosen_nik === dosenNik) ||
-          
-          // Periksa ID dosen (jika ada)
-          (laporan.dosen_id && dosenId && laporan.dosen_id == dosenId) ||
-          (laporan.id_dosen && dosenId && laporan.id_dosen == dosenId) ||
-          
-          // Periksa berdasarkan user_id atau created_by
-          (laporan.user_id && dosenId && laporan.user_id == dosenId) ||
-          (laporan.created_by && dosenId && laporan.created_by == dosenId) ||
-          
-          // Periksa berdasarkan email (jika tersedia)
-          (laporan.email && dosenEmail && laporan.email.toLowerCase() === dosenEmail.toLowerCase())
-        );
-      });
+      // Filter laporan berdasarkan nama dosen pelapor
+      const filteredLaporan = responseLaporan.data.filter(laporan => 
+        isLaporanMatchingDosen(laporan, dosenName)
+      );
       
-      console.log('Filtered Laporan untuk', dosenName, ':', filteredLaporan);
+      console.log(`Filtered Laporan Kejadian for ${dosenName}: ${filteredLaporan.length} dari ${responseLaporan.data.length}`);
       jumlahLaporan.value = filteredLaporan.length;
       
       // Hitung jumlah laporan per bulan
@@ -164,57 +182,33 @@ const fetchLaporan = async () => {
       });
       
       laporanUmumByMonth.value = monthData;
-      
-      // Jika tidak ada laporan yang ditemukan setelah filter
-      if (filteredLaporan.length === 0) {
-        console.warn('Tidak ditemukan laporan umum untuk dosen:', dosenName);
-        
-        // Coba lihat field apa yang ada di laporan untuk filter masa depan
-        if (responseLaporan.data.length > 0) {
-          console.log('Field yang tersedia di laporan untuk filter:');
-          const sampleLaporan = responseLaporan.data[0];
-          Object.keys(sampleLaporan).forEach(key => {
-            console.log(`- ${key}: ${sampleLaporan[key]}`);
-          });
-        }
-      }
     }
     
     // Ambil data laporan kekerasan
     const responseLaporanKekerasan = await axios.get("https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan");
     console.log('Response Laporan Kekerasan:', responseLaporanKekerasan.data);
     
-    if (responseLaporanKekerasan.data && responseLaporanKekerasan.data.length > 0) {
+    if (responseLaporanKekerasan.data && Array.isArray(responseLaporanKekerasan.data)) {
       // Log contoh laporan untuk memeriksa struktur
-      console.log('Contoh struktur laporan kekerasan:', responseLaporanKekerasan.data[0]);
+      if (responseLaporanKekerasan.data.length > 0) {
+        console.log('Contoh struktur laporan kekerasan:', responseLaporanKekerasan.data[0]);
+        
+        // Coba deteksi field yang mungkin berisi informasi pelapor
+        const sampleLaporan = responseLaporanKekerasan.data[0];
+        console.log('Field di laporan kekerasan yang mungkin berisi informasi pelapor:');
+        ['nama_pelapor', 'pelapor', 'nama_dosen', 'dosen_nama', 'dosen', 'reporter', 'reported_by', 'nama', 'name'].forEach(field => {
+          if (sampleLaporan[field]) {
+            console.log(`- ${field}: ${sampleLaporan[field]}`);
+          }
+        });
+      }
       
-      // Filter laporan berdasarkan kemungkinan field yang terkait dengan dosen
-      const filteredLaporanKekerasan = responseLaporanKekerasan.data.filter(laporan => {
-        // Periksa semua kemungkinan field yang mungkin mengaitkan laporan dengan dosen
-        return (
-          // Periksa nama dosen
-          (laporan.nama_dosen && laporan.nama_dosen.toLowerCase() === dosenName?.toLowerCase()) ||
-          (laporan.dosen_nama && laporan.dosen_nama.toLowerCase() === dosenName?.toLowerCase()) ||
-          (laporan.dosen && laporan.dosen.toLowerCase() === dosenName?.toLowerCase()) ||
-          
-          // Periksa NIK dosen
-          (laporan.nik_dosen && laporan.nik_dosen === dosenNik) ||
-          (laporan.dosen_nik && laporan.dosen_nik === dosenNik) ||
-          
-          // Periksa ID dosen (jika ada)
-          (laporan.dosen_id && dosenId && laporan.dosen_id == dosenId) ||
-          (laporan.id_dosen && dosenId && laporan.id_dosen == dosenId) ||
-          
-          // Periksa berdasarkan user_id atau created_by
-          (laporan.user_id && dosenId && laporan.user_id == dosenId) ||
-          (laporan.created_by && dosenId && laporan.created_by == dosenId) ||
-          
-          // Periksa berdasarkan email (jika tersedia)
-          (laporan.email && dosenEmail && laporan.email.toLowerCase() === dosenEmail.toLowerCase())
-        );
-      });
+      // Filter laporan kekerasan berdasarkan nama dosen pelapor
+      const filteredLaporanKekerasan = responseLaporanKekerasan.data.filter(laporan => 
+        isLaporanMatchingDosen(laporan, dosenName)
+      );
       
-      console.log('Filtered Laporan Kekerasan untuk', dosenName, ':', filteredLaporanKekerasan);
+      console.log(`Filtered Laporan Kekerasan for ${dosenName}: ${filteredLaporanKekerasan.length} dari ${responseLaporanKekerasan.data.length}`);
       jumlahLaporanKekerasan.value = filteredLaporanKekerasan.length;
       
       // Hitung jumlah laporan kekerasan per bulan
@@ -237,32 +231,25 @@ const fetchLaporan = async () => {
       });
       
       laporanKekerasanByMonth.value = monthData;
-      
-      // Jika tidak ada laporan yang ditemukan setelah filter
-      if (filteredLaporanKekerasan.length === 0) {
-        console.warn('Tidak ditemukan laporan kekerasan untuk dosen:', dosenName);
-        
-        // Coba lihat field apa yang ada di laporan untuk filter masa depan
-        if (responseLaporanKekerasan.data.length > 0) {
-          console.log('Field yang tersedia di laporan kekerasan untuk filter:');
-          const sampleLaporan = responseLaporanKekerasan.data[0];
-          Object.keys(sampleLaporan).forEach(key => {
-            console.log(`- ${key}: ${sampleLaporan[key]}`);
-          });
-        }
-      }
     }
     
-    // Tambahkan informasi di UI jika tidak ada laporan yang ditemukan
+    console.log('Total laporan kejadian untuk dosen:', jumlahLaporan.value);
+    console.log('Total laporan kekerasan untuk dosen:', jumlahLaporanKekerasan.value);
+    
+    // Jika tidak ada data, tambahkan log
     if (jumlahLaporan.value === 0 && jumlahLaporanKekerasan.value === 0) {
-      console.warn('Tidak ada laporan yang ditemukan untuk dosen:', dosenName);
-    } else {
-      console.log('Total laporan umum setelah filter:', jumlahLaporan.value);
-      console.log('Total laporan kekerasan setelah filter:', jumlahLaporanKekerasan.value);
+      console.warn(`Tidak ada laporan yang ditemukan untuk dosen: ${dosenName}`);
+      console.log('Kemungkinan penyebab:');
+      console.log('1. Dosen belum membuat laporan');
+      console.log('2. Nama dosen (pelapor) dalam data tidak cocok dengan nama login');
+      console.log('3. Format data tidak konsisten');
     }
     
   } catch (error) {
     console.error("Error fetching laporan data:", error);
+    // Jika terjadi error saat fetching data, set nilai default
+    jumlahLaporan.value = 0;
+    jumlahLaporanKekerasan.value = 0;
   } finally {
     isLoadingLaporan.value = false;
     // Render charts setelah data tersedia
@@ -374,6 +361,9 @@ onMounted(() => {
     userData.value = decryptData(encryptedUserData);
     // Panggil fungsi untuk mengambil data laporan setelah user data tersedia
     fetchLaporan();
+  } else {
+    console.error("User session data not found");
+    isLoadingLaporan.value = false;
   }
 });
 
