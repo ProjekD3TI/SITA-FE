@@ -22,6 +22,18 @@
         <div v-else class="detail-content">
             <div class="status-header">
                 <div class="laporan-number">{{ laporan.nomor_laporan }}</div>
+                <div class="action-btn-container">
+                    <button 
+                        v-if="laporan && laporan.status !== 'finished'" 
+                        class="edit-button"
+                        @click="goToEditLaporan"
+                        title="Lengkapi atau ubah data laporan">
+                        <i class="fas fa-edit"></i> <span>Edit Laporan</span>
+                    </button>
+                    <div :class="['status-badge', laporan.status]">
+                        {{ formatStatus(laporan.status) }}
+                    </div>
+                </div>
                 <div :class="['status-badge', laporan.status]">
                     {{ formatStatus(laporan.status) }}
                 </div>
@@ -436,6 +448,11 @@ export default {
         
         goBack() {
             this.$router.go(-1);
+        },
+
+        goToEditLaporan() {
+            if (!this.checkAuth()) return;
+            this.$router.push({ name: 'EditPelaporanKejadianDosen', params: { id: this.laporanId } });
         },
         
         formatDate(dateString) {
@@ -1613,5 +1630,38 @@ export default {
         width: 100%;
         justify-content: center;
     }
+}
+
+.action-btn-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.edit-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.edit-button:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.edit-button i {
+    margin-right: 8px;
+    font-size: 16px;
 }
 </style>

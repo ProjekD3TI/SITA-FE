@@ -74,6 +74,14 @@
                               </button>
                             </div>
                           </div>
+
+                          <button 
+                            class="urgent-report-btn ms-2" 
+                            @click="openUrgentReportDialog"
+                          >
+                            <i class="mdi mdi-alert-circle"></i>
+                            Tambah Laporan Mendesak
+                          </button>
                           
                           <!-- Tambah Laporan Button -->
                           <button 
@@ -655,6 +663,11 @@ export default {
       // Alternatively, use router to navigate to form page
       this.$router.push('/dosen/addpkdosen');
     },
+
+    openUrgentReportDialog() {
+      // Open a dialog or redirect to urgent report form
+      this.$router.push('/dosen/addpkmendesakdosen');
+    },
     
     lihatDetail(laporanId) {
       // Explicitly use the correct route name with parameter
@@ -807,5 +820,32 @@ export default {
     width: 100%;
     margin-bottom: 10px;
   }
+}
+
+.urgent-report-btn {
+  background-color: #FF5252; /* error color for urgency */
+  color: white;
+  border: none;
+  border-radius: 8px; /* matching the rounded corners of other buttons */
+  padding: 8px 16px; /* same padding as other buttons */
+  font-size: 14px; /* match font size */
+  font-weight: 500; /* adding medium font weight for consistency */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 8px; /* consistent spacing between buttons */
+  margin-left: 8px; /* consistent spacing between buttons */
+  height: 40px; /* ensuring consistent height */
+  box-shadow: 0 2px 5px rgba(255, 82, 82, 0.2); /* subtle shadow like other buttons */
+  transition: background-color 0.2s;
+}
+
+.urgent-report-btn:hover {
+  background-color: #FF1744; /* darker shade on hover */
+}
+
+.urgent-report-btn i {
+  font-size: 16px; /* slightly smaller icon size for better alignment */
 }
 </style>

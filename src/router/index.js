@@ -180,9 +180,19 @@ const routes = [
         component: () => import("../views/Dosen/Pelaporan/Kejadian/AddPKDosen.vue"),
       },
       {
+        path: "addpkmendesakdosen",
+        name: "AddPKMendesakDosen",
+        component: () => import("../views/Dosen/Pelaporan/Kejadian/AddPKMendesakDosen.vue"),
+      },
+      {
         path: "/laporan/:id",
         name: "DetailPKDosen",
         component: () => import("../views/Dosen/Pelaporan/Kejadian/DetailPKDosen.vue"),
+      },
+      {
+        path: "/laporan/:id/edit",
+        name: "EditPelaporanKejadianDosen",
+        component: () => import("../views/Dosen/Pelaporan/Kejadian/EditPKDosen.vue"),
       },
       {
         path: "dashboardksdosen",
