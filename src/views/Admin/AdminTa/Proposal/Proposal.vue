@@ -315,7 +315,7 @@ watch(currentPageSeminar, (val) => {
   fetchSeminarProposal(
     val,
     searchQuerySeminar.value,
-    getSelectedKategoriLabel(selectedCategoriesSeminar.value)
+    getSelectedKategoriLabel(selectedCategoriesSeminar.value || [])
   );
 });
 watch(currentPagePendaftar, (val) => {
@@ -376,7 +376,7 @@ watch(currentPagePendaftar, (val) => {
           :pagination="paginationTabelPendaftarProposal"
           @pageChange="
             (page) => {
-              currentPage = page;
+              currentPagePendaftar = page;
             }
           "
         >
@@ -448,7 +448,7 @@ watch(currentPagePendaftar, (val) => {
           :pagination="paginationTabelSeminarProposal"
           @pageChange="
             (page) => {
-              currentPage = page;
+              currentPageSeminar = page;
             }
           "
         >

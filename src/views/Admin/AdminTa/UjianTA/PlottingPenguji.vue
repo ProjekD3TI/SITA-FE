@@ -160,7 +160,7 @@ const handleSubmit = async () => {
       query: { refreshPlottingPenguji: Date.now() },
     });
   } catch (e) {
-    toast.error("Gagal menyimpan plotting penguji.");
+    // toast.error("Gagal menyimpan plotting penguji.");
   } finally {
     loadingShowPlottingPenguji.value = false;
   }
@@ -204,7 +204,7 @@ const handleUpdate = async () => {
       query: { refreshPlottingPenguji: Date.now() },
     });
   } catch (e) {
-    toast.error("Gagal mengupdate plotting penguji.");
+    // toast.error("Gagal mengupdate plotting penguji.");
   } finally {
     loadingShowPlottingPenguji.value = false;
   }
@@ -227,9 +227,9 @@ watch(
     <Loading />
   </div>
 
-  <div v-else-if="errorShowPlottingPenguji" class="p-4">
+  <!-- <div v-else-if="errorShowPlottingPenguji" class="p-4">
     <ErrorMsg :message="errorShowPlottingPenguji" />
-  </div>
+  </div> -->
 
   <div v-else>
     <Breadcrumb />

@@ -78,6 +78,7 @@ export function authMahasiswa() {
           name: response.data.data?.user?.name,
           nim: response.data.data?.user?.nim,
           no_telp: response.data.data?.user?.no_telp,
+          akses_ta: response.data.data?.user?.akses_ta,
           timestamp: new Date().getTime(),
         };
 
@@ -105,7 +106,7 @@ export function authMahasiswa() {
       } else {
         toast.error(
           error.response?.data?.message ||
-          "Gagal melakukan login. Silakan coba lagi."
+            "Gagal melakukan login. Silakan coba lagi."
         );
       }
       // console.error("Login error:", error.response?.data);
@@ -145,6 +146,7 @@ export function authMahasiswa() {
         email: userData.email,
         nim: userData.nim,
         no_telp: userData.no_telp,
+        akses_ta: userData.akses_ta,
       };
       axios.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
       return true;
@@ -169,26 +171,26 @@ export function authMahasiswa() {
   };
 
   const getAuthUser = () => {
-    console.log('getAuthUser called');
+    console.log("getAuthUser called");
 
     // Cek localStorage - tampilkan semua kunci yang ada
-    console.log('All localStorage keys:', Object.keys(localStorage));
+    console.log("All localStorage keys:", Object.keys(localStorage));
 
     // Coba ambil data user dari localStorage
-    const storedUser = localStorage.getItem('user');
-    console.log('Raw data from localStorage:', storedUser);
+    const storedUser = localStorage.getItem("user");
+    console.log("Raw data from localStorage:", storedUser);
 
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser);
-        console.log('Parsed user data:', userData);
+        console.log("Parsed user data:", userData);
         return userData;
       } catch (e) {
-        console.error('Error parsing user data:', e);
+        console.error("Error parsing user data:", e);
         return null;
       }
     } else {
-      console.warn('No user data found in localStorage');
+      console.warn("No user data found in localStorage");
       return null;
     }
   };
@@ -209,7 +211,7 @@ export function authMahasiswa() {
     logout,
     checkAuth,
     initializeAuth,
-    getAuthUser
+    getAuthUser,
   };
 }
 
@@ -228,4 +230,3 @@ export function getUserData() {
   }
   return null;
 }
-

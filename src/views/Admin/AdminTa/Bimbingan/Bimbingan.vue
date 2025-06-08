@@ -39,13 +39,17 @@ onMounted(() => {
 });
 
 watch(currentPage, (val) => {
-  fetchBimbingan(val, searchQueryBimbingan.value, getSelectedKategoriLabel());
+  fetchBimbingan(
+    val,
+    searchQueryBimbingan.value,
+    getSelectedKategoriLabel(selectedCategoriesBimbingan.value || [])
+  );
 });
 watch(currentPagePlotting, (val) => {
   fetchPlottingPembimbing(
     val,
     searchQuery.value,
-    getSelectedKategoriLabel(selectedCategoriesPlot.value)
+    getSelectedKategoriLabel(selectedCategoriesPlot.value || [])
   );
 });
 // Komputed untuk data tabel plotting pembimbing

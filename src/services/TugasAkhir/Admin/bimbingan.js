@@ -334,7 +334,7 @@ export function useKategori() {
       };
 
       const response = await axios.get("/api/admin_ta/kategori", { headers });
-      dataKategori.value = response.data.data;
+      dataKategori.value = response.data.data.data;
     } catch (err) {
       handleError(err);
     } finally {

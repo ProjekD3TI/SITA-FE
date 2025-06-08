@@ -166,6 +166,7 @@ const routes = [
         component: UserLayoutTA, // Gunakan AdminLayout sebagai layout
         meta: {
           breadcrumb: "Tugas Akhir",
+          requiresAksesTA: true, // Tambahkan meta untuk akses TA
         },
         children: [
           {
@@ -588,6 +589,19 @@ router.beforeEach(async (to, from, next) => {
     if (!userData || !authToken) {
       next({ name: "Landing" });
       return;
+    }
+
+    if (to.matched.some((record) => record.meta.requiresAksesTA)) {
+      if (
+        userData.type === "mahasiswa" &&
+        (!userData.akses_ta || userData.akses_ta === 0)
+      ) {
+        toast.error(
+          "Anda tidak memiliki akses ke halaman Tugas Akhir. Silakan hubungi admin."
+        );
+        next({ name: "Landing" });
+        return;
+      }
     }
 
     if (to.meta.userType && userData.type !== to.meta.userType) {

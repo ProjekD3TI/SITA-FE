@@ -5,14 +5,14 @@
       <div
         class="bg-[rgba(223,245,255,0.5)] text-gray-800 fixed inset-x-0 top-0 z-10 shadow-md"
       >
-        <div class="container mx-auto flex items-center justify-between p-3">
+        <div class="container flex items-center justify-between p-3 mx-auto">
           <!-- Logo -->
           <div class="flex items-center">
             <div class="mr-3">
               <img
                 src="/src/assets/images/d3ti-logo.png"
                 alt="D3TI UNS Logo"
-                class="h-10 w-auto"
+                class="w-auto h-10"
               />
             </div>
           </div>
@@ -20,11 +20,11 @@
           <!-- Hamburger Menu for Mobile -->
           <button
             @click="toggleMenu"
-            class="md:hidden text-gray-800 focus:outline-none"
+            class="text-gray-800 md:hidden focus:outline-none"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-6 w-6"
+              class="w-6 h-6"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -41,23 +41,32 @@
           <!-- Navigation Menu (Hidden on Mobile) -->
           <nav
             :class="{ hidden: !isMenuOpen, block: isMenuOpen }"
-            class="md:flex space-x-6 relative"
+            class="relative space-x-6 md:flex"
           >
-            <router-link to="/" class="hover:text-gray-600"
-              >Home</router-link
+            <router-link to="/" class="hover:text-gray-600">Home</router-link>
+            <router-link to="/informasi-ta" class="hover:text-gray-600"
+              >TA</router-link
             >
-            <router-link to="/informasi-ta" class="hover:text-gray-600">TA</router-link>
-            <router-link to="/informasi-inventaris-peminjaman" class="hover:text-gray-600"
+            <router-link
+              to="/informasi-inventaris-peminjaman"
+              class="hover:text-gray-600"
               >Ruang dan Inventaris</router-link
             >
             <!-- Dropdown Menu for "Pelaporan" -->
             <div class="relative group">
-              <span class="hover:text-gray-600 cursor-pointer px-4 py-2">Pelaporan</span>
+              <span class="px-4 py-2 cursor-pointer hover:text-gray-600"
+                >Pelaporan</span
+              >
               <!-- Sub-navbar (Dropdown) -->
               <div
-                class="absolute top-full left-0 mt-2 bg-gray-800 text-white rounded-lg shadow-lg py-2 w-48 
-                opacity-0 group-hover:opacity-100 transition-opacity duration-800 invisible group-hover:visible z-10"
-                v-on:mouseleave="e => setTimeout(() => e.target.classList.remove('group-hover:visible'), 1500)"
+                class="absolute left-0 z-10 invisible w-48 py-2 mt-2 text-white transition-opacity bg-gray-800 rounded-lg shadow-lg opacity-0 top-full group-hover:opacity-100 duration-800 group-hover:visible"
+                v-on:mouseleave="
+                  (e) =>
+                    setTimeout(
+                      () => e.target.classList.remove('group-hover:visible'),
+                      1500
+                    )
+                "
               >
                 <router-link
                   to="/pelaporan/dashboard"
@@ -79,14 +88,14 @@
           <div v-if="!isAuthenticated" class="flex items-center space-x-3">
             <router-link :to="{ name: 'loginmhs' }">
               <button
-                class="border border-blue-500 bg-white text-blue-500 hover:bg-blue-500 hover:text-white px-4 py-2 rounded-md shadow-md text-sm"
+                class="px-4 py-2 text-sm text-blue-500 bg-white border border-blue-500 rounded-md shadow-md hover:bg-blue-500 hover:text-white"
               >
                 Login
               </button>
             </router-link>
             <router-link :to="{ name: 'register' }">
               <button
-                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md shadow-md text-sm"
+                class="px-4 py-2 text-sm text-white bg-blue-500 rounded-md shadow-md hover:bg-blue-600"
               >
                 Register
               </button>
@@ -98,12 +107,12 @@
             <div class="relative">
               <button
                 @click="toggleProfileDropdown"
-                class="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-full shadow-md text-sm"
+                class="flex items-center px-5 py-2 text-sm text-white bg-blue-500 rounded-full shadow-md hover:bg-blue-600"
               >
-                <span class="mr-2">{{ username || 'My Account' }}</span>
+                <span class="mr-2">{{ username || "My Account" }}</span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  class="h-4 w-4"
+                  class="w-4 h-4"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -119,7 +128,7 @@
               <!-- Profile Dropdown Menu -->
               <div
                 v-show="isProfileDropdownOpen"
-                class="absolute top-full right-0 mt-2 bg-white text-gray-800 rounded-lg shadow-lg py-2 w-48 z-20"
+                class="absolute right-0 z-20 w-48 py-2 mt-2 text-gray-800 bg-white rounded-lg shadow-lg top-full"
               >
                 <router-link
                   to="/profile"
@@ -128,7 +137,7 @@
                   <div class="flex items-center">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      class="h-5 w-5 mr-2"
+                      class="w-5 h-5 mr-2"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -144,13 +153,14 @@
                   </div>
                 </router-link>
                 <router-link
+                  v-if="aksesTA"
                   :to="getTaskRoute()"
                   class="block px-4 py-2 hover:bg-gray-100"
                 >
                   <div class="flex items-center">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      class="h-5 w-5 mr-2"
+                      class="w-5 h-5 mr-2"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -167,9 +177,11 @@
                 </router-link>
                 <button
                   @click="handleLogout"
-                  class="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  class="block w-full px-4 py-2 text-left hover:bg-gray-100"
                 >
-                  <div class="flex items-center text-red-600 hover:text-red-800">
+                  <div
+                    class="flex items-center text-red-600 hover:text-red-800"
+                  >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -197,10 +209,10 @@
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
-import { authMahasiswa, getUserData } from '../services/authMahasiswa';
+import { authMahasiswa, getUserData } from "../services/authMahasiswa";
 
 export default {
   name: "HeaderComponent",
@@ -208,31 +220,49 @@ export default {
     const router = useRouter();
     const toast = useToast();
     const { logout } = authMahasiswa();
-    const username = ref('');
-    const userType = ref('');
-    
+    const username = ref("");
+    const userType = ref("");
+
     // Computed property untuk cek apakah pengguna terautentikasi
     const isAuthenticated = computed(() => {
       const userData = getUserData();
       return !!userData; // Akan mengembalikan true jika userData ada, false jika tidak
     });
 
+    // Fungsi untuk mendapatkan data user dari cookie atau localStorage
+    const aksesTA = computed(() => {
+      const userData = getUserData();
+      if (!userData) return false;
+
+      // Dosen dan Admin selalu memiliki akses
+      if (userData.type === "dosen" || userData.type === "admin") {
+        return true;
+      }
+
+      // Mahasiswa hanya jika akses_ta = 1
+      if (userData.type === "mahasiswa") {
+        return userData.akses_ta === 1;
+      }
+
+      return false;
+    });
     onMounted(() => {
       // Mendapatkan data user dari cookie
       const userData = getUserData();
       if (userData) {
-        username.value = userData.name || userData.email?.split('@')[0] || 'User';
-        userType.value = userData.type || 'mahasiswa';
+        username.value =
+          userData.name || userData.email?.split("@")[0] || "User";
+        userType.value = userData.type || "mahasiswa";
       } else {
         try {
-          const userInfo = JSON.parse(localStorage.getItem('user'));
+          const userInfo = JSON.parse(localStorage.getItem("user"));
           if (userInfo && userInfo.username) {
             username.value = userInfo.username;
           } else if (userInfo && userInfo.email) {
-            username.value = userInfo.email.split('@')[0];
+            username.value = userInfo.email.split("@")[0];
           }
         } catch (error) {
-          console.log('No user data found');
+          console.log("No user data found");
         }
       }
     });
@@ -241,35 +271,36 @@ export default {
       const userData = getUserData();
       if (userData) {
         switch (userData.type) {
-          case 'admin':
-            return '/admin-ta/tugas-akhir';
-          case 'dosen':
-            return '/dosen/tugas-akhir';
-          case 'mahasiswa':
-            return '/mahasiswa/tugas-akhir';
+          case "admin":
+            return "/admin-ta/tugas-akhir";
+          case "dosen":
+            return "/dosen/tugas-akhir";
+          case "mahasiswa":
+            return "/mahasiswa/tugas-akhir";
           default:
-            return '/mahasiswa/tugas-akhir';
+            return "/mahasiswa/tugas-akhir";
         }
       }
-      return '/mahasiswa/tugas-akhir'; // Default route jika tidak ada userData
+      return "/mahasiswa/tugas-akhir"; // Default route jika tidak ada userData
     };
 
     const handleLogout = () => {
       try {
         logout();
         toast.success("Berhasil Logout!");
-        router.push('/');
+        router.push("/");
       } catch (error) {
         toast.error("Terjadi kesalahan saat logout.");
       }
     };
 
     return {
+      aksesTA,
       username,
       userType,
       handleLogout,
       getTaskRoute,
-      isAuthenticated
+      isAuthenticated,
     };
   },
   data() {
@@ -280,10 +311,10 @@ export default {
   },
   // Close dropdown when clicking outside
   mounted() {
-    document.addEventListener('click', this.closeDropdownOnClickOutside);
+    document.addEventListener("click", this.closeDropdownOnClickOutside);
   },
   beforeUnmount() {
-    document.removeEventListener('click', this.closeDropdownOnClickOutside);
+    document.removeEventListener("click", this.closeDropdownOnClickOutside);
   },
   methods: {
     toggleMenu() {
@@ -294,12 +325,16 @@ export default {
       this.isProfileDropdownOpen = !this.isProfileDropdownOpen;
     },
     closeDropdownOnClickOutside(event) {
-      const dropdown = document.querySelector('.relative');
-      if (dropdown && !dropdown.contains(event.target) && this.isProfileDropdownOpen) {
+      const dropdown = document.querySelector(".relative");
+      if (
+        dropdown &&
+        !dropdown.contains(event.target) &&
+        this.isProfileDropdownOpen
+      ) {
         this.isProfileDropdownOpen = false;
       }
-    }
-  }
+    },
+  },
 };
 </script>
 
