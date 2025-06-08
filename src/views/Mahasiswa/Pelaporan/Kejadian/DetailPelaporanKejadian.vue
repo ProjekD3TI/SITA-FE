@@ -29,6 +29,18 @@
             <div class="flex flex-wrap items-center w-full">
               <h2 class="text-2xl font-semibold mr-3">Detail Laporan Kejadian</h2>
               <div class="laporan-id mr-3">{{ laporan.nomor_laporan }}</div>
+              <div class="action-btn-container">
+                    <button 
+                        v-if="laporan && laporan.status !== 'finished'" 
+                        class="edit-button"
+                        @click="goToEditLaporan"
+                        title="Lengkapi atau ubah data laporan">
+                        <i class="fas fa-edit"></i> <span>Edit Laporan</span>
+                    </button>
+                    <div :class="['status-badge', laporan.status]">
+                        {{ formatStatus(laporan.status) }}
+                    </div>
+                </div>
               <div class="status-badge" :class="getStatusClass">{{ formatStatus(laporan.status) }}</div>
             </div>
           </div>
@@ -359,6 +371,39 @@ export default {
   // Replace the methods section with this cleaned version
 
   methods: {
+    checkAuth() {
+      const token = VueCookies.get("auth_token");
+      if (!token) {
+        this.error = "Sesi login telah berakhir. Silakan login kembali.";
+        // Optionally redirect to login page
+        // this.$router.push({ name: 'Login' });
+        return false;
+      }
+      return true;
+    },
+    
+    goToEditLaporan() {
+      if (!this.checkAuth()) return;
+      this.$router.push({ name: 'EditPelaporanKejadian', params: { id: this.laporanId } });
+    },
+
+    capitalizeSentence(text) {
+      if (!text) return '';
+      return text.split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    },
+
+    getAuthToken() {
+      const token = VueCookies.get("auth_token");
+      if (token) {
+        this.authToken = token;
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      } else {
+        this.error = "Sesi login telah berakhir. Silakan login kembali.";
+      }
+    },
+
     capitalizeSentence(text) {
       if (!text) return '';
       return text.split(' ')

@@ -6,6 +6,7 @@ import { useToast } from "vue-toastification";
 import UserLayout from "../layout/UserLayout.vue";
 import DosenLayout from "../layout/DosenLayout.vue";
 import AdminLayout from "../layout/AdminLayout.vue";
+import path from "path";
 
 //define a routes
 const routes = [
@@ -395,6 +396,16 @@ const routes = [
         path: "add-kejadian",
         name: "AddPelaporanKejadian",
         component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/AddPelaporanKejadian.vue"),
+      },
+      {
+        path: "add-kejadian-mendesak-mhs",
+        name: "AddPelaporanKejadianMendesakMHS",
+        component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/AddPelaporanKejadianMendesak.vue"),
+      },
+      {
+        path: "laporan/:id/edit",
+        name: "EditPelaporanKejadian",
+        component: () => import("../views/Mahasiswa/Pelaporan/Kejadian/EditPelaporanKejadian.vue"),
       },
       {
         path: "laporan/:id",
