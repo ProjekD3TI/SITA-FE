@@ -1,14 +1,13 @@
 <script setup>
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import { ref, computed, onMounted } from "vue";
-import { RouterLink } from "vue-router";
+import { RouterLink, useRouter } from "vue-router";
 import Table from "@/components/Tugas-akhir/Table.vue";
 import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
 import ModalFilter from "@/components/Tugas-akhir/Modals/ModalFilter.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Loading from "@/components/Loading.vue";
 import { useUjianTAForDosen } from "@/services/TugasAkhir/Dosen/ujianTA.js";
-import { useSesiForDosen } from "@/services/TugasAkhir/Dosen/sesi.js";
 
 // Use the composable to get all the state and functions
 const {
@@ -23,14 +22,14 @@ const {
   filterBySesi,
   searchQuery,
   selectedSesi,
-} = useUjianTAForDosen();
 
-const {
+  // Session related properties
   sessions,
-  loading: loadingSessions,
-  error: errorSessions,
+  loadingSessions,
+  errorSessions,
   fetchSessions,
-} = useSesiForDosen();
+} = useUjianTAForDosen();
+const router = useRouter();
 
 // Table headers for the Table component
 const tableHeaders = [
@@ -43,18 +42,50 @@ const tableHeaders = [
   "Aksi",
 ];
 
+// Track selected sessions in an array (following Bimbingan pattern)
+const selectedSessions = ref([]);
+
 // Computed property to get session filter options
 const filterSessions = computed(() => {
-  if (sessions.value && sessions.value.length > 0) {
-    return sessions.value.map((session) => session.nama_sesi);
+  if (
+    !sessions.value ||
+    !Array.isArray(sessions.value) ||
+    sessions.value.length === 0
+  ) {
+    return [];
   }
-  return loadingSessions.value ? ["Memuat sesi..."] : [];
+
+  return sessions.value
+    .map((session) => {
+      if (typeof session === "string") {
+        // If sessions are just strings
+        return {
+          value: session,
+          label: session,
+        };
+      } else if (session && session.nama_sesi) {
+        // If sessions have a proper structure with nama_sesi
+        return {
+          value: session.nama_sesi,
+          label: session.nama_sesi,
+        };
+      } else if (session && session.id) {
+        // Fallback if sessions have different structure
+        return {
+          value: session.id,
+          label: session.id.toString(),
+        };
+      } else {
+        return null;
+      }
+    })
+    .filter(Boolean); // Remove any null items
 });
 
 // Handler for filter application
-const applyFilter = (filterData) => {
-  const selectedSesiValue =
-    filterData.values.length > 0 ? filterData.values[0] : "";
+const applyFilter = ({ values }) => {
+  selectedSessions.value = values;
+  const selectedSesiValue = values.length > 0 ? values[0] : "";
   filterBySesi(selectedSesiValue);
 };
 
@@ -73,30 +104,27 @@ onMounted(() => {
   fetchSessions();
   fetchUjianTA();
 });
+
+// Add a function to handle row click navigation
+const navigateToDetail = (item) => {
+  router.push({
+    name: "DetailUjianTAforDosen",
+    params: { tugas_akhir_id: item.tugas_akhir_id },
+  });
+};
 </script>
 
 <template>
-  <div
-    v-if="loadingUjian"
-    class="flex items-center justify-center min-h-[80dvh]"
-  >
-    <Loading />
-  </div>
-  <div v-else-if="!$route.path.includes('detail-ujian-ta')">
-    <Breadcrumb :items="breadcrumbItems" />
+  <div v-if="!$route.path.includes('detail-ujian-ta')">
+    <Breadcrumb />
 
     <div class="bg-white rounded-lg shadow-md p-8">
       <!-- Search and Filter - Stack on mobile -->
-      <div class="flex flex-row mb-2 gap-2">
+      <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
         <!-- Filter by Session -->
-        <div class="w-auto sm:w-auto sm:mr-2">
-          <!-- Indikator loading untuk sesi -->
-          <div v-if="loadingSessions" class="inline-flex items-center">
-            <Loading />
-          </div>
-
+        <div class="w-auto">
           <!-- Pesan error jika sesi gagal dimuat -->
-          <div v-else-if="errorSessions" class="text-red-500 text-sm">
+          <div v-if="errorSessions" class="text-red-500 text-sm">
             Gagal memuat sesi: {{ errorSessions }}
           </div>
 
@@ -105,28 +133,29 @@ onMounted(() => {
             v-else
             title="Sesi"
             :items="filterSessions"
-            :preselectedValues="selectedSesi ? [selectedSesi] : []"
-            filterType="session"
-            triggerText="Sesi"
-            triggerVariant="outlined-black"
-            hint="*Pilih sesi ujian"
-            modalPosition="bottom"
+            filterType="Sesi"
             @apply="applyFilter"
+            triggerText="Sesi"
+            :preselectedValues="selectedSessions"
           />
         </div>
 
         <!-- Search Bar -->
-        <div class="flex-grow w-full">
+        <div class="flex-grow">
           <SearchBar
             v-model="searchQuery"
-            placeholder="Search by name, NIM, or title..."
+            placeholder="Cari..."
+            :debounce="300"
             @search="handleSearch"
           />
         </div>
       </div>
       <!-- Status error -->
+      <div v-if="loadingUjian" class="py-8">
+        <Loading />
+      </div>
       <div
-        v-if="errorUjian"
+        v-else-if="errorUjian"
         class="p-4 bg-red-100 text-red-700 rounded-lg my-4"
       >
         <p>{{ errorUjian }}</p>
@@ -172,50 +201,32 @@ onMounted(() => {
           @pageChange="handlePageChange"
         >
           <template #row="{ item }">
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-6 py-4 whitespace-nowrap rounded-l-lg">
               {{ item.mahasiswa?.nim }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-6 py-4">
               {{ item.mahasiswa?.name }}
             </td>
-            <td
-              class="px-6 py-4 whitespace-nowrap truncate max-w-[200px] sm:max-w-[300px] md:max-w-[350px]"
-            >
+            <td class="px-6 py-4">
               {{ item.judul_tugas_akhir }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-6 py-4">
               {{ item.tanggal_ujian }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              {{
-                item.sesi?.nama_sesi ||
-                `${item.sesi?.waktu_mulai} - ${item.sesi?.waktu_selesai}`
-              }}
+            <td class="px-6 py-4">
+              {{ `${item.sesi?.waktu_mulai} - ${item.sesi?.waktu_selesai}` }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-6 py-4">
               {{ item.ruang }}
             </td>
             <td class="px-6 py-4">
-              <router-link
-                :to="{
-                  path: '/dosen/tugas-akhir/ujian-ta/detail-ujian-ta',
-                  query: {
-                    tugas_akhir_id: item.tugas_akhir_id || '',
-                    nim: item.mahasiswa?.nim || '',
-                    name: item.mahasiswa?.name || '',
-                    title: item.judul_tugas_akhir || 'Judul Tidak Tersedia',
-                    date: item.tanggal_ujian || '',
-                    session:
-                      item.sesi?.nama_sesi ||
-                      `${item.sesi?.waktu_mulai} - ${item.sesi?.waktu_selesai}` ||
-                      '',
-                    room: item.ruang || '',
-                    _t: Date.now(),
-                  },
-                }"
+              <Button
+                variant="primary"
+                size="md"
+                @click.stop="navigateToDetail(item)"
               >
-                <Button variant="primary" size="md">Detail</Button>
-              </router-link>
+                Detail
+              </Button>
             </td>
           </template>
         </Table>

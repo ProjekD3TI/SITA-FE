@@ -253,13 +253,15 @@ const routes = [
           },
           {
             path: "bimbingan",
+            name: "BimbinganforDosen",
             component: BimbinganforDosen,
             meta: {
               breadcrumb: "Bimbingan",
             },
             children: [
               {
-                path: "detail-bimbingan",
+                path: "detail-bimbingan/:tugas_akhir_id",
+                name: "DetailBimbinganforDosen",
                 component: DetailBimbinganforDosen,
                 meta: {
                   breadcrumb: "Detail",
@@ -267,6 +269,7 @@ const routes = [
                 children: [
                   {
                     path: "input-nilai-bimbingan",
+                    name: "InputNilaiBimbinganforDosen",
                     component: InputNilaiBimbinganforDosen,
                     meta: {
                       breadcrumb: "Input Nilai",
@@ -278,13 +281,15 @@ const routes = [
           },
           {
             path: "ujian-ta",
+            name: "UjianTAforDosen",
             component: UjianTAforDosen,
             meta: {
               breadcrumb: "Ujian",
             },
             children: [
               {
-                path: "detail-ujian-ta",
+                path: "detail-ujian-ta/:tugas_akhir_id",
+                name: "DetailUjianTAforDosen",
                 component: detailUjianTAforDosen,
                 meta: {
                   breadcrumb: "Detail",
@@ -292,6 +297,7 @@ const routes = [
                 children: [
                   {
                     path: "input-nilai-ujian-ta",
+                    name: "InputNilaiUjianTAforDosen",
                     component: InputNilaiUjianTAforDosen,
                     meta: {
                       breadcrumb: "Input Nilai",
@@ -562,7 +568,6 @@ const routes = [
       },
     ],
   },
-
   {
     path: "/:pathMatch(.*)*",
     redirect: "/404",

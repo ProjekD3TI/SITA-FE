@@ -7,7 +7,7 @@ import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
-import { useNilaiBimbingan } from "@/services/TugasAkhir/Dosen/nilaiBimbingan";
+import { useNilaiBimbingan } from "@/services/TugasAkhir/Dosen/bimbingan";
 
 const route = useRoute();
 const router = useRouter();
@@ -22,7 +22,7 @@ const {
   saveNilaiBimbingan,
 } = useNilaiBimbingan();
 
-// Data mahasiswa dari parameter query
+// Data mahasiswa dari parameter route
 const studentInfo = ref({
   id: "",
   nim: "",
@@ -158,37 +158,32 @@ const loadNilaiBimbingan = async (tugasAkhirId) => {
   }
 };
 
-// Ambil data dari parameter query dan muat nilai jika ada
+// Ambil data dari parameter route dan muat nilai jika ada
 onMounted(() => {
-  const id = route.query.id;
-  const nim = route.query.nim;
-  const name = route.query.name;
-  const category = route.query.category;
-  const title = route.query.title;
+  const id = route.params.tugas_akhir_id;
 
-  console.log("Nilai bimbingan query params:", {
-    id,
-    nim,
-    name,
-    category,
-    title,
-  });
+  console.log("Nilai bimbingan route params:", route.params);
 
-  if (nim) {
-    studentInfo.value = {
-      id,
-      nim,
-      name,
-      category,
-      title,
-    };
-
-    // Jika ada ID, coba muat nilai yang sudah ada
-    if (id) {
-      loadNilaiBimbingan(id);
-    }
+  if (id) {
+    // Fetch student info using the ID
+    fetchStudentInfo(id);
+    loadNilaiBimbingan(id);
   }
 });
+
+// Function to fetch student info from API
+const fetchStudentInfo = async (id) => {
+  try {
+    // Here you would make an API call to get the student details
+    // For now, we'll just set the ID
+    studentInfo.value.id = id;
+
+    // Note: In a real implementation, you would fetch the student's details
+    // and update studentInfo.value with the response data
+  } catch (err) {
+    console.error("Error fetching student info:", err);
+  }
+};
 
 // Tangani submit nilai
 const handleSubmit = async () => {
@@ -237,15 +232,8 @@ const handleSubmit = async () => {
     // Kembali ke halaman detail setelah delay singkat
     setTimeout(() => {
       router.push({
-        path: "/dosen/tugas-akhir/bimbingan/detail-bimbingan",
-        query: {
-          id: studentInfo.value.id,
-          nim: studentInfo.value.nim,
-          name: studentInfo.value.name,
-          category: studentInfo.value.category,
-          title: studentInfo.value.title,
-          _t: Date.now(),
-        },
+        name: "DetailBimbinganforDosen",
+        params: { tugas_akhir_id: studentInfo.value.id },
       });
     }, 1500);
   } catch (err) {

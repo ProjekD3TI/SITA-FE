@@ -27,8 +27,9 @@ const {
   updateVerifikasiBimbingan,
 } = useDibimbing();
 
-// Informasi mahasiswa dari parameter query route
+// Informasi mahasiswa dari parameter route
 const studentInfo = ref({
+  id: "",
   nim: "",
   name: "",
   category: "",
@@ -39,6 +40,10 @@ const studentInfo = ref({
 const errorMessage = computed(() => {
   return errorBimbingan.value || "Terjadi kesalahan saat memuat data.";
 });
+
+// Pagination state
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
 
 // Format data bimbingan untuk tampilan tabel
 const formattedBimbinganData = computed(() => {
@@ -106,6 +111,29 @@ const formattedBimbinganData = computed(() => {
     };
   });
 });
+
+// Pagination computed properties
+const paginatedBimbinganData = computed(() => {
+  const startIndex = (currentPage.value - 1) * itemsPerPage.value;
+  const endIndex = startIndex + itemsPerPage.value;
+  return formattedBimbinganData.value.slice(startIndex, endIndex);
+});
+
+const paginationData = computed(() => {
+  return {
+    current_page: currentPage.value,
+    last_page: Math.ceil(
+      formattedBimbinganData.value.length / itemsPerPage.value
+    ),
+    per_page: itemsPerPage.value,
+    total: formattedBimbinganData.value.length,
+  };
+});
+
+// Page change handler
+const handlePageChange = (page) => {
+  currentPage.value = page;
+};
 
 // Pemetaan status numerik ke teks
 function mapStatusToText(status) {
@@ -221,35 +249,35 @@ const tahunAjaran = computed(() => {
   return "2024/2025";
 });
 
-// Fungsi untuk mengupdate data dari parameter query dan response API
+// Fungsi untuk mengupdate data dari parameter route dan response API
 const updateStudentInfo = async () => {
-  const nim = route.query.nim;
-  const name = route.query.name;
-  const category = route.query.category;
-  const title = route.query.title;
-  const id = route.query.id;
-
-  console.log("Query params received:", { id, nim, name, category, title });
-
-  if (nim) {
-    studentInfo.value = {
-      id,
-      nim,
-      name: name || "Unknown",
-      category: category || "Uncategorized",
-      title: title || "Judul Tidak Tersedia",
-    };
-    console.log("Updated student info from query params:", studentInfo.value);
-  }
+  const id = route.params.tugas_akhir_id;
+  console.log("Route params received:", route.params);
 
   if (id) {
     try {
+      // Simpan ID tugas akhir
+      studentInfo.value.id = id;
+
+      // Fetch student data and bimbingan data in one call
       const response = await fetchBimbingan(id);
 
-      // Update judul dari response API jika tersedia
-      if (response.data?.judul_tugas_akhir) {
-        studentInfo.value.title = response.data.judul_tugas_akhir;
-        console.log("Updated title from API:", studentInfo.value.title);
+      if (response.data) {
+        // Update student info from API response
+        if (response.data.mahasiswa) {
+          studentInfo.value.nim = response.data.mahasiswa.nim || "";
+          studentInfo.value.name = response.data.mahasiswa.name || "Unknown";
+        }
+
+        if (response.data.kategori) {
+          studentInfo.value.category =
+            response.data.kategori.nama_kategori || "Uncategorized";
+        }
+
+        studentInfo.value.title =
+          response.data.judul_tugas_akhir || "Judul Tidak Tersedia";
+
+        console.log("Updated student info from API:", studentInfo.value);
       }
     } catch (err) {
       console.error("Error fetching bimbingan data:", err);
@@ -263,11 +291,11 @@ onMounted(() => {
   updateStudentInfo();
 });
 
-// Watch untuk perubahan route.query
+// Watch untuk perubahan route.params
 watch(
-  () => route.query,
-  (newQuery) => {
-    console.log("Route query changed:", newQuery);
+  () => route.params,
+  (newParams) => {
+    console.log("Route params changed:", newParams);
     updateStudentInfo();
   },
   { deep: true, immediate: true }
@@ -326,6 +354,7 @@ const openVerifikasiModal = (item) => {
   tanggal.value = item.tanggal;
   bab.value = parseInt(item.bab) || 0;
   catatan.value = item.catatan;
+  noBimbingan.value = item.no;
 
   verifikasiModal.value.open();
 };
@@ -337,8 +366,6 @@ const openDetailModal = (item) => {
   catatan.value = item.catatan;
   status.value = getStatusClass(item.status);
   statusLabel.value = getStatusLabel(item.status);
-
-  // Tambahkan properti untuk nomor bimbingan
   noBimbingan.value = item.no;
 
   detailModal.value.open();
@@ -349,16 +376,10 @@ const editNilai = () => {
   // First close the modal
   closeNilaiModal();
 
-  // Then navigate to input nilai page with necessary query parameters
+  // Then navigate to input nilai page with route params
   router.push({
-    path: "/dosen/tugas-akhir/bimbingan/detail-bimbingan/input-nilai-bimbingan",
-    query: {
-      id: studentInfo.value.id,
-      nim: studentInfo.value.nim,
-      name: studentInfo.value.name,
-      category: studentInfo.value.category,
-      title: studentInfo.value.title,
-    },
+    name: "InputNilaiBimbinganforDosen",
+    params: { tugas_akhir_id: studentInfo.value.id },
   });
 };
 
@@ -484,58 +505,28 @@ const handleActionClick = (item, action) => {
         <ProgressBarBAB class="sm:ms-3" :currentStep="highestChapter" />
 
         <!-- Action Buttons -->
-        <!-- Modify the Action Buttons section -->
-        <div class="flex gap-2">
+        <div class="flex flex-wrap justify-end w-full gap-2 md:w-fit">
           <!-- Tombol Nilai/Lihat Nilai (Desktop) -->
           <router-link
             v-if="!hasNilaiBimbingan"
+            class="flex-grow"
             :to="{
-              path: '/dosen/tugas-akhir/bimbingan/detail-bimbingan/input-nilai-bimbingan',
-              query: {
-                id: studentInfo.id,
-                nim: studentInfo.nim,
-                name: studentInfo.name,
-                category: studentInfo.category,
-                title: studentInfo.title,
-              },
+              name: 'InputNilaiBimbinganforDosen',
+              params: { tugas_akhir_id: studentInfo.id },
             }"
           >
             <Button
-              class="hidden lg:flex"
+              class="hidden w-full lg:flex"
               variant="primary"
               size="lg"
               left-icon-path="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z"
             >
               Nilai
             </Button>
-          </router-link>
 
-          <Button
-            v-else
-            class="hidden lg:flex"
-            variant="success"
-            size="lg"
-            @click="openNilaiModal"
-          >
-            Lihat Nilai
-          </Button>
-
-          <!-- Tombol Nilai (Mobile) -->
-          <router-link
-            v-if="!hasNilaiBimbingan"
-            :to="{
-              path: '/dosen/tugas-akhir/bimbingan/detail-bimbingan/input-nilai-bimbingan',
-              query: {
-                id: studentInfo.id,
-                nim: studentInfo.nim,
-                name: studentInfo.name,
-                category: studentInfo.category,
-                title: studentInfo.title,
-              },
-            }"
-          >
+            <!-- Mobile Button -->
             <Button
-              class="lg:hidden"
+              class="w-full lg:hidden"
               variant="primary"
               size="md"
               left-icon-path="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z"
@@ -544,15 +535,27 @@ const handleActionClick = (item, action) => {
             </Button>
           </router-link>
 
-          <Button
-            v-else
-            class="lg:hidden"
-            variant="success"
-            size="md"
-            @click="openNilaiModal"
-          >
-            Lihat Nilai
-          </Button>
+          <div v-else class="flex-grow">
+            <!-- Desktop Button -->
+            <Button
+              class="hidden w-full lg:flex"
+              variant="success"
+              size="lg"
+              @click="openNilaiModal"
+            >
+              Lihat Nilai
+            </Button>
+
+            <!-- Mobile Button -->
+            <Button
+              class="w-full lg:hidden"
+              variant="success"
+              size="md"
+              @click="openNilaiModal"
+            >
+              Lihat Nilai
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -560,7 +563,9 @@ const handleActionClick = (item, action) => {
     <div class="card-rounded bg-white p-4 lg:p-8 mt-4">
       <Table
         :headers="['No', 'Tanggal', 'BAB', 'Catatan', 'Status', 'Aksi']"
-        :items="formattedBimbinganData"
+        :items="paginatedBimbinganData"
+        :pagination="paginationData"
+        @pageChange="handlePageChange"
       >
         <template #row="{ item }">
           <!-- Kolom No -->
@@ -646,7 +651,6 @@ const handleActionClick = (item, action) => {
   </div>
   <router-view v-else></router-view>
 
-  <!-- Modal-modal tetap berada di luar struktur kondisional utama -->
   <!-- Modal Verifikasi Bimbingan with ref -->
   <ModalVerifikasiBimbingan
     ref="verifikasiModal"

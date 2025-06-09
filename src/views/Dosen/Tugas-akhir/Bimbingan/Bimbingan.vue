@@ -9,12 +9,18 @@ import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
 import ModalFilter from "@/components/Tugas-akhir/Modals/ModalFilter.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Loading from "@/components/Loading.vue";
-import { useRequestPembimbing } from "@/services/TugasAkhir/Dosen/requestPembimbing";
-import { useDibimbing } from "@/services/TugasAkhir/Dosen/bimbingan";
-import { useKategori } from "@/services/TugasAkhir/Dosen/kategori";
+import ErrorMsg from "@/components/ErrorMsg.vue";
+import {
+  useRequestPembimbing,
+  useDibimbing,
+  useKategori,
+} from "@/services/TugasAkhir/Dosen/bimbingan";
 
 const activeTab = ref("permintaan");
-const searchQuery = ref("");
+const currentPage = ref(1);
+const currentPagePermintaan = ref(1);
+const searchQueryPermintaan = ref("");
+const searchQueryBimbingan = ref("");
 const router = useRouter();
 
 // Inisialisasi layanan
@@ -24,9 +30,23 @@ const {
   error: errorRequests,
   fetchRequests,
   updateApproval,
+  pagination: paginationRequests,
+  changePage: changePageRequests,
+  search: searchRequests,
+  filterByKategori: filterByKategoriRequests,
 } = useRequestPembimbing();
-const { tugasAkhirList, loadingTugasAkhir, errorTugasAkhir, fetchTugasAkhir } =
-  useDibimbing();
+
+const {
+  tugasAkhirList,
+  loadingTugasAkhir,
+  errorTugasAkhir,
+  fetchTugasAkhir,
+  pagination: paginationTugasAkhir,
+  changePage: changePageTugasAkhir,
+  search: searchTugasAkhir,
+  filterByKategori: filterByKategoriTugasAkhir,
+} = useDibimbing();
+
 const {
   categories,
   loading: loadingCategories,
@@ -34,22 +54,63 @@ const {
   fetchCategories,
 } = useKategori();
 
-// Menggunakan computed property untuk kategori filter
-const filterCategories = computed(() => {
-  if (categories.value && categories.value.length > 0) {
-    return categories.value.map((category) => category.nama_kategori);
-  }
+// Mengubah format kategori untuk filter
+const categoryOptions = computed(() => {
+  if (!categories.value) return [];
 
-  return loadingCategories.value ? ["Memuat kategori..."] : [];
+  return categories.value.map((category) => ({
+    value: category.id,
+    label: category.nama_kategori,
+  }));
 });
 
-const selectedFilters = ref([]);
+const selectedCategoriesPermintaan = ref([]);
+const selectedCategoriesBimbingan = ref([]);
 
-// Menangani penerapan filter
-const applyFilter = (filterData) => {
-  selectedFilters.value = filterData.values;
-  console.log("Filter diterapkan:", selectedFilters.value);
+// Menangani penerapan filter untuk tab Permintaan
+const applyFilterPermintaan = ({ values }) => {
+  selectedCategoriesPermintaan.value = values;
+  currentPagePermintaan.value = 1;
+  const kategoriStr = getSelectedKategoriLabel(
+    selectedCategoriesPermintaan.value
+  );
+  filterByKategoriRequests(kategoriStr);
 };
+
+// Menangani penerapan filter untuk tab Dibimbing
+const applyFilterBimbingan = ({ values }) => {
+  selectedCategoriesBimbingan.value = values;
+  currentPage.value = 1;
+  const kategoriStr = getSelectedKategoriLabel(
+    selectedCategoriesBimbingan.value
+  );
+  filterByKategoriTugasAkhir(kategoriStr);
+};
+
+function getSelectedKategoriLabel(selectedCategories) {
+  if (selectedCategories.length > 0) {
+    // Ambil semua label kategori yang dipilih
+    const selectedLabels = selectedCategories
+      .map((catId) => {
+        const cat = categoryOptions.value.find((c) => c.value === catId);
+        return cat ? cat.label : "";
+      })
+      .filter(Boolean);
+    return selectedLabels.join(",");
+  }
+  return "";
+}
+
+// Handle search functions
+function onSearchPermintaan({ value }) {
+  currentPagePermintaan.value = 1;
+  searchRequests(value);
+}
+
+function onSearchBimbingan({ value }) {
+  currentPage.value = 1;
+  searchTugasAkhir(value);
+}
 
 const modalRef = ref(null);
 const selectedItem = ref(null);
@@ -59,8 +120,6 @@ const modalContent = ref("");
 // Memetakan data API untuk tab permintaan
 const requests = computed(() => {
   if (!requestsData.value) return [];
-
-  console.log("Data permintaan mentah:", requestsData.value);
 
   return requestsData.value.map((req) => {
     return {
@@ -80,8 +139,6 @@ const requests = computed(() => {
 const mentorships = computed(() => {
   if (!tugasAkhirList.value) return [];
 
-  console.log("Data tugas akhir mentah:", tugasAkhirList.value);
-
   return tugasAkhirList.value.map((ta) => {
     return {
       id: ta.tugas_akhir_id,
@@ -90,6 +147,7 @@ const mentorships = computed(() => {
       avatar: "/api/placeholder/40/40",
       title: ta.judul_tugas_akhir || "Judul Tidak Tersedia",
       category: ta.kategori?.nama_kategori || "Tidak terkategorisasi",
+      jumlah_bimbingan: ta.jumlah_bimbingan || 0,
     };
   });
 });
@@ -110,32 +168,10 @@ const items = computed(() => {
   return activeTab.value === "permintaan" ? requests.value : mentorships.value;
 });
 
-// Item yang sudah difilter berdasarkan pencarian dan filter kategori
-const filteredItems = computed(() => {
-  let filtered = items.value;
-
-  // Menerapkan filter pencarian teks
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    filtered = filtered.filter((item) => {
-      return (
-        (item.name && item.name.toLowerCase().includes(query)) ||
-        (item.nim && item.nim.toLowerCase().includes(query)) ||
-        (item.category && item.category.toLowerCase().includes(query)) ||
-        (item.title && item.title.toLowerCase().includes(query)) ||
-        (item.date && item.date.toLowerCase().includes(query))
-      );
-    });
-  }
-
-  // Menerapkan filter kategori jika ada yang dipilih
-  if (selectedFilters.value.length > 0) {
-    filtered = filtered.filter((item) =>
-      selectedFilters.value.includes(item.category)
-    );
-  }
-
-  return filtered;
+const pagination = computed(() => {
+  return activeTab.value === "permintaan"
+    ? paginationRequests.value
+    : paginationTugasAkhir.value;
 });
 
 // Fungsi untuk menampilkan modal respon
@@ -149,7 +185,11 @@ const showResponModal = (item) => {
 const handleAcceptRequest = async () => {
   try {
     await updateApproval(selectedItem.value.id, 1);
-    await fetchRequests();
+    await fetchRequests(
+      currentPagePermintaan.value,
+      searchQueryPermintaan.value,
+      getSelectedKategoriLabel(selectedCategoriesPermintaan.value)
+    );
     modalRef.value.close();
   } catch (err) {
     console.error("Error saat menerima permintaan:", err);
@@ -159,19 +199,58 @@ const handleAcceptRequest = async () => {
 const handleRejectRequest = async () => {
   try {
     await updateApproval(selectedItem.value.id, 2);
-    await fetchRequests();
+    await fetchRequests(
+      currentPagePermintaan.value,
+      searchQueryPermintaan.value,
+      getSelectedKategoriLabel(selectedCategoriesPermintaan.value)
+    );
     modalRef.value.close();
   } catch (err) {
     console.error("Error saat menolak permintaan:", err);
   }
 };
 
+// Handle page change
+const handlePageChange = (page) => {
+  if (activeTab.value === "permintaan") {
+    currentPagePermintaan.value = page;
+    changePageRequests(page);
+  } else {
+    currentPage.value = page;
+    changePageTugasAkhir(page);
+  }
+};
+
+// Computed for tab definitions
+const tabs = computed(() => [
+  {
+    id: "permintaan",
+    label: "Permintaan",
+    icon: "M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z",
+    count: requests.value.length,
+  },
+  {
+    id: "dibimbing",
+    label: "Dibimbing",
+    icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
+    count: mentorships.value.length,
+  },
+]);
+
 // Mengambil data ketika tab aktif berubah
 watch(activeTab, (newTab) => {
   if (newTab === "permintaan") {
-    fetchRequests();
+    fetchRequests(
+      currentPagePermintaan.value,
+      searchQueryPermintaan.value,
+      selectedCategoriesPermintaan.value.join(",")
+    );
   } else if (newTab === "dibimbing") {
-    fetchTugasAkhir();
+    fetchTugasAkhir(
+      currentPage.value,
+      searchQueryBimbingan.value,
+      selectedCategoriesBimbingan.value.join(",")
+    );
   }
 });
 
@@ -180,25 +259,16 @@ onMounted(() => {
   fetchCategories();
 
   if (activeTab.value === "permintaan") {
-    fetchRequests();
+    fetchRequests(currentPagePermintaan.value);
   } else {
-    fetchTugasAkhir();
+    fetchTugasAkhir(currentPage.value);
   }
 });
 </script>
 
 <template>
   <div v-if="!$route.path.includes('detail-bimbingan')">
-    <!-- Status loading -->
-    <div
-      v-if="loading"
-      class="flex justify-center items-center min-h-[75vh] w-full"
-    >
-      <Loading />
-    </div>
-
-    <!-- Konten setelah loading -->
-    <div v-else>
+    <div>
       <!-- Breadcrumb muncul setelah loading selesai -->
       <Breadcrumb :items="breadcrumbItems" />
 
@@ -207,7 +277,17 @@ onMounted(() => {
         <p>{{ error }}</p>
         <Button
           @click="
-            activeTab === 'permintaan' ? fetchRequests() : fetchTugasAkhir()
+            activeTab === 'permintaan'
+              ? fetchRequests(
+                  currentPagePermintaan,
+                  searchQueryPermintaan,
+                  selectedCategoriesPermintaan.join(',')
+                )
+              : fetchTugasAkhir(
+                  currentPage,
+                  searchQueryBimbingan,
+                  selectedCategoriesBimbingan.join(',')
+                )
           "
           variant="outlined"
           size="sm"
@@ -219,152 +299,228 @@ onMounted(() => {
 
       <TabDiv
         v-else
-        :tabs="[
-          {
-            id: 'permintaan',
-            label: 'Permintaan',
-            icon: 'M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z',
-            count: requests.length,
-          },
-          {
-            id: 'dibimbing',
-            label: 'Dibimbing',
-            icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
-            count: mentorships.length,
-          },
-        ]"
+        :tabs="tabs"
         :default-tab="activeTab"
+        :use-named-slots="true"
         @tab-changed="activeTab = $event"
       >
-        <!-- Pencarian dan Filter -->
-        <div class="flex flex-row mb-2 gap-2">
-          <div class="w-auto sm:w-auto sm:mr-2">
-            <!-- Indikator loading untuk kategori -->
-            <div
-              v-if="loadingCategories"
-              class="flex justify-center items-center py-2 w-full"
-            >
-              <Loading />
-            </div>
+        <!-- Tab Permintaan Bimbingan -->
+        <template #permintaan>
+          <!-- Pencarian dan Filter untuk Tab Permintaan -->
+          <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
+            <ModalFilter
+              title="Kategori"
+              :items="categoryOptions"
+              filterType="Kategori"
+              @apply="applyFilterPermintaan"
+              triggerText="Kategori"
+              :preselectedValues="selectedCategoriesPermintaan"
+            />
 
-            <!-- Pesan error jika kategori gagal dimuat -->
-            <div v-else-if="errorCategories" class="text-red-500 text-sm">
+            <div v-if="errorCategories" class="text-red-500 text-sm">
               Gagal memuat kategori: {{ errorCategories }}
             </div>
 
-            <!-- Tampilkan filter ketika kategori dimuat -->
-            <ModalFilter
-              v-else
-              title="Kategori"
-              :items="filterCategories"
-              :preselectedValues="selectedFilters"
-              filterType="category"
-              triggerText="Kategori"
-              triggerVariant="outlined-black"
-              hint="*Pilih kategori tugas akhir"
-              modalPosition="bottom"
-              @apply="applyFilter"
-            />
-          </div>
-          <div class="flex-grow w-full">
             <SearchBar
-              v-model="searchQuery"
+              v-model="searchQueryPermintaan"
               placeholder="Cari..."
               :debounce="300"
-              @search="(query) => console.log('Mencari:', query)"
+              @search="onSearchPermintaan"
+              filterKey="permintaan"
             />
           </div>
-        </div>
 
-        <!-- Status kosong jika tidak ada item -->
-        <div
-          v-if="filteredItems.length === 0"
-          class="text-center py-8 bg-gray-50 rounded-lg"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-12 w-12 mx-auto text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+          <!-- Status loading untuk Tab Permintaan -->
+          <div v-if="loadingRequests" class="py-8">
+            <Loading />
+          </div>
+
+          <!-- Status kosong jika tidak ada permintaan -->
+          <div
+            v-else-if="requests.length === 0"
+            class="text-center py-8 bg-gray-50 rounded-lg"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-12 w-12 mx-auto text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+              />
+            </svg>
+            <p class="mt-2 text-gray-600">Tidak ada permintaan bimbingan</p>
+          </div>
+
+          <!-- Tabel Permintaan Bimbingan -->
+          <div v-else class="relative overflow-x-auto">
+            <Table
+              :headers="['NIM', 'Nama', 'Kategori', 'Tanggal', 'Aksi']"
+              :items="requests"
+              :pagination="paginationRequests"
+              @pageChange="
+                (page) => {
+                  currentPagePermintaan = page;
+                  changePageRequests(page);
+                }
+              "
+            >
+              <template #row="{ item }">
+                <td
+                  class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap rounded-l-lg"
+                >
+                  {{ item.nim }}
+                </td>
+                <td class="px-6 py-4">
+                  {{ item.name }}
+                </td>
+                <td class="px-6 py-4">
+                  {{ item.category }}
+                </td>
+                <td class="px-6 py-4">
+                  {{ item.date }}
+                </td>
+                <!-- Kolom Aksi -->
+                <td class="px-6 py-4 rounded-r-lg">
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    @click="showResponModal(item)"
+                  >
+                    Respon
+                  </Button>
+                </td>
+              </template>
+            </Table>
+          </div>
+        </template>
+
+        <!-- Tab Mahasiswa yang Dibimbing -->
+        <template #dibimbing>
+          <!-- Pencarian dan Filter untuk Tab Dibimbing -->
+          <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
+            <ModalFilter
+              title="Kategori"
+              :items="categoryOptions"
+              filterType="Kategori"
+              @apply="applyFilterBimbingan"
+              triggerText="Kategori"
+              :preselectedValues="selectedCategoriesBimbingan"
             />
-          </svg>
-          <p class="mt-2 text-gray-600">
-            {{
-              activeTab === "permintaan"
-                ? "Tidak ada permintaan bimbingan"
-                : "Tidak ada mahasiswa bimbingan"
-            }}
-          </p>
-        </div>
 
-        <!-- Implementasi tabel untuk semua ukuran layar -->
-        <div v-else class="relative overflow-x-auto">
-          <Table
-            :headers="
-              activeTab === 'permintaan'
-                ? ['NIM', 'Nama', 'Kategori', 'Tanggal', 'Aksi']
-                : ['NIM', 'Nama', 'Kategori', 'Judul', 'Aksi']
-            "
-            :items="filteredItems"
+            <div v-if="errorCategories" class="text-red-500 text-sm">
+              Gagal memuat kategori: {{ errorCategories }}
+            </div>
+
+            <SearchBar
+              v-model="searchQueryBimbingan"
+              placeholder="Cari..."
+              :debounce="300"
+              @search="onSearchBimbingan"
+              filterKey="bimbingan"
+            />
+          </div>
+
+          <!-- Status loading untuk Tab Dibimbing -->
+          <div v-if="loadingTugasAkhir" class="py-8">
+            <Loading />
+          </div>
+
+          <!-- Status kosong jika tidak ada yang dibimbing -->
+          <div
+            v-else-if="mentorships.length === 0"
+            class="text-center py-8 bg-gray-50 rounded-lg"
           >
-            <template #row="{ item }">
-              <td
-                class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap rounded-l-lg"
-              >
-                {{ item.nim }}
-              </td>
-              <td class="px-6 py-4">
-                {{ item.name }}
-              </td>
-              <td class="px-6 py-4">
-                {{ item.category }}
-              </td>
-              <td v-if="activeTab === 'permintaan'" class="px-6 py-4">
-                {{ item.date }}
-              </td>
-              <td v-if="activeTab === 'dibimbing'" class="px-6 py-4">
-                {{ item.title }}
-              </td>
-              <!-- Kolom Aksi -->
-              <td class="px-6 py-4 rounded-r-lg">
-                <!-- Tombol untuk tab permintaan -->
-                <Button
-                  v-if="activeTab === 'permintaan'"
-                  variant="secondary"
-                  size="md"
-                  @click="showResponModal(item)"
-                >
-                  Respon
-                </Button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-12 w-12 mx-auto text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+              />
+            </svg>
+            <p class="mt-2 text-gray-600">Tidak ada mahasiswa bimbingan</p>
+          </div>
 
-                <!-- Tombol untuk tab dibimbing -->
-                <router-link
-                  v-if="activeTab === 'dibimbing'"
-                  :to="{
-                    path: '/dosen/tugas-akhir/bimbingan/detail-bimbingan',
-                    query: {
-                      id: item.id,
-                      nim: item.nim || '',
-                      name: item.name || '',
-                      category: item.category || '',
-                      title: item.title || 'Judul Tidak Tersedia',
-                      _t: Date.now(),
-                    },
-                  }"
+          <!-- Tabel Mahasiswa yang Dibimbing -->
+          <div v-else class="relative overflow-x-auto">
+            <Table
+              :headers="[
+                'NIM',
+                'Nama',
+                'Kategori',
+                'Judul',
+                'Pertemuan',
+                'Aksi',
+              ]"
+              :items="mentorships"
+              :pagination="paginationTugasAkhir"
+              @pageChange="
+                (page) => {
+                  currentPage = page;
+                  changePageTugasAkhir(page);
+                }
+              "
+            >
+              <template #row="{ item }">
+                <td
+                  class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap rounded-l-lg"
                 >
-                  <Button variant="primary" size="md"> Detail </Button>
-                </router-link>
-              </td>
-            </template>
-          </Table>
-        </div>
+                  {{ item.nim }}
+                </td>
+                <td class="px-6 py-4">
+                  {{ item.name }}
+                </td>
+                <td class="px-6 py-4">
+                  {{ item.category }}
+                </td>
+                <td class="px-6 py-4">
+                  {{ item.title }}
+                </td>
+                <td
+                  class="px-6 py-4"
+                  :class="
+                    item.jumlah_bimbingan == null ||
+                    item.jumlah_bimbingan === undefined ||
+                    item.jumlah_bimbingan === 0
+                      ? 'text-secondary'
+                      : 'text-blackText'
+                  "
+                >
+                  {{
+                    item.jumlah_bimbingan == null ||
+                    item.jumlah_bimbingan === undefined ||
+                    item.jumlah_bimbingan === 0
+                      ? "Belum ada pertemuan"
+                      : item.jumlah_bimbingan + "/9"
+                  }}
+                </td>
+                <!-- Kolom Aksi -->
+                <td class="px-6 py-4 rounded-r-lg">
+                  <router-link
+                    :to="{
+                      name: 'DetailBimbinganforDosen',
+                      params: { tugas_akhir_id: item.id },
+                    }"
+                  >
+                    <Button variant="primary" size="md"> Detail </Button>
+                  </router-link>
+                </td>
+              </template>
+            </Table>
+          </div>
+        </template>
       </TabDiv>
     </div>
   </div>

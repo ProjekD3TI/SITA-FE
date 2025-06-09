@@ -17,11 +17,34 @@ const props = defineProps({
   },
 });
 
+// Function to resolve route parameters in path
+const resolveRoutePath = (path) => {
+  if (!path) return path;
+
+  // Get current route params
+  const params = route.params;
+  let resolvedPath = path;
+
+  // Replace all dynamic segments with actual parameter values
+  Object.keys(params).forEach((param) => {
+    const paramPlaceholder = `:${param}`;
+    if (resolvedPath.includes(paramPlaceholder)) {
+      resolvedPath = resolvedPath.replace(paramPlaceholder, params[param]);
+    }
+  });
+
+  return resolvedPath;
+};
+
 const breadcrumbItems = computed(() => {
   // Jika props.items ada, pakai itu
   if (props.items && props.items.length > 0) {
-    return props.items;
+    return props.items.map((item) => ({
+      ...item,
+      path: item.path ? resolveRoutePath(item.path) : null,
+    }));
   }
+
   // Jika tidak, generate otomatis dari route meta
   const routeMatched = route.matched;
   return routeMatched
@@ -34,7 +57,7 @@ const breadcrumbItems = computed(() => {
           1;
       return {
         label: item.meta.breadcrumb,
-        path: isLast ? null : item.path,
+        path: isLast ? null : resolveRoutePath(item.path),
         active: isLast,
       };
     });

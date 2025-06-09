@@ -10,41 +10,57 @@ import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Loading from "@/components/Loading.vue";
 import router from "@/router";
-import { useDetailUjianTA } from "@/services/TugasAkhir/Dosen/detailUjianTA.js";
+// Updated import
+import { useUjianTAForDosen } from "@/services/TugasAkhir/Dosen/ujianTA.js";
 import { useToast } from "vue-toastification";
 
 const route = useRoute();
-const { detailUjian, loading, error, fetchDetailUjian, refreshDetailUjian } =
-  useDetailUjianTA();
+// Updated destructuring to match the new property names
+const {
+  detailUjian,
+  loadingDetail: loading,
+  errorDetail: error,
+  fetchDetailUjian,
+  refreshDetailUjian,
+} = useUjianTAForDosen();
 const toast = useToast();
 
 // App State
 const showNilaiModal = ref(false);
 
-// Watch the route params for changes and reload data when needed
+// Watch for route parameter changes to load data
+watch(
+  () => route.params.tugas_akhir_id,
+  (newTugasAkhirId) => {
+    if (newTugasAkhirId) {
+      fetchDetailUjian(newTugasAkhirId);
+    }
+  },
+  { immediate: true }
+);
+
+// Watch for success query parameter to show toast notifications
 watch(
   () => route.query,
   (newQuery) => {
-    if (newQuery.tugas_akhir_id) {
-      fetchDetailUjian(newQuery.tugas_akhir_id);
+    if (newQuery.success === "true") {
+      const message =
+        newQuery.action === "update"
+          ? "Nilai berhasil diperbarui"
+          : "Nilai berhasil disimpan";
+      toast.success(message);
 
-      // Show toast notification if returning from successful submission - simplified version
-      if (newQuery.success === "true") {
-        const message =
-          newQuery.action === "update"
-            ? "Nilai berhasil diperbarui"
-            : "Nilai berhasil disimpan";
-        toast.success(message);
-
-        // Remove success param from URL to prevent showing toast on refresh
-        const newRoute = {
-          path: route.path,
-          query: { ...route.query },
-        };
-        delete newRoute.query.success;
-        delete newRoute.query.action;
-        router.replace(newRoute);
+      // Check for refresh parameter to reload data
+      if (newQuery.refresh) {
+        refreshDetailUjian(route.params.tugas_akhir_id);
       }
+
+      // Remove success param from URL to prevent showing toast on refresh
+      const newRoute = {
+        path: route.path,
+        params: route.params,
+      };
+      router.replace(newRoute);
     }
   },
   { deep: true, immediate: true }
@@ -57,8 +73,8 @@ const isSecretary = computed(() => {
   // Check if current user is a Secretary among the examiners
   const isSecretaryExaminer = detailUjian.value.dosen_penguji?.some(
     (penguji) => {
-      // The API marks current user by providing their nilai_ujian_ta data
-      const isCurrentUser = penguji.nilai_ujian_ta !== null;
+      // Use the explicit is_current_user flag from API
+      const isCurrentUser = penguji.is_current_user === true;
       const isSecretary =
         penguji.jabatan_penguji?.toLowerCase() === "sekretaris";
       return isCurrentUser && isSecretary;
@@ -68,7 +84,7 @@ const isSecretary = computed(() => {
   // Check if current user is the supervising lecturer
   const isSupervisingLecturer =
     detailUjian.value.dosen_pembimbing?.dosen_pembimbing_id ===
-    detailUjian.value.dosen_penguji?.find((p) => p.nilai_ujian_ta !== null)
+    detailUjian.value.dosen_penguji?.find((p) => p.is_current_user === true)
       ?.dosen_penguji_id;
 
   return isSecretaryExaminer || isSupervisingLecturer;
@@ -178,7 +194,7 @@ const catatanRevisi = computed(() => {
 
 // Load data when component is mounted
 onMounted(() => {
-  const tugasAkhirId = route.query.tugas_akhir_id;
+  const tugasAkhirId = route.params.tugas_akhir_id;
   if (tugasAkhirId) {
     fetchDetailUjian(tugasAkhirId);
   }
@@ -186,7 +202,6 @@ onMounted(() => {
 
 // Methods
 const openNilaiModal = () => {
-  // Just open the modal without fetching data again
   showNilaiModal.value = true;
 };
 
@@ -198,19 +213,13 @@ const closeNilaiModal = () => {
 const goToEditNilai = () => {
   closeNilaiModal();
 
-  // Add timestamp to query for cache busting
-  const timestamp = Date.now();
-
   router.push({
-    path: "/dosen/tugas-akhir/ujian-ta/detail-ujian-ta/input-nilai-ujian-ta",
+    name: "InputNilaiUjianTAforDosen",
+    params: {
+      tugas_akhir_id: route.params.tugas_akhir_id,
+    },
     query: {
-      tugas_akhir_id: route.query.tugas_akhir_id,
-      nim: tugasAkhirDetails.value.nim,
-      name: tugasAkhirDetails.value.nama,
-      category: tugasAkhirDetails.value.kategori,
-      title: tugasAkhirDetails.value.judul,
-      edit: true,
-      _t: timestamp, // Add timestamp for cache busting
+      edit: "true",
     },
   });
 };
@@ -231,7 +240,7 @@ const modalBodyText = computed(() => {
   <div v-else-if="error" class="bg-red-100 p-4 rounded-lg mt-4">
     <p class="text-red-700">{{ error }}</p>
     <Button
-      @click="fetchDetailUjian(route.query.tugas_akhir_id)"
+      @click="fetchDetailUjian(route.params.tugas_akhir_id)"
       variant="outlined"
       size="sm"
       class="mt-2"
@@ -241,7 +250,7 @@ const modalBodyText = computed(() => {
   </div>
 
   <div v-else-if="!$route.path.includes('input-nilai-ujian-ta') && detailUjian">
-    <Breadcrumb :items="breadcrumbItems" />
+    <Breadcrumb />
     <!-- Jadwal Section -->
     <div class="card-rounded bg-white p-6 lg:p-8">
       <div class="max-w-screen-2xl mx-auto">
@@ -318,7 +327,7 @@ const modalBodyText = computed(() => {
               </div>
             </div>
 
-            <!-- Action Buttons - Modified to show either Input or View button -->
+            <!-- Action Buttons - Modified to use route params -->
             <div class="flex flex-col gap-4">
               <div class="flex self-end gap-4 items-center">
                 <!-- If nilai exists, show Lihat Nilai button -->
@@ -343,45 +352,35 @@ const modalBodyText = computed(() => {
                 </Button>
 
                 <!-- If nilai doesn't exist, show Input Nilai button -->
-                <router-link
-                  v-else
-                  :to="{
-                    path: '/dosen/tugas-akhir/ujian-ta/detail-ujian-ta/input-nilai-ujian-ta',
-                    query: {
-                      tugas_akhir_id: route.query.tugas_akhir_id,
-                      nim: tugasAkhirDetails.nim,
-                      name: tugasAkhirDetails.nama,
-                      category: tugasAkhirDetails.kategori,
-                      title: tugasAkhirDetails.judul,
-                    },
-                  }"
-                >
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    class="w-fit sm:flex hidden"
+                <template v-else>
+                  <router-link
+                    :to="{
+                      name: 'InputNilaiUjianTAforDosen',
+                      params: {
+                        tugas_akhir_id: $route.params.tugas_akhir_id,
+                      },
+                    }"
+                    class="sm:block hidden"
                   >
-                    Input Nilai
-                  </Button>
-                </router-link>
+                    <Button variant="primary" size="lg" class="w-fit">
+                      Input Nilai
+                    </Button>
+                  </router-link>
 
-                <router-link
-                  v-else
-                  :to="{
-                    path: '/dosen/tugas-akhir/ujian-ta/detail-ujian-ta/input-nilai-ujian-ta',
-                    query: {
-                      tugas_akhir_id: route.query.tugas_akhir_id,
-                      nim: tugasAkhirDetails.nim,
-                      name: tugasAkhirDetails.nama,
-                      category: tugasAkhirDetails.kategori,
-                      title: tugasAkhirDetails.judul,
-                    },
-                  }"
-                >
-                  <Button variant="primary" size="md" class="w-fit sm:hidden">
-                    Input Nilai
-                  </Button>
-                </router-link>
+                  <router-link
+                    :to="{
+                      name: 'InputNilaiUjianTAforDosen',
+                      params: {
+                        tugas_akhir_id: $route.params.tugas_akhir_id,
+                      },
+                    }"
+                    class="sm:hidden block"
+                  >
+                    <Button variant="primary" size="md" class="w-fit">
+                      Input Nilai
+                    </Button>
+                  </router-link>
+                </template>
               </div>
 
               <div v-if="hasGiven" class="text-green-600 text-sm self-end">

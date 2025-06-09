@@ -6,22 +6,26 @@ import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Loading from "@/components/Loading.vue";
-import { useNilaiUjianTA } from "@/services/TugasAkhir/Dosen/nilaiUjianTA.js";
-import { useDetailUjianTA } from "@/services/TugasAkhir/Dosen/detailUjianTA.js";
+// Updated import - using the merged composable
+import { useUjianTAForDosen } from "@/services/TugasAkhir/Dosen/ujianTA.js";
 import { useToast } from "vue-toastification";
 
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
-const { submitNilaiUjian, updateStatusKelulusan, loading, error } =
-  useNilaiUjianTA();
-const {
-  detailUjian,
-  loading: loadingDetail,
-  fetchDetailUjian,
-} = useDetailUjianTA();
 
-// Data mahasiswa dari query parameters
+// Use a single instance of the composable with updated property names
+const {
+  submitNilaiUjian,
+  updateStatusKelulusan,
+  loadingNilai: loading,
+  errorNilai: error,
+  detailUjian,
+  loadingDetail,
+  fetchDetailUjian,
+} = useUjianTAForDosen();
+
+// Data mahasiswa dari params dan detail ujian
 const studentInfo = ref({
   nim: "",
   name: "",
@@ -79,8 +83,8 @@ const isSecretary = computed(() => {
   // Check if current user is a Secretary among the examiners
   const isSecretaryExaminer = detailUjian.value.dosen_penguji?.some(
     (penguji) => {
-      // The API marks current user by providing their nilai_ujian_ta data
-      const isCurrentUser = penguji.nilai_ujian_ta !== null;
+      // Use the explicit is_current_user flag from API
+      const isCurrentUser = penguji.is_current_user === true;
       const isSecretary =
         penguji.jabatan_penguji?.toLowerCase() === "sekretaris";
       return isCurrentUser && isSecretary;
@@ -90,7 +94,7 @@ const isSecretary = computed(() => {
   // Check if current user is the supervising lecturer
   const isSupervisingLecturer =
     detailUjian.value.dosen_pembimbing?.dosen_pembimbing_id ===
-    detailUjian.value.dosen_penguji?.find((p) => p.nilai_ujian_ta !== null)
+    detailUjian.value.dosen_penguji?.find((p) => p.is_current_user === true)
       ?.dosen_penguji_id;
 
   return isSecretaryExaminer || isSupervisingLecturer;
@@ -188,24 +192,29 @@ const validateForm = () => {
   return isValid;
 };
 
-// Load data from API or query params
+// Load data from API using route params
 const loadData = async () => {
-  const tugasAkhirId = route.query.tugas_akhir_id;
+  const tugasAkhirId = route.params.tugas_akhir_id;
 
   if (tugasAkhirId) {
     await fetchDetailUjian(tugasAkhirId);
 
-    const nim = route.query.nim || detailUjian.value?.mahasiswa?.nim;
-    const name = route.query.name || detailUjian.value?.mahasiswa?.name;
-    const category =
-      route.query.category || detailUjian.value?.kategori?.nama_kategori;
-    const title = route.query.title || detailUjian.value?.judul_tugas_akhir;
+    if (detailUjian.value) {
+      studentInfo.value = {
+        nim: detailUjian.value?.mahasiswa?.nim || "",
+        name: detailUjian.value?.mahasiswa?.name || "",
+        category: detailUjian.value?.kategori?.nama_kategori || "",
+        title: detailUjian.value?.judul_tugas_akhir || "",
+      };
 
-    if (nim) {
-      studentInfo.value = { nim, name, category, title };
+      // Initialize status kelulusan for secretary regardless of edit mode
+      if (isSecretary.value) {
+        statusKelulusan.value =
+          detailUjian.value.status_kelulusan?.toString() || "";
+      }
     }
 
-    // Check if we're in edit mode
+    // Check if we're in edit mode - this query parameter is necessary
     isEdit.value = route.query.edit === "true";
 
     // If editing, pre-populate form with existing data
@@ -222,11 +231,6 @@ const loadData = async () => {
         hasilProduk.value = nilai?.kualitas_produk || "";
         presentasi.value = nilai?.presentasi || "";
         catatanRevisi.value = currentDosenPenguji.revisi || "";
-
-        // Only set status kelulusan if user is secretary
-        if (isSecretary.value) {
-          statusKelulusan.value = detailUjian.value.status_kelulusan || "";
-        }
       }
     }
   }
@@ -247,7 +251,7 @@ const handleSubmit = async () => {
   }
 
   const nilaiData = {
-    tugas_akhir_id: route.query.tugas_akhir_id,
+    tugas_akhir_id: route.params.tugas_akhir_id,
     tataLaporan: tataLaporan.value,
     kemampuanTeknis: kemampuanTeknis.value,
     hasilProduk: hasilProduk.value,
@@ -262,23 +266,20 @@ const handleSubmit = async () => {
   // If secretary, also update status kelulusan
   if (isSecretary.value && statusKelulusan.value) {
     await updateStatusKelulusan(
-      route.query.tugas_akhir_id,
+      route.params.tugas_akhir_id,
       statusKelulusan.value
     );
   }
 
   if (!error.value) {
-    // Add timestamp for cache busting and success parameter
-    const timestamp = new Date().getTime();
-
-    // Kembali ke halaman detail ujian dengan parameter sukses
+    // Return to detail page with success parameter
     router.push({
-      path: "/dosen/tugas-akhir/ujian-ta/detail-ujian-ta",
+      name: "DetailUjianTAforDosen",
+      params: { tugas_akhir_id: route.params.tugas_akhir_id },
       query: {
-        tugas_akhir_id: route.query.tugas_akhir_id,
         success: "true",
         action: isEdit.value ? "update" : "input",
-        _t: timestamp,
+        refresh: Date.now().toString(), // Add timestamp to force refresh
       },
     });
   }
@@ -313,7 +314,7 @@ onMounted(() => {
   </div>
 
   <div v-else>
-    <Breadcrumb :items="breadcrumbItems" />
+    <Breadcrumb />
     <div class="card-rounded bg-white p-6 lg:p-8">
       <!-- Header Section -->
       <div class="mb-6">
@@ -474,7 +475,7 @@ onMounted(() => {
             <div class="w-full sm:w-[calc(50%-0.5rem)]">
               <InputNumber
                 id="tataLaporan"
-                label="Kualitas Tata Laporan Tugas Akhir(15%) *"
+                label="Kualitas Tata Laporan Tugas Akhir(15%)"
                 placeholder="Masukkan nilai tata laporan"
                 v-model="tataLaporan"
                 :class="{
@@ -493,7 +494,7 @@ onMounted(() => {
             <div class="w-full sm:w-[calc(50%-0.5rem)]">
               <InputNumber
                 id="kemampuanTeknis"
-                label="Kemampuan Teknis (35%) *"
+                label="Kemampuan Teknis (35%)"
                 placeholder="Masukkan nilai kemampuan teknis"
                 v-model="kemampuanTeknis"
                 :class="{
@@ -512,7 +513,7 @@ onMounted(() => {
             <div class="w-full sm:w-[calc(50%-0.5rem)]">
               <InputNumber
                 id="hasilProduk"
-                label="Kualitas Produk yang Dihasilkan (25%) *"
+                label="Kualitas Produk yang Dihasilkan (25%)"
                 placeholder="Masukkan nilai hasil produk"
                 v-model="hasilProduk"
                 :class="{
@@ -531,7 +532,7 @@ onMounted(() => {
             <div class="w-full sm:w-[calc(50%-0.5rem)]">
               <InputNumber
                 id="presentasi"
-                label="Presentasi dan Question Handling (25%) *"
+                label="Presentasi dan Question Handling (25%)"
                 placeholder="Masukkan nilai presentasi"
                 v-model="presentasi"
                 :class="{
@@ -561,7 +562,10 @@ onMounted(() => {
           <p class="heading5 text-[#00A2EA] font-semibold mb-5">
             Catatan Revisi
             <span
-              v-if="!isCatatanRevisiDisabled && statusKelulusan === '2'"
+              v-if="
+                !isCatatanRevisiDisabled &&
+                (statusKelulusan === '2' || statusKelulusan === '3')
+              "
               class="text-red-500"
               >*</span
             >
@@ -572,8 +576,7 @@ onMounted(() => {
             placeholder="Masukkan catatan revisi"
             v-model="catatanRevisi"
             :disabled="isCatatanRevisiDisabled"
-            :class="{ 'border-red-500': formSubmitted && errors.catatanRevisi }"
-            required
+            :class="{ 'border-red': formSubmitted && errors.catatanRevisi }"
           ></InputTextarea>
           <p
             v-if="formSubmitted && errors.catatanRevisi"

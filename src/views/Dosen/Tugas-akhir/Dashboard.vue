@@ -1,17 +1,72 @@
 <script setup>
 import { ref, computed } from "vue";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
+import Table from "@/components/Tugas-akhir/Table.vue";
+import Button from "@/components/Tugas-akhir/Button.vue";
+import ModalResponBimbingan from "@/components/Tugas-akhir/Modals/ModalResponBimbingan.vue";
 import LineChart from "@/components/Tugas-akhir/Dashboard/LineChart.vue";
 import DoughnutChart from "@/components/Tugas-akhir/Dashboard/DoughnutChart.vue";
 import SummaryCard from "@/components/Tugas-akhir/Dashboard/SummaryCard.vue";
 import { useDashboard } from "@/services/TugasAkhir/Dosen/dashboard.js";
+import { useRequestPembimbing } from "@/services/TugasAkhir/Dosen/bimbingan.js";
 import Loading from "@/components/Loading.vue";
+import { RouterLink, useRouter } from "vue-router";
+const router = useRouter();
 const { data, loading: loadingDashboard, error } = useDashboard();
+
+// Set up the useRequestPembimbing hook
+const { updateApproval } = useRequestPembimbing();
+
+// Add necessary refs for the modal
+const modalRef = ref(null);
+const selectedItem = ref(null);
+const modalTitle = ref("Respon Permintaan Bimbingan");
+const modalContent = ref("");
+
+// Function to show the modal when clicking Respon button
+const showResponModal = (item) => {
+  selectedItem.value = item;
+  modalContent.value = `Respon permintaan ${item.nama} sebagai mahasiswa bimbingan anda.`;
+  modalRef.value.open();
+};
+
+// Functions to handle accept and reject actions
+const handleAcceptRequest = async () => {
+  try {
+    await updateApproval(selectedItem.value.id, 1);
+    // Refresh dashboard data
+    await data.value?.refreshData?.();
+    modalRef.value.close();
+  } catch (err) {
+    console.error("Error saat menerima permintaan:", err);
+  }
+};
+
+const handleRejectRequest = async () => {
+  try {
+    await updateApproval(selectedItem.value.id, 2);
+    // Refresh dashboard data
+    await data.value?.refreshData?.();
+    modalRef.value.close();
+  } catch (err) {
+    console.error("Error saat menolak permintaan:", err);
+  }
+};
 
 function handleRowClick(item) {
   // aksi saat klik baris
   console.log(item);
 }
+
+const tableHeaders = ["NIM", "NAMA", "Sesi", "Ruang"];
+
+// Update your navigateToDetail function to log data and handle missing IDs
+const navigateToDetail = (item) => {
+  router.push({
+    name: "DetailUjianTAforDosen",
+    params: { tugas_akhir_id: item.tugas_akhir_id },
+  });
+};
 
 // Summary cards data
 const iconPaths = {
@@ -81,20 +136,45 @@ const PermintaanBimbingan = computed(() => {
   >
     <Loading />
   </div>
-  <div v-else>
-    <Breadcrumb :items="breadcrumbItems" />
-    <div class="grid lg:grid-cols-3 gap-4 w-auto">
-      <div class="card-style">
-        <h5 class="body2-bold mb-4">Progress Bimbingan Mahasiswa</h5>
-        <DoughnutChart
-          class="w-44 h-44"
-          :labels="doughnutLabels"
-          datasetsLabel="Tugas Akhir Mahasiswa"
-          :dataValues="doughnutData"
-          :showCenterText="false"
-          :showInsideText="false"
-          :backgroundColor="doughnutColors"
-        />
+  <div v-else class="px-2 sm:px-0">
+    <Breadcrumb />
+    <div class="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <!-- Summary Cards -->
+      <template v-for="(card, index) in summaryCards" :key="index">
+        <div
+          class="p-3 bg-white card-rounded lg:p-6 shadow-custom min-w-[120px] sm:min-w-[170px] flex items-center"
+        >
+          <!-- Card -->
+          <SummaryCard
+            :icon="card.icon"
+            :iconColor="card.iconColor"
+            :title="card.title || '-'"
+            :subtitle="card.subtitle"
+          />
+        </div>
+      </template>
+    </div>
+    <div
+      class="flex flex-col lg:flex-row flex-wrap gap-3 sm:gap-4 mt-3 sm:mt-4"
+    >
+      <!-- Doughnut Card -->
+      <div
+        class="card-rounded bg-white p-3 sm:p-4 pb-6 sm:pb-8 lg:p-6 w-full lg:w-auto lg:flex-1 min-w-[250px] sm:min-w-[320px] shadow-custom"
+      >
+        <h5 class="body2-bold mb-3 sm:mb-4 text-center sm:text-left">
+          Progress Bimbingan Mahasiswa
+        </h5>
+        <div class="flex justify-center">
+          <DoughnutChart
+            class="w-36 h-36 sm:w-44 sm:h-44"
+            :labels="doughnutLabels"
+            datasetsLabel="Tugas Akhir Mahasiswa"
+            :dataValues="doughnutData"
+            :showCenterText="false"
+            :showInsideText="false"
+            :backgroundColor="doughnutColors"
+          />
+        </div>
         <div class="flex flex-wrap gap-2 sm:gap-4 justify-center mt-2">
           <template v-for="(label, idx) in doughnutLabels" :key="idx">
             <p class="flex items-center gap-1 text-placeholder body5">
@@ -107,167 +187,140 @@ const PermintaanBimbingan = computed(() => {
           </template>
         </div>
       </div>
-      <div
-        class="lg:col-span-2 card-style p-4 flex sm:flex-row flex-col justify-evenly flex-grow"
-      >
-        <template v-for="(card, index) in summaryCards" :key="index">
-          <!-- Card -->
-          <SummaryCard
-            :icon="card.icon"
-            :iconColor="card.iconColor"
-            :title="card.title || '-'"
-            :subtitle="card.subtitle"
-          />
 
-          <!-- Divider (except after last card) -->
-          <template v-if="index < summaryCards.length - 1">
-            <div
-              class="hidden sm:flex h-auto w-px my-8 bg-placeholder mx-4 self-stretch"
-            ></div>
-            <div
-              class="sm:hidden max-w-[240px] w-10/12 h-px bg-placeholder mx-auto my-4"
-            ></div>
-          </template>
-        </template>
-      </div>
-      <div class="lg:col-span-3 grid lg:grid-cols-2 gap-4">
-        <div class="card-style">
-          <div class="flex justify-between items-center mb-2">
-            <h1 class="body1">Jadwal Ujian Hari ini</h1>
-            <router-link
-              to="/dosen/tugas-akhir/ujian-ta"
-              title="Lihat Jadwal Ujian"
-              aria-label="Navigasi ke halaman Ujian TA"
+      <!-- Jadwal Ujian Card -->
+      <div
+        class="flex-grow p-3 sm:p-4 lg:p-6 bg-white card-rounded shadow-custom w-full lg:w-auto"
+      >
+        <div class="flex justify-between items-center mb-2">
+          <h1 class="body2-bold">Jadwal Ujian Hari ini</h1>
+          <router-link
+            to="/dosen/tugas-akhir/ujian-ta"
+            title="Lihat Jadwal Ujian"
+            aria-label="Navigasi ke halaman Ujian TA"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-5 h-5 sm:w-6 sm:h-6 text-[var(--secondary)] cursor-pointer"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke="currentColor"
-                class="w-6 h-6 text-[var(--secondary)] cursor-pointer"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-                />
-              </svg>
-            </router-link>
-          </div>
-          <table class="w-full text-left rtl:text-right">
-            <thead class="body5-bold uppercase text-white bg-[var(--primary)]">
-              <tr>
-                <th scope="col" class="px-3 py-2 rounded-l-lg">NIM</th>
-                <th scope="col" class="px-3 py-2">Sesi</th>
-                <th scope="col" class="px-3 py-2 rounded-r-lg">Ruang</th>
-              </tr>
-            </thead>
-            <tbody class="body5">
-              <template v-if="JadwalHariIni.length">
-                <tr
-                  v-for="(item, index) in JadwalHariIni"
-                  :key="index"
-                  class="bg-white border-b rounded-l-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                  @click="handleRowClick(item)"
-                  role="button"
-                  tabindex="0"
-                >
-                  <td class="px-3 py-2">
-                    <div class="flex items-center gap-2">
-                      <img
-                        class="h-6 w-6 sm:h-8 sm:w-8 rounded-full"
-                        :src="item.avatar"
-                        alt=""
-                      />
-                      <span>{{ item.nama }}</span>
-                    </div>
-                  </td>
-                  <td class="px-3 py-2">
-                    {{ item.waktu }}
-                  </td>
-                  <td class="px-3 py-2">
-                    {{ item.ruang }}
-                  </td>
-                </tr>
-              </template>
-              <template v-else>
-                <tr>
-                  <td colspan="3">
-                    <div class="text-center text-placeholder py-8">
-                      tidak ada data
-                    </div>
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+              />
+            </svg>
+          </router-link>
         </div>
-        <div class="card-style">
-          <div class="flex justify-between items-center mb-2">
-            <h1 class="body1">Permintaan Bimbingan</h1>
-            <router-link
-              to="/dosen/tugas-akhir/bimbingan"
-              title="Lihat Permintaan Bimbingan"
-              aria-label="Navigasi ke halaman Ujian TA"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke="currentColor"
-                class="w-6 h-6 text-[var(--secondary)]"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-                />
-              </svg>
-            </router-link>
-          </div>
-          <table class="w-full text-left rtl:text-right w-min-[350px]">
-            <thead class="body5-bold uppercase text-white bg-[var(--primary)]">
+
+        <div class="overflow-x-auto">
+          <Table
+            :headers="tableHeaders"
+            :items="JadwalHariIni"
+            :showPagination="false"
+            @rowClick="navigateToDetail"
+            min-width="min-w-[400px]"
+          >
+            <template #row="{ item }">
+              <td class="px-3 py-2 whitespace-nowrap rounded-l-lg">
+                {{ item.nim }}
+              </td>
+              <td class="px-3 py-2">
+                {{ item.nama }}
+              </td>
+              <td class="px-3 py-2">
+                {{ item.waktu }}
+              </td>
+              <td class="px-3 py-2 rounded-r-lg">
+                {{ item.ruang }}
+              </td>
+            </template>
+            <template #empty>
               <tr>
-                <th scope="col" class="px-3 py-2 rounded-l-lg">NIM</th>
-                <th scope="col" class="px-3 py-2">Nama</th>
-                <th scope="col" class="px-3 py-2 rounded-r-lg">Kategori</th>
+                <td colspan="4">
+                  <div class="text-center text-placeholder py-6 sm:py-8">
+                    Tidak ada data
+                  </div>
+                </td>
               </tr>
-            </thead>
+            </template>
+          </Table>
+        </div>
+      </div>
+
+      <!-- Permintaan Bimbingan Card -->
+      <div
+        class="flex-grow p-3 sm:p-4 lg:p-6 bg-white card-rounded shadow-custom w-full lg:w-auto"
+      >
+        <div class="flex justify-between items-center mb-2">
+          <h1 class="body2-bold">Permintaan Bimbingan</h1>
+          <router-link
+            to="/dosen/tugas-akhir/bimbingan"
+            title="Lihat Permintaan Bimbingan"
+            aria-label="Navigasi ke halaman Bimbingan"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-5 h-5 sm:w-6 sm:h-6 text-[var(--secondary)]"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+              />
+            </svg>
+          </router-link>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
             <tbody class="body5">
               <template v-if="PermintaanBimbingan.length">
                 <tr
                   v-for="(item, index) in PermintaanBimbingan"
                   :key="index"
-                  class="bg-white border-b rounded-l-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                  @click="handleRowClick(item)"
+                  class="border-b hover:bg-gray-50 transition"
                   role="button"
                   tabindex="0"
                 >
-                  <td class="px-3 py-2">
-                    {{ item.nim }}
-                  </td>
-                  <td class="px-3 py-2 w-fit">
-                    <div class="flex items-center gap-2">
-                      <img
-                        class="h-6 w-6 sm:h-8 sm:w-8 rounded-full"
-                        :src="item.avatar"
-                        alt=""
-                      />
-                      <span>{{ item.nama }}</span>
+                  <td class="p-2 sm:p-3">
+                    <div class="body5-bold sm:body4-bold">
+                      {{ item.nama }}
+                      <span class="block sm:inline">({{ item.nim }})</span>
                     </div>
+                    <div class="body6 sm:body5">{{ item.kategori }}</div>
                   </td>
-                  <td class="px-3 py-2">
-                    {{ item.kategori }}
+                  <td class="p-2 sm:p-3 text-right align-middle">
+                    <div class="flex justify-end">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        class="sm:hidden"
+                        @click.stop="showResponModal(item)"
+                        >Respon</Button
+                      >
+                      <Button
+                        variant="primary"
+                        size="md"
+                        class="hidden sm:inline-flex"
+                        @click.stop="showResponModal(item)"
+                        >Respon</Button
+                      >
+                    </div>
                   </td>
                 </tr>
               </template>
               <template v-else>
                 <tr>
-                  <td colspan="3">
-                    <div class="text-center text-placeholder py-8">
-                      tidak ada data
+                  <td colspan="2">
+                    <div class="text-center text-placeholder py-6 sm:py-8">
+                      Tidak ada permintaan
                     </div>
                   </td>
                 </tr>
@@ -278,4 +331,26 @@ const PermintaanBimbingan = computed(() => {
       </div>
     </div>
   </div>
+  <!-- Modal Respon Bimbingan -->
+  <ModalResponBimbingan
+    ref="modalRef"
+    :title="modalTitle"
+    :content="modalContent"
+    @accept="handleAcceptRequest"
+    @reject="handleRejectRequest"
+  />
 </template>
+
+<style scoped>
+/* Add responsive styles */
+@media (max-width: 640px) {
+  .overflow-x-auto {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  /* Additional mobile styles can be added here */
+}
+</style>
