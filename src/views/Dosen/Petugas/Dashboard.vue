@@ -63,52 +63,37 @@
         <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
       </div>
       
+      <div v-else-if="apiError" class="text-center py-8">
+        <div class="text-red-600 mb-2">
+          <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+        </div>
+        <p class="text-lg font-medium text-gray-800">Gagal memuat data</p>
+        <p class="text-gray-600">{{ apiErrorMessage }}</p>
+        <button @click="fetchLaporan" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+          Coba Lagi
+        </button>
+      </div>
+      
+      <div v-else-if="totalLaporan === 0" class="text-center py-8">
+        <p class="text-lg font-medium text-gray-800">Tidak ada data laporan untuk periode ini</p>
+      </div>
+      
       <div v-else>
         <!-- Statistik Summary -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div class="bg-blue-50 p-4 rounded-lg">
-            <h3 class="text-lg font-medium text-gray-800 mb-2">Total Laporan</h3>
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Jumlah Laporan</h3>
             <p class="text-3xl font-bold text-blue-600">{{ totalLaporan }}</p>
-          </div>
-          
-          <div class="bg-green-50 p-4 rounded-lg">
-            <h3 class="text-lg font-medium text-gray-800 mb-2">Selesai Ditangani</h3>
-            <p class="text-3xl font-bold text-green-600">{{ statusCounts.selesai }}</p>
-            <p class="text-sm text-gray-500">
-              {{ totalLaporan > 0 ? Math.round((statusCounts.selesai / totalLaporan) * 100) : 0 }}% dari total
-            </p>
-          </div>
-          
-          <div class="bg-yellow-50 p-4 rounded-lg">
-            <h3 class="text-lg font-medium text-gray-800 mb-2">Sedang Diproses</h3>
-            <p class="text-3xl font-bold text-yellow-600">{{ statusCounts.proses }}</p>
-            <p class="text-sm text-gray-500">
-              {{ totalLaporan > 0 ? Math.round((statusCounts.proses / totalLaporan) * 100) : 0 }}% dari total
-            </p>
-          </div>
-          
-          <div class="bg-red-50 p-4 rounded-lg">
-            <h3 class="text-lg font-medium text-gray-800 mb-2">Belum Ditangani</h3>
-            <p class="text-3xl font-bold text-red-600">{{ statusCounts.belum }}</p>
-            <p class="text-sm text-gray-500">
-              {{ totalLaporan > 0 ? Math.round((statusCounts.belum / totalLaporan) * 100) : 0 }}% dari total
-            </p>
           </div>
         </div>
         
         <!-- Grafik Laporan per Periode -->
         <div class="mb-6">
-          <h3 class="text-lg font-medium text-gray-800 mb-2">Tren Laporan Kekerasan</h3>
+          <h3 class="text-lg font-medium text-gray-800 mb-2">Tren Jumlah Laporan</h3>
           <div class="h-64 bg-gray-50 rounded-lg p-4">
             <canvas ref="trendChartRef"></canvas>
-          </div>
-        </div>
-
-        <!-- Status Distribution Chart -->
-        <div class="mb-6">
-          <h3 class="text-lg font-medium text-gray-800 mb-2">Distribusi Status Laporan</h3>
-          <div class="h-64 bg-gray-50 rounded-lg p-4">
-            <canvas ref="statusChartRef"></canvas>
           </div>
         </div>
         
@@ -119,9 +104,9 @@
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-100">
                 <tr>
-                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nomor Laporan</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
-                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
                 </tr>
@@ -131,9 +116,9 @@
                   <td colspan="5" class="px-4 py-4 text-center text-gray-500">Tidak ada data</td>
                 </tr>
                 <tr v-for="report in recentReports" :key="report.id" class="hover:bg-gray-50">
-                  <td class="px-4 py-2 whitespace-nowrap">{{ report.id }}</td>
+                  <td class="px-4 py-2 whitespace-nowrap">{{ report.nomor_laporan_kekerasan || `LK-${report.id}` }}</td>
                   <td class="px-4 py-2 whitespace-nowrap">{{ formatDate(report.created_at) }}</td>
-                  <td class="px-4 py-2 whitespace-nowrap">{{ report.lokasi || 'Tidak disebutkan' }}</td>
+                  <td class="px-4 py-2 whitespace-nowrap">{{ report.judul || 'Tidak disebutkan' }}</td>
                   <td class="px-4 py-2 whitespace-nowrap">
                     <span 
                       :class="[
@@ -154,18 +139,20 @@
             </table>
           </div>
         </div>
-        
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick, onBeforeUnmount } from "vue";
+import { ref, onMounted, watch, nextTick, onBeforeUnmount } from "vue";
 import { decryptData } from "../../../services/encrypt";
 import VueCookies from "vue-cookies";
 import axios from "axios";
 import Chart from "chart.js/auto";
+
+const API_URL = "https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan";
+const API_TIMEOUT = 10000; // 10 detik timeout
 
 const userData = ref(null);
 const isLoading = ref(true);
@@ -173,7 +160,6 @@ const totalLaporan = ref(0);
 const laporanData = ref([]);
 const selectedPeriod = ref("week");
 const trendChartRef = ref(null);
-const statusChartRef = ref(null);
 const selectedYear = ref(new Date().getFullYear());
 const statusCounts = ref({
   selesai: 0,
@@ -181,6 +167,8 @@ const statusCounts = ref({
   belum: 0
 });
 const recentReports = ref([]);
+const apiError = ref(false);
+const apiErrorMessage = ref("");
 
 // Buat array tahun, dari tahun sekarang hingga 5 tahun sebelumnya
 const currentYear = new Date().getFullYear();
@@ -193,75 +181,6 @@ const periods = [
 ];
 
 let trendChart = null;
-let statusChart = null;
-
-// Data dummy untuk memastikan selalu ada data untuk ditampilkan
-const dummyLaporan = [
-  { 
-    id: 1, 
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 2).toISOString(),
-    status: "Selesai",
-    lokasi: "Ruang Lab Komputer",
-    deskripsi: "Terjadi perkelahian antar mahasiswa saat praktikum"
-  },
-  { 
-    id: 2, 
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 3).toISOString(),
-    status: "Diproses",
-    lokasi: "Kantin",
-    deskripsi: "Bullying verbal terhadap mahasiswa baru"
-  },
-  { 
-    id: 3, 
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 4).toISOString(),
-    status: "Belum ditangani",
-    lokasi: "Koridor Gedung A",
-    deskripsi: "Intimidasi terhadap mahasiswi"
-  },
-  { 
-    id: 4, 
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 10).toISOString(),
-    status: "Selesai",
-    lokasi: "Gedung Rektorat",
-    deskripsi: "Pelecehan verbal oleh oknum mahasiswa"
-  },
-  { 
-    id: 5, 
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 15).toISOString(),
-    status: "Diproses",
-    lokasi: "Parkiran Motor",
-    deskripsi: "Ancaman fisik terhadap petugas parkir"
-  },
-  { 
-    id: 6, 
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 20).toISOString(),
-    status: "Selesai",
-    lokasi: "Ruang Dosen",
-    deskripsi: "Pengrusakan fasilitas ruangan"
-  },
-  { 
-    id: 7, 
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 25).toISOString(),
-    status: "Belum ditangani",
-    lokasi: "Perpustakaan",
-    deskripsi: "Pencurian barang milik mahasiswa"
-  },
-  // Tambahkan data untuk tahun sebelumnya
-  { 
-    id: 8, 
-    created_at: new Date(currentYear-1, 2, 15).toISOString(),
-    status: "Selesai",
-    lokasi: "Lapangan Olahraga",
-    deskripsi: "Perkelahian antar fakultas saat pertandingan"
-  },
-  { 
-    id: 9, 
-    created_at: new Date(currentYear-1, 5, 22).toISOString(),
-    status: "Selesai",
-    lokasi: "Asrama Mahasiswa",
-    deskripsi: "Senior melakukan kekerasan terhadap junior"
-  }
-];
 
 onMounted(async () => {
   // Mendapatkan data user
@@ -283,10 +202,6 @@ onBeforeUnmount(() => {
     trendChart.destroy();
   }
   
-  if (statusChart) {
-    statusChart.destroy();
-  }
-  
   window.removeEventListener("resize", handleResize);
 });
 
@@ -296,34 +211,43 @@ const handleResize = () => {
     if (trendChart) {
       trendChart.resize();
     }
-    
-    if (statusChart) {
-      statusChart.resize();
-    }
   });
 };
 
 const fetchLaporan = async () => {
   isLoading.value = true;
+  apiError.value = false;
+  apiErrorMessage.value = "";
   
   try {
-    const response = await axios.get("https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan", {
-      timeout: 5000 // 5 detik timeout
+    console.log(`Fetching data from: ${API_URL}`);
+    const response = await axios.get(API_URL, {
+      timeout: API_TIMEOUT
     });
     
     if (response.data && Array.isArray(response.data)) {
       laporanData.value = response.data;
       console.log("Laporan data loaded successfully:", laporanData.value.length, "laporan");
     } else {
-      throw new Error("Invalid laporan data format");
+      throw new Error("Format data tidak valid");
     }
   } catch (error) {
     console.error("Error fetching laporan data:", error);
-    console.warn("Using dummy laporan data instead");
-    laporanData.value = dummyLaporan;
+    apiError.value = true;
+    if (error.code === 'ECONNABORTED') {
+      apiErrorMessage.value = "Koneksi timeout, server tidak merespon";
+    } else if (error.response) {
+      apiErrorMessage.value = `Error ${error.response.status}: ${error.response.statusText}`;
+    } else if (error.request) {
+      apiErrorMessage.value = "Tidak dapat terhubung ke server";
+    } else {
+      apiErrorMessage.value = error.message || "Terjadi kesalahan saat memuat data";
+    }
   } finally {
     isLoading.value = false;
-    await processData();
+    if (!apiError.value) {
+      await processData();
+    }
   }
 };
 
@@ -335,10 +259,13 @@ const changePeriod = async (period) => {
 const processData = async () => {
   console.log("Processing data...");
   
-  // Safety check - gunakan dummy data jika tidak ada data
-  if (!laporanData.value.length) {
-    console.warn("No laporan data available, using dummy data");
-    laporanData.value = dummyLaporan;
+  // Check if we have data
+  if (!laporanData.value || laporanData.value.length === 0) {
+    console.warn("No laporan data available");
+    totalLaporan.value = 0;
+    statusCounts.value = { selesai: 0, proses: 0, belum: 0 };
+    recentReports.value = [];
+    return;
   }
   
   // Tanggal untuk filter data
@@ -397,9 +324,6 @@ const updateCharts = async (filteredData, startDate, endDate) => {
   // Update trend chart
   const trenData = prepareTrendData(filteredData, startDate, endDate);
   await updateTrendChart(trenData);
-  
-  // Update status chart
-  await updateStatusChart();
 };
 
 const updateTrendChart = async (trenData) => {
@@ -465,71 +389,6 @@ const updateTrendChart = async (trenData) => {
     console.log("Trend chart created successfully");
   } catch (error) {
     console.error('Error updating trend chart:', error);
-  }
-};
-
-const updateStatusChart = async () => {
-  await nextTick();
-  
-  try {
-    if (!statusChartRef.value) {
-      console.warn('Status chart ref is not available');
-      return;
-    }
-    
-    const ctx = statusChartRef.value.getContext('2d');
-    if (!ctx) {
-      console.warn('Could not get canvas context for status chart');
-      return;
-    }
-    
-    if (statusChart) {
-      statusChart.destroy();
-    }
-    
-    statusChart = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Selesai', 'Diproses', 'Belum Ditangani'],
-        datasets: [{
-          data: [statusCounts.value.selesai, statusCounts.value.proses, statusCounts.value.belum],
-          backgroundColor: [
-            'rgba(34, 197, 94, 0.7)', // green
-            'rgba(234, 179, 8, 0.7)',  // yellow
-            'rgba(239, 68, 68, 0.7)',   // red
-          ],
-          borderColor: [
-            'rgb(34, 197, 94)',
-            'rgb(234, 179, 8)',
-            'rgb(239, 68, 68)',
-          ],
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'right',
-          },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                const value = context.raw;
-                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                const percentage = total > 0 ? Math.round((value * 100) / total) : 0;
-                return `${context.label}: ${value} (${percentage}%)`;
-              }
-            }
-          }
-        }
-      }
-    });
-    
-    console.log("Status chart created successfully");
-  } catch (error) {
-    console.error('Error updating status chart:', error);
   }
 };
 
