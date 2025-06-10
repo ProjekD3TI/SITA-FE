@@ -273,7 +273,7 @@ onMounted(() => {
       <Breadcrumb :items="breadcrumbItems" />
 
       <!-- Status error -->
-      <div v-if="error" class="p-4 bg-red-100 text-red-700 rounded-lg my-4">
+      <div v-if="error" class="p-4 my-4 text-red-700 bg-red-100 rounded-lg">
         <p>{{ error }}</p>
         <Button
           @click="
@@ -317,7 +317,7 @@ onMounted(() => {
               :preselectedValues="selectedCategoriesPermintaan"
             />
 
-            <div v-if="errorCategories" class="text-red-500 text-sm">
+            <div v-if="errorCategories" class="text-sm text-red-500">
               Gagal memuat kategori: {{ errorCategories }}
             </div>
 
@@ -338,11 +338,11 @@ onMounted(() => {
           <!-- Status kosong jika tidak ada permintaan -->
           <div
             v-else-if="requests.length === 0"
-            class="text-center py-8 bg-gray-50 rounded-lg"
+            class="py-8 text-center rounded-lg bg-gray-50"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-12 w-12 mx-auto text-gray-400"
+              class="w-12 h-12 mx-auto text-gray-400"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -372,7 +372,7 @@ onMounted(() => {
             >
               <template #row="{ item }">
                 <td
-                  class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap rounded-l-lg"
+                  class="px-6 py-4 font-medium text-gray-900 rounded-l-lg whitespace-nowrap"
                 >
                   {{ item.nim }}
                 </td>
@@ -413,7 +413,7 @@ onMounted(() => {
               :preselectedValues="selectedCategoriesBimbingan"
             />
 
-            <div v-if="errorCategories" class="text-red-500 text-sm">
+            <div v-if="errorCategories" class="text-sm text-red-500">
               Gagal memuat kategori: {{ errorCategories }}
             </div>
 
@@ -434,11 +434,11 @@ onMounted(() => {
           <!-- Status kosong jika tidak ada yang dibimbing -->
           <div
             v-else-if="mentorships.length === 0"
-            class="text-center py-8 bg-gray-50 rounded-lg"
+            class="py-8 text-center rounded-lg bg-gray-50"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-12 w-12 mx-auto text-gray-400"
+              class="w-12 h-12 mx-auto text-gray-400"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -475,7 +475,7 @@ onMounted(() => {
             >
               <template #row="{ item }">
                 <td
-                  class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap rounded-l-lg"
+                  class="px-6 py-4 font-medium text-gray-900 rounded-l-lg whitespace-nowrap"
                 >
                   {{ item.nim }}
                 </td>

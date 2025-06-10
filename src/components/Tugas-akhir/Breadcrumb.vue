@@ -45,23 +45,50 @@ const breadcrumbItems = computed(() => {
     }));
   }
 
-  // Jika tidak, generate otomatis dari route meta
+  // Generate otomatis dari route meta dengan parameter
   const routeMatched = route.matched;
-  return routeMatched
+  const items = [];
+
+  routeMatched
     .filter((item) => item.meta && item.meta.breadcrumb)
-    .map((item, index) => {
-      const isLast =
-        index ===
-        routeMatched.filter((route) => route.meta && route.meta.breadcrumb)
-          .length -
-          1;
-      return {
+    .forEach((item, index, array) => {
+      const isLast = index === array.length - 1;
+
+      let itemPath = null;
+
+      if (!isLast) {
+        // ✅ PERBAIKAN: Generate path dengan parameter yang benar
+        if (
+          item.meta.parentPath &&
+          typeof item.meta.parentPath === "function"
+        ) {
+          itemPath = item.meta.parentPath(route);
+        } else {
+          // Generate path dengan parameter dari route saat ini
+          itemPath = generatePathWithParams(item.path, route.params);
+        }
+      }
+
+      items.push({
         label: item.meta.breadcrumb,
-        path: isLast ? null : resolveRoutePath(item.path),
+        path: itemPath,
         active: isLast,
-      };
+      });
     });
+
+  return items;
 });
+// ✅ TAMBAHAN: Function untuk generate path dengan parameter
+const generatePathWithParams = (basePath, params) => {
+  let path = basePath;
+
+  // Replace parameter placeholders dengan nilai actual
+  Object.keys(params).forEach((key) => {
+    path = path.replace(`:${key}`, params[key]);
+  });
+
+  return path;
+};
 </script>
 
 <template>
@@ -108,7 +135,7 @@ const breadcrumbItems = computed(() => {
           <router-link
             v-if="item.path && !item.active"
             :to="item.path"
-            class="text-[#384551] body5 sm:text-[13px] hover:text-primary"
+            class="text-[#384551] body5 sm:text-[13px] hover:text-primary duration-200"
           >
             {{ item.label }}
           </router-link>

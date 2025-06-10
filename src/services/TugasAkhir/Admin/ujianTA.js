@@ -33,7 +33,7 @@ export function useTabelPlottingPenguji() {
         `/api/admin_ta/plotting-penguji?page=${page}`,
         { headers, params }
       );
-      dataTabelPlottingPenguji.value = response.data.data.data;
+      dataTabelPlottingPenguji.value = response.data.data;
       paginationTabelPlottingPenguji.value = response.data.data.pagination;
     } catch (err) {
       handleError(err);
@@ -112,7 +112,7 @@ export function useShowPlottingPenguji() {
         Accept: "application/json",
       };
 
-      const response = await axios.post(`/api/admin_ta/dosen-penguji/`, data, {
+      const response = await axios.post(`/api/admin_ta/dosen-penguji`, data, {
         headers,
       });
       toast.success(
@@ -382,7 +382,7 @@ export function useTabelPenjadwalan() {
         `/api/admin_ta/penjadwalan-ujian?page=${page}`,
         { headers, params }
       );
-      dataTabelPenjadwalan.value = response.data.data.data;
+      dataTabelPenjadwalan.value = response.data.data;
       paginationTabelPenjadwalan.value = response.data.data.pagination;
     } catch (err) {
       handleError(err);
@@ -461,9 +461,10 @@ export function useShowPenjadwalan() {
         Accept: "application/json",
       };
 
+      // ✅ PERBAIKAN: Gunakan POST untuk mengirim filters termasuk ujian_ta_id
       const response = await axios.post(
         `/api/admin_ta/penjadwalan-ujian/${tugasAkhirId}/cek-jadwal-tersedia`,
-        filters,
+        filters, // Kirim semua filters termasuk ujian_ta_id
         { headers }
       );
       return response.data.data;
@@ -485,7 +486,7 @@ export function useShowPenjadwalan() {
       };
 
       const response = await axios.post(
-        `/api/admin_ta/penjadwalan-ujian/`,
+        `/api/admin_ta/penjadwalan-ujian`,
         data,
         {
           headers,

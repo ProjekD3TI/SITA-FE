@@ -69,7 +69,16 @@ const dataSertifikatKompetensi = ref({});
 const dataSertifikatTOEIC = ref({});
 const dataBeritaAcaraSemhas = ref({});
 const dataMasaPerpanjanganStudi = ref({});
+const selectedPlottingItem = ref(null);
 
+const examiners = computed(() => {
+  return (
+    selectedPlottingItem.value?.dosen_penguji?.map((d) => ({
+      name: d.name,
+      role: d.jabatan_penguji,
+    })) || []
+  );
+});
 const catatan_perbaikan = ref("");
 const modalHeadText = ref("");
 const modalBodyText = ref("");
@@ -93,6 +102,7 @@ const tempValidasi = ref({
   masa_perpanjangan_studi_status_valid: null,
   file_transkrip_status_valid: null,
 });
+
 
 function getUjianStatus(berkas) {
   // Kumpulkan semua status valid dari setiap berkas
@@ -127,8 +137,8 @@ watch(
 );
 
 const listPlottingPenguji = computed(() => {
-  return Array.isArray(dataTabelPlottingPenguji.value)
-    ? dataTabelPlottingPenguji.value
+  return Array.isArray(dataTabelPlottingPenguji.value?.data)
+    ? dataTabelPlottingPenguji.value?.data
     : [];
 });
 
@@ -139,8 +149,8 @@ const listPendaftarUjian = computed(() => {
 });
 
 const listPenjadwalan = computed(() => {
-  return Array.isArray(dataTabelPenjadwalan.value)
-    ? dataTabelPenjadwalan.value
+  return Array.isArray(dataTabelPenjadwalan.value?.data)
+    ? dataTabelPenjadwalan.value?.data
     : [];
 });
 
@@ -210,24 +220,17 @@ const jadwalUjianTA = computed(() => {
   };
 });
 
-const countPlottingMenunggu = computed(
-  () =>
-    (dataTabelPlottingPenguji.value || []).filter(
-      (item) => !item.dosen_penguji || item.dosen_penguji.length < 3
-    ).length
-);
+const countPlottingMenunggu = computed(() => {
+  return dataTabelPlottingPenguji.value?.notification || 0;
+});
 // Hitung jumlah pendaftar ujian dengan status '0' (Menunggu)
-const countPendaftarMenunggu = computed(
-  () =>
-    (dataTabelPendaftar.value?.data || []).filter(
-      (item) => item.status_valid === 0
-    ).length
-);
+const countPendaftarMenunggu = computed(() => {
+  return dataTabelPendaftar.value?.notification || 0;
+});
 // Hitung jumlah penjadwalan dengan status menunggu (status === '1' dan jadwal null)
-const countPenjadwalanMenunggu = computed(
-  () =>
-    (dataTabelPenjadwalan.value || []).filter((item) => !item.ujian_ta).length
-);
+const countPenjadwalanMenunggu = computed(() => {
+  return dataTabelPenjadwalan.value?.notification || 0;
+});
 
 const tabs = [
   {
@@ -405,10 +408,15 @@ const getFileName = (filePath) => {
   return filePath ? decodeURIComponent(filePath.split("/").pop()) : "";
 };
 const handleRowClickPlot = (item) => {
-  router.push({
-    name: "PlottingPengujiForAdmin",
-    params: { tugas_akhir_id: item.tugas_akhir_id },
-  });
+  if (item.sudah_lulus === true) {
+    selectedPlottingItem.value = item;
+    modalRef.value = true;
+  } else {
+    router.push({
+      name: "PlottingPengujiForAdmin",
+      params: { tugas_akhir_id: item.tugas_akhir_id },
+    });
+  }
 };
 const handleRowClickDaftar = (item) => {
   if (item.status_valid === 0) {
@@ -611,6 +619,12 @@ watch(
   () => {
     fetchTabelPlottingPenguji(currentPageTabelPlottingPenguji.value);
     fetchTabelPenjadwalan(currentPageTabelPenjadwalan.value);
+    router.replace({
+      query: {
+        ...router.currentRoute.value.query,
+        refreshPlottingPenguji: undefined,
+      },
+    });
   }
 );
 watch(
@@ -618,6 +632,24 @@ watch(
   () => {
     fetchTabelPendaftar(currentPageTabelPendaftar.value);
     fetchTabelPenjadwalan(currentPageTabelPenjadwalan.value);
+    router.replace({
+      query: {
+        ...router.currentRoute.value.query,
+        refreshPendaftar: undefined,
+      },
+    });
+  }
+);
+watch(
+  () => router.currentRoute.value.query.refreshPenjadwalan,
+  () => {
+    fetchTabelPenjadwalan(currentPageTabelPenjadwalan.value);
+    router.replace({
+      query: {
+        ...router.currentRoute.value.query,
+        refreshPenjadwalan: undefined,
+      },
+    });
   }
 );
 const modalFileUjianTAVisible = ref(false);
@@ -1027,6 +1059,35 @@ const modalFileUjianTAFiles = ref({
       :enableTimer="false"
       @submit="handleModalSubmit"
     />
+
+    <DefaultModal
+      v-if="modalRef && selectedPlottingItem"
+      @close="modalRef = false"
+      headText="Dosen Penguji"
+      :bodyText="`${selectedPlottingItem.mahasiswa?.nim} | ${selectedPlottingItem.mahasiswa?.name} | ${selectedPlottingItem.proposal?.judul_proposal}`"
+    >
+      <div class="flex flex-col w-full gap-4 basis-7/12 md:w-auto">
+        <div
+          v-for="(examiner, index) in examiners"
+          :key="index"
+          class="flex items-center gap-4"
+        >
+          <img :src="DefaultAvatar" alt="" class="w-10 h-10 sm:w-14 sm:h-14" />
+          <div>
+            <p class="body4 sm:body2 text-blackText">{{ examiner.name }}</p>
+            <p class="capitalize body4-bold sm:body2-bold text-primary">
+              {{ examiner.role }}
+            </p>
+          </div>
+        </div>
+        <div
+          v-if="examiners.length === 0"
+          class="py-4 text-center text-gray-500"
+        >
+          Tidak ada data dosen penguji
+        </div>
+      </div>
+    </DefaultModal>
 
     <!-- Jadwal Ujian Modal -->
     <DefaultModal

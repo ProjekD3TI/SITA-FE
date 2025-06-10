@@ -2,16 +2,18 @@
   <div class="relative w-full">
     <label
       :for="id"
-      :class="`absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold max-w-[210px] sm:max-w-none truncate text-blackText`"
+      :class="`absolute bg-white left-3 sm:left-5 -top-2.5 px-1 body5-bold sm:body4-bold max-w-[210px] sm:max-w-none truncate text-blackText ${
+        danger ? 'text-danger' : 'text-blackText'
+      }`"
     >
       {{ label }} <span v-if="required" class="text-secondary">*</span>
     </label>
     <div class="flex w-full">
       <div
         :id="id"
-        :class="`border-y border-l border-placeholder rounded-l-[12px] px-4 sm:px-6 py-3 body5 sm:body4 flex-1 min-w-0 flex items-center overflow-hidden ${
+        :class="`border-y border-l rounded-l-[12px] px-4 sm:px-6 py-3 body5 sm:body4 flex-1 min-w-0 flex items-center overflow-hidden ${
           !hasFile ? 'text-placeholder' : 'text-blackText'
-        }`"
+        } ${danger ? 'border-danger' : 'border-placeholder'}`"
       >
         <div
           class="flex items-center w-full min-w-0 gap-2 overflow-hidden"
@@ -78,6 +80,7 @@ const props = defineProps({
   existingFileName: { type: String, default: "" },
   existingFileUrl: { type: String, default: "" },
   required: { type: Boolean, default: false },
+  danger: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["update:modelValue"]);

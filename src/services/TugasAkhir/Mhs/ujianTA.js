@@ -244,47 +244,6 @@ export function useNilaiUjianTA() {
         headers,
       });
       dataNilaiUjianTA.value = response.data.data;
-      // await new Promise(resolve => setTimeout(resolve, 1000));
-      // dataNilaiUjianTA.value = {
-      //     dosen_penguji: [
-      //         {
-      //             id: null,//1,
-      //             nama: null,//"Prof. Dr. Budi Santoso, M.Kom",
-      //             nilai_ujian_ta: {
-      //                 id: null,//1,
-      //                 kualitas_tata_laporan: null,//80,
-      //                 kemampuan_teknis: null,//85,
-      //                 kualitas_produk: null,//90,
-      //                 presentasi: null,//90,
-      //                 rerata_ujian: null,//85,
-      //             }
-      //         },
-      //         {
-      //             id: null,//2,
-      //             nama: null,//"Dr. Siti Aminah, M.T.",
-      //             nilai_ujian_ta: {
-      //                 id: null,//2,
-      //                 kualitas_tata_laporan: null,//80,
-      //                 kemampuan_teknis: null,//85,
-      //                 kualitas_produk: null,//90,
-      //                 presentasi: null,//90,
-      //                 rerata_ujian: null,//85,
-      //             }
-      //         },
-      //         {
-      //             id: null,//3,
-      //             nama: null,//"Dr. Ahmad Fauzi, M.Kom",
-      //             nilai_ujian_ta: {
-      //                 id: null,//3,
-      //                 kualitas_tata_laporan: null,//80,
-      //                 kemampuan_teknis: null,//85,
-      //                 kualitas_produk: null,//90,
-      //                 presentasi: null,//90,
-      //                 rerata_ujian: null,//85,
-      //             }
-      //         }
-      //     ]
-      // }
     } catch (err) {
       handleError(err);
     } finally {

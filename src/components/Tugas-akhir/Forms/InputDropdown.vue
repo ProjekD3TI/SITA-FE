@@ -15,6 +15,10 @@
         :id="id"
         type="text"
         class="w-full outline-none cursor-pointer"
+        :class="{
+          'text-gray-400': !selectedValue, // ✅ TAMBAHAN: Gray jika belum dipilih
+          'text-blackText': selectedValue,
+        }"
         :placeholder="placeholder"
         :value="displayText"
         readonly
@@ -87,6 +91,8 @@
                 ? 'text-primary font-medium bg-blue-50'
                 : option.disabled
                 ? 'text-gray-400'
+                : option.isDefault
+                ? 'text-gray-500 italic' // ✅ TAMBAHAN: Styling khusus untuk default option
                 : 'text-blackText',
             ]"
             @click.stop="!option.disabled && selectOption(option)"
@@ -130,6 +136,8 @@ const props = defineProps({
   },
   required: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
+  showDefaultOption: { type: Boolean, default: true }, // ✅ TAMBAHAN: Show default option
+  defaultOptionText: { type: String, default: "Pilih..." }, // ✅ TAMBAHAN: Customizable default text
 });
 
 const selectedValue = ref(props.modelValue);

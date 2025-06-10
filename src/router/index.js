@@ -480,6 +480,8 @@ const routes = [
                 component: InputNilaiProposalForAdmin,
                 meta: {
                   breadcrumb: "Input Nilai",
+                  parentPath: (route) =>
+                    `/admin-ta/tugas-akhir/proposal/detail-proposal/${route.params.proposal_id}`,
                 },
               },
             ],

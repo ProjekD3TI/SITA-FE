@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from "vue";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import UserData from "@/components/Tugas-akhir/UserData.vue";
 import InputDropdown from "@/components/Tugas-akhir/Forms/InputDropdown.vue";
+import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import DefaultAvatar from "@/assets/images/Profile Avatar.svg";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Loading from "@/components/Loading.vue";
@@ -184,7 +185,17 @@ const handleUpdate = async () => {
             mahasiswaData?.tahun_ajaran || 'Tahun Ajaran Tugas Akhir'
           "
         />
+        <InputText
+          v-if="mahasiswaData?.has_dosen_penguji == true"
+          id="dosen-pembimbing"
+          label="Dosen Pembimbing"
+          :modelValue="
+            mahasiswaData?.dosen_pembimbing?.name || 'Nama Dosen Pembimbing'
+          "
+          :disabled="true"
+        />
         <InputDropdown
+          v-else
           id="dosen-pembimbing"
           label="Dosen Pembimbing"
           :options="dosen_list"
@@ -222,13 +233,22 @@ const handleUpdate = async () => {
           </div>
         </div>
         <Button
-          v-if="!mahasiswaData?.dosen_pembimbing"
+          v-if="!mahasiswaData?.dosen_pembimbing?.dosen_pembimbing_id"
           variant="primary"
           size="lg"
           class="self-end hidden w-fit sm:flex"
           @click="handleSubmit"
         >
           Simpan
+        </Button>
+        <Button
+          v-else-if="mahasiswaData?.has_dosen_penguji == true"
+          variant="secondary"
+          size="lg"
+          class="self-end hidden w-fit sm:flex"
+          @click="router.back()"
+        >
+          Kembali
         </Button>
         <Button
           v-else
@@ -239,6 +259,7 @@ const handleUpdate = async () => {
         >
           Update
         </Button>
+
         <Button
           v-if="!mahasiswaData?.dosen_pembimbing?.dosen_pembimbing_id"
           variant="primary"
@@ -247,6 +268,15 @@ const handleUpdate = async () => {
           @click="handleSubmit"
         >
           Simpan
+        </Button>
+        <Button
+          v-else-if="mahasiswaData?.has_dosen_penguji == true"
+          variant="secondary"
+          size="md"
+          class="self-end w-fit sm:hidden"
+          @click="router.back()"
+        >
+          Kembali
         </Button>
         <Button
           v-else

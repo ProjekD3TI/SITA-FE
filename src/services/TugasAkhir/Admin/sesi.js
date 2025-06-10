@@ -72,24 +72,24 @@ export function useSesi() {
     }
   };
 
-  const deleteSesi = async (id) => {
-    loading.value = true;
-    try {
-      const token = VueCookies.get("auth_token");
-      const response = await axios.delete(`api/admin_ta/sesi/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      });
-      return response.data;
-    } catch (err) {
-      error.value = err.response?.data?.message || "Terjadi kesalahan";
-      throw err;
-    } finally {
-      loading.value = false;
-    }
-  };
+  // const deleteSesi = async (id) => {
+  //   loading.value = true;
+  //   try {
+  //     const token = VueCookies.get("auth_token");
+  //     const response = await axios.delete(`api/admin_ta/sesi/${id}`, {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //         Accept: "application/json",
+  //       },
+  //     });
+  //     return response.data;
+  //   } catch (err) {
+  //     error.value = err.response?.data?.message || "Terjadi kesalahan";
+  //     throw err;
+  //   } finally {
+  //     loading.value = false;
+  //   }
+  // };
 
   return {
     data,
@@ -99,6 +99,6 @@ export function useSesi() {
     fetchData,
     addSesi,
     editSesi,
-    deleteSesi,
+    // deleteSesi,
   };
 }

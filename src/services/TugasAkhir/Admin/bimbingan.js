@@ -33,7 +33,7 @@ export function useTabelPlottingPembimbing() {
         `/api/admin_ta/tugas-akhir/plotting?page=${page}`,
         { headers, params }
       );
-      dataPlotting.value = response.data.data.data;
+      dataPlotting.value = response.data.data;
       paginationPlotting.value = response.data.data.pagination;
     } catch (err) {
       handleError(err);
@@ -156,7 +156,7 @@ export function useShowPlottingPembimbing() {
       };
 
       const response = await axios.get(
-        `/api/admin_ta/tugas-akhir/plotting-pembimbing/show/${id}`,
+        `/api/admin_ta/tugas-akhir/plotting-pembimbing/${id}`,
         { headers }
       );
       dataShowPlotting.value = response.data.data;

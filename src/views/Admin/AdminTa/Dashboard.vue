@@ -89,7 +89,6 @@ const handleRowClickProposal = (item) => {
     name: "DetailPengajuanForAdmin",
     params: { proposal_id: item.proposal_id },
   });
-  console.log("Row clicked:", item);
 };
 const handleRowClickUjianTA = (item) => {
   router.push({
@@ -142,7 +141,7 @@ watch(data, (val) => {
   <div v-else>
     <Breadcrumb />
     <!-- Status card & Summary Cards -->
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="grid grid-cols-1 gap-2 sm:gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <!-- Summary Cards -->
 
       <template v-for="(card, index) in summaryCards" :key="index">
@@ -159,7 +158,7 @@ watch(data, (val) => {
         </div>
       </template>
     </div>
-    <div class="flex flex-wrap gap-4 mt-4">
+    <div class="flex flex-wrap gap-2 mt-2 sm:gap-4 sm:mt-4">
       <!-- Doughnut Card -->
       <div
         class="card-rounded bg-white p-4 pb-8 lg:p-6 flex-1 min-w-[320px] shadow-custom"
@@ -197,7 +196,7 @@ watch(data, (val) => {
         </Carousel>
       </div>
       <div class="flex-grow p-4 bg-white card-rounded lg:p-6 shadow-custom">
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center justify-between mb-2">
           <h5 class="body3-bold text-blackText">
             Validasi Berkas Seminar Proposal
           </h5>
@@ -289,7 +288,9 @@ watch(data, (val) => {
       </div>
     </div>
 
-    <div class="p-4 mt-4 bg-white card-rounded lg:p-8 h-96 shadow-custom">
+    <div
+      class="p-4 mt-2 bg-white sm:mt-4 card-rounded lg:p-8 h-96 shadow-custom"
+    >
       <BarChart
         :labels="BarChartData.labels"
         :datasets-label="BarChartData.datasetsLabel"

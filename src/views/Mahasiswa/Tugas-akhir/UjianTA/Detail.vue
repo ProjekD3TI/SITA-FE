@@ -123,7 +123,7 @@ watchEffect(() => {
     <!-- Jadwal Section -->
     <div
       v-if="dataJadwalUjianTA?.ujian_ta?.id"
-      class="p-6 bg-white card-rounded lg:p-8"
+      class="p-6 bg-white card-rounded lg:p-8 shadow-custom"
     >
       <div class="mx-auto max-w-screen-2xl">
         <JadwalUjian :examiners="daftarPenguji" :jadwal="jadwalUjianTA" />
@@ -131,7 +131,7 @@ watchEffect(() => {
     </div>
 
     <!-- Tugas Akhir Details Section -->
-    <div class="p-6 mt-4 bg-white sm:mt-6 card-rounded lg:p-8">
+    <div class="p-6 mt-4 bg-white sm:mt-6 card-rounded lg:p-8 shadow-custom">
       <div class="mx-auto max-w-screen-2xl">
         <div class="flex flex-col md:flex-row">
           <!-- PDF Preview (Left Side) -->
@@ -164,23 +164,23 @@ watchEffect(() => {
             <!-- Detail items -->
             <div class="flex flex-col gap-2">
               <div>
-                <h5 class="body3-bold sm:body2-bold">Judul Tugas Akhir</h5>
-                <p class="body3 sm:body2 text-primary">{{ judulTugasAkhir }}</p>
+                <h5 class="body4-bold sm:body2-bold">Judul Tugas Akhir</h5>
+                <p class="body4 sm:body2 text-primary">{{ judulTugasAkhir }}</p>
               </div>
 
               <div>
-                <h5 class="body3-bold sm:body2-bold">Kategori</h5>
-                <p class="body3 sm:body2 text-primary">{{ kategoriTA }}</p>
+                <h5 class="body4-bold sm:body2-bold">Kategori</h5>
+                <p class="body4 sm:body2 text-primary">{{ kategoriTA }}</p>
               </div>
 
               <div>
-                <h5 class="body3-bold sm:body2-bold">Dosen Pembimbing</h5>
-                <p class="body3 sm:body2 text-primary">{{ dosenPembimbing }}</p>
+                <h5 class="body4-bold sm:body2-bold">Dosen Pembimbing</h5>
+                <p class="body4 sm:body2 text-primary">{{ dosenPembimbing }}</p>
               </div>
 
               <div>
-                <h5 class="body3-bold sm:body2-bold">Tahun Ajaran</h5>
-                <p class="body3 sm:body2 text-secondary">{{ tahunAjaranTA }}</p>
+                <h5 class="body4-bold sm:body2-bold">Tahun Ajaran</h5>
+                <p class="body4 sm:body2 text-secondary">{{ tahunAjaranTA }}</p>
               </div>
             </div>
 

@@ -137,7 +137,7 @@ const variantClass = computed(() => {
     case "outlined-black":
       return "border border-placeholder text-blackText ";
     case "transparent":
-      return "text-secondary ";
+      return "bg-transparent";
     default:
       return "bg-primary text-white hover:opacity-90";
   }

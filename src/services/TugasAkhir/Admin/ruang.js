@@ -76,27 +76,27 @@ export function useRuang() {
     }
   };
 
-  const deleteRuang = async (id) => {
-    loading.value = true;
-    try {
-      const token = VueCookies.get("auth_token");
-      const response = await axios.delete(
-        `api/admin_ta/ruang/${id}`, // Update to match your backend route
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        }
-      );
-      return response.data;
-    } catch (err) {
-      error.value = err.response?.data?.message || "Terjadi kesalahan";
-      throw err;
-    } finally {
-      loading.value = false;
-    }
-  };
+  // const deleteRuang = async (id) => {
+  //   loading.value = true;
+  //   try {
+  //     const token = VueCookies.get("auth_token");
+  //     const response = await axios.delete(
+  //       `api/admin_ta/ruang/${id}`, // Update to match your backend route
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           Accept: "application/json",
+  //         },
+  //       }
+  //     );
+  //     return response.data;
+  //   } catch (err) {
+  //     error.value = err.response?.data?.message || "Terjadi kesalahan";
+  //     throw err;
+  //   } finally {
+  //     loading.value = false;
+  //   }
+  // };
 
   return {
     data,
@@ -106,6 +106,6 @@ export function useRuang() {
     fetchData,
     addRuang,
     editRuang,
-    deleteRuang,
+    // deleteRuang,
   };
 }

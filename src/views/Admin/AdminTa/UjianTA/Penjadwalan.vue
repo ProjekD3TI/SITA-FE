@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch, nextTick } from "vue";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import UserData from "@/components/Tugas-akhir/UserData.vue";
 import InputDropdown from "@/components/Tugas-akhir/Forms/InputDropdown.vue";
@@ -30,6 +30,7 @@ const selectedTanggal = ref("");
 const selectedRuang = ref("");
 const selectedSesi = ref("");
 const isSubmitting = ref(false);
+const showAllDates = ref(false);
 
 // Availability options
 const availableDates = ref([]);
@@ -84,7 +85,15 @@ const isFormValid = computed(() => {
 const isUpdate = computed(() => {
   return dataShowPenjadwalan.value?.ujian_ta?.ujian_ta_id;
 });
-
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("id-ID", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
 // Function untuk update availability (sama seperti sebelumnya)
 const updateAvailability = async () => {
   if (!route.params.tugas_akhir_id) return;
@@ -94,7 +103,9 @@ const updateAvailability = async () => {
     if (selectedTanggal.value) filters.tanggal_ujian = selectedTanggal.value;
     if (selectedRuang.value) filters.ruang_id = selectedRuang.value;
     if (selectedSesi.value) filters.sesi_id = selectedSesi.value;
-
+    if (isUpdate.value && dataShowPenjadwalan.value?.ujian_ta?.ujian_ta_id) {
+      filters.ujian_ta_id = dataShowPenjadwalan.value.ujian_ta.ujian_ta_id;
+    }
     const availability = await checkAvailability(
       route.params.tugas_akhir_id,
       filters
@@ -159,12 +170,17 @@ const handleSubmit = async () => {
 
     if (response) {
       router.push({
-        path: "UjianTAforAdmin",
-        query: { refresh: Date.now().toString() },
+        name: "UjianTAforAdmin",
+        query: { refreshPenjadwalan: Date.now().toString() },
       });
     }
   } catch (error) {
-    console.error("Error submitting:", error);
+    toast.error(
+      isUpdate.value
+        ? "Gagal memperbarui penjadwalan ujian TA"
+        : "Gagal menyimpan penjadwalan ujian TA"
+    );
+    console.error("Error submitting penjadwalan:", error);
   } finally {
     isSubmitting.value = false;
   }
@@ -217,6 +233,62 @@ watch(selectedTanggal, (newDate) => {
 onMounted(() => {
   if (route.params.tugas_akhir_id) {
     fetchShowPenjadwalan(route.params.tugas_akhir_id);
+  }
+});
+// ✅ TAMBAHAN: Function untuk disable tanggal yang tidak tersedia
+const isDateDisabled = (date) => {
+  const dateString = date.toISOString().split("T")[0];
+  return !availableDateStrings.value.includes(dateString);
+};
+
+// ✅ PERBAIKAN: Function untuk validasi tanggal yang lebih smart
+const validateSelectedDate = () => {
+  if (selectedTanggal.value && !isDateAvailable(selectedTanggal.value)) {
+    // Cari tanggal terdekat yang available
+    const nearestDate = findNearestAvailableDate(selectedTanggal.value);
+    if (nearestDate) {
+      selectedTanggal.value = nearestDate;
+      toast.info(
+        `Tanggal dialihkan ke ${formatDate(
+          nearestDate
+        )} (tanggal terdekat yang tersedia)`
+      );
+    } else {
+      selectedTanggal.value = "";
+      toast.warning(
+        "Tidak ada tanggal yang tersedia untuk kombinasi ruang dan sesi ini"
+      );
+    }
+  }
+};
+
+// ✅ PERBAIKAN: Watch untuk ruang dan sesi - reset tanggal jika tidak valid
+watch([selectedRuang, selectedSesi], () => {
+  // Update availability dulu
+  updateAvailability();
+
+  // Tunggu sebentar untuk availability update, lalu validasi tanggal
+  nextTick(() => {
+    setTimeout(() => {
+      validateSelectedDate();
+    }, 300);
+  });
+});
+watch(
+  dataShowPenjadwalan,
+  () => {
+    loadInitialData();
+  },
+  { deep: true }
+);
+
+// ✅ PERBAIKAN: Watch tanggal yang lebih gentle (tanpa auto-reset)
+watch(selectedTanggal, (newDate) => {
+  if (newDate && !isDateAvailable(newDate)) {
+    // Hanya tampilkan warning, tidak auto-reset
+    toast.warning(
+      "Tanggal yang dipilih tidak tersedia untuk kombinasi ruang dan sesi ini"
+    );
   }
 });
 </script>
@@ -279,23 +351,14 @@ onMounted(() => {
                 id="tanggal"
                 label="Tanggal"
                 :value="selectedTanggal"
-                :min="dateRange.min"
-                :max="dateRange.max"
+                :minDate="dateRange.min"
+                :maxDate="dateRange.max"
+                :availableDates="availableDateStrings"
+                :disabledDates="isDateDisabled"
+                placeholder="Pilih tanggal ujian"
                 @update:value="selectedTanggal = $event"
                 required
               />
-              <div
-                v-if="selectedTanggal && !isDateAvailable(selectedTanggal)"
-                class="mt-1 text-sm text-red-500"
-              >
-                Tanggal tidak tersedia
-              </div>
-              <!-- Tampilkan daftar tanggal available sebagai hint -->
-              <!-- <div class="mt-1 text-xs text-gray-500">
-                Tanggal tersedia:
-                {{ availableDateStrings.slice(0, 3).join(", ") }}
-                <span v-if="availableDateStrings.length > 3">...</span>
-              </div> -->
             </div>
             <InputDropdown
               id="ruang"
@@ -303,6 +366,8 @@ onMounted(() => {
               placeholder="Pilih ruang"
               :options="ruangOptions"
               :modelValue="selectedRuang"
+              :showDefaultOption="true"
+              :defaultOptionText="'-- Pilih Ruang --'"
               @update:modelValue="selectedRuang = $event"
               required
             />
@@ -312,6 +377,8 @@ onMounted(() => {
               placeholder="Pilih sesi"
               :options="sesiOptions"
               :modelValue="selectedSesi"
+              :showDefaultOption="true"
+              :defaultOptionText="'-- Pilih Sesi --'"
               @update:modelValue="selectedSesi = $event"
               required
             />

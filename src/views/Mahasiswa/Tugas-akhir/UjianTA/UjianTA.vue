@@ -100,7 +100,10 @@ const filePerpanjanganMasaStudi = ref(null);
 const minimalBimbingan = computed(() => {
   return totalBimbingan.value >= 9;
 });
-
+const wajibUploadPerpanjanganMasaStudi = computed(() => {
+  // statusBerkasSuratPerpanjanganMasaStudi: 2 = DITOLAK, 1 = DITERIMA, 0/null = BELUM DIPROSES
+  return statusBerkasSuratPerpanjanganMasaStudi.value === STATUS.REJECTED;
+});
 const formConfig = computed(() => {
   // Cast semua status ke Number, tapi biarkan null tetap null
   const statusList = [
@@ -182,6 +185,40 @@ function isFileDisabled(status) {
 }
 
 // Modular computed untuk setiap file
+const dangerNaskah = computed(
+  () => statusBerkasNaskahTA.value === STATUS.REJECTED && !fileNaskah.value
+);
+const dangerKRS = computed(
+  () => statusBerkasKRS.value === STATUS.REJECTED && !fileKRSLocal.value
+);
+const dangerPersetujuanPembimbing = computed(
+  () =>
+    statusBerkasBuktiPersetujuanPembimbing.value === STATUS.REJECTED &&
+    !filePersetujuanPembimbing.value
+);
+const dangerTranskrip = computed(
+  () =>
+    statusBerkasTranskripNilai.value === STATUS.REJECTED && !fileTranskrip.value
+);
+const dangerSertifikatKompetensi = computed(
+  () =>
+    statusBerkasBuktiSertifikatKompetensi.value === STATUS.REJECTED &&
+    !fileSertifikatKompetensi.value
+);
+const dangerTOEIC = computed(
+  () =>
+    statusBerkasSertifikatTOEIC.value === STATUS.REJECTED && !fileTOEIC.value
+);
+const dangerBeritaAcara = computed(
+  () =>
+    statusBerkasBeritaAcaraSeminarHasil.value === STATUS.REJECTED &&
+    !fileBeritaAcara.value
+);
+const dangerPerpanjanganMasaStudi = computed(
+  () =>
+    statusBerkasSuratPerpanjanganMasaStudi.value === STATUS.REJECTED &&
+    !filePerpanjanganMasaStudi.value
+);
 const isNaskahDisabled = computed(() =>
   isFileDisabled(statusBerkasNaskahTA.value)
 );
@@ -290,6 +327,13 @@ const handleUpdate = async () => {
     toast.error("File Berita Acara Seminar Hasil harus diisi/diperbarui!");
     return;
   }
+  if (
+    wajibUploadPerpanjanganMasaStudi.value &&
+    !filePerpanjanganMasaStudi.value
+  ) {
+    toast.error("File Surat Perpanjangan Masa Studi wajib diperbarui!");
+    return;
+  }
 
   const payload = {
     id,
@@ -393,7 +437,7 @@ watch(
       <template v-else>
         <Breadcrumb />
 
-        <div class="p-4 bg-white card-rounded lg:p-8">
+        <div class="p-4 bg-white card-rounded shadow-custom lg:p-8">
           <!-- User Data Section -->
           <div class="pb-6 mx-auto max-w-screen-2xl">
             <UserData v-bind="userDataConfig" />
@@ -416,110 +460,272 @@ watch(
                 :required="true"
               />
 
-              <!-- All the file uploads -->
-              <InputFile
-                :class="`${formConfig.wrapperClass} ${
-                  isNaskahDisabled ? 'opacity-50' : ''
-                }`"
-                id="naskah-ta"
-                label="Naskah Tugas Akhir"
-                v-model="fileNaskah"
-                :existingFileName="naskahTA"
-                :existingFileUrl="fileNaskahTA"
-                :disabled="isNaskahDisabled"
-                :required="true"
-              />
+              <div>
+                <!-- All the file uploads -->
+                <InputFile
+                  :class="`${formConfig.wrapperClass} ${
+                    isNaskahDisabled ? 'opacity-50' : ''
+                  }`"
+                  id="naskah-ta"
+                  label="Naskah Tugas Akhir"
+                  v-model="fileNaskah"
+                  :existingFileName="naskahTA"
+                  :existingFileUrl="fileNaskahTA"
+                  :disabled="isNaskahDisabled"
+                  :required="true"
+                  :danger="dangerNaskah"
+                />
+                <div
+                  v-if="dangerNaskah"
+                  class="flex items-center gap-1 sm:gap-2 mt-0.5"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    class="w-4 h-4 sm:w-5 sm:h-5 text-danger"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  <p class="body5 sm:text-[13px] text-danger">Berkas ditolak</p>
+                </div>
+              </div>
+              <div>
+                <InputFile
+                  :class="`${formConfig.wrapperClass} ${
+                    isKRSDisabled ? 'opacity-50' : ''
+                  }`"
+                  id="krs-semester-terakhir"
+                  label="Scan KRS Semester Terakhir"
+                  v-model="fileKRSLocal"
+                  :existingFileName="krs"
+                  :existingFileUrl="fileKRS"
+                  :disabled="isKRSDisabled"
+                  :required="true"
+                  :danger="dangerKRS"
+                />
+                <div
+                  v-if="dangerKRS"
+                  class="flex items-center gap-1 sm:gap-2 mt-0.5"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    class="w-4 h-4 sm:w-5 sm:h-5 text-danger"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  <p class="body5 sm:text-[13px] text-danger">Berkas ditolak</p>
+                </div>
+              </div>
+              <div>
+                <InputFile
+                  :class="`${formConfig.wrapperClass} ${
+                    isBuktiPersetujuanPembimbingDisabled ? 'opacity-50' : ''
+                  }`"
+                  id="bukti-persetujuan-pembimbing"
+                  label="Bukti Persetujuan Pembimbing"
+                  v-model="filePersetujuanPembimbing"
+                  :existingFileName="buktiPersetujuanPembimbing"
+                  :existingFileUrl="fileBuktiPersetujuanPembimbing"
+                  :disabled="isBuktiPersetujuanPembimbingDisabled"
+                  :required="true"
+                  :danger="dangerPersetujuanPembimbing"
+                />
+                <div
+                  v-if="dangerPersetujuanPembimbing"
+                  class="flex items-center gap-1 sm:gap-2 mt-0.5"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    class="w-4 h-4 sm:w-5 sm:h-5 text-danger"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  <p class="body5 sm:text-[13px] text-danger">Berkas ditolak</p>
+                </div>
+              </div>
+              <div>
+                <InputFile
+                  :class="`${formConfig.wrapperClass} ${
+                    isTranskripDisabled ? 'opacity-50' : ''
+                  }`"
+                  id="transkrip-nilai-mahasiswa"
+                  label="Transkrip Nilai Mahasiswa"
+                  v-model="fileTranskrip"
+                  :existingFileName="transkripNilai"
+                  :existingFileUrl="fileTranskripNilai"
+                  :disabled="isTranskripDisabled"
+                  :required="true"
+                  :danger="dangerTranskrip"
+                />
+                <div
+                  v-if="dangerTranskrip"
+                  class="flex items-center gap-1 sm:gap-2 mt-0.5"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    class="w-4 h-4 sm:w-5 sm:h-5 text-danger"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  <p class="body5 sm:text-[13px] text-danger">Berkas ditolak</p>
+                </div>
+              </div>
+              <div>
+                <InputFile
+                  :class="`${formConfig.wrapperClass} ${
+                    isBuktiSertifikatKompetensiDisabled ? 'opacity-50' : ''
+                  }`"
+                  id="bukti-sertifikat-kompetensi"
+                  label="Bukti Sertifikat Kompetensi"
+                  v-model="fileSertifikatKompetensi"
+                  :existingFileName="buktiSertifikatKompetensi"
+                  :existingFileUrl="fileBuktiSertifikatKompetensi"
+                  :disabled="isBuktiSertifikatKompetensiDisabled"
+                  :required="true"
+                  :danger="dangerSertifikatKompetensi"
+                />
+                <div
+                  v-if="dangerSertifikatKompetensi"
+                  class="flex items-center gap-1 sm:gap-2 mt-0.5"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    class="w-4 h-4 sm:w-5 sm:h-5 text-danger"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  <p class="body5 sm:text-[13px] text-danger">Berkas ditolak</p>
+                </div>
+              </div>
+              <div>
+                <InputFile
+                  :class="`${formConfig.wrapperClass} ${
+                    isSertifikatTOEICDisabled ? 'opacity-50' : ''
+                  }`"
+                  id="sertifikat-toeic"
+                  label="Sertifikat TOEIC"
+                  v-model="fileTOEIC"
+                  :existingFileName="sertifikatTOEIC"
+                  :existingFileUrl="fileSertifikatTOEIC"
+                  :disabled="isSertifikatTOEICDisabled"
+                  :required="true"
+                  :danger="dangerTOEIC"
+                />
+                <div
+                  v-if="dangerTOEIC"
+                  class="flex items-center gap-1 sm:gap-2 mt-0.5"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    class="w-4 h-4 sm:w-5 sm:h-5 text-danger"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  <p class="body5 sm:text-[13px] text-danger">Berkas ditolak</p>
+                </div>
+              </div>
+              <div>
+                <InputFile
+                  :class="`${formConfig.wrapperClass} ${
+                    isBeritaAcaraSeminarHasilDisabled ? 'opacity-50' : ''
+                  }`"
+                  id="berita-acara-seminar-hasil"
+                  label="Berita Acara Seminar Hasil"
+                  v-model="fileBeritaAcara"
+                  :existingFileName="beritaAcaraSeminarHasil"
+                  :existingFileUrl="fileBeritaAcaraSeminarHasil"
+                  :disabled="isBeritaAcaraSeminarHasilDisabled"
+                  :required="true"
+                  :danger="dangerBeritaAcara"
+                />
+                <div
+                  v-if="dangerBeritaAcara"
+                  class="flex items-center gap-1 sm:gap-2 mt-0.5"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    class="w-4 h-4 sm:w-5 sm:h-5 text-danger"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  <p class="body5 sm:text-[13px] text-danger">Berkas ditolak</p>
+                </div>
+              </div>
+              <div>
+                <!-- Optional field -->
+                <InputFile
+                  :class="`${formConfig.wrapperClass} ${
+                    isSuratPerpanjanganMasaStudiDisabled ? 'opacity-50' : ''
+                  }`"
+                  id="surat-perpanjangan-masa-studi"
+                  label="Surat Perpanjangan Masa Studi"
+                  v-model="filePerpanjanganMasaStudi"
+                  :existingFileName="suratPerpanjanganMasaStudi"
+                  :existingFileUrl="fileSuratPerpanjanganMasaStudi"
+                  :disabled="isSuratPerpanjanganMasaStudiDisabled"
+                  :danger="dangerPerpanjanganMasaStudi"
+                />
+                <div
+                  v-if="dangerPerpanjanganMasaStudi"
+                  class="flex items-center gap-1 sm:gap-2 mt-0.5"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    class="w-4 h-4 sm:w-5 sm:h-5 text-danger"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  <p class="body5 sm:text-[13px] text-danger">Berkas ditolak</p>
+                </div>
+              </div>
 
-              <InputFile
-                :class="`${formConfig.wrapperClass} ${
-                  isKRSDisabled ? 'opacity-50' : ''
-                }`"
-                id="krs-semester-terakhir"
-                label="Scan KRS Semester Terakhir"
-                v-model="fileKRSLocal"
-                :existingFileName="krs"
-                :existingFileUrl="fileKRS"
-                :disabled="isKRSDisabled"
-                :required="true"
-              />
-
-              <InputFile
-                :class="`${formConfig.wrapperClass} ${
-                  isBuktiPersetujuanPembimbingDisabled ? 'opacity-50' : ''
-                }`"
-                id="bukti-persetujuan-pembimbing"
-                label="Bukti Persetujuan Pembimbing"
-                v-model="filePersetujuanPembimbing"
-                :existingFileName="buktiPersetujuanPembimbing"
-                :existingFileUrl="fileBuktiPersetujuanPembimbing"
-                :disabled="isBuktiPersetujuanPembimbingDisabled"
-                :required="true"
-              />
-
-              <InputFile
-                :class="`${formConfig.wrapperClass} ${
-                  isTranskripDisabled ? 'opacity-50' : ''
-                }`"
-                id="transkrip-nilai-mahasiswa"
-                label="Transkrip Nilai Mahasiswa"
-                v-model="fileTranskrip"
-                :existingFileName="transkripNilai"
-                :existingFileUrl="fileTranskripNilai"
-                :disabled="isTranskripDisabled"
-                :required="true"
-              />
-
-              <InputFile
-                :class="`${formConfig.wrapperClass} ${
-                  isBuktiSertifikatKompetensiDisabled ? 'opacity-50' : ''
-                }`"
-                id="bukti-sertifikat-kompetensi"
-                label="Bukti Sertifikat Kompetensi"
-                v-model="fileSertifikatKompetensi"
-                :existingFileName="buktiSertifikatKompetensi"
-                :existingFileUrl="fileBuktiSertifikatKompetensi"
-                :disabled="isBuktiSertifikatKompetensiDisabled"
-                :required="true"
-              />
-
-              <InputFile
-                :class="`${formConfig.wrapperClass} ${
-                  isSertifikatTOEICDisabled ? 'opacity-50' : ''
-                }`"
-                id="sertifikat-toeic"
-                label="Sertifikat TOEIC"
-                v-model="fileTOEIC"
-                :existingFileName="sertifikatTOEIC"
-                :existingFileUrl="fileSertifikatTOEIC"
-                :disabled="isSertifikatTOEICDisabled"
-                :required="true"
-              />
-
-              <InputFile
-                :class="`${formConfig.wrapperClass} ${
-                  isBeritaAcaraSeminarHasilDisabled ? 'opacity-50' : ''
-                }`"
-                id="berita-acara-seminar-hasil"
-                label="Berita Acara Seminar Hasil"
-                v-model="fileBeritaAcara"
-                :existingFileName="beritaAcaraSeminarHasil"
-                :existingFileUrl="fileBeritaAcaraSeminarHasil"
-                :disabled="isBeritaAcaraSeminarHasilDisabled"
-                :required="true"
-              />
-
-              <!-- Optional field -->
-              <InputFile
-                :class="`${formConfig.wrapperClass} ${
-                  isSuratPerpanjanganMasaStudiDisabled ? 'opacity-50' : ''
-                }`"
-                id="surat-perpanjangan-masa-studi"
-                label="Surat Perpanjangan Masa Studi"
-                v-model="filePerpanjanganMasaStudi"
-                :existingFileName="suratPerpanjanganMasaStudi"
-                :existingFileUrl="fileSuratPerpanjanganMasaStudi"
-                :disabled="isSuratPerpanjanganMasaStudiDisabled"
-              />
               <InputTextarea
                 v-if="catatanPerbaikan"
                 :class="formConfig.wrapperClass"

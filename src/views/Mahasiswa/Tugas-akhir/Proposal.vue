@@ -54,6 +54,15 @@ const fileProposal = ref(null);
 const fileTranskrip = ref(null);
 const catatanPerbaikan = ref("");
 // Methods
+
+const dangerNaskah = computed(
+  () => naskahProposalTAStatus.value === STATUS.REJECTED && !fileProposal.value
+);
+const dangerTranskrip = computed(
+  () =>
+    transkripNilaiMahasiswaStatus.value === STATUS.REJECTED &&
+    !fileTranskrip.value
+);
 const showModal = () => {
   modalRef.value = true;
 };
@@ -215,7 +224,7 @@ watch(
     <template v-else>
       <Breadcrumb />
 
-      <div class="p-4 bg-white card-rounded lg:p-8">
+      <div class="p-4 bg-white card-rounded shadow-custom lg:p-8">
         <!-- User Data Section -->
         <div class="pb-6 mx-auto max-w-screen-2xl">
           <UserData v-bind="userDataConfig" />
@@ -233,30 +242,74 @@ watch(
               :disabled="formConfig.isDisabled"
               :required="true"
             />
-            <InputFile
-              :class="`${formConfig.wrapperClass} ${
-                isNaskahDisabled ? 'opacity-50' : ''
-              }`"
-              id="naskah-proposal-ta"
-              label="Naskah Proposal Tugas Akhir"
-              v-model="fileProposal"
-              :existingFileName="naskahProposalTA"
-              :existingFileUrl="fileNaskahProposalTA"
-              :disabled="isNaskahDisabled"
-              :required="true"
-            />
-            <InputFile
-              :class="`${formConfig.wrapperClass} ${
-                isTranskripDisabled ? 'opacity-50' : ''
-              }`"
-              id="transkrip-nilai-mahasiswa"
-              label="Transkrip Nilai Mahasiswa"
-              v-model="fileTranskrip"
-              :existingFileName="transkripNilaiMahasiswa"
-              :existingFileUrl="fileTranskripNilaiMahasiswa"
-              :disabled="isTranskripDisabled"
-              :required="true"
-            />
+            <div>
+              <InputFile
+                :class="`${formConfig.wrapperClass} ${
+                  isNaskahDisabled ? 'opacity-50' : ''
+                }`"
+                id="naskah-proposal-ta"
+                label="Naskah Proposal Tugas Akhir"
+                v-model="fileProposal"
+                :existingFileName="naskahProposalTA"
+                :existingFileUrl="fileNaskahProposalTA"
+                :disabled="isNaskahDisabled"
+                :required="true"
+                :danger="dangerNaskah"
+              />
+              <div
+                v-if="dangerNaskah"
+                class="flex items-center gap-1 sm:gap-2 mt-0.5"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  class="w-4 h-4 sm:w-5 sm:h-5 text-danger"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+                <p class="body5 sm:text-[13px] text-danger">Berkas ditolak</p>
+              </div>
+            </div>
+
+            <div>
+              <InputFile
+                :class="`${formConfig.wrapperClass} ${
+                  isTranskripDisabled ? 'opacity-50' : ''
+                }`"
+                id="transkrip-nilai-mahasiswa"
+                label="Transkrip Nilai Mahasiswa"
+                v-model="fileTranskrip"
+                :existingFileName="transkripNilaiMahasiswa"
+                :existingFileUrl="fileTranskripNilaiMahasiswa"
+                :disabled="isTranskripDisabled"
+                :required="true"
+                :danger="dangerTranskrip"
+              />
+              <div
+                v-if="dangerTranskrip"
+                class="flex items-center gap-1 sm:gap-2 mt-0.5"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  class="w-4 h-4 sm:w-5 sm:h-5 text-danger"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+                <p class="body5 sm:text-[13px] text-danger">Berkas ditolak</p>
+              </div>
+            </div>
+
             <InputTextarea
               v-if="catatanPerbaikan"
               :class="formConfig.wrapperClass"
