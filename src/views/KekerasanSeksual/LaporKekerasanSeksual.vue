@@ -2,6 +2,44 @@
   <div>
     <Header />
     <div class="container mx-auto px-4 py-8 mt-16">
+      <!-- Informasi Satgas PPK Section -->
+      <div class="max-w-5xl mx-auto bg-white p-6 rounded-lg shadow-lg mb-6">
+        <h2 class="text-2xl font-bold text-center mb-4">Satuan Tugas Pencegahan dan Penanganan Kekerasan (PPK)</h2>
+        
+        <div class="prose max-w-none">
+          <p class="mb-3">
+            Kami berkomitmen menciptakan lingkungan kampus yang ramah, aman, inklusif, setara, dan bebas dari segala bentuk kekerasan.
+          </p>
+          
+          <p class="mb-3">
+            Sesuai dengan Peraturan Menteri Pendidikan dan Kebudayaan Riset Teknologi Nomor 55 Tahun 2024, lingkup pencegahan dan penanganan kekerasan mencakup enam bentuk kekerasan:
+          </p>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+            <ul class="list-disc pl-5 space-y-1">
+              <li>Kekerasan fisik</li>
+              <li>Kekerasan psikis</li>
+              <li>Perundungan</li>
+            </ul>
+            <ul class="list-disc pl-5 space-y-1">
+              <li>Kekerasan seksual</li>
+              <li>Diskriminasi dan intoleransi</li>
+              <li>Kebijakan yang mengandung kekerasan</li>
+            </ul>
+          </div>
+          
+          <div class="flex justify-center my-4">
+            <a href="https://satgasppk.uns.ac.id/" target="_blank" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition">
+              <span>Kunjungi Website Resmi Satgas PPK UNS</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Section -->
       <div class="max-w-5xl mx-auto bg-white p-6 rounded-lg shadow-lg">
         <h2 class="text-2xl font-bold text-center mb-6">Laporan Kekerasan Seksual</h2>
 
