@@ -27,21 +27,24 @@
             
             <!-- Detail information below the back button -->
             <div class="flex flex-wrap items-center w-full">
-              <h2 class="text-2xl font-semibold mr-3">Detail Laporan Kejadian</h2>
-              <div class="laporan-id mr-3">{{ laporan.nomor_laporan }}</div>
+              <div class="left-content">
+                <h2 class="text-2xl font-semibold">Detail Laporan Kejadian</h2>
+                <div class="laporan-id">{{ laporan.nomor_laporan }}</div>
+              </div>
+              
               <div class="action-btn-container">
-                    <button 
-                        v-if="laporan && laporan.status !== 'finished'" 
-                        class="edit-button"
-                        @click="goToEditLaporan"
-                        title="Lengkapi atau ubah data laporan">
-                        <i class="fas fa-edit"></i> <span>Edit Laporan</span>
-                    </button>
-                    <div :class="['status-badge', laporan.status]">
-                        {{ formatStatus(laporan.status) }}
-                    </div>
-                </div>
-              <div class="status-badge" :class="getStatusClass">{{ formatStatus(laporan.status) }}</div>
+                <button 
+                  v-if="laporan && laporan.status !== 'finished'" 
+                  class="edit-button blue-btn"
+                  @click="goToEditLaporan"
+                  title="Lengkapi atau ubah data laporan">
+                  <i class="fas fa-edit"></i> <span>Edit Laporan</span>
+                </button>
+              </div>
+              
+              <div class="status-badge" :class="getStatusClass">
+                {{ formatStatus(laporan.status) }}
+              </div>
             </div>
           </div>
           
@@ -1005,6 +1008,7 @@ export default {
 
 .laporan-id {
   font-weight: 500;
+  margin-right: 20px;
   color: #666;
 }
 
@@ -1447,5 +1451,90 @@ person-item {
   .image-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* Add to your <style scoped> section */
+.blue-btn {
+  background-color: #3490dc;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.blue-btn:hover {
+  background-color: #2779bd;
+}
+
+.blue-btn i {
+  font-size: 1rem;
+}
+
+.action-btn-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Add or update these styles in your <style scoped> section */
+.header-section {
+  position: relative;
+  width: 100%;
+}
+
+.header-section .flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.header-section .left-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-badge {
+  margin-left: auto; /* Push to the right side */
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.action-btn-container {
+  display: flex;
+  align-items: center;
+  margin-right: 16px; /* Add space between button and status badge */
+}
+
+.blue-btn {
+  background-color: #3490dc;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.blue-btn:hover {
+  background-color: #2779bd;
 }
 </style>
