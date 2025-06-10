@@ -103,8 +103,7 @@ const isSecretary = computed(() => {
 // Computed property untuk mengontrol status disabled pada textarea catatan revisi
 const isCatatanRevisiDisabled = computed(() => {
   return (
-    statusKelulusan.value === "1" || // Lulus tanpa revisi
-    statusKelulusan.value === "4" // Tidak lulus
+    statusKelulusan.value === "1" // Lulus tanpa revisi
   );
 });
 
@@ -564,7 +563,9 @@ onMounted(() => {
             <span
               v-if="
                 !isCatatanRevisiDisabled &&
-                (statusKelulusan === '2' || statusKelulusan === '3')
+                (statusKelulusan === '2' ||
+                  statusKelulusan === '3' ||
+                  statusKelulusan === '4')
               "
               class="text-red-500"
               >*</span

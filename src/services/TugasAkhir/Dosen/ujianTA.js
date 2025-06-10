@@ -41,7 +41,7 @@ export function useUjianTAForDosen() {
   const handleError = (err, errorState) => {
     if (err.response?.status === 401) {
       toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
-      router.push("/dosen/login");
+      router.push("/dosen/tugas-akhir/login");
     } else {
       errorState.value = err.response?.data?.message || "Terjadi kesalahan";
       toast.error(errorState.value);
@@ -69,7 +69,7 @@ export function useUjianTAForDosen() {
       const signal = abortController.signal;
 
       const response = await axios.get(
-        `/api/dosen/list-ujian-ta?page=${page}`,
+        `/api/dosen/tugas-akhir/list-ujian-ta?page=${page}`,
         {
           headers,
           params,
@@ -134,7 +134,7 @@ export function useUjianTAForDosen() {
       // Add cache busting parameter
       const timestamp = new Date().getTime();
       const response = await axios.get(
-        `/api/dosen/detail-ujian-ta/${tugasAkhirId}?_t=${timestamp}`,
+        `/api/dosen/tugas-akhir/detail-ujian-ta/${tugasAkhirId}?_t=${timestamp}`,
         { headers }
       );
 
@@ -193,14 +193,14 @@ export function useUjianTAForDosen() {
       if (isEdit) {
         // Update nilai
         response = await axios.put(
-          `/api/dosen/nilai-ujian-ta/${data.tugas_akhir_id}`,
+          `/api/dosen/tugas-akhir/nilai-ujian-ta/${data.tugas_akhir_id}`,
           payload,
           { headers }
         );
       } else {
         // Create nilai
         response = await axios.post(
-          `/api/dosen/nilai-ujian-ta`,
+          `/api/dosen/tugas-akhir/nilai-ujian-ta`,
           {
             tugas_akhir_id: data.tugas_akhir_id,
             ...payload,
@@ -239,7 +239,7 @@ export function useUjianTAForDosen() {
 
     try {
       const response = await axios.put(
-        `/api/dosen/status-kelulusan/${tugasAkhirId}`,
+        `/api/dosen/tugas-akhir/status-kelulusan/${tugasAkhirId}`,
         {
           status_kelulusan: status,
         },

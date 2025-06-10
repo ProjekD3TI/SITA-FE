@@ -60,7 +60,7 @@ export function useRequestPembimbing() {
       const signal = abortController.signal;
 
       const response = await axios.get(
-        `/api/dosen/request-pembimbing?page=${page}`,
+        `/api/dosen/tugas-akhir/request-pembimbing?page=${page}`,
         { headers, params, signal }
       );
 
@@ -99,7 +99,7 @@ export function useRequestPembimbing() {
       };
 
       const response = await axios.put(
-        `/api/dosen/request-pembimbing/approval/${id}`,
+        `/api/dosen/tugas-akhir/request-pembimbing/approval/${id}`,
         { status_request: status },
         { headers }
       );
@@ -208,7 +208,7 @@ export function useNilaiBimbingan() {
       };
 
       const response = await axios.get(
-        `/api/dosen/nilai-bimbingan/${tugasAkhirId}`,
+        `/api/dosen/tugas-akhir/nilai-bimbingan/${tugasAkhirId}`,
         { headers }
       );
 
@@ -251,7 +251,7 @@ export function useNilaiBimbingan() {
       };
 
       const response = await axios.post(
-        `/api/dosen/nilai-bimbingan/${tugasAkhirId}`,
+        `/api/dosen/tugas-akhir/nilai-bimbingan/${tugasAkhirId}`,
         data,
         { headers }
       );
@@ -292,7 +292,7 @@ export function useNilaiBimbingan() {
       };
 
       const response = await axios.put(
-        `/api/dosen/nilai-bimbingan/${tugasAkhirId}/update`,
+        `/api/dosen/tugas-akhir/nilai-bimbingan/${tugasAkhirId}/update`,
         data,
         { headers }
       );
@@ -401,10 +401,13 @@ export function useDibimbing() {
       if (search) params.search = search;
       if (kategori) params.kategori = kategori;
 
-      const response = await axios.get(`/api/dosen/bimbingan?page=${page}`, {
-        headers,
-        params,
-      });
+      const response = await axios.get(
+        `/api/dosen/tugas-akhir/bimbingan?page=${page}`,
+        {
+          headers,
+          params,
+        }
+      );
 
       console.log("Tugas Akhir response:", response.data);
 
@@ -440,9 +443,12 @@ export function useDibimbing() {
         "Content-Type": "application/json",
         Accept: "application/json",
       };
-      const response = await axios.get(`/api/dosen/bimbingan/${tugasAkhirId}`, {
-        headers,
-      });
+      const response = await axios.get(
+        `/api/dosen/tugas-akhir/bimbingan/${tugasAkhirId}`,
+        {
+          headers,
+        }
+      );
 
       console.log("Bimbingan response:", response.data);
 
@@ -491,7 +497,7 @@ export function useDibimbing() {
       };
 
       const response = await axios.put(
-        `/api/dosen/bimbingan/${bimbinganId}`,
+        `/api/dosen/tugas-akhir/bimbingan/${bimbinganId}`,
         { status_verifikasi: status },
         { headers }
       );
@@ -597,7 +603,7 @@ export function useKategori() {
       abortController = new AbortController();
       const signal = abortController.signal;
 
-      const response = await axios.get("/api/dosen/kategori", {
+      const response = await axios.get("/api/dosen/tugas-akhir/kategori", {
         headers,
         signal,
       });

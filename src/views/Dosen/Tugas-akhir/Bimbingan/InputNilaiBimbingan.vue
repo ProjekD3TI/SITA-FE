@@ -229,13 +229,10 @@ const handleSubmit = async () => {
       isSubmitting: false,
     };
 
-    // Kembali ke halaman detail setelah delay singkat
-    setTimeout(() => {
-      router.push({
-        name: "DetailBimbinganforDosen",
-        params: { tugas_akhir_id: studentInfo.value.id },
-      });
-    }, 1500);
+    router.push({
+      name: "DetailBimbinganforDosen",
+      params: { tugas_akhir_id: studentInfo.value.id },
+    });
   } catch (err) {
     console.error("Error saving nilai:", err);
     submissionStatus.value = {

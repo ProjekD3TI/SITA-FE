@@ -13,6 +13,7 @@ import ModalDetailBimbingan from "@/components/Tugas-akhir/Modals/ModalDetailBim
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
+import UserData from "@/components/Tugas-akhir/UserData.vue";
 import { useDibimbing } from "@/services/TugasAkhir/Dosen/bimbingan";
 
 const route = useRoute();
@@ -450,7 +451,7 @@ const handleActionClick = (item, action) => {
   <div v-else-if="!$route.path.includes('input-nilai-bimbingan')">
     <Breadcrumb :items="breadcrumbItems" />
     <!-- Header: Info Dosen & Progress BAB -->
-    <div class="card-rounded bg-white p-6 lg:p-8">
+    <div class="p-6 bg-white card-rounded lg:p-8 shadow-custom">
       <!-- Info Dosen Pembimbing -->
       <div class="flex gap-2 sm:gap-4 max-w-screen-xl mx-auto">
         <!-- Icon Dosen -->
@@ -560,7 +561,7 @@ const handleActionClick = (item, action) => {
       </div>
     </div>
     <!-- Tabel Riwayat Bimbingan -->
-    <div class="card-rounded bg-white p-4 lg:p-8 mt-4">
+    <div class="p-4 mt-4 bg-white card-rounded lg:p-8 shadow-custom">
       <Table
         :headers="['No', 'Tanggal', 'BAB', 'Catatan', 'Status', 'Aksi']"
         :items="paginatedBimbinganData"

@@ -292,7 +292,7 @@ const PermintaanBimbingan = computed(() => {
                   <td class="p-2 sm:p-3">
                     <div class="body5-bold sm:body4-bold">
                       {{ item.nama }}
-                      <span class="block sm:inline">({{ item.nim }})</span>
+                      <span class="block sm:inline">| {{ item.nim }}</span>
                     </div>
                     <div class="body6 sm:body5">{{ item.kategori }}</div>
                   </td>
