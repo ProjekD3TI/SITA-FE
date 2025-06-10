@@ -206,13 +206,19 @@ const isAllChecked = computed(() => {
 });
 
 const toggleAll = (e) => {
+  const currentPageIds = props.items.map((item) => item[props.rowKey]);
   if (e.target.checked) {
-    emit(
-      "update:checkedItems",
-      props.items.map((item) => item[props.rowKey])
+    // Tambahkan ID halaman ini ke checkedItems (tanpa duplikasi)
+    const merged = Array.from(
+      new Set([...props.checkedItems, ...currentPageIds])
     );
+    emit("update:checkedItems", merged);
   } else {
-    emit("update:checkedItems", []);
+    // Hapus ID halaman ini dari checkedItems
+    const filtered = props.checkedItems.filter(
+      (id) => !currentPageIds.includes(id)
+    );
+    emit("update:checkedItems", filtered);
   }
 };
 const toggleItem = (id) => {

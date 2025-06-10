@@ -217,9 +217,9 @@ const getStatusClass = (status) => {
     case 1:
       return "success";
     case 0:
-      return "danger";
+      return "inactive";
     default:
-      return "placeholder";
+      return "inactive";
   }
 };
 
