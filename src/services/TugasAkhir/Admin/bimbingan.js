@@ -29,10 +29,10 @@ export function useTabelPlottingPembimbing() {
       if (search) params.search = search;
       if (kategori) params.kategori = kategori;
 
-      const response = await axios.get(
-        `/api/admin_ta/tugas-akhir/plotting?page=${page}`,
-        { headers, params }
-      );
+      const response = await axios.get(`/api/admin_ta/plotting?page=${page}`, {
+        headers,
+        params,
+      });
       dataPlotting.value = response.data.data;
       paginationPlotting.value = response.data.data.pagination;
     } catch (err) {
@@ -93,7 +93,7 @@ export function useTabelBimbingan() {
       //simulasi jeda
       // await new Promise(resolve => setTimeout(resolve, 2000));
       const response = await axios.get(
-        `/api/admin_ta/tugas-akhir/list-bimbingan?page=${page}`,
+        `/api/admin_ta/list-bimbingan?page=${page}`,
         {
           headers,
           params,
@@ -156,7 +156,7 @@ export function useShowPlottingPembimbing() {
       };
 
       const response = await axios.get(
-        `/api/admin_ta/tugas-akhir/plotting-pembimbing/${id}`,
+        `/api/admin_ta/plotting-pembimbing/${id}`,
         { headers }
       );
       dataShowPlotting.value = response.data.data;
@@ -215,7 +215,7 @@ export function useShowPlottingPembimbing() {
       };
       // Ganti URL sesuai endpoint update di backend (misal: PUT atau PATCH)
       await axios.put(
-        `/api/admin_ta/tugas-akhir/plotting-pembimbing/${tugas_akhir_id}`,
+        `/api/admin_ta/plotting-pembimbing/${tugas_akhir_id}`,
         formData,
         { headers }
       );
@@ -277,7 +277,7 @@ export function useShowBimbingan() {
       };
 
       const response = await axios.get(
-        `/api/admin_ta/tugas-akhir/detail-bimbingan/${id}?page=${page}`,
+        `/api/admin_ta/detail-bimbingan/${id}?page=${page}`,
         { headers }
       );
       dataShowBimbingan.value = response.data.data;

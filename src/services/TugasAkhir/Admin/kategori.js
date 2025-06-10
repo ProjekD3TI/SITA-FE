@@ -36,16 +36,12 @@ export function useKategori() {
     loading.value = true;
     try {
       const token = VueCookies.get("auth_token");
-      const response = await axios.post(
-        "api/admin_ta/tambah-kategori",
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        }
-      );
+      const response = await axios.post("api/admin_ta/kategori", payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
       return response.data;
     } catch (err) {
       error.value = err.response?.data?.message || "Terjadi kesalahan";
@@ -58,17 +54,13 @@ export function useKategori() {
     loading.value = true;
     try {
       const token = VueCookies.get("auth_token");
-      const response = await axios.put(
-        `api/admin_ta/edit-kategori/${id}`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-            // "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await axios.put(`api/admin_ta/kategori/${id}`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          // "Content-Type": "application/json",
+        },
+      });
       return response.data;
     } catch (err) {
       error.value = err.response?.data?.message || "Terjadi kesalahan";
