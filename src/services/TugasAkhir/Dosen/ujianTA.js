@@ -200,7 +200,7 @@ export function useUjianTAForDosen() {
       } else {
         // Create nilai
         response = await axios.post(
-          `/api/dosen/nilai-ujian-ta/`,
+          `/api/dosen/nilai-ujian-ta`,
           {
             tugas_akhir_id: data.tugas_akhir_id,
             ...payload,
