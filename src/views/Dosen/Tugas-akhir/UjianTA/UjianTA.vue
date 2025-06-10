@@ -7,6 +7,7 @@ import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
 import ModalFilter from "@/components/Tugas-akhir/Modals/ModalFilter.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Loading from "@/components/Loading.vue";
+import Label from "@/components/Tugas-akhir/Label.vue";
 import { useUjianTAForDosen } from "@/services/TugasAkhir/Dosen/ujianTA.js";
 
 // Use the composable to get all the state and functions
@@ -19,15 +20,10 @@ const {
   fetchUjianTA,
   changePage,
   search,
-  filterBySesi,
+  filterByStatus,
   searchQuery,
-  selectedSesi,
-
-  // Session related properties
-  sessions,
-  loadingSessions,
-  errorSessions,
-  fetchSessions,
+  selectedStatus,
+  statusOptions,
 } = useUjianTAForDosen();
 const router = useRouter();
 
@@ -39,54 +35,21 @@ const tableHeaders = [
   "Tanggal",
   "Sesi",
   "Ruang",
+  "Status",
   "Aksi",
 ];
 
-// Track selected sessions in an array (following Bimbingan pattern)
-const selectedSessions = ref([]);
+// Track selected status in an array
+const selectedStatuses = ref([]);
 
-// Computed property to get session filter options
-const filterSessions = computed(() => {
-  if (
-    !sessions.value ||
-    !Array.isArray(sessions.value) ||
-    sessions.value.length === 0
-  ) {
-    return [];
-  }
-
-  return sessions.value
-    .map((session) => {
-      if (typeof session === "string") {
-        // If sessions are just strings
-        return {
-          value: session,
-          label: session,
-        };
-      } else if (session && session.nama_sesi) {
-        // If sessions have a proper structure with nama_sesi
-        return {
-          value: session.nama_sesi,
-          label: session.nama_sesi,
-        };
-      } else if (session && session.id) {
-        // Fallback if sessions have different structure
-        return {
-          value: session.id,
-          label: session.id.toString(),
-        };
-      } else {
-        return null;
-      }
-    })
-    .filter(Boolean); // Remove any null items
-});
+// Computed property to get status filter options
+const filterStatusOptions = computed(() => statusOptions.value || []);
 
 // Handler for filter application
 const applyFilter = ({ values }) => {
-  selectedSessions.value = values;
-  const selectedSesiValue = values.length > 0 ? values[0] : "";
-  filterBySesi(selectedSesiValue);
+  selectedStatuses.value = values;
+  const selectedStatusValue = values.length > 0 ? values[0] : "";
+  filterByStatus(selectedStatusValue);
 };
 
 // Handle search input
@@ -99,9 +62,20 @@ const handlePageChange = (page) => {
   changePage(page);
 };
 
+// Helper to get status label
+const getStatusLabel = (status) => {
+  return status ? "Selesai" : "Menunggu";
+};
+
+// Helper function to get status badge class
+const getStatusBadgeClass = (status) => {
+  return status
+    ? "bg-green-100 text-green-800"
+    : "bg-yellow-100 text-yellow-800";
+};
+
 // Fetch data when component is mounted
 onMounted(() => {
-  fetchSessions();
   fetchUjianTA();
 });
 
@@ -121,22 +95,15 @@ const navigateToDetail = (item) => {
     <div class="bg-white rounded-lg shadow-md p-8">
       <!-- Search and Filter - Stack on mobile -->
       <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
-        <!-- Filter by Session -->
+        <!-- Filter by Status -->
         <div class="w-auto">
-          <!-- Pesan error jika sesi gagal dimuat -->
-          <div v-if="errorSessions" class="text-red-500 text-sm">
-            Gagal memuat sesi: {{ errorSessions }}
-          </div>
-
-          <!-- Tampilkan filter ketika sesi dimuat -->
           <ModalFilter
-            v-else
-            title="Sesi"
-            :items="filterSessions"
-            filterType="Sesi"
+            title="Status"
+            :items="filterStatusOptions"
+            filterType="Status"
             @apply="applyFilter"
-            triggerText="Sesi"
-            :preselectedValues="selectedSessions"
+            triggerText="Status"
+            :preselectedValues="selectedStatuses"
           />
         </div>
 
@@ -218,6 +185,14 @@ const navigateToDetail = (item) => {
             </td>
             <td class="px-6 py-4">
               {{ item.ruang }}
+            </td>
+            <td class="px-6 py-4">
+              <Label
+                class="flex justify-center"
+                :status="item.status_kelulusan ? 'success' : 'warning'"
+                :label="getStatusLabel(item.status_kelulusan)"
+                size="sm"
+              />
             </td>
             <td class="px-6 py-4">
               <Button

@@ -19,19 +19,20 @@ export function useUjianTAForDosen() {
   const error = ref(null);
   const currentPage = ref(1);
   const searchQuery = ref("");
-  const selectedSesi = ref(""); // Selected session for filtering
+  const selectedStatus = ref(""); // Selected status for filtering
 
-  // Sessions state
-  const sessions = ref([]);
-  const loadingSessions = ref(false);
-  const errorSessions = ref(null);
+  // Status options for filtering
+  const statusOptions = ref([
+    { value: "0", label: "Menunggu" },
+    { value: "1", label: "Selesai" },
+  ]);
 
-  // Detail Ujian state (from detailUjianTA.js)
+  // Detail Ujian state
   const detailUjian = ref(null);
   const loadingDetail = ref(false);
   const errorDetail = ref(null);
 
-  // Nilai Ujian state (from nilaiUjianTA.js)
+  // Nilai Ujian state
   const loadingNilai = ref(false);
   const errorNilai = ref(null);
   const success = ref(false);
@@ -47,65 +48,8 @@ export function useUjianTAForDosen() {
     }
   };
 
-  // Fetch sessions data
-  const fetchSessions = async () => {
-    loadingSessions.value = true;
-    errorSessions.value = null;
-
-    try {
-      const authToken = VueCookies.get("auth_token");
-      const headers = {
-        Authorization: `Bearer ${authToken}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      };
-
-      abortController = new AbortController();
-      const signal = abortController.signal;
-
-      const response = await axios.get("/api/dosen/sesi", {
-        headers,
-        signal,
-      });
-
-      // Log the full response to debug
-      console.log("Sessions API response:", response.data);
-
-      // Handle different possible response structures
-      if (response.data.data?.data) {
-        // If data is in nested data.data property (common in Laravel pagination)
-        sessions.value = response.data.data.data;
-      } else if (response.data.data) {
-        // If data is in data property
-        sessions.value = response.data.data;
-      } else if (Array.isArray(response.data)) {
-        // If response is directly the array
-        sessions.value = response.data;
-      } else {
-        console.error(
-          "Unexpected sessions API response structure:",
-          response.data
-        );
-        sessions.value = [];
-      }
-
-      return response.data;
-    } catch (err) {
-      if (err.name !== "AbortError") {
-        console.error("Error fetching sessions:", err);
-        errorSessions.value =
-          err.response?.data?.message || "Terjadi kesalahan saat memuat sesi";
-
-        handleError(err, errorSessions);
-        throw err;
-      }
-    } finally {
-      loadingSessions.value = false;
-    }
-  };
-
   // Fetch UjianTA data
-  const fetchUjianTA = async (page = 1, searchTerm = "", sesi = "") => {
+  const fetchUjianTA = async (page = 1, searchTerm = "", status = "") => {
     loading.value = true;
     error.value = null;
 
@@ -119,7 +63,7 @@ export function useUjianTAForDosen() {
 
       const params = {};
       if (searchTerm) params.search = searchTerm;
-      if (sesi) params.sesi = sesi;
+      if (status) params.status = status;
 
       abortController = new AbortController();
       const signal = abortController.signal;
@@ -151,21 +95,21 @@ export function useUjianTAForDosen() {
   // Handle pagination change
   const changePage = (page) => {
     currentPage.value = page;
-    fetchUjianTA(page, searchQuery.value, selectedSesi.value);
+    fetchUjianTA(page, searchQuery.value, selectedStatus.value);
   };
 
   // Handle search
   const search = (query) => {
     searchQuery.value = query;
     currentPage.value = 1;
-    fetchUjianTA(1, query, selectedSesi.value);
+    fetchUjianTA(1, query, selectedStatus.value);
   };
 
-  // Filter by session
-  const filterBySesi = (sesi) => {
-    selectedSesi.value = sesi;
+  // Filter by status
+  const filterByStatus = (status) => {
+    selectedStatus.value = status;
     currentPage.value = 1;
-    fetchUjianTA(1, searchQuery.value, sesi);
+    fetchUjianTA(1, searchQuery.value, status);
   };
 
   // ------ Functions from detailUjianTA.js ------
@@ -322,7 +266,6 @@ export function useUjianTAForDosen() {
 
   onMounted(() => {
     fetchUjianTA();
-    fetchSessions();
   });
 
   onUnmounted(() => {
@@ -332,24 +275,20 @@ export function useUjianTAForDosen() {
   });
 
   return {
-    // Original ujianTA.js exports
     ujianTAData,
     pagination,
     loading,
     error,
     currentPage,
     searchQuery,
-    selectedSesi,
+    selectedStatus,
     fetchUjianTA,
     changePage,
     search,
-    filterBySesi,
+    filterByStatus,
 
-    // Session related
-    sessions,
-    loadingSessions,
-    errorSessions,
-    fetchSessions,
+    // Status options
+    statusOptions,
 
     // From detailUjianTA.js
     detailUjian,

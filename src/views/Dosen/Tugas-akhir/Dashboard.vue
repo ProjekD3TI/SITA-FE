@@ -299,14 +299,14 @@ const PermintaanBimbingan = computed(() => {
                   <td class="p-2 sm:p-3 text-right align-middle">
                     <div class="flex justify-end">
                       <Button
-                        variant="primary"
+                        variant="secondary"
                         size="sm"
                         class="sm:hidden"
                         @click.stop="showResponModal(item)"
                         >Respon</Button
                       >
                       <Button
-                        variant="primary"
+                        variant="secondary"
                         size="md"
                         class="hidden sm:inline-flex"
                         @click.stop="showResponModal(item)"
