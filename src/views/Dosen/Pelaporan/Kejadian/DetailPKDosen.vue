@@ -202,7 +202,10 @@
                 <div v-else-if="Array.isArray(laporan.tanggapan)" class="tanggapan-list">
                     <div v-for="(item, index) in laporan.tanggapan" :key="index" class="tanggapan-item">
                         <div class="tanggapan-header">
-                            <span class="tanggapan-user">{{ item.user || 'Admin' }}</span>
+                            <!-- Add Kalab prefix for items with role "kalab" -->
+                            <span class="tanggapan-user">
+                                {{ item.role === 'kalab' ? 'Kalab - ' : '' }}{{ item.user || 'Admin' }}
+                            </span>
                             <span class="tanggapan-time">{{ formatDate(item.timestamp) }}</span>
                         </div>
                         <p class="tanggapan-text">{{ item.text }}</p>
