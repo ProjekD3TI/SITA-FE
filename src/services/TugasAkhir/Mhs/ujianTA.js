@@ -560,6 +560,11 @@ export const catatanRevisi = computed(() => {
     revisi: d.revisi || "",
   }));
 });
+export const catatanRevisiTerisi = computed(() => {
+  return (catatanRevisi.value || []).filter(
+    (item) => item.revisi && item.revisi.trim() !== ""
+  );
+});
 export const rataRataNilaiUjianTA = computed(() => {
   const penguji = dataNilaiUjianTA.value?.dosen_penguji || [];
   if (penguji.length === 0)

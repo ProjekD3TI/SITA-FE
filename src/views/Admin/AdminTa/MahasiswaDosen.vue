@@ -23,6 +23,7 @@ const {
   fetchDataTabelMahasiswa,
   paginationTabelMahasiswa,
   updateAksesMahasiswa,
+  angkatanList,
 } = useTabelMahasiswa();
 
 const {
@@ -41,7 +42,7 @@ const activeTab = ref("tab1");
 
 const currentPageTabelMahasiswa = ref(1);
 const currentPageTabelDosen = ref(1);
-
+const selectedAngkatan = ref([]);
 // Data tab
 const tabs = [
   {
@@ -104,7 +105,8 @@ const setMahasiswaStatus = async (status) => {
     fetchDataTabelMahasiswa(
       currentPageTabelMahasiswa.value,
       searchQueryMahasiswa.value,
-      getSelectedStatusValue(selectedStatusesMahasiswa.value)
+      getSelectedStatusValue(selectedStatusesMahasiswa.value),
+      selectedAngkatan.value.join(",")
     );
   } catch (e) {
     // error sudah di-handle di service
@@ -153,7 +155,8 @@ function onSearchMahasiswa({ value }) {
   fetchDataTabelMahasiswa(
     1,
     value,
-    getSelectedStatusValue(selectedStatusesMahasiswa.value)
+    getSelectedStatusValue(selectedStatusesMahasiswa.value),
+    selectedAngkatan.value.join(",")
   );
 }
 function onSearchDosen({ value }) {
@@ -164,14 +167,21 @@ function onSearchDosen({ value }) {
     getSelectedStatusValue(selectedStatusesDosen.value)
   );
 }
-
+const filterOptionsMahasiswa = computed(() => [
+  ...statuses.map((s) => ({ ...s, type: "status" })),
+  ...angkatanList.value.map((a) => ({ value: a, label: a, type: "angkatan" })),
+]);
+const selectedFiltersMahasiswa = ref([]);
 function handleFilterMahasiswa({ values }) {
-  selectedStatusesMahasiswa.value = values;
+  selectedFiltersMahasiswa.value = values;
+  const statusValues = values.filter((v) => ["0", "1"].includes(v));
+  const angkatanValues = values.filter((v) => !["0", "1"].includes(v));
   currentPageTabelMahasiswa.value = 1;
   fetchDataTabelMahasiswa(
     1,
     searchQueryMahasiswa.value,
-    getSelectedStatusValue(values)
+    statusValues.join(","),
+    angkatanValues.join(",")
   );
 }
 
@@ -199,10 +209,17 @@ onMounted(() => {
   );
 });
 watch(currentPageTabelMahasiswa, (val) => {
+  const statusValues = selectedFiltersMahasiswa.value.filter((v) =>
+    ["0", "1"].includes(v)
+  );
+  const angkatanValues = selectedFiltersMahasiswa.value.filter(
+    (v) => !["0", "1"].includes(v)
+  );
   fetchDataTabelMahasiswa(
     val,
     searchQueryMahasiswa.value,
-    getSelectedStatusValue(selectedStatusesMahasiswa.value)
+    statusValues.join(","),
+    angkatanValues.join(",")
   );
 });
 watch(currentPageTabelDosen, (val) => {
@@ -260,10 +277,10 @@ function handleTabChanged(tabId) {
       <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
         <ModalFilter
           title="Status"
-          :items="statuses"
+          :items="filterOptionsMahasiswa"
           filterType="status"
           triggerText="Status"
-          :preselectedValues="selectedStatusesMahasiswa"
+          :preselectedValues="selectedFiltersMahasiswa"
           @apply="handleFilterMahasiswa"
         />
         <SearchBar

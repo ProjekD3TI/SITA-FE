@@ -26,6 +26,7 @@ import DetailBimbinganForAdmin from "../views/Admin/AdminTa/Bimbingan/DetailBimb
 import PlotPembimbingForAdmin from "../views/Admin/AdminTa/Bimbingan/PlotPembimbing.vue";
 import MahasiswaDosenForAdmin from "../views/Admin/AdminTa/MahasiswaDosen.vue";
 import TahunAjaranForAdmin from "../views/Admin/AdminTa/TahunAjaran.vue";
+import TugasAkhirforAdminTa from "../views/Admin/AdminTa/TugasAkhir.vue";
 // Route Mhs TA
 import DashboardTAMhs from "../views/Mahasiswa/Tugas-akhir/Dashboard.vue";
 import BimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan/Bimbingan.vue";
@@ -41,6 +42,7 @@ import InputNilaiBimbinganforDosen from "@/views/Dosen/Tugas-akhir/Bimbingan/Inp
 import UjianTAforDosen from "../views/Dosen/Tugas-akhir/UjianTA/UjianTA.vue";
 import detailUjianTAforDosen from "../views/Dosen/Tugas-akhir/UjianTA/DetailUjianTA.vue";
 import InputNilaiUjianTAforDosen from "@/views/Dosen/Tugas-akhir/UjianTA/InputNilaiUjianTA.vue";
+import path from "path";
 
 //define a routes
 const routes = [
@@ -422,6 +424,14 @@ const routes = [
         component: DashboardTAAdmin,
         meta: {
           breadcrumb: "Dashboard",
+        },
+      },
+      {
+        path: "tugas-akhir",
+        name: "TugasAkhirforAdminTa",
+        component: TugasAkhirforAdminTa,
+        meta: {
+          breadcrumb: "Tugas Akhir",
         },
       },
       {

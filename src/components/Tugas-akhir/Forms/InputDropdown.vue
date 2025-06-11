@@ -137,22 +137,41 @@ const props = defineProps({
   required: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
   showDefaultOption: { type: Boolean, default: true }, // ✅ TAMBAHAN: Show default option
-  defaultOptionText: { type: String, default: "Pilih..." }, // ✅ TAMBAHAN: Customizable default text
+  defaultOptionText: { type: String, default: "-- Pilih --" }, // ✅ TAMBAHAN: Customizable default text
 });
 
-const selectedValue = ref(props.modelValue);
+const selectedValue = ref(props.modelValue ?? null);
 const searchQuery = ref("");
 const isDropdownOpen = ref(false);
 const searchInput = ref(null);
 const dropdownPanel = ref(null);
 
+// Filtered options based on search query
+const filteredOptions = computed(() => {
+  let opts = props.options.filter((option) =>
+    option.label.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+  if (props.showDefaultOption) {
+    opts = [
+      {
+        value: null,
+        label: props.defaultOptionText,
+
+        isDefault: true,
+      },
+      ...opts,
+    ];
+  }
+  return opts;
+});
+
 // Compute display text for the input field
 const displayText = computed(() => {
-  if (!selectedValue.value) return "";
+  if (!selectedValue.value) return props.defaultOptionText;
   const selectedOption = props.options.find(
     (option) => option.value === selectedValue.value
   );
-  return selectedOption ? selectedOption.label : "";
+  return selectedOption ? selectedOption.label : props.defaultOptionText;
 });
 
 // Set initial display value based on modelValue
@@ -191,13 +210,6 @@ watch(
   (newValue) => {
     selectedValue.value = newValue;
   }
-);
-
-// Filtered options based on search query
-const filteredOptions = computed(() =>
-  props.options.filter((option) =>
-    option.label.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
 );
 
 // Function to select an option

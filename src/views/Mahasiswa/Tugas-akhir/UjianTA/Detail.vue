@@ -25,6 +25,7 @@ import {
   presentasi,
   rerata_ujian,
   dataTugasAkhir,
+  catatanRevisiTerisi,
   dataNilaiUjianTA,
   rataRataNilaiUjianTA,
   catatanRevisi,
@@ -282,10 +283,19 @@ watchEffect(() => {
           :modelValue="rerata_ujian"
           disabled
         />
-        <h5 class="body3-bold lg:body1-bold text-primary">Catatan Revisi</h5>
-        <div class="flex flex-col gap-2">
+        <h5
+          v-if="catatanRevisiTerisi && catatanRevisiTerisi.length > 0"
+          class="body3-bold lg:body1-bold text-primary"
+        >
+          Catatan Revisi
+        </h5>
+        <div
+          v-if="catatanRevisiTerisi && catatanRevisiTerisi.length > 0"
+          class="flex flex-col gap-2"
+        >
           <template v-for="(item, idx) in catatanRevisi" :key="idx">
             <InputTextarea
+              v-if="item.revisi"
               :id="`catatan_revisi_${idx + 1}`"
               :label="`${item.nama}`"
               :modelValue="item.revisi"

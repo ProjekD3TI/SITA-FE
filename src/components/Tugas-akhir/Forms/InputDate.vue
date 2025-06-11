@@ -48,13 +48,13 @@ const maxDateObj = computed(() =>
 const isDateDisabled = (date) => {
   const dateString = formatLocalDateString(date); // ✅ Ganti dari toISOString
 
-  // ✅ DEBUG: Log untuk melihat perbandingan
-  console.log("🔍 Checking date:", {
-    originalDate: date,
-    formattedString: dateString,
-    availableDates: props.availableDates.slice(0, 5), // Show first 5 for debug
-    isIncluded: props.availableDates.includes(dateString),
-  });
+  // // ✅ DEBUG: Log untuk melihat perbandingan
+  // console.log("🔍 Checking date:", {
+  //   originalDate: date,
+  //   formattedString: dateString,
+  //   availableDates: props.availableDates.slice(0, 5), // Show first 5 for debug
+  //   isIncluded: props.availableDates.includes(dateString),
+  // });
 
   if (props.availableDates.length > 0) {
     return !props.availableDates.includes(dateString);
@@ -125,30 +125,76 @@ const formatDate = (date) => {
       :close-on-scroll="false"
       :month-change-on-scroll="false"
       :prevent-min-max-navigation="true"
-      input-class-name="w-full px-4 py-3 bg-white border border-placeholder rounded-lg body5 sm:body4 text-blackText focus:border-primary focus:outline-none"
-      menu-class-name="dp-custom-menu"
-      class="custom-datepicker"
-      :class="{ 'cursor-not-allowed opacity-50': disabled }"
-    />
+    >
+      <template #input-icon>
+        <!-- <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="w-5 h-5 ms-6 text-blackText"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+          />
+        </svg> -->
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="w-5 h-5 sm:ms-6 ms-4 text-blackText"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z"
+          />
+        </svg>
+      </template>
+      <template #clear-icon="{ clear }">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="w-5 h-5 sm:me-6 me-4 text-blackText hover:text-secondary"
+          @click="clear"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M6 18 18 6M6 6l12 12"
+          />
+        </svg>
+      </template>
+    </VueDatePicker>
   </div>
 </template>
 
 <style scoped>
 /* ✅ Custom styling untuk date picker */
-:deep(.dp__input) {
-  @apply w-full px-4 py-3 bg-white border border-gray-300;
-  @apply text-sm text-gray-900 focus:border-blue-500 focus:outline-none;
-  border-radius: 12px;
-  min-height: 48px;
-  font-size: 14px;
-}
 
+:deep(.dp__input) {
+  @apply w-full px-4 ps-10 sm:ps-12  min-h-[46px] sm:min-h-[47px] bg-white border border-placeholder;
+  @apply text-[13px] sm:text-base text-blackText focus:border-primary focus:outline-none;
+
+  border-radius: 12px;
+}
+#clear-icon {
+  @apply w-5 h-5 pe-10 text-blackText;
+}
 :deep(.dp__input:disabled) {
   @apply cursor-not-allowed opacity-50 bg-gray-100;
 }
 
 :deep(.dp__input:focus) {
-  @apply border-blue-500;
+  @apply border-primary;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
@@ -162,11 +208,11 @@ const formatDate = (date) => {
 }
 
 :deep(.dp__calendar_header_item) {
-  @apply text-blue-800 font-medium;
+  @apply text-primary font-medium;
 }
 
 :deep(.dp__today) {
-  @apply bg-blue-100 text-blue-800 font-medium;
+  @apply bg-blue-100 text-primary font-medium;
 }
 
 :deep(.dp__date_hover) {
@@ -174,7 +220,7 @@ const formatDate = (date) => {
 }
 
 :deep(.dp__active_date) {
-  @apply bg-blue-500 text-white font-medium;
+  @apply bg-primary text-white font-medium;
 }
 
 :deep(.dp__disabled) {
@@ -186,15 +232,15 @@ const formatDate = (date) => {
 }
 
 :deep(.dp__month_year_select) {
-  @apply text-blue-600 font-medium;
+  @apply text-primary font-medium;
 }
 
 :deep(.dp__arrow_top) {
-  @apply text-blue-600;
+  @apply text-primary;
 }
 
 :deep(.dp__arrow_bottom) {
-  @apply text-blue-600;
+  @apply text-primary;
 }
 
 .custom-datepicker {

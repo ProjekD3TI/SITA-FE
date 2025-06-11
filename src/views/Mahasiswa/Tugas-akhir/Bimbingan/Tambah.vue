@@ -19,7 +19,7 @@ const { fetchData, submitBimbingan } = useBimbingan(); // Jika ingin refresh set
 
 // Form state
 const today = ref(new Date().toISOString().split("T")[0]); // Format YYYY-MM-DD untuk hari ini
-const bimbinganDate = ref(today.value); // Tanggal default untuk bimbingan
+const selectedTanggal = ref(today); // Tanggal yang dipilih
 const selectedBAB = ref(""); // BAB yang dipilih
 const catatan = ref(""); // Catatan bimbingan
 const isSubmitting = ref(false); // Status submit form
@@ -40,11 +40,6 @@ const babOptions = computed(() => [
   { value: "5", label: "BAB V" },
 ]);
 
-// Validasi form
-const isFormValid = computed(() => {
-  return bimbinganDate.value && selectedBAB.value && catatan.value;
-});
-
 // ============================================
 // METHODS
 // ============================================
@@ -54,14 +49,10 @@ const isFormValid = computed(() => {
  * Menyimpan data bimbingan ke API dan kembali ke halaman bimbingan
  */
 const handleSubmit = async () => {
-  if (!isFormValid.value) {
-    toast.error("Mohon lengkapi semua field yang diperlukan");
-    return;
-  }
   isSubmitting.value = true;
   try {
     const success = await submitBimbingan({
-      tanggal_bimbingan: bimbinganDate.value,
+      tanggal_bimbingan: selectedTanggal.value,
       bab: selectedBAB.value,
       catatan: catatan.value,
     });
@@ -102,9 +93,9 @@ const handleSubmit = async () => {
             id="date-input"
             label="Tanggal Bimbingan"
             placeholder="Pilih tanggal bimbingan"
-            v-model="bimbinganDate"
-            :value="today"
-            :max="today"
+            :value="selectedTanggal"
+            :maxDate="today"
+            @update:value="selectedTanggal = $event"
             required
           />
 
@@ -115,6 +106,7 @@ const handleSubmit = async () => {
             :options="babOptions"
             placeholder="Pilih BAB yang dibahas"
             v-model="selectedBAB"
+            default-option-text="-- Pilih BAB --"
             required
           />
 
@@ -137,7 +129,7 @@ const handleSubmit = async () => {
             type="submit"
             variant="primary"
             size="lg"
-            :disabled="!isFormValid || isSubmitting"
+            :disabled="isSubmitting"
           >
             {{ isSubmitting ? "Mengirim..." : "Kirim" }}
           </Button>
@@ -146,7 +138,7 @@ const handleSubmit = async () => {
             type="submit"
             variant="primary"
             size="md"
-            :disabled="!isFormValid || isSubmitting"
+            :disabled="isSubmitting"
           >
             {{ isSubmitting ? "Mengirim..." : "Kirim" }}
           </Button>

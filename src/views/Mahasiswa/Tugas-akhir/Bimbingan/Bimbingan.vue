@@ -221,6 +221,7 @@ watch(
               :options="categories"
               placeholder="Pilih kategori tugas akhir"
               v-model="selectedCategory"
+              default-option-text="-- Pilih kategori --"
               required
             />
 
@@ -241,6 +242,7 @@ watch(
               :options="pembimbings"
               placeholder="Pilih dosen pembimbing"
               v-model="selectedPembimbing"
+              default-option-text="-- Pilih dosen --"
               required
             />
           </div>
@@ -352,44 +354,39 @@ watch(
 
     <!-- STATE 4: PUNYA PEMBIMBING - TAMPILKAN DATA BIMBINGAN -->
     <div v-else-if="hasPembimbing">
-      <div class="card-rounded bg-white p-6 lg:p-8">
-        <!-- Info Mahasiswa using UserData component -->
+      <!-- Header: Info Dosen & Progress BAB -->
+      <div class="p-6 bg-white card-rounded lg:p-8 shadow-custom">
+        <!-- Info Dosen Pembimbing -->
         <UserData
-          class="max-w-screen-xl mx-auto"
-          headText="Mahasiswa"
-          :bodyText="studentInfo.name"
-          headText2="Kategori TA"
-          :bodyText2="studentInfo.category"
-          headText3="Judul"
-          :bodyText3="studentInfo.title"
-          :tahunAjaran="tahunAjaran"
+          class="max-w-screen-xl mx-auto mb-4"
+          headText="Dosen Pembimbing"
+          :bodyText="namaPembimbing"
+          headText2="Kategori"
+          :bodyText2="kategoriTA"
+          :tahunAjaran="tahunAjaranTA"
         />
 
-        <!-- Progress BAB & Tombol Input -->
+        <!-- Progress BAB & Tombol Tambah -->
         <div
-          class="flex flex-wrap justify-between items-center max-w-screen-xl mx-auto mt-4"
+          class="flex flex-col items-center justify-between max-w-screen-xl mx-auto md:flex-row md:gap-8"
         >
           <!-- Progress Bar BAB -->
-          <ProgressBarBAB class="sm:ms-3" :currentStep="highestChapter" />
+          <ProgressBarBAB class="sm:ms-3" :currentStep="highestBAB" />
 
-          <!-- Action Buttons -->
+          <!-- Tombol Tambah Bimbingan -->
           <div class="flex flex-wrap justify-end w-full gap-2 md:w-fit">
-            <!-- Tombol Nilai/Lihat Nilai (Desktop) -->
             <router-link
-              v-if="!hasNilaiBimbingan"
               class="flex-grow"
-              :to="{
-                name: 'InputNilaiBimbinganforDosen',
-                params: { tugas_akhir_id: studentInfo.id },
-              }"
+              to="/mahasiswa/tugas-akhir/bimbingan/tambah-bimbingan"
             >
+              <!-- Desktop Button -->
               <Button
                 class="hidden w-full lg:flex"
                 variant="primary"
                 size="lg"
                 left-icon-path="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z"
               >
-                Nilai
+                Tambah
               </Button>
 
               <!-- Mobile Button -->
@@ -399,17 +396,15 @@ watch(
                 size="md"
                 left-icon-path="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z"
               >
-                Nilai
+                Tambah
               </Button>
             </router-link>
-
-            <div v-else class="flex-grow">
-              <!-- Desktop Button -->
+            <div v-if="dataNilaiBimbingan" class="flex-grow">
               <Button
                 class="hidden w-full lg:flex"
                 variant="success"
                 size="lg"
-                @click="openNilaiModal"
+                @click="showNilaiModal = true"
               >
                 Lihat Nilai
               </Button>
@@ -419,7 +414,7 @@ watch(
                 class="w-full lg:hidden"
                 variant="success"
                 size="md"
-                @click="openNilaiModal"
+                @click="showNilaiModal = true"
               >
                 Lihat Nilai
               </Button>

@@ -103,7 +103,6 @@ const tempValidasi = ref({
   file_transkrip_status_valid: null,
 });
 
-
 function getUjianStatus(berkas) {
   // Kumpulkan semua status valid dari setiap berkas
   const statusList = [
@@ -408,10 +407,12 @@ const getFileName = (filePath) => {
   return filePath ? decodeURIComponent(filePath.split("/").pop()) : "";
 };
 const handleRowClickPlot = (item) => {
-  if (item.sudah_lulus === true) {
+  // Jika sudah ada dosen penguji (array minimal 1), buka modal
+  if (Array.isArray(item.dosen_penguji) && item.dosen_penguji.length > 0) {
     selectedPlottingItem.value = item;
     modalRef.value = true;
   } else {
+    // Jika belum ada dosen penguji, redirect ke halaman plotting
     router.push({
       name: "PlottingPengujiForAdmin",
       params: { tugas_akhir_id: item.tugas_akhir_id },
@@ -1086,6 +1087,46 @@ const modalFileUjianTAFiles = ref({
         >
           Tidak ada data dosen penguji
         </div>
+        <Button
+          v-if="
+            selectedPlottingItem && selectedPlottingItem.sudah_lulus === false
+          "
+          variant="secondary"
+          size="lg"
+          class="self-end hidden w-fit sm:flex"
+          left-icon-path="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+          @click="
+            () => {
+              modalRef = false;
+              router.push({
+                name: 'PlottingPengujiForAdmin',
+                params: { tugas_akhir_id: selectedPlottingItem.tugas_akhir_id },
+              });
+            }
+          "
+        >
+          Edit
+        </Button>
+        <Button
+          v-if="
+            selectedPlottingItem && selectedPlottingItem.sudah_lulus === false
+          "
+          variant="secondary"
+          size="md"
+          class="self-end w-full sm:hidden"
+          left-icon-path="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+          @click="
+            () => {
+              modalRef = false;
+              router.push({
+                name: 'PlottingPengujiForAdmin',
+                params: { tugas_akhir_id: selectedPlottingItem.tugas_akhir_id },
+              });
+            }
+          "
+        >
+          Edit
+        </Button>
       </div>
     </DefaultModal>
 

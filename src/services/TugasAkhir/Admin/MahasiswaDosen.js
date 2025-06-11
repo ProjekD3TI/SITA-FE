@@ -12,11 +12,13 @@ export function useTabelMahasiswa() {
   const paginationTabelMahasiswa = ref({});
   const loadingTabelMahasiswa = ref(false);
   const errorTabelMahasiswa = ref(null);
+  const angkatanList = ref([]);
 
   const fetchDataTabelMahasiswa = async (
     page = 1,
     search = "",
-    status = ""
+    status = "",
+    angkatan = ""
   ) => {
     loadingTabelMahasiswa.value = true;
     try {
@@ -29,6 +31,7 @@ export function useTabelMahasiswa() {
       const params = {};
       if (search) params.search = search;
       if (status) params.akses_ta = status;
+      if (angkatan) params.angkatan = angkatan;
       const response = await axios.get(
         `/api/admin_ta/mahasiswa-ta?page=${page}`,
         {
@@ -38,6 +41,7 @@ export function useTabelMahasiswa() {
       );
       dataTabelMahasiswa.value = response.data.data.data;
       paginationTabelMahasiswa.value = response.data.data.pagination;
+      angkatanList.value = response.data.data.angkatan_list || [];
     } catch (err) {
       handleError(err);
     } finally {
@@ -96,6 +100,7 @@ export function useTabelMahasiswa() {
     paginationTabelMahasiswa,
     loadingTabelMahasiswa,
     errorTabelMahasiswa,
+    angkatanList,
     fetchDataTabelMahasiswa,
     updateAksesMahasiswa,
   };
