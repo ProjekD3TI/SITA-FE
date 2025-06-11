@@ -425,7 +425,7 @@ watch(
         <h1
           class="text-center heading5 sm:heading4 lg:heading3 text-placeholder"
         >
-          Admin belum memplotting dosen penguji untuk anda, silahkan hubungi
+          Admin belum memplotting dosen penguji untuk anda, ilahkan hubungi
           Admin untuk memplotting dosen penguji anda.
         </h1>
       </div>
@@ -446,7 +446,7 @@ watch(
       </div>
 
       <!-- Main Content when minimal bimbingan is met -->
-      <template v-else>
+      <template v-else-if="dataTugasAkhir">
         <Breadcrumb />
 
         <div class="p-4 bg-white card-rounded shadow-custom lg:p-8">
