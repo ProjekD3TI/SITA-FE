@@ -6,7 +6,7 @@ import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Loading from "@/components/Loading.vue";
-// Updated import - using the merged composable
+// Updated import - using the combined function only
 import { useUjianTAForDosen } from "@/services/TugasAkhir/Dosen/ujianTA.js";
 import { useToast } from "vue-toastification";
 
@@ -14,10 +14,9 @@ const route = useRoute();
 const router = useRouter();
 const toast = useToast();
 
-// Use a single instance of the composable with updated property names
+// Use the combined function and other utilities
 const {
-  submitNilaiUjian,
-  updateStatusKelulusan,
+  submitNilaiDanStatus,
   loadingNilai: loading,
   errorNilai: error,
   detailUjian,
@@ -209,7 +208,7 @@ const loadData = async () => {
       // Initialize status kelulusan for secretary regardless of edit mode
       if (isSecretary.value) {
         statusKelulusan.value =
-          detailUjian.value.status_kelulusan?.toString() || "";
+          detailUjian.value?.status_kelulusan?.toString() || "";
       }
     }
 
@@ -249,6 +248,7 @@ const handleSubmit = async () => {
     return;
   }
 
+  // Create data object with all required fields
   const nilaiData = {
     tugas_akhir_id: route.params.tugas_akhir_id,
     tataLaporan: tataLaporan.value,
@@ -259,16 +259,13 @@ const handleSubmit = async () => {
     catatanRevisi: catatanRevisi.value,
   };
 
-  // Submit nilai ujian
-  const result = await submitNilaiUjian(nilaiData, isEdit.value);
-
-  // If secretary, also update status kelulusan
+  // Add statusKelulusan if user is secretary
   if (isSecretary.value && statusKelulusan.value) {
-    await updateStatusKelulusan(
-      route.params.tugas_akhir_id,
-      statusKelulusan.value
-    );
+    nilaiData.statusKelulusan = statusKelulusan.value;
   }
+
+  // Submit nilai and status in one call
+  const result = await submitNilaiDanStatus(nilaiData, isEdit.value);
 
   if (!error.value) {
     // Return to detail page with success parameter
@@ -298,6 +295,11 @@ watch(hasilProduk, () => resetValidationError("hasilProduk"));
 watch(presentasi, () => resetValidationError("presentasi"));
 watch(catatanRevisi, () => resetValidationError("catatanRevisi"));
 watch(statusKelulusan, () => resetValidationError("statusKelulusan"));
+watch(error, (newError) => {
+  if (newError) {
+    toast.error(newError);
+  }
+});
 
 // Load data when component is mounted
 onMounted(() => {
@@ -327,11 +329,6 @@ onMounted(() => {
             {{ studentInfo.title }}
           </p>
         </div>
-      </div>
-
-      <!-- API error message -->
-      <div v-if="error" class="bg-red-100 p-4 rounded-lg mb-4">
-        <p class="text-red-700">{{ error }}</p>
       </div>
 
       <!-- Form Section -->

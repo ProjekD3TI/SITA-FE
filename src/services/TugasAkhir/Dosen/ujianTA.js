@@ -7,6 +7,19 @@ import VueCookies from "vue-cookies";
 /**
  * Composable untuk mengelola data ujian tugas akhir untuk dosen
  */
+export async function getFileBlobUrl(downloadUrl) {
+  const authToken = VueCookies.get("auth_token");
+  const response = await fetch(downloadUrl, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+      Accept: "application/pdf",
+    },
+  });
+  if (!response.ok) throw new Error("Gagal mengambil file");
+  const blob = await response.blob();
+  return URL.createObjectURL(blob);
+}
+
 export function useUjianTAForDosen() {
   let abortController = null;
   const router = useRouter();
@@ -44,7 +57,7 @@ export function useUjianTAForDosen() {
       router.push("/dosen/tugas-akhir/login");
     } else {
       errorState.value = err.response?.data?.message || "Terjadi kesalahan";
-      toast.error(errorState.value);
+      console.error(errorState.value);
     }
   };
 
@@ -112,8 +125,6 @@ export function useUjianTAForDosen() {
     fetchUjianTA(1, searchQuery.value, status);
   };
 
-  // ------ Functions from detailUjianTA.js ------
-
   // Fetch detail of a specific UjianTA
   const fetchDetailUjian = async (tugasAkhirId) => {
     if (!tugasAkhirId) {
@@ -163,10 +174,8 @@ export function useUjianTAForDosen() {
     return await fetchDetailUjian(tugasAkhirId);
   };
 
-  // ------ Functions from nilaiUjianTA.js ------
-
-  // Submit or update nilai ujian TA
-  const submitNilaiUjian = async (data, isEdit = false) => {
+  // Submit nilai and status kelulusan in one call
+  const submitNilaiDanStatus = async (data, isEdit = false) => {
     loadingNilai.value = true;
     errorNilai.value = null;
     success.value = false;
@@ -178,9 +187,7 @@ export function useUjianTAForDosen() {
     };
 
     try {
-      let response;
-
-      // Create payload - same for both create and update
+      // Create payload with all required fields
       const payload = {
         kualitas_tata_laporan: parseFloat(data.tataLaporan),
         kemampuan_teknis: parseFloat(data.kemampuanTeknis),
@@ -190,24 +197,17 @@ export function useUjianTAForDosen() {
         revisi: data.catatanRevisi,
       };
 
-      if (isEdit) {
-        // Update nilai
-        response = await axios.put(
-          `/api/dosen/tugas-akhir/nilai-ujian-ta/${data.tugas_akhir_id}`,
-          payload,
-          { headers }
-        );
-      } else {
-        // Create nilai
-        response = await axios.post(
-          `/api/dosen/tugas-akhir/nilai-ujian-ta`,
-          {
-            tugas_akhir_id: data.tugas_akhir_id,
-            ...payload,
-          },
-          { headers }
-        );
+      // Add status_kelulusan if provided (for secretary role)
+      if (data.statusKelulusan) {
+        payload.status_kelulusan = data.statusKelulusan;
       }
+
+      // Make API call to combined endpoint
+      const response = await axios.put(
+        `/api/dosen/tugas-akhir/submit-nilai-dan-status/${data.tugas_akhir_id}`,
+        payload,
+        { headers }
+      );
 
       if (response.data.status === "success") {
         success.value = true;
@@ -218,45 +218,7 @@ export function useUjianTAForDosen() {
         return null;
       }
     } catch (err) {
-      console.error("Error submitting ujian TA nilai:", err);
-      handleError(err, errorNilai);
-      return null;
-    } finally {
-      loadingNilai.value = false;
-    }
-  };
-
-  // Update status kelulusan (only for secretary role)
-  const updateStatusKelulusan = async (tugasAkhirId, status) => {
-    loadingNilai.value = true;
-    errorNilai.value = null;
-
-    const token = VueCookies.get("auth_token");
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-    };
-
-    try {
-      const response = await axios.put(
-        `/api/dosen/tugas-akhir/status-kelulusan/${tugasAkhirId}`,
-        {
-          status_kelulusan: status,
-        },
-        { headers }
-      );
-
-      if (response.data.status === "success") {
-        success.value = true;
-        return response.data;
-      } else {
-        errorNilai.value =
-          response.data.message || "Gagal mengupdate status kelulusan";
-        toast.error(errorNilai.value);
-        return null;
-      }
-    } catch (err) {
-      console.error("Error updating status kelulusan:", err);
+      console.error("Error submitting nilai dan status:", err);
       handleError(err, errorNilai);
       return null;
     } finally {
@@ -294,14 +256,14 @@ export function useUjianTAForDosen() {
     detailUjian,
     loadingDetail,
     errorDetail,
+    getFileBlobUrl,
     fetchDetailUjian,
     refreshDetailUjian,
 
-    // From nilaiUjianTA.js
+    // Nilai state
     loadingNilai,
     errorNilai,
     success,
-    submitNilaiUjian,
-    updateStatusKelulusan,
+    submitNilaiDanStatus,
   };
 }

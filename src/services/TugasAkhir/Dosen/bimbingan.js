@@ -31,7 +31,7 @@ export function useRequestPembimbing() {
       router.push("/dosen/login");
     } else {
       error.value = err.response?.data?.message || "Terjadi kesalahan";
-      toast.error(error.value);
+      console.error(error.value);
     }
   };
 
@@ -183,7 +183,7 @@ export function useNilaiBimbingan() {
       router.push("/dosen/login");
     } else {
       error.value = err.response?.data?.message || "Terjadi kesalahan";
-      toast.error(error.value);
+      console.error(error.value);
     }
   };
 
@@ -373,12 +373,10 @@ export function useDibimbing() {
       router.push("/dosen/login");
     } else {
       const errorMessage = err.response?.data?.message || "Terjadi kesalahan";
-
       if (customErrorState) {
         customErrorState.value = errorMessage;
       }
-
-      toast.error(errorMessage);
+      console.error(errorMessage);
     }
   };
 
@@ -620,10 +618,8 @@ export function useKategori() {
         if (err.response?.status === 401) {
           toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
           router.push("/dosen/login");
-        } else {
-          toast.error(error.value);
         }
-
+        // Remove the toast.error(error.value);
         throw err;
       }
     } finally {

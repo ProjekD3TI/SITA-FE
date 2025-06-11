@@ -563,19 +563,14 @@ const handleActionClick = (item, action) => {
     <!-- Tabel Riwayat Bimbingan -->
     <div class="p-4 mt-4 bg-white card-rounded lg:p-8 shadow-custom">
       <Table
-        :headers="['No', 'Tanggal', 'BAB', 'Catatan', 'Status', 'Aksi']"
+        :headers="['Tanggal', 'BAB', 'Catatan', 'Status', 'Aksi']"
         :items="paginatedBimbinganData"
         :pagination="paginationData"
         @pageChange="handlePageChange"
       >
         <template #row="{ item }">
-          <!-- Kolom No -->
-          <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-l-lg">
-            {{ item.no }}
-          </td>
-
           <!-- Kolom Tanggal -->
-          <td class="sm:py-3 py-3 sm:px-4 px-1">
+          <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-l-lg">
             {{ item.tanggal }}
           </td>
 

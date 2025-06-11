@@ -12,7 +12,7 @@ import { useRequestPembimbing } from "@/services/TugasAkhir/Dosen/bimbingan.js";
 import Loading from "@/components/Loading.vue";
 import { RouterLink, useRouter } from "vue-router";
 const router = useRouter();
-const { data, loading: loadingDashboard, error } = useDashboard();
+const { data, loading: loadingDashboard, error, fetchData } = useDashboard();
 
 // Set up the useRequestPembimbing hook
 const { updateApproval } = useRequestPembimbing();
@@ -34,8 +34,8 @@ const showResponModal = (item) => {
 const handleAcceptRequest = async () => {
   try {
     await updateApproval(selectedItem.value.id, 1);
-    // Refresh dashboard data
-    await data.value?.refreshData?.();
+    // Proper refresh of dashboard data
+    await fetchData();
     modalRef.value.close();
   } catch (err) {
     console.error("Error saat menerima permintaan:", err);
@@ -45,8 +45,8 @@ const handleAcceptRequest = async () => {
 const handleRejectRequest = async () => {
   try {
     await updateApproval(selectedItem.value.id, 2);
-    // Refresh dashboard data
-    await data.value?.refreshData?.();
+    // Proper refresh of dashboard data
+    await fetchData();
     modalRef.value.close();
   } catch (err) {
     console.error("Error saat menolak permintaan:", err);

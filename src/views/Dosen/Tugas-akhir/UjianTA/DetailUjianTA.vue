@@ -1,6 +1,10 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
+import router from "@/router";
+import { useToast } from "vue-toastification";
+
+// Components
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import JadwalUjian from "@/components/Tugas-akhir/JadwalUjian.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
@@ -9,13 +13,18 @@ import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Loading from "@/components/Loading.vue";
-import router from "@/router";
-// Updated import
-import { useUjianTAForDosen } from "@/services/TugasAkhir/Dosen/ujianTA.js";
-import { useToast } from "vue-toastification";
 
+// Services
+import {
+  useUjianTAForDosen,
+  getFileBlobUrl,
+} from "@/services/TugasAkhir/Dosen/ujianTA.js";
+
+// Setup
 const route = useRoute();
-// Updated destructuring to match the new property names
+const toast = useToast();
+
+// API data and loading states
 const {
   detailUjian,
   loadingDetail: loading,
@@ -23,48 +32,24 @@ const {
   fetchDetailUjian,
   refreshDetailUjian,
 } = useUjianTAForDosen();
-const toast = useToast();
 
 // App State
 const showNilaiModal = ref(false);
+const pdfBlobUrl = ref(null);
+const loadingPdf = ref(false);
+const errorPdf = ref(null);
 
-// Watch for route parameter changes to load data
-watch(
-  () => route.params.tugas_akhir_id,
-  (newTugasAkhirId) => {
-    if (newTugasAkhirId) {
-      fetchDetailUjian(newTugasAkhirId);
-    }
-  },
-  { immediate: true }
-);
+// ==================
+// COMPUTED PROPERTIES
+// ==================
 
-// Watch for success query parameter to show toast notifications
-watch(
-  () => route.query,
-  (newQuery) => {
-    if (newQuery.success === "true") {
-      const message =
-        newQuery.action === "update"
-          ? "Nilai berhasil diperbarui"
-          : "Nilai berhasil disimpan";
-      toast.success(message);
-
-      // Check for refresh parameter to reload data
-      if (newQuery.refresh) {
-        refreshDetailUjian(route.params.tugas_akhir_id);
-      }
-
-      // Remove success param from URL to prevent showing toast on refresh
-      const newRoute = {
-        path: route.path,
-        params: route.params,
-      };
-      router.replace(newRoute);
-    }
-  },
-  { deep: true, immediate: true }
-);
+// PDF handling - MOVED UP to avoid reference error
+const pdfUrl = computed(() => {
+  if (detailUjian.value?.berkas && detailUjian.value.berkas.length > 0) {
+    return detailUjian.value.berkas[0].file_path;
+  }
+  return null;
+});
 
 // Check if current user is Secretary or Supervising Lecturer
 const isSecretary = computed(() => {
@@ -96,18 +81,11 @@ const hasGiven = computed(() => {
 
   // Find if current user has already given grades
   const currentDosenPenguji = detailUjian.value.dosen_penguji.find(
-    (penguji) => penguji.nilai_ujian_ta !== null
+    (penguji) =>
+      penguji.is_current_user === true && penguji.nilai_ujian_ta !== null
   );
 
   return !!currentDosenPenguji?.nilai_ujian_ta;
-});
-
-// PDF handling
-const pdfUrl = computed(() => {
-  if (detailUjian.value?.berkas && detailUjian.value.berkas.length > 0) {
-    return detailUjian.value.berkas[0].file_path;
-  }
-  return null;
 });
 
 // Computed for examiners list
@@ -154,7 +132,8 @@ const nilaiData = computed(() => {
   if (!detailUjian.value?.dosen_penguji) return null;
 
   const currentDosenPenguji = detailUjian.value.dosen_penguji.find(
-    (penguji) => penguji.nilai_ujian_ta !== null
+    (penguji) =>
+      penguji.is_current_user === true && penguji.nilai_ujian_ta !== null
   );
 
   return currentDosenPenguji?.nilai_ujian_ta || null;
@@ -186,21 +165,92 @@ const catatanRevisi = computed(() => {
   if (!detailUjian.value?.dosen_penguji) return "";
 
   const currentDosenPenguji = detailUjian.value.dosen_penguji.find(
-    (penguji) => penguji.nilai_ujian_ta !== null
+    (penguji) =>
+      penguji.is_current_user === true && penguji.nilai_ujian_ta !== null
   );
 
   return currentDosenPenguji?.revisi || "";
 });
 
-// Load data when component is mounted
-onMounted(() => {
-  const tugasAkhirId = route.params.tugas_akhir_id;
-  if (tugasAkhirId) {
-    fetchDetailUjian(tugasAkhirId);
-  }
+// Computed for modal body text
+const modalBodyText = computed(() => {
+  return `${tugasAkhirDetails.value.nama} | ${tugasAkhirDetails.value.nim} | ${tugasAkhirDetails.value.judul}`;
 });
 
-// Methods
+// ==================
+// WATCHERS
+// ==================
+
+// Watch for route parameter changes to load data
+watch(
+  () => route.params.tugas_akhir_id,
+  (newTugasAkhirId) => {
+    if (newTugasAkhirId) {
+      fetchDetailUjian(newTugasAkhirId);
+    }
+  },
+  { immediate: true }
+);
+
+// Watch for success query parameter to show toast notifications
+watch(
+  () => route.query,
+  (newQuery) => {
+    if (newQuery.success === "true") {
+      const message =
+        newQuery.action === "update"
+          ? "Nilai berhasil diperbarui"
+          : "Nilai berhasil disimpan";
+      toast.success(message);
+
+      // Check for refresh parameter to reload data
+      if (newQuery.refresh) {
+        refreshDetailUjian(route.params.tugas_akhir_id);
+      }
+
+      // Remove success param from URL to prevent showing toast on refresh
+      const newRoute = {
+        path: route.path,
+        params: route.params,
+      };
+      router.replace(newRoute);
+    }
+  },
+  { deep: true, immediate: true }
+);
+
+// Watch for PDF URL changes to load preview
+watch(
+  () => pdfUrl.value,
+  (newPdfUrl) => {
+    if (newPdfUrl) {
+      loadPdfPreview();
+    }
+  },
+  { immediate: true }
+);
+
+// ==================
+// METHODS
+// ==================
+
+// PDF loading method
+async function loadPdfPreview() {
+  loadingPdf.value = true;
+  errorPdf.value = null;
+  try {
+    if (pdfUrl.value) {
+      pdfBlobUrl.value = await getFileBlobUrl(pdfUrl.value);
+    }
+  } catch (err) {
+    console.error("Error loading PDF:", err);
+    errorPdf.value = "Gagal memuat file PDF";
+  } finally {
+    loadingPdf.value = false;
+  }
+}
+
+// Modal methods
 const openNilaiModal = () => {
   showNilaiModal.value = true;
 };
@@ -209,7 +259,7 @@ const closeNilaiModal = () => {
   showNilaiModal.value = false;
 };
 
-// Methods for edit nilai functionality
+// Navigation methods
 const goToEditNilai = () => {
   closeNilaiModal();
 
@@ -224,9 +274,15 @@ const goToEditNilai = () => {
   });
 };
 
-// Computed for modal body text
-const modalBodyText = computed(() => {
-  return `${tugasAkhirDetails.value.nama} | ${tugasAkhirDetails.value.nim} | ${tugasAkhirDetails.value.judul}`;
+// ==================
+// LIFECYCLE HOOKS
+// ==================
+
+onMounted(() => {
+  const tugasAkhirId = route.params.tugas_akhir_id;
+  if (tugasAkhirId) {
+    fetchDetailUjian(tugasAkhirId);
+  }
 });
 </script>
 
@@ -252,37 +308,38 @@ const modalBodyText = computed(() => {
   <div v-else-if="!$route.path.includes('input-nilai-ujian-ta') && detailUjian">
     <Breadcrumb />
     <!-- Jadwal Section -->
-    <div class="card-rounded bg-white p-6 lg:p-8">
+    <div class="card-rounded bg-white p-6 lg:p-8 shadow-custom">
       <div class="max-w-screen-2xl mx-auto">
         <JadwalUjian :examiners="examiners" :jadwal="schedule" />
       </div>
     </div>
 
     <!-- Tugas Akhir Details Section -->
-    <div class="card-rounded bg-white p-6 lg:p-8 mt-6">
+    <div class="card-rounded bg-white p-6 lg:p-8 mt-6 shadow-custom">
       <div class="max-w-screen-2xl mx-auto">
         <div class="flex flex-col md:flex-row">
           <!-- PDF Preview (Left Side) -->
           <div class="basis-7/12 md:pe-8 order-last md:order-first">
+            <div v-if="loadingPdf" class="py-8 text-center">Memuat file...</div>
+            <div v-else-if="errorPdf" class="py-8 text-center text-red-500">
+              {{ errorPdf }}
+            </div>
             <object
-              v-if="pdfUrl"
-              :data="pdfUrl"
+              v-else-if="pdfBlobUrl"
+              :data="pdfBlobUrl"
               type="application/pdf"
               class="w-full h-[750px] mt-6 md:mt-0"
             >
               <p class="p-4 text-center">
                 Browser Anda tidak mendukung tampilan PDF.
-                <a :href="pdfUrl" target="_blank" class="text-primary"
+                <a :href="pdfBlobUrl" target="_blank" class="text-primary"
                   >Klik di sini</a
                 >
                 untuk membuka PDF.
               </p>
             </object>
-            <div
-              v-else
-              class="w-full h-[750px] bg-gray-100 flex items-center justify-center"
-            >
-              <p class="text-gray-500">Berkas PDF tidak tersedia</p>
+            <div v-else class="py-8 text-center">
+              Tidak ada file untuk ditampilkan.
             </div>
           </div>
 
@@ -394,7 +451,7 @@ const modalBodyText = computed(() => {
   </div>
   <router-view v-else></router-view>
 
-  <!-- Modal Lihat Nilai - Similar to DetailBimbingan implementation -->
+  <!-- Modal Lihat Nilai -->
   <DefaultModal
     v-if="showNilaiModal"
     @close="closeNilaiModal"
