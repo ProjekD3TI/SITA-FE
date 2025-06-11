@@ -195,7 +195,7 @@
                 <div v-else class="tanggapan-list">
                     <div v-for="(item, index) in laporan.tanggapan" :key="index" class="tanggapan-item">
                         <div class="tanggapan-header">
-                            <span class="tanggapan-user">{{ item.user || 'Admin' }}</span>
+                            <span class="tanggapan-user">{{ getDisplayName(item) }}</span>
                             <span class="tanggapan-time">{{ formatDate(item.timestamp) }}</span>
                         </div>
                         <p class="tanggapan-text">{{ item.text }}</p>
@@ -317,13 +317,14 @@ const showTanggapanModal = ref(false);
 const tanggapanText = ref('');
 const showVerificationModal = ref(false);
 const isVerifying = ref(false);
-const currentUser = ref('miftahul01'); // Current user's login as specified
+const kalabInfo = ref(null); // Add this to store kalab information
 
 // Initialize data
 onMounted(() => {
     laporanId.value = route.params.id;
     fetchCategories();
     fetchLaporanDetail();
+    fetchKalabData();
 });
 
 // Computed properties
@@ -457,6 +458,33 @@ const fetchCategories = async () => {
     }
 };
 
+// Enhanced getDisplayName to handle kalab role
+const getDisplayName = (item) => {
+    // If no user data, fallback to 'Admin'
+    if (!item.user) return 'Admin';
+    
+    // If user is kalab and we have kalab data, use the name from API
+    if (item.role === 'kalab' && kalabInfo.value) {
+        return kalabInfo.value.name; // Return "Raharja" from the API data
+    }
+    
+    // Otherwise return the user name as is (for mahasiswa or regular dosen)
+    return item.user;
+};
+
+// Improved fetchKalabData to always fetch regardless of existing tanggapan
+const fetchKalabData = async () => {
+    try {
+        // Always fetch kalab data to ensure we have it
+        const response = await axios.get('https://v3422040.mhs.d3tiuns.com/api/login/dosen');
+        if (response.data && response.data.data && response.data.data.dosen) {
+            kalabInfo.value = response.data.data.dosen;
+        }
+    } catch (error) {
+        console.error('Error fetching kalab data:', error);
+    }
+};
+
 const fetchLaporanDetail = async () => {
     loading.value = true;
     error.value = null;
@@ -480,6 +508,9 @@ const fetchLaporanDetail = async () => {
         }
         
         tanggapanText.value = '';
+        
+        // Fetch kalab data after successfully loading the laporan
+        await fetchKalabData();
     } catch (error) {
         console.error('Error fetching laporan detail:', error);
         error.value = 'Gagal memuat data laporan. Silakan coba lagi.';
@@ -876,8 +907,9 @@ const saveTanggapan = async () => {
         // Create a new tanggapan object
         const newTanggapan = {
             text: tanggapanText.value,
-            timestamp: new Date().toISOString(), // Use current time
-            user: currentUser.value
+            timestamp: new Date().toISOString(),
+            user: kalabInfo.value?.name || 'Kalab', // Use name from API data or fallback
+            role: 'kalab' // Set role as kalab to ensure proper display
         };
         
         // Add the new tanggapan
@@ -1037,6 +1069,13 @@ const formatBuktiPelanggaran = (bukti) => {
     
     return buktiMap[bukti] || bukti;
 };
+
+// Add a watcher to fetch kalab data when laporan changes
+watch(() => laporan.value?.tanggapan, () => {
+    if (laporan.value && Array.isArray(laporan.value.tanggapan)) {
+        fetchKalabData();
+    }
+}, { deep: true });
 
 // Clean up resources when component is unmounted
 onBeforeUnmount(() => {
