@@ -195,7 +195,7 @@
                 <div v-else class="tanggapan-list">
                     <div v-for="(item, index) in laporan.tanggapan" :key="index" class="tanggapan-item">
                         <div class="tanggapan-header">
-                            <span class="tanggapan-user">{{ getDisplayName(item) }}</span>
+                            <span class="tanggapan-user">Kalab - {{ getDisplayName(item) }}</span>
                             <span class="tanggapan-time">{{ formatDate(item.timestamp) }}</span>
                         </div>
                         <p class="tanggapan-text">{{ item.text }}</p>
@@ -300,6 +300,8 @@ import VueCookies from "vue-cookies";
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useRoute, useRouter } from 'vue-router';
+import { getUserData } from "../../../../../services/authDosen"; // Adjust the path as needed
+
 
 const route = useRoute();
 const router = useRouter();
@@ -463,26 +465,38 @@ const getDisplayName = (item) => {
     // If no user data, fallback to 'Admin'
     if (!item.user) return 'Admin';
     
-    // If user is kalab and we have kalab data, use the name from API
+    // If user is kalab and we have kalab data, use the name
     if (item.role === 'kalab' && kalabInfo.value) {
-        return kalabInfo.value.name; // Return "Raharja" from the API data
+        return kalabInfo.value.name; // This will now be the name from user session
     }
     
-    // Otherwise return the user name as is (for mahasiswa or regular dosen)
+    // Otherwise return the user name as is
     return item.user;
 };
 
-// Improved fetchKalabData to always fetch regardless of existing tanggapan
-const fetchKalabData = async () => {
-    try {
-        // Always fetch kalab data to ensure we have it
-        const response = await axios.get('https://v3422040.mhs.d3tiuns.com/api/login/dosen');
-        if (response.data && response.data.data && response.data.data.dosen) {
-            kalabInfo.value = response.data.data.dosen;
-        }
-    } catch (error) {
-        console.error('Error fetching kalab data:', error);
+// Replace your current fetchKalabData function with this
+const fetchKalabData = () => {
+  try {
+    // Import the helper function to get user data from cookies
+    const userData = getUserData(); // This comes from your authDosen.js
+    
+    if (userData) {
+      // Create a kalabInfo object using the userData from the session
+      kalabInfo.value = {
+        name: userData.name,
+        email: userData.email,
+        nik: userData.nik,
+        id: userData.dosenId,
+        no_telp: userData.no_telp
+      };
+    } else {
+      // Fallback if no user data available
+      kalabInfo.value = { name: "Kalab" };
     }
+  } catch (error) {
+    console.error('Error retrieving kalab data:', error);
+    kalabInfo.value = { name: "Kalab" };
+  }
 };
 
 const fetchLaporanDetail = async () => {
@@ -510,7 +524,7 @@ const fetchLaporanDetail = async () => {
         tanggapanText.value = '';
         
         // Fetch kalab data after successfully loading the laporan
-        await fetchKalabData();
+        fetchKalabData();
     } catch (error) {
         console.error('Error fetching laporan detail:', error);
         error.value = 'Gagal memuat data laporan. Silakan coba lagi.';
