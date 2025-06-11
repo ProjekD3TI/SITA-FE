@@ -47,6 +47,7 @@ const {
   errorTabelPenjadwalan,
   paginationTabelPenjadwalan,
   fetchTabelPenjadwalan,
+  downloadBeritaAcara,
 } = useTabelPenjadwalan();
 
 const toast = useToast();
@@ -1170,11 +1171,15 @@ const modalFileUjianTAFiles = ref({
             size="lg"
             class="hidden w-fit sm:flex"
             leftIconPath="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0-2.25 2.25h13.5M6 7.5h3v3H6v-3Z"
+            @click="downloadBeritaAcara(selectedJadwalItem.tugas_akhir_id)"
           >
             Berita Acara
           </Button>
           <Button
-            v-if="selectedJadwalItem.status_kelulusan !== null && 1"
+            v-if="
+              selectedJadwalItem.status_kelulusan !== null &&
+              selectedJadwalItem.status_kelulusan !== 1
+            "
             variant="primary"
             size="lg"
             class="hidden w-fit sm:flex"
@@ -1188,11 +1193,15 @@ const modalFileUjianTAFiles = ref({
             size="md"
             class="w-full sm:hidden"
             leftIconPath="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0-2.25 2.25h13.5M6 7.5h3v3H6v-3Z"
+            @click="downloadBeritaAcara(selectedJadwalItem.tugas_akhir_id)"
           >
             Berita Acara
           </Button>
           <Button
-            v-if="selectedJadwalItem.status_kelulusan !== null && 1"
+            v-if="
+              selectedJadwalItem.status_kelulusan !== null &&
+              selectedJadwalItem.status_kelulusan !== 1
+            "
             variant="primary"
             size="md"
             class="w-full sm:hidden"

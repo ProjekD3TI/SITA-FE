@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import Table from "@/components/Tugas-akhir/Table.vue";
 import ModalFilter from "@/components/Tugas-akhir/Modals/ModalFilter.vue";
 import SearchBar from "@/components/Tugas-akhir/Forms/SearchBar.vue";
@@ -100,6 +100,13 @@ const handleModalSubmit = async () => {
 onMounted(() => {
   fetchTabelTugasAkhir(
     currentPage.value,
+    searchQuery.value,
+    getSelectedStatusValue(selectedStatuses.value)
+  );
+});
+watch(currentPage, (val) => {
+  fetchTabelTugasAkhir(
+    val,
     searchQuery.value,
     getSelectedStatusValue(selectedStatuses.value)
   );

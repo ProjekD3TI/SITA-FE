@@ -9,6 +9,7 @@ import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
+import StatusLabel from "@/components/Tugas-akhir/Label.vue";
 import {
   useTugasAkhir,
   useJadwalUjianTA,
@@ -31,6 +32,7 @@ import {
   catatanRevisi,
   fileNaskahTA,
   getFileBlobUrl,
+  statusKelulusan,
 } from "@/services/TugasAkhir/Mhs/ujianTA.js";
 import { getUserData } from "@/services/authMahasiswa";
 
@@ -90,6 +92,35 @@ watchEffect(() => {
     loadPdfPreview();
   }
 });
+
+const getStatusClass = (status) => {
+  switch (status) {
+    case 1:
+      return "success";
+    case 2:
+      return "success";
+    case 3:
+      return "warning";
+    case 4:
+      return "danger";
+    default:
+      return "inactive";
+  }
+};
+const getStatusLabel = (status) => {
+  switch (status) {
+    case 1:
+      return "Lulus";
+    case 2:
+      return "Lulus, Revisi";
+    case 3:
+      return "Revisi, Ulang Ujian";
+    case 4:
+      return "Tidak Lulus";
+    default:
+      return "Tidak Diketahui";
+  }
+};
 
 // Computed properties
 const buttonClasses = computed(() => {
@@ -245,7 +276,19 @@ watchEffect(() => {
     >
       <div class="flex flex-col gap-4 mt-4">
         <h5 class="body3-bold lg:body1-bold text-primary">Status Kelulusan</h5>
+        <StatusLabel
+          class="hidden w-fit lg:block"
+          :status="getStatusClass(statusKelulusan)"
+          size="lg"
+          :label="getStatusLabel(statusKelulusan)"
+        />
 
+        <StatusLabel
+          class="block w-fit lg:hidden"
+          :status="getStatusClass(statusKelulusan)"
+          size="md"
+          :label="getStatusLabel(statusKelulusan)"
+        />
         <h5 class="body3-bold lg:body1-bold text-primary">Nilai Ujian</h5>
         <div class="flex flex-wrap gap-2">
           <InputText

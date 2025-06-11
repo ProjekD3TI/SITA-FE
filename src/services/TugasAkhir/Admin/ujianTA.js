@@ -391,6 +391,34 @@ export function useTabelPenjadwalan() {
     }
   };
 
+  const downloadBeritaAcara = async (tugasAkhirId) => {
+    try {
+      const authToken = VueCookies.get("auth_token");
+      const response = await axios.get(
+        `/api/admin_ta/cetak-berita-acara-ujian/${tugasAkhirId}`,
+        {
+          responseType: "blob",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            Accept: "application/pdf",
+          },
+        }
+      );
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], { type: "application/pdf" })
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "berita_acara_ujian.pdf");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error("Gagal mendownload Berita Acara");
+    }
+  };
+
   const handleError = (err) => {
     if (err.response?.status === 401) {
       toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
@@ -417,6 +445,7 @@ export function useTabelPenjadwalan() {
     loadingTabelPenjadwalan,
     errorTabelPenjadwalan,
     paginationTabelPenjadwalan,
+    downloadBeritaAcara,
     fetchTabelPenjadwalan,
   };
 }

@@ -134,7 +134,7 @@ export function useTugasAkhir() {
       toast.success("Pengajuan Ujian TA berhasil diupdate!");
       return true;
     } catch (err) {
-      handleError(err, router, toast);
+      handleError(err);
       return false;
     } finally {
       loadingTugasAkhir.value = false;
@@ -565,6 +565,9 @@ export const catatanRevisiTerisi = computed(() => {
     (item) => item.revisi && item.revisi.trim() !== ""
   );
 });
+export const statusKelulusan = computed(
+  () => dataNilaiUjianTA.value?.status_kelulusan || null
+);
 export const rataRataNilaiUjianTA = computed(() => {
   const penguji = dataNilaiUjianTA.value?.dosen_penguji || [];
   if (penguji.length === 0)

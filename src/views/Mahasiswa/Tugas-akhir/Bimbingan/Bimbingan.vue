@@ -97,6 +97,8 @@ const isSubmitDisabled = computed(
     !selectedDosenData.value || !selectedCategory.value || loadingRequest.value
 );
 
+const totalBimbingan = computed(() => listBimbingan.value.length);
+
 // ============================================
 // METHODS & HANDLERS
 // ============================================
@@ -137,7 +139,8 @@ const handleSubmit = async () => {
   }
 };
 const handleRowClick = (item) => {
-  selectedBimbingan.value = item;
+  const index = numberedBimbingan.value.findIndex((b) => b === item);
+  selectedBimbingan.value = { ...item, index };
   showBimbinganModal.value = true;
   nextTick(() => {
     modalDetailRef.value?.open();
@@ -426,7 +429,7 @@ watch(
       <!-- Tabel Riwayat Bimbingan -->
       <div class="p-4 mt-4 bg-white card-rounded lg:p-8 shadow-custom">
         <Table
-          :headers="['No', 'Tanggal', 'BAB', 'Catatan', 'Status']"
+          :headers="['Tanggal', 'BAB', 'Catatan', 'Status']"
           :items="numberedBimbingan"
           @rowClick="handleRowClick"
           :pagination="paginationBimbingan"
@@ -438,11 +441,11 @@ watch(
         >
           <template #row="{ item }">
             <!-- Kolom No -->
-            <td
+            <!-- <td
               class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.rowNumber }}
-            </td>
+            </td> -->
 
             <!-- Kolom Tanggal -->
             <td
@@ -535,7 +538,7 @@ watch(
       <ModalDetailBimbingan
         ref="modalDetailRef"
         v-if="showBimbinganModal && selectedBimbingan"
-        :bimbinganKe="selectedBimbingan.rowNumber"
+        :bimbinganKe="totalBimbingan - selectedBimbingan.index"
         :tanggalBimbingan="selectedBimbingan.tanggal_bimbingan"
         :bab="selectedBimbingan.bab"
         :catatan="selectedBimbingan.catatan"

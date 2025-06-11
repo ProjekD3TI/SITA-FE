@@ -163,7 +163,7 @@ const formatDate = (date) => {
           viewBox="0 0 24 24"
           stroke-width="1.5"
           stroke="currentColor"
-          class="w-5 h-5 sm:me-6 me-4 text-blackText hover:text-secondary"
+          class="w-5 h-5 bg-white me-4 sm:me-4 lg:me-6 text-blackText hover:text-secondary"
           @click="clear"
         >
           <path

@@ -94,12 +94,14 @@ function getStatusLabel(status) {
 const highestChapter = computed(() => {
   return dataShowBimbingan.value?.bab_tertinggi || 0;
 });
-
+const totalBimbingan = computed(() => listBimbingan.value.length);
 const buttonClasses = computed(() => {
   return dinilai.value ? "opacity-100" : "opacity-50";
 });
 const handleRowClick = (item) => {
-  selectedBimbingan.value = item;
+  const index = numberedBimbingan.value.findIndex((b) => b === item);
+  selectedBimbingan.value = { ...item, index };
+
   showBimbinganModal.value = true;
   nextTick(() => {
     modalDetailRef.value?.open();
@@ -219,7 +221,7 @@ const numberedBimbingan = computed(() => {
     <!-- Tabel Riwayat Bimbingan -->
     <div class="p-4 mt-4 bg-white card-rounded lg:p-8">
       <Table
-        :headers="['No', 'Tanggal', 'BAB', 'Catatan', 'Status']"
+        :headers="['Tanggal', 'BAB', 'Catatan', 'Status']"
         :items="numberedBimbingan"
         @rowClick="handleRowClick"
         :pagination="paginationShowBimbingan"
@@ -231,11 +233,11 @@ const numberedBimbingan = computed(() => {
       >
         <template #row="{ item }">
           <!-- Kolom No -->
-          <td
+          <!-- <td
             class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6 body5 sm:body4"
           >
             {{ item.rowNumber }}
-          </td>
+          </td> -->
 
           <!-- Kolom Tanggal -->
           <td
@@ -330,7 +332,7 @@ const numberedBimbingan = computed(() => {
   <ModalDetailBimbingan
     ref="modalDetailRef"
     v-if="showBimbinganModal && selectedBimbingan"
-    :bimbinganKe="selectedBimbingan.rowNumber"
+    :bimbinganKe="totalBimbingan - selectedBimbingan.index"
     :tanggalBimbingan="selectedBimbingan.tanggal_bimbingan"
     :bab="selectedBimbingan.bab"
     :catatan="selectedBimbingan.catatan"
