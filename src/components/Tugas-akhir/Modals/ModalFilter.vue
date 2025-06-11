@@ -1,28 +1,10 @@
 <template>
   <div class="relative">
-    <!-- Tombol untuk menampilkan modal -->
+    <!-- Tombol untuk mobile -->
     <ButtonPrimary
       size="sm"
       class="w-full py-2 font-normal sm:hidden"
-      ref="triggerRef"
-      v-if="showTrigger"
-      @click="toggleModal"
-      :variant="triggerVariant"
-      :leftIconPath="computedTriggerLeftIconPath"
-      :rightIconPath="computedTriggerRightIconPath"
-    >
-      {{ triggerText }}
-      <span
-        v-if="preselectedValues.length > 0"
-        class="ml-2 bg-secondary text-white rounded-full px-2 py-0.5 text-xs"
-      >
-        {{ preselectedValues.length }}
-      </span>
-    </ButtonPrimary>
-    <ButtonPrimary
-      size="md"
-      class="hidden w-full font-normal sm:py-3 sm:flex"
-      ref="triggerRef"
+      ref="triggerMobileRef"
       v-if="showTrigger"
       @click="toggleModal"
       :variant="triggerVariant"
@@ -38,19 +20,45 @@
       </span>
     </ButtonPrimary>
 
-    <!-- Desktop modal (teleport) -->
-    <teleport to="body" v-if="!isMobile">
+    <!-- Tombol untuk desktop -->
+    <ButtonPrimary
+      size="md"
+      class="hidden w-full font-normal sm:py-3 sm:flex"
+      ref="triggerDesktopRef"
+      v-if="showTrigger"
+      @click="toggleModal"
+      :variant="triggerVariant"
+      :leftIconPath="computedTriggerLeftIconPath"
+      :rightIconPath="computedTriggerRightIconPath"
+    >
+      {{ triggerText }}
+      <span
+        v-if="preselectedValues.length > 0"
+        class="ml-2 bg-secondary text-white rounded-full px-2 py-0.5 text-xs"
+      >
+        {{ preselectedValues.length }}
+      </span>
+    </ButtonPrimary>
+
+    <!-- Modal tunggal (teleport ke body) -->
+    <teleport to="body">
       <div v-if="showModal">
-        <!-- Overlay untuk menangkap klik di luar modal -->
+        <!-- Overlay -->
         <div class="fixed inset-0 z-40" @click="closeModal"></div>
+
         <!-- Modal content -->
         <div
           ref="modalRef"
-          class="fixed z-50 bg-white border shadow-lg p-6 card-rounded w-[95%] sm:w-[50vw] md:w-[40vw] lg:w-[30vw] xl:w-[25vw] max-h-[80vh] overflow-y-auto"
+          class="fixed z-50 bg-white border shadow-lg p-6 card-rounded max-h-[80vh] overflow-y-auto"
+          :class="
+            isMobile
+              ? 'w-[90vw] max-w-[420px]'
+              : 'w-[95%] sm:w-[50vw] md:w-[40vw] lg:w-[30vw] xl:w-[25vw]'
+          "
           :style="modalPositionStyle"
           @click.stop
         >
-          <!-- Header dengan judul dan tombol tutup -->
+          <!-- Header -->
           <div class="flex items-center justify-between w-full mb-4">
             <span class="body3-bold">Pilih {{ title }}</span>
           </div>
@@ -72,10 +80,7 @@
             </div>
           </div>
 
-          <!-- Footer dengan hint dan tombol terapkan -->
-          <div
-            class="absolute bottom-[72px] left-0 w-full border-t border-placeholder opacity-20"
-          ></div>
+          <!-- Footer -->
           <div class="flex items-center justify-between mt-6">
             <span class="body5 text-placeholder">{{ hint }}</span>
             <div class="flex gap-2">
@@ -87,51 +92,6 @@
         </div>
       </div>
     </teleport>
-
-    <!-- Mobile modal (no teleport, absolute under trigger) -->
-    <div v-if="isMobile && showModal" class="absolute left-0 right-0 z-50">
-      <div
-        ref="modalRef"
-        class="bg-white border shadow-lg p-6 card-rounded w-[85vw] sm:w-[50vw] md:w-[50vw] lg:w-[45vw] xl:w-[35vw] max-h-[80vh] overflow-y-auto"
-        @click.stop
-      >
-        <!-- Header dengan judul dan tombol tutup -->
-        <div class="flex items-center justify-between w-full mb-4">
-          <span class="body3-bold">Pilih {{ title }}</span>
-        </div>
-
-        <!-- Konten filter -->
-        <div class="flex flex-wrap gap-2 mt-4 max-h-[40vh] overflow-y-auto">
-          <div
-            v-for="(item, index) in items"
-            :key="index"
-            class="flex-grow px-4 py-2 text-center duration-200 border rounded-full cursor-pointer body5 active:scale-90"
-            :class="
-              isSelected(item.value || item)
-                ? 'border-secondary bg-secondary text-white hover:opacity-90'
-                : 'border-placeholder hover:bg-secondary hover:text-white hover:border-secondary'
-            "
-            @click="toggleSelection(item.value || item)"
-          >
-            <span>{{ item.label || item }}</span>
-          </div>
-        </div>
-
-        <!-- Footer dengan hint dan tombol terapkan -->
-        <div
-          class="absolute bottom-[72px] left-0 w-full border-t border-placeholder opacity-20"
-        ></div>
-        <div class="flex items-center justify-between mt-6">
-          <span class="body5 text-placeholder">{{ hint }}</span>
-          <div class="flex gap-2">
-            <ButtonPrimary variant="primary" size="md" @click="applyAndClose">
-              {{ buttonText }}
-            </ButtonPrimary>
-          </div>
-        </div>
-      </div>
-      <div class="fixed inset-0 z-40" @click="closeModal"></div>
-    </div>
   </div>
 </template>
 
@@ -226,6 +186,8 @@ const emit = defineEmits(["apply", "update:modelValue"]);
 // Refs
 const triggerRef = ref(null);
 const modalRef = ref(null);
+const triggerMobileRef = ref(null);
+const triggerDesktopRef = ref(null);
 
 // IMPORTANT: Define all reactive variables first
 const modalPositionStyle = ref({});
@@ -399,80 +361,115 @@ const applyAndClose = () => {
   showModal.value = false;
   // unlockScroll();
 };
-
+const windowWidth = ref(window.innerWidth);
 const isMobile = computed(() => window.innerWidth < 640);
-
+const handleResize = () => {
+  windowWidth.value = window.innerWidth;
+};
+onMounted(() => {
+  window.addEventListener("resize", handleResize);
+  // Inisialisasi nilai pertama
+  windowWidth.value = window.innerWidth;
+});
 const updateModalPosition = () => {
-  const triggerEl = triggerRef.value?.$el || triggerRef.value;
+  // Pilih trigger yang sesuai dengan mode saat ini
+  const triggerEl = isMobile.value
+    ? triggerMobileRef.value?.$el || triggerMobileRef.value
+    : triggerDesktopRef.value?.$el || triggerDesktopRef.value;
+
   const modalEl = modalRef.value;
-  if (!triggerEl || !modalEl || !triggerEl.getBoundingClientRect) return;
+  if (!triggerEl || !modalEl) return;
+  nextTick(() => {
+    const triggerRect = triggerEl.getBoundingClientRect();
+    const modalRect = modalEl.getBoundingClientRect();
 
-  const triggerRect = triggerEl.getBoundingClientRect();
-  const modalRect = modalEl.getBoundingClientRect();
+    if (isMobile.value) {
+      console.log("Mobile mode - Trigger position:", triggerRect); // Debug log
 
-  let top, left;
+      // Mobile: posisikan modal tepat di bawah tombol mobile
+      let top = triggerRect.bottom + 8;
+      let left = triggerRect.left;
+      let width = Math.max(triggerRect.width, 280);
 
-  // Pada mobile, modal fixed di bawah trigger, lebar penuh
-  if (isMobile.value) {
-    top = triggerRect.bottom + 8;
-    left = window.innerWidth / 2 - modalRect.width / 2;
-    // Pastikan tidak keluar layar
-    if (top + modalRect.height > window.innerHeight - 16) {
-      top = window.innerHeight - modalRect.height - 16;
+      // Adjust untuk layar mobile
+      if (left + width > window.innerWidth - 16) {
+        left = window.innerWidth - width - 16;
+      }
+      if (left < 16) {
+        left = 16;
+        width = Math.min(width, window.innerWidth - 32);
+      }
+
+      // Pastikan tidak keluar layar bawah
+      if (top + modalRect.height > window.innerHeight - 16) {
+        if (triggerRect.top - modalRect.height - 8 > 56) {
+          top = triggerRect.top - modalRect.height - 8;
+        } else {
+          top = Math.max(56, window.innerHeight - modalRect.height - 16);
+        }
+      }
+
+      modalPositionStyle.value = {
+        position: "fixed",
+        top: `${top}px`,
+        left: `${left}px`,
+        width: `${width}px`,
+        maxWidth: "90vw",
+        zIndex: 9999,
+      };
+      return;
+    }
+
+    // Desktop: posisi seperti biasa
+    let top, left;
+    switch (props.modalPosition) {
+      case "top":
+        top = triggerRect.top - modalRect.height - 8;
+        left = triggerRect.left;
+        break;
+      case "right":
+        top = triggerRect.top;
+        left = triggerRect.right + 8;
+        break;
+      case "left":
+        top = triggerRect.top;
+        left = triggerRect.left - modalRect.width - 8;
+        break;
+      case "bottom":
+      default:
+        top = triggerRect.bottom + 8;
+        left = triggerRect.left;
+        break;
+    }
+
+    // Adjust untuk desktop agar tidak keluar layar
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    if (left + modalRect.width > viewportWidth - 16) {
+      left = viewportWidth - modalRect.width - 16;
+    }
+    if (left < 16) left = 16;
+
+    if (top + modalRect.height > viewportHeight - 16) {
+      if (
+        props.modalPosition === "bottom" &&
+        triggerRect.top > modalRect.height
+      ) {
+        top = triggerRect.top - modalRect.height - 8;
+      } else {
+        top = viewportHeight - modalRect.height - 16;
+      }
     }
     if (top < 56) top = 56;
+
     modalPositionStyle.value = {
+      position: "fixed",
       top: `${top}px`,
-      left: `50%`,
-      transform: "translateX(-50%)",
+      left: `${left}px`,
+      zIndex: 9999,
     };
-    return;
-  }
-
-  // Desktop: posisi seperti biasa
-  switch (props.modalPosition) {
-    case "top":
-      top = triggerRect.top - modalRect.height - 8;
-      left = triggerRect.left;
-      break;
-    case "right":
-      top = triggerRect.top;
-      left = triggerRect.right + 8;
-      break;
-    case "left":
-      top = triggerRect.top;
-      left = triggerRect.left - modalRect.width - 8;
-      break;
-    case "bottom":
-    default:
-      top = triggerRect.bottom + 8;
-      left = triggerRect.left;
-      break;
-  }
-
-  // Adjust agar tidak keluar layar
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-  if (left + modalRect.width > viewportWidth - 16)
-    left = viewportWidth - modalRect.width - 16;
-  if (left < 16) left = 16;
-  if (top + modalRect.height > viewportHeight - 16) {
-    if (
-      props.modalPosition === "bottom" &&
-      triggerRect.top > modalRect.height
-    ) {
-      top = triggerRect.top - modalRect.height - 8;
-    } else {
-      top = viewportHeight - modalRect.height - 16;
-    }
-  }
-  if (top < 56) top = 56;
-
-  modalPositionStyle.value = {
-    top: `${top}px`,
-    left: `${left}px`,
-    transform: "",
-  };
+  });
 };
 
 // Watch untuk preselectedValues
@@ -511,20 +508,13 @@ watch(showModal, (value) => {
   if (value) {
     nextTick(() => {
       updateModalPosition();
-      // lockScroll();
-      // Tambahkan event listener untuk resize
+      // Event listeners
       window.addEventListener("resize", updateModalPosition);
-      // Tambahkan event listener untuk scroll
       window.addEventListener("scroll", updateModalPosition, true);
-      // Tambahkan event listener untuk Escape key
       document.addEventListener("keydown", handleKeyDown);
     });
   } else {
-    // Reset selection saat modal ditutup tanpa mengklik Apply
-    syncInternalValues();
-    // unlockScroll();
-
-    // Hapus event listener saat modal ditutup
+    // Cleanup
     window.removeEventListener("resize", updateModalPosition);
     window.removeEventListener("scroll", updateModalPosition, true);
     document.removeEventListener("keydown", handleKeyDown);
@@ -539,6 +529,15 @@ onBeforeUnmount(() => {
   // if (showModal.value) {
   //   unlockScroll();
   // }
+});
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", handleResize);
+});
+// Watch untuk perubahan mode mobile/desktop
+watch(isMobile, () => {
+  if (showModal.value) {
+    nextTick(() => updateModalPosition());
+  }
 });
 </script>
 

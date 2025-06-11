@@ -100,6 +100,7 @@ const filePerpanjanganMasaStudi = ref(null);
 const minimalBimbingan = computed(() => {
   return totalBimbingan.value >= 9;
 });
+
 const wajibUploadPerpanjanganMasaStudi = computed(() => {
   // statusBerkasSuratPerpanjanganMasaStudi: 2 = DITOLAK, 1 = DITERIMA, 0/null = BELUM DIPROSES
   return statusBerkasSuratPerpanjanganMasaStudi.value === STATUS.REJECTED;
@@ -416,6 +417,17 @@ watch(
             Bimbingan
           </Button>
         </router-link>
+      </div>
+      <div
+        v-if="dataTugasAkhir?.tugas_akhir?.has_dosen_penguji == false"
+        class="h-[80vh] flex flex-col justify-center items-center gap-4"
+      >
+        <h1
+          class="text-center heading5 sm:heading4 lg:heading3 text-placeholder"
+        >
+          Admin belum memplotting dosen penguji untuk anda, silahkan hubungi
+          Admin untuk memplotting dosen penguji anda.
+        </h1>
       </div>
 
       <div
