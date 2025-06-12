@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
@@ -7,7 +7,20 @@ import VueCookies from "vue-cookies";
 /**
  * Composable untuk mengelola data ujian tugas akhir untuk dosen
  */
+
+const dataBerkasTA = ref(null);
+
+export const fileNaskahTA = computed(() => {
+  console.log("Computing fileNaskahTA for Dosen:", dataBerkasTA.value);
+  return (
+    dataBerkasTA.value?.berkas?.find(
+      (berkas) => berkas.nama_berkas === "Naskah Tugas Akhir"
+    )?.download_url || ""
+  );
+});
+
 export async function getFileBlobUrl(downloadUrl) {
+  console.log("Fetching PDF blob for URL:", downloadUrl);
   const authToken = VueCookies.get("auth_token");
   const response = await fetch(downloadUrl, {
     headers: {
@@ -17,6 +30,7 @@ export async function getFileBlobUrl(downloadUrl) {
   });
   if (!response.ok) throw new Error("Gagal mengambil file");
   const blob = await response.blob();
+  console.log("Blob created successfully:", blob.size, "bytes");
   return URL.createObjectURL(blob);
 }
 
@@ -256,6 +270,8 @@ export function useUjianTAForDosen() {
     detailUjian,
     loadingDetail,
     errorDetail,
+    dataBerkasTA,
+    fileNaskahTA,
     getFileBlobUrl,
     fetchDetailUjian,
     refreshDetailUjian,

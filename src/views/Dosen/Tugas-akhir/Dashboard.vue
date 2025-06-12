@@ -241,7 +241,9 @@ const PermintaanBimbingan = computed(() => {
             <template #empty>
               <tr>
                 <td colspan="4">
-                  <div class="text-center text-placeholder py-6 sm:py-8">
+                  <div
+                    class="text-center text-placeholder py-6 sm:py-8 body2-bold"
+                  >
                     Tidak ada data
                   </div>
                 </td>
@@ -250,8 +252,11 @@ const PermintaanBimbingan = computed(() => {
           </Table>
         </div>
       </div>
-
-      <!-- Permintaan Bimbingan Card -->
+    </div>
+    <!-- Permintaan Bimbingan Card -->
+    <div
+      class="flex flex-col lg:flex-row flex-wrap gap-3 sm:gap-4 mt-3 sm:mt-4"
+    >
       <div
         class="flex-grow p-3 sm:p-4 lg:p-6 bg-white card-rounded shadow-custom w-full lg:w-auto"
       >
@@ -319,7 +324,9 @@ const PermintaanBimbingan = computed(() => {
               <template v-else>
                 <tr>
                   <td colspan="2">
-                    <div class="text-center text-placeholder py-6 sm:py-8">
+                    <div
+                      class="text-center text-placeholder py-6 sm:py-8 body2-bold"
+                    >
                       Tidak ada permintaan
                     </div>
                   </td>

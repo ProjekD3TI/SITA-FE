@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 import router from "@/router";
 import { useToast } from "vue-toastification";
@@ -18,6 +18,7 @@ import Loading from "@/components/Loading.vue";
 import {
   useUjianTAForDosen,
   getFileBlobUrl,
+  fileNaskahTA,
 } from "@/services/TugasAkhir/Dosen/ujianTA.js";
 
 // Setup
@@ -31,6 +32,7 @@ const {
   errorDetail: error,
   fetchDetailUjian,
   refreshDetailUjian,
+  dataBerkasTA,
 } = useUjianTAForDosen();
 
 // App State
@@ -239,8 +241,15 @@ async function loadPdfPreview() {
   loadingPdf.value = true;
   errorPdf.value = null;
   try {
-    if (pdfUrl.value) {
-      pdfBlobUrl.value = await getFileBlobUrl(pdfUrl.value);
+    if (fileNaskahTA.value) {
+      console.log("Loading PDF preview for:", fileNaskahTA.value);
+      pdfBlobUrl.value = await getFileBlobUrl(fileNaskahTA.value);
+      console.log(
+        "PDF blob URL created:",
+        pdfBlobUrl.value ? "success" : "failed"
+      );
+    } else {
+      console.log("No fileNaskahTA available");
     }
   } catch (err) {
     console.error("Error loading PDF:", err);
@@ -277,6 +286,27 @@ const goToEditNilai = () => {
 // ==================
 // LIFECYCLE HOOKS
 // ==================
+
+// Watch for fileNaskahTA changes to load PDF preview - matches student implementation
+watchEffect(() => {
+  if (detailUjian.value?.berkas) {
+    // Map the berkas data structure to match what fileNaskahTA expects
+    dataBerkasTA.value = {
+      berkas: detailUjian.value.berkas.map((berkas) => ({
+        nama_berkas: berkas.nama_berkas,
+        download_url: berkas.download_url,
+      })),
+    };
+    console.log("Updated dataBerkasTA:", dataBerkasTA.value);
+  }
+});
+
+watchEffect(() => {
+  if (fileNaskahTA.value) {
+    console.log("fileNaskahTA changed, loading preview");
+    loadPdfPreview();
+  }
+});
 
 onMounted(() => {
   const tugasAkhirId = route.params.tugas_akhir_id;
@@ -319,7 +349,7 @@ onMounted(() => {
       <div class="max-w-screen-2xl mx-auto">
         <div class="flex flex-col md:flex-row">
           <!-- PDF Preview (Left Side) -->
-          <div class="basis-7/12 md:pe-8 order-last md:order-first">
+          <div class="order-last basis-7/12 md:pe-8 md:order-first">
             <div v-if="loadingPdf" class="py-8 text-center">Memuat file...</div>
             <div v-else-if="errorPdf" class="py-8 text-center text-red-500">
               {{ errorPdf }}
@@ -339,7 +369,7 @@ onMounted(() => {
               </p>
             </object>
             <div v-else class="py-8 text-center">
-              Tidak ada file untuk ditampilkan.
+              Tidak ada file naskah untuk ditampilkan.
             </div>
           </div>
 
