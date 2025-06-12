@@ -910,6 +910,7 @@ export default {
         return false;
       }
     },
+    // Add this to your existing loadUserData method
     loadUserData() {
       try {
         const encryptedUserData = VueCookies.get("user_session");
@@ -918,6 +919,12 @@ export default {
           this.form.nama_pelapor = userData.name || '';
           this.form.nim_pelapor = userData.nim || userData.nik || '';
           this.form.nomor_telepon = userData.no_telp || '';
+          
+          // Auto-select profession based on email domain
+          if (userData.email && userData.email.includes('@student')) {
+            this.form.profesi = 'Mahasiswa';
+            console.log('Auto-selected profession: Mahasiswa based on student email');
+          }
         }
       } catch (error) {
         console.error('Error loading user data:', error);

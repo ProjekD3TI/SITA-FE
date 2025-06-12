@@ -238,12 +238,22 @@ export default {
     },
     methods: {
         loadUserData() {
-            const encryptedUserData = VueCookies.get("user_session");
-            if (encryptedUserData) {
-                const userData = decryptData(encryptedUserData);
-                this.formData.nama_pelapor = userData.name || '';
-                this.formData.ni_pelapor = userData.nim || userData.nik || '';
-                this.formData.nomor_telepon = userData.no_telp || '';
+            try {
+                const encryptedUserData = VueCookies.get("user_session");
+                if (encryptedUserData) {
+                    const userData = decryptData(encryptedUserData);
+                    this.form.nama_pelapor = userData.name || '';
+                    this.form.nim_pelapor = userData.nim || userData.nik || '';
+                    this.form.nomor_telepon = userData.no_telp || '';
+                
+                    // Auto-select profession based on email domain
+                    if (userData.email && userData.email.includes('@student')) {
+                        this.form.profesi = 'Mahasiswa';
+                        console.log('Auto-selected profession: Mahasiswa based on student email');
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
             }
         },
         async fetchCategories() {

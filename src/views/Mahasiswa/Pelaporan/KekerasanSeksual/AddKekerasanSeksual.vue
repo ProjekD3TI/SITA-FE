@@ -951,6 +951,12 @@ export default {
           this.report.nim = userData.nim || userData.nik || '';
           this.report.phone = userData.no_telp || '';
           
+          // Auto-select profession based on email domain
+          if (userData.email && userData.email.includes('@student')) {
+            this.report.profesi = 'Mahasiswa';
+            console.log('Auto-selected profession: Mahasiswa based on student email');
+          }
+          
           // Update current user display if available
           if (userData.username) {
             this.currentUser = userData.username;

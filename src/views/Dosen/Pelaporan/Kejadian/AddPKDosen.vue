@@ -701,12 +701,33 @@ export default {
   },
   methods: {
     loadUserData() {
-      const encryptedUserData = VueCookies.get("user_session");
-      if (encryptedUserData) {
-        const userData = decryptData(encryptedUserData);
-        this.form.nama_pelapor = userData.name || '';
-        this.form.ni_pelapor = userData.nim || userData.nik || '';
-        this.form.nomor_telepon = userData.no_telp || '';
+      try {
+        const encryptedUserData = VueCookies.get("user_session");
+        if (encryptedUserData) {
+          const userData = decryptData(encryptedUserData);
+          
+          // Set basic user information
+          this.form.nama_pelapor = userData.name || (userData.dosen ? userData.dosen.name : '');
+          this.form.ni_pelapor = userData.nim || userData.nik || (userData.dosen ? userData.dosen.nik : '');
+          this.form.nomor_telepon = userData.no_telp || (userData.dosen ? userData.dosen.no_telp : '');
+          
+          // Check for lecturer role and set profession to "Dosen"
+          if (userData.jabatan_sekarang && userData.jabatan_sekarang.name === 'Dosen') {
+            this.form.profesi = 'Dosen';
+            console.log('Auto-selected profession: Dosen based on user role');
+          }
+          // Check if dosen object exists (alternative way to identify a lecturer)
+          else if (userData.dosen) {
+            this.form.profesi = 'Dosen';
+            console.log('Auto-selected profession: Dosen based on dosen object');
+          }
+          
+          console.log('User data loaded successfully');
+        } else {
+          console.log('No user session found');
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
       }
     },
 
