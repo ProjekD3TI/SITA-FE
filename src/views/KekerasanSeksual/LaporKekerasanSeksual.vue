@@ -453,6 +453,47 @@
                       </div>
                     </div>
                   </div>
+ 
+                  <!-- Rentang Umur Terduga -->
+                  <div class="mb-4">
+                    <label :for="'terduga_umur_terlapor_' + index" class="block text-sm font-medium text-gray-700 mb-2">Rentang Umur <span class="text-red-500">*</span></label>
+                    <div class="space-y-2 bg-gray-50 p-3 rounded-md border border-gray-300">
+                      <div class="flex items-center">
+                        <input
+                          type="radio"
+                          :id="'terlapor-below20-' + index"
+                          :name="'umur_terlapor_' + index"
+                          v-model="terduga.umur_terlapor"
+                          value="<20"
+                          class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
+                          required
+                        />
+                        <label :for="'terlapor-below20-' + index" class="ml-2 text-sm text-gray-700">Kurang dari 20 tahun</label>
+                      </div>
+                      <div class="flex items-center">
+                        <input
+                          type="radio"
+                          :id="'terlapor-20to40-' + index"
+                          :name="'umur_terlapor_' + index"
+                          v-model="terduga.umur_terlapor"
+                          value="20-40"
+                          class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
+                        />
+                        <label :for="'terlapor-20to40-' + index" class="ml-2 text-sm text-gray-700">20 - 40 tahun</label>
+                      </div>
+                      <div class="flex items-center">
+                        <input
+                          type="radio"
+                          :id="'terlapor-above40-' + index"
+                          :name="'umur_terlapor_' + index"
+                          v-model="terduga.umur_terlapor"
+                          value="40<"
+                          class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
+                        />
+                        <label :for="'terlapor-above40-' + index" class="ml-2 text-sm text-gray-700">Lebih dari 40 tahun</label>
+                      </div>
+                    </div>
+                  </div>
                   
                   <!-- Status Warga -->
                   <div class="mb-4">
