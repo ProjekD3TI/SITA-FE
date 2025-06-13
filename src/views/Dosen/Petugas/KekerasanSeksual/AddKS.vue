@@ -816,19 +816,53 @@ export default {
     // Data loading methods
     loadUserData() {
       try {
+        // Set current date and time dynamically in UTC
+        const now = new Date();
+        // Format as YYYY-MM-DD HH:MM:SS in UTC
+        const year = now.getUTCFullYear();
+        const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(now.getUTCDate()).padStart(2, '0');
+        const hours = String(now.getUTCHours()).padStart(2, '0');
+        const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+        const seconds = String(now.getUTCSeconds()).padStart(2, '0');
+        
+        this.currentDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        
         const encryptedUserData = VueCookies.get("user_session");
         if (encryptedUserData) {
           const userData = decryptData(encryptedUserData);
           this.formData.nama_pelapor = userData.name || '';
           this.formData.nim_pelapor = userData.nim || userData.nik || '';
           this.formData.nomor_telepon = userData.no_telp || '';
-          console.log("User data loaded successfully");
+          
+          // Check email domain to determine role
+          const email = userData.email || (userData.dosen ? userData.dosen.email : '');
+          
+          // If email exists and does NOT contain "@student", set role as "Dosen"
+          if (email && !email.includes('@student')) {
+            this.formData.profesi = 'Dosen';
+          }
+          // Check for other indicators of lecturer role
+          else if (userData.jabatan_sekarang && userData.jabatan_sekarang.name === 'Dosen') {
+            this.formData.profesi = 'Dosen';
+          }
+          else if (userData.dosen) {
+            this.formData.profesi = 'Dosen';
+          }
+          // Check punya_jabatan array for active Dosen role
+          else if (userData.punya_jabatan && Array.isArray(userData.punya_jabatan)) {
+            const dosenRole = userData.punya_jabatan.find(jabatan => 
+              jabatan.name === 'Dosen' && jabatan.is_active === 1
+            );
+            
+            if (dosenRole) {
+              this.formData.profesi = 'Dosen';
+            }
+          }
         } else {
-          console.log("No user data found in cookies, using default data");
           this.setDefaultUserData();
         }
       } catch (error) {
-        console.error("Error loading user data:", error);
         this.setDefaultUserData();
       }
     },
