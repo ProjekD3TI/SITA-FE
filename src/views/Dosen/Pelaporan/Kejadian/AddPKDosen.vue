@@ -705,24 +705,46 @@ export default {
         const encryptedUserData = VueCookies.get("user_session");
         if (encryptedUserData) {
           const userData = decryptData(encryptedUserData);
+          console.log('Loaded user data:', userData);
           
-          // Set basic user information
+          // Set basic user information - keep original variable names
           this.form.nama_pelapor = userData.name || (userData.dosen ? userData.dosen.name : '');
           this.form.ni_pelapor = userData.nim || userData.nik || (userData.dosen ? userData.dosen.nik : '');
           this.form.nomor_telepon = userData.no_telp || (userData.dosen ? userData.dosen.no_telp : '');
           
-          // Check for lecturer role and set profession to "Dosen"
-          if (userData.jabatan_sekarang && userData.jabatan_sekarang.name === 'Dosen') {
+          // Check email domain to determine role
+          const email = userData.email || (userData.dosen ? userData.dosen.email : '');
+          
+          // If email exists and does NOT contain "@student", set role as "Dosen"
+          if (email && !email.includes('@student')) {
+            this.form.profesi = 'Dosen';
+            console.log('Auto-selected profession: Dosen based on non-student email domain');
+          }
+          // Fallback to previous checks if email check doesn't trigger
+          else if (userData.jabatan_sekarang && userData.jabatan_sekarang.name === 'Dosen') {
             this.form.profesi = 'Dosen';
             console.log('Auto-selected profession: Dosen based on user role');
           }
-          // Check if dosen object exists (alternative way to identify a lecturer)
           else if (userData.dosen) {
             this.form.profesi = 'Dosen';
             console.log('Auto-selected profession: Dosen based on dosen object');
           }
+          // Check punya_jabatan array for active Dosen role
+          else if (userData.punya_jabatan && Array.isArray(userData.punya_jabatan)) {
+            const dosenRole = userData.punya_jabatan.find(jabatan => 
+              jabatan.name === 'Dosen' && jabatan.is_active === 1
+            );
+            
+            if (dosenRole) {
+              this.form.profesi = 'Dosen';
+              console.log('Auto-selected profession: Dosen based on active role in punya_jabatan');
+            }
+          }
           
-          console.log('User data loaded successfully');
+          // Log the values for debugging
+          console.log('User data loaded - Name:', this.form.nama_pelapor, 
+                    'NI/NIK:', this.form.ni_pelapor, 
+                    'Profesi:', this.form.profesi);
         } else {
           console.log('No user session found');
         }

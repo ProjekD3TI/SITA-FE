@@ -30,9 +30,6 @@
                         title="Lengkapi atau ubah data laporan">
                         <i class="fas fa-edit"></i> <span>Edit Laporan</span>
                     </button>
-                    <div :class="['status-badge', laporan.status]">
-                        {{ formatStatus(laporan.status) }}
-                    </div>
                 </div>
                 <div :class="['status-badge', laporan.status]">
                     {{ formatStatus(laporan.status) }}
@@ -1010,17 +1007,39 @@ export default {
 </script>
 
 <style scoped>
-/* Your CSS styles remain unchanged */
+/* Main container */
 .detail-pk-container {
     padding: 24px;
     max-width: 1200px;
     margin: 0 auto;
 }
 
+/* Header section */
 .detail-header {
     display: flex;
     align-items: center;
     margin-bottom: 24px;
+}
+
+.header-section {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.header-section .flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.header-section .left-content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .back-button {
@@ -1051,6 +1070,7 @@ export default {
     flex: 1;
 }
 
+/* Loading and Error states */
 .loading-container, .error-container {
     display: flex;
     flex-direction: column;
@@ -1102,10 +1122,12 @@ export default {
     background-color: #dc2626;
 }
 
+/* Detail content */
 .detail-content {
     margin-top: 24px;
 }
 
+/* Status header */
 .status-header {
     display: flex;
     justify-content: space-between;
@@ -1122,13 +1144,67 @@ export default {
     border-radius: 6px;
 }
 
-.status-badge {
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    font-weight: 500;
+.action-btn-container {
+    margin-left: auto; /* Push to right */
+    display: flex;
+    align-items: center;
+    margin-right: 16px; /* Add space between button and status badge */
 }
 
+.edit-button {
+    background-color: #3490dc;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.edit-button:hover {
+    background-color: #2779bd;
+}
+
+.edit-button i {
+    font-size: 1rem;
+}
+
+/* Status badge */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+/* Status colors */
+.unverified {
+    background-color: #fff3e0;
+    color: #ef6c00;
+}
+
+.verified {
+    background-color: #e0f2fe;
+    color: #0369a1;
+}
+
+.rejected {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.finished {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+/* Card styling */
 .detail-card {
     background-color: white;
     border-radius: 8px;
@@ -1181,20 +1257,43 @@ export default {
     white-space: pre-line;
 }
 
-.image-container {
+/* Image gallery */
+.image-gallery {
     margin-top: 20px;
 }
 
-.evidence-image {
-    max-width: 100%;
-    max-height: 400px;
+.gallery-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.image-item {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
     border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.evidence-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     cursor: pointer;
     transition: transform 0.2s;
 }
 
 .evidence-image:hover {
-    transform: scale(1.02);
+    transform: scale(1.05);
 }
 
 .image-caption {
@@ -1204,6 +1303,76 @@ export default {
     text-align: center;
 }
 
+/* Fullscreen modal for images */
+.fullscreen-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.fullscreen-image {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+}
+
+.close-modal {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 32px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* Image navigation */
+.image-navigation {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-button {
+    background-color: rgba(255, 255, 255, 0.3);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin: 0 10px;
+    transition: background-color 0.2s;
+}
+
+.nav-button:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.image-counter {
+    color: white;
+    font-size: 16px;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 5px 10px;
+    border-radius: 15px;
+}
+
+/* Detail cards layout */
 .detail-cards-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1240,13 +1409,93 @@ export default {
     color: #111827;
 }
 
+/* Person items (terlapor/saksi) */
+.person-item {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.person-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.person-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 16px;
+    padding-left: 8px;
+    border-left: 3px solid #3b82f6;
+}
+
+.info-item {
+    margin-bottom: 12px;
+}
+
+.info-item .label {
+    color: #6b7280;
+    font-size: 14px;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.info-item .value {
+    color: #111827;
+    font-weight: 500;
+}
+
+/* Tanggapan section */
+.card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.tanggapan-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tanggapan-item {
+    border-left: 3px solid #3b82f6;
+    padding-left: 16px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    background-color: #f9fafb;
+    border-radius: 0 6px 6px 0;
+}
+
+.tanggapan-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.tanggapan-user {
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.tanggapan-time {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
 .tanggapan-text {
     font-size: 1rem;
     line-height: 1.6;
     color: #374151;
     white-space: pre-line;
+    margin: 0;
 }
 
+/* Action buttons */
 .action-buttons {
     display: flex;
     flex-wrap: wrap;
@@ -1305,45 +1554,7 @@ export default {
     background-color: #4b5563;
 }
 
-.card {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-/* Full image modal */
-.fullscreen-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.fullscreen-image {
-    max-width: 90%;
-    max-height: 90%;
-    object-fit: contain;
-}
-
-.close-modal {
-    position: absolute;
-    top: 20px;
-    right: 30px;
-    color: white;
-    font-size: 32px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-/* Tanggapan modal */
+/* Modal */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -1435,190 +1646,6 @@ export default {
     background-color: #1d4ed8;
 }
 
-/* Status badge colors */
-.unverified {
-    background-color: #f3f4f6;
-    color: #4b5563;
-}
-
-.verified {
-    background-color: #dbeafe;
-    color: #2563eb;
-}
-
-.processed {
-    background-color: #fef3c7;
-    color: #d97706;
-}
-
-.rejected {
-    background-color: #fee2e2;
-    color: #dc2626;
-}
-
-/* Add to the Status badge colors section */
-.finished {
-    background-color: #d1fae5;
-    color: #059669;
-}
-
-/* Tanggapan styling */
-.tanggapan-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.tanggapan-item {
-    border-left: 3px solid #3b82f6;
-    padding-left: 16px;
-    padding-top: 8px;
-    padding-bottom: 8px;
-    background-color: #f9fafb;
-    border-radius: 0 6px 6px 0;
-}
-
-.tanggapan-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-}
-
-.tanggapan-user {
-    font-weight: 600;
-    color: #4b5563;
-}
-
-.tanggapan-time {
-    font-size: 0.875rem;
-    color: #6b7280;
-}
-
-.tanggapan-text {
-    font-size: 1rem;
-    line-height: 1.6;
-    color: #374151;
-    white-space: pre-line;
-    margin: 0;
-}
-
-/* Add these styles to the <style> section */
-.person-item {
-    margin-bottom: 24px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.person-item:last-child {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
-}
-
-.person-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #4b5563;
-    margin-bottom: 16px;
-    padding-left: 8px;
-    border-left: 3px solid #3b82f6;
-}
-
-.info-item {
-    margin-bottom: 12px;
-}
-
-.info-item .label {
-    color: #6b7280;
-    font-size: 14px;
-    margin-bottom: 4px;
-    font-weight: 500;
-}
-
-.info-item .value {
-    color: #111827;
-    font-weight: 500;
-}
-
-/* Tambahkan CSS berikut ke bagian style */
-/* CSS untuk image gallery */
-.image-gallery {
-    margin-top: 20px;
-}
-
-.gallery-title {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 12px;
-}
-
-.image-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
-    margin-bottom: 10px;
-}
-
-.image-item {
-    position: relative;
-    aspect-ratio: 1;
-    overflow: hidden;
-    border-radius: 6px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.evidence-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.evidence-image:hover {
-    transform: scale(1.05);
-}
-
-/* CSS untuk navigasi image fullscreen */
-.image-navigation {
-    position: absolute;
-    bottom: 20px;
-    left: 0;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.nav-button {
-    background-color: rgba(255, 255, 255, 0.3);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    margin: 0 10px;
-    transition: background-color 0.2s;
-}
-
-.nav-button:hover {
-    background-color: rgba(255, 255, 255, 0.5);
-}
-
-.image-counter {
-    color: white;
-    font-size: 16px;
-    background-color: rgba(0, 0, 0, 0.5);
-    padding: 5px 10px;
-    border-radius: 15px;
-}
-
 /* Responsive design */
 @media (max-width: 768px) {
     .detail-cards-row {
@@ -1633,38 +1660,5 @@ export default {
         width: 100%;
         justify-content: center;
     }
-}
-
-.action-btn-container {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.edit-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #3498db;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.edit-button:hover {
-    background-color: #2980b9;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.edit-button i {
-    margin-right: 8px;
-    font-size: 16px;
 }
 </style>

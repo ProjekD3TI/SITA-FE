@@ -952,20 +952,68 @@ export default {
     
     loadUserData() {
       try {
+        // Set current date and time dynamically
+        const now = new Date();
+        this.currentDateTime = now.toISOString().slice(0, 19).replace('T', ' '); // Format: YYYY-MM-DD HH:MM:SS
+        this.currentUser = 'miftahul01'; // Current user's login
+        
         const encryptedUserData = VueCookies.get("user_session");
         if (encryptedUserData) {
           const userData = decryptData(encryptedUserData);
+          console.log('Loaded user data:', userData);
+          
+          // Set basic user data
           this.report.reporterName = userData.name || 'Miftahul';
           this.report.nim = userData.nim || userData.nik || 'miftahul01judul';
           this.report.phone = userData.no_telp || '';
-          this.currentUser = userData.username || 'miftahul01judul';
+          this.currentUser = userData.username || 'miftahul01';
+          
+          // Check email domain to determine role and set profession
+          const email = userData.email || (userData.dosen ? userData.dosen.email : '');
+          
+          // IMPORTANT FIX: Use this.report.profesi instead of this.form.profesi
+          // If email exists and does NOT contain "@student", set role as "Dosen"
+          if (email && !email.includes('@student')) {
+            this.report.profesi = 'Dosen';
+            console.log('Auto-selected profession: Dosen based on non-student email domain');
+          }
+          // Fallback to other checks
+          else if (userData.jabatan_sekarang && userData.jabatan_sekarang.name === 'Dosen') {
+            this.report.profesi = 'Dosen';
+            console.log('Auto-selected profession: Dosen based on user role');
+          }
+          else if (userData.dosen) {
+            this.report.profesi = 'Dosen';
+            console.log('Auto-selected profession: Dosen based on dosen object');
+          }
+          // Check punya_jabatan array for active Dosen role
+          else if (userData.punya_jabatan && Array.isArray(userData.punya_jabatan)) {
+            const dosenRole = userData.punya_jabatan.find(jabatan => 
+              jabatan.name === 'Dosen' && jabatan.is_active === 1
+            );
+            
+            if (dosenRole) {
+              this.report.profesi = 'Dosen';
+              console.log('Auto-selected profession: Dosen based on active role in punya_jabatan');
+            }
+          }
+          
+          // Force Vue to recognize changes
+          this.$nextTick(() => {
+            console.log('After nextTick - Profesi:', this.report.profesi);
+          });
+          
+          console.log('User data loaded successfully - DateTime:', this.currentDateTime);
+          
         } else {
+          // Default values if no user session
           this.report.reporterName = 'Miftahul';
           this.report.nim = 'miftahul01judul';
           this.report.phone = '';
         }
       } catch (error) {
         console.error('Error loading user data:', error);
+        // Default values on error
         this.report.reporterName = 'Miftahul';
         this.report.nim = 'miftahul01judul';
         this.report.phone = '';
