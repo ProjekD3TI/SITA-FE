@@ -5,7 +5,7 @@
       v-if="isSidebarReady"
       id="dosen-sidebar"
       :class="{
-        'translate-x-0 w-64': showNavbar,
+        'translate-x-0 w-60': showNavbar,
         '-translate-x-full lg:translate-x-0 w-20': !showNavbar,
       }"
       class="fixed top-0 left-0 z-50 h-full duration-200 transform bg-white shadow-md"
@@ -108,7 +108,7 @@
 
       <!-- Dashboard Content -->
       <main
-        :class="{ 'lg:ml-64': showNavbar, 'lg:ml-20': !showNavbar }"
+        :class="{ 'lg:ml-60': showNavbar, 'lg:ml-20': !showNavbar }"
         class="flex-1 p-4 mt-16 ml-0 duration-200 bg-gray-100 sm:p-6"
       >
         <router-view />

@@ -192,7 +192,9 @@ watch(
       v-model:selected="selectedTab"
     >
       <template #1>
-        <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
+        <div
+          class="flex items-center justify-between gap-2 mb-2 sm:mb-4 lg:gap-4"
+        >
           <ModalFilter
             title="Kategori"
             :items="categories"
@@ -226,28 +228,28 @@ watch(
           <template #row="{ item }">
             <!-- Kolom NIM -->
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white rounded-l-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.mahasiswa?.nim }}
             </td>
 
             <!-- Kolom Nama -->
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.mahasiswa?.name }}
             </td>
 
             <!-- Kolom Judul Proposal -->
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.kategori?.nama_kategori }}
             </td>
 
             <!-- Kolom Nilai -->
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white rounded-r-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
               :class="
                 item.dosen_pembimbing?.dosen_pembimbing_id == null
                   ? 'text-secondary'
@@ -266,7 +268,9 @@ watch(
         </Table>
       </template>
       <template #2>
-        <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
+        <div
+          class="flex items-center justify-between gap-2 mb-2 sm:mb-4 lg:gap-4"
+        >
           <ModalFilter
             title="Kategori"
             :items="categories"
@@ -307,34 +311,34 @@ watch(
           <template #row="{ item }">
             <!-- Kolom NIM -->
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white rounded-l-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.mahasiswa?.nim }}
             </td>
 
             <!-- Kolom Nama -->
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.mahasiswa?.name }}
             </td>
 
             <!-- Kolom Judul Proposal -->
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.kategori?.nama_kategori }}
             </td>
 
             <!-- Kolom Nilai -->
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.dosen_pembimbing?.name }}
             </td>
 
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body5 sm:body4"
+              class="px-3 py-2 border-r border-white rounded-r-lg sm:py-3 sm:px-6 body5 sm:body4"
               :class="
                 item.jumlah_bimbingan == null ||
                 item.jumlah_bimbingan === undefined ||

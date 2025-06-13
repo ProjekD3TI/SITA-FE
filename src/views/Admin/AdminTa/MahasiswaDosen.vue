@@ -274,7 +274,9 @@ function handleTabChanged(tabId) {
   >
     <!-- === TAB 1: MAHASISWA === -->
     <template #tab1>
-      <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
+      <div
+        class="flex items-center justify-between gap-2 mb-2 sm:mb-4 lg:gap-4"
+      >
         <ModalFilter
           title="Status"
           :items="filterOptionsMahasiswa"
@@ -312,21 +314,28 @@ function handleTabChanged(tabId) {
         "
       >
         <template #row="{ item }">
-          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
             {{ item.name }}
           </td>
-          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
             {{ item.nim }}
           </td>
-          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
             {{ item.angkatan }}
           </td>
-          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
             {{ item.email }}
           </td>
-          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
             <StatusLabel
-              class="w-fit"
+              class="w-fit sm:hidden"
+              :status="getStatusClass(item.akses_ta)"
+              :label="getStatusLabel(item.akses_ta)"
+              :customLabel="true"
+              size="sm"
+            />
+            <StatusLabel
+              class="hidden w-fit sm:flex"
               :status="getStatusClass(item.akses_ta)"
               :label="getStatusLabel(item.akses_ta)"
               :customLabel="true"
@@ -374,18 +383,25 @@ function handleTabChanged(tabId) {
         "
       >
         <template #row="{ item }">
-          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
             {{ item.name }}
           </td>
-          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
             {{ item.nik }}
           </td>
-          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
             {{ item.email }}
           </td>
-          <td class="px-3 py-3 sm:px-6 body5 sm:body4 text-blackText">
+          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
             <StatusLabel
-              class="w-fit"
+              class="w-fit sm:hidden"
+              :status="getStatusClass(item.akses_ta)"
+              :label="getStatusLabel(item.akses_ta)"
+              :customLabel="true"
+              size="sm"
+            />
+            <StatusLabel
+              class="hidden w-fit sm:flex"
               :status="getStatusClass(item.akses_ta)"
               :label="getStatusLabel(item.akses_ta)"
               :customLabel="true"

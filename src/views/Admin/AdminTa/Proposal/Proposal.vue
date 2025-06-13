@@ -56,7 +56,7 @@ const toast = useToast();
 const searchQueryPengajuan = ref("");
 const searchQuerySeminar = ref("");
 const selectedStatusesPengajuan = ref([]);
-const selectedCategoriesSeminar = ref([]);
+const selectedStatusesSeminar = ref([]);
 
 const currentPagePendaftar = ref(1);
 const currentPageSeminar = ref(1);
@@ -86,13 +86,16 @@ const statuses = [
   { value: "0", label: "Menunggu" },
   { value: "2", label: "Ditolak" },
 ];
-
-const categories = computed(() => {
-  return (dataTabelSeminarProposal.value?.list_kategori || []).map((cat) => ({
-    value: String(cat.kategori_id),
-    label: cat.nama_kategori,
-  }));
-});
+const isDinilai = [
+  { value: "sudah", label: "Sudah Dinilai" },
+  { value: "belum", label: "Belum Dinilai" },
+];
+// const categories = computed(() => {
+//   return (dataTabelSeminarProposal.value?.list_kategori || []).map((cat) => ({
+//     value: String(cat.kategori_id),
+//     label: cat.nama_kategori,
+//   }));
+// });
 
 // Helper untuk status
 const getStatusClass = (status) => {
@@ -183,7 +186,7 @@ function onSearchSeminar({ value }) {
   fetchSeminarProposal(
     1,
     value,
-    getSelectedKategoriLabel(selectedCategoriesSeminar.value)
+    getSelectedKategoriLabel(selectedStatusesSeminar.value)
   );
 }
 
@@ -199,10 +202,10 @@ function handleFilterPengajuan({ values }) {
 }
 // Handler filter kategori seminar
 function handleFilterSeminar({ values }) {
-  selectedCategoriesSeminar.value = values;
+  selectedStatusesSeminar.value = values;
   currentPageSeminar.value = 1;
-  const kategoriStr = getSelectedKategoriLabel(selectedCategoriesSeminar.value);
-  fetchSeminarProposal(1, searchQuerySeminar.value, kategoriStr);
+  // Kirim ke parameter ke-3 (statusNilai)
+  fetchSeminarProposal(1, searchQuerySeminar.value, values[0] || "");
 }
 
 // Tab change reset
@@ -212,7 +215,7 @@ function handleTabChange(tabId) {
   searchQueryPengajuan.value = "";
   searchQuerySeminar.value = "";
   selectedStatusesPengajuan.value = [];
-  selectedCategoriesSeminar.value = [];
+  selectedStatusesSeminar.value = [];
 }
 
 // Row click
@@ -312,7 +315,7 @@ watch(currentPageSeminar, (val) => {
   fetchSeminarProposal(
     val,
     searchQuerySeminar.value,
-    getSelectedKategoriLabel(selectedCategoriesSeminar.value || [])
+    selectedStatusesSeminar.value[0] || ""
   );
 });
 watch(currentPagePendaftar, (val) => {
@@ -333,10 +336,10 @@ watch(currentPagePendaftar, (val) => {
     <TabDiv :tabs="tabs" :use-named-slots="true" @tab-changed="handleTabChange">
       <template #1>
         <div
-          class="flex flex-wrap items-center justify-between gap-2 mb-4 lg:gap-4"
+          class="flex flex-wrap items-center gap-2 mb-2 sm:mb-4 sjustify-between lg:gap-4"
         >
           <ModalFilter
-            class="flex-grow md:flex-none"
+            class="items-stretch flex-grow h-full md:flex-none"
             title="Status"
             :items="statuses"
             filterType="status"
@@ -345,12 +348,13 @@ watch(currentPagePendaftar, (val) => {
             :preselectedValues="selectedStatusesPengajuan"
           />
           <SearchBar
-            class="order-last md:order-none sm:min-w-[367px]"
+            class="order-last md:order-none sm:min-w-[367px] items-stretch"
             v-model="searchQueryPengajuan"
             @search="onSearchPendaftar"
             filterKey="pendaftar"
           />
           <Slider
+            class="items-stretch"
             :modelValue="statusForm"
             @update:modelValue="handleSliderChange"
           />
@@ -379,27 +383,27 @@ watch(currentPagePendaftar, (val) => {
         >
           <template #row="{ item }">
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white rounded-l-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.mahasiswa?.nim }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.mahasiswa?.name }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.judul_proposal }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.tanggal_pengajuan }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white rounded-r-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               <StatusLabel
                 class="hidden w-fit lg:block"
@@ -418,14 +422,16 @@ watch(currentPagePendaftar, (val) => {
         </Table>
       </template>
       <template #2>
-        <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
+        <div
+          class="flex items-center justify-between gap-2 mb-2 sm:mb-4 lg:gap-4"
+        >
           <ModalFilter
-            title="Kategori"
-            :items="categories"
-            filterType="category"
+            title="Status"
+            :items="isDinilai"
+            filterType="status"
             @apply="handleFilterSeminar"
-            triggerText="Kategori"
-            :preselectedValues="selectedCategoriesSeminar"
+            triggerText="Status"
+            :preselectedValues="selectedStatusesSeminar"
           />
           <SearchBar
             v-model="searchQuerySeminar"
@@ -439,7 +445,7 @@ watch(currentPagePendaftar, (val) => {
         <ErrorMsg v-else-if="errorTabelSeminarProposal" :message="error" />
         <Table
           v-else
-          :headers="['NIM', 'Nama', 'Kategori', 'Judul Proposal ', 'Nilai']"
+          :headers="['NIM', 'Nama', 'Judul Proposal', 'Dospem', 'Nilai']"
           :items="listTabelSeminarProposal"
           @rowClick="handleRowClickSeminar"
           :pagination="paginationTabelSeminarProposal"
@@ -451,27 +457,27 @@ watch(currentPagePendaftar, (val) => {
         >
           <template #row="{ item }">
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white rounded-l-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.mahasiswa?.nim }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.mahasiswa?.name }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
-            >
-              {{ item.kategori?.nama_kategori }}
-            </td>
-            <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.judul_proposal }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body5 sm:body4"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
+            >
+              {{ item.dosen_pembimbing?.name }}
+            </td>
+            <td
+              class="px-3 py-2 border-r border-white rounded-r-lg sm:py-3 sm:px-6 body5 sm:body4"
               :class="
                 item.nilai_proposal == null
                   ? 'text-secondary'

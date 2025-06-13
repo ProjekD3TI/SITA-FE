@@ -21,7 +21,7 @@
             <th
               v-for="(header, index) in headers"
               :key="index"
-              class="px-3 py-3 text-left border-r sm:px-6"
+              class="px-3 py-2 text-left border-r sm:py-3 sm:px-6 whitespace-nowrap"
               :class="{
                 'rounded-l-lg': index === 0 && !showCheckbox,
                 'rounded-r-lg': index === headers.length - 1,

@@ -115,7 +115,7 @@ watch(currentPage, (val) => {
 <template>
   <Breadcrumb />
   <div class="p-4 bg-white card-rounded shadow-custom lg:p-6">
-    <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
+    <div class="flex items-center justify-between gap-2 mb-2 sm:mb-4 lg:gap-4">
       <ModalFilter
         title="Status"
         :items="statuses"
@@ -129,7 +129,7 @@ watch(currentPage, (val) => {
     <div v-if="loadingTabelTugasAkhir" class="py-8">
       <Loading />
     </div>
-    <ErrorMsg v-else-if="errorTabelTugasAkhir" :message="error" />
+    <!-- <ErrorMsg v-else-if="errorTabelTugasAkhir" :message="error" /> -->
     <Table
       v-else
       :headers="['NIM', 'Nama', 'Kategori', 'Judul TA', 'Status']"
@@ -145,34 +145,34 @@ watch(currentPage, (val) => {
       <template #row="{ item }">
         <!-- Kolom NIM -->
         <td
-          class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+          class="px-3 py-2 border-r border-white rounded-l-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
         >
           {{ item.mahasiswa?.nim }}
         </td>
 
         <!-- Kolom Nama -->
         <td
-          class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+          class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
         >
           {{ item.mahasiswa?.name }}
         </td>
 
         <!-- Kolom Judul Proposal -->
         <td
-          class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+          class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
         >
           {{ item.kategori?.name }}
         </td>
 
         <td
-          class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+          class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
         >
           {{ item.judul_tugas_akhir || "-" }}
         </td>
 
         <!-- Kolom Nilai -->
         <td
-          class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+          class="px-3 py-2 border-r border-white rounded-r-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
         >
           <StatusLabel
             class="hidden w-fit lg:block"

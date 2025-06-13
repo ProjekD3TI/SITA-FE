@@ -686,7 +686,9 @@ const modalFileUjianTAFiles = ref({
       @tab-changed="handleTabChange"
     >
       <template #tab1>
-        <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
+        <div
+          class="flex items-center justify-between gap-2 mb-2 sm:mb-4 lg:gap-4"
+        >
           <ModalFilter
             class=""
             title="Status"
@@ -726,27 +728,27 @@ const modalFileUjianTAFiles = ref({
         >
           <template #row="{ item }">
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white rounded-l-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.mahasiswa?.nim }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.mahasiswa?.name }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.proposal?.judul_proposal }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.dosen_pembimbing }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white rounded-r-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               <StatusLabel
                 class="hidden w-fit lg:block"
@@ -795,7 +797,7 @@ const modalFileUjianTAFiles = ref({
 
       <template #tab2>
         <div
-          class="flex flex-wrap items-center justify-between gap-2 mb-4 lg:gap-4"
+          class="flex flex-wrap items-center justify-between gap-2 mb-2 sm:mb-4 lg:gap-4"
         >
           <ModalFilter
             class="flex-grow md:flex-none"
@@ -841,27 +843,27 @@ const modalFileUjianTAFiles = ref({
         >
           <template #row="{ item }">
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white rounded-l-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.mahasiswa?.nim }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.mahasiswa?.name }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.judul_tugas_akhir }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.dosen_pembimbing?.name }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white rounded-r-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               <StatusLabel
                 class="hidden w-fit lg:block"
@@ -881,7 +883,9 @@ const modalFileUjianTAFiles = ref({
       </template>
 
       <template #tab3>
-        <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
+        <div
+          class="flex items-center justify-between gap-2 mb-2 sm:mb-4 lg:gap-4"
+        >
           <ModalFilter
             title="Status"
             :items="penjadwalanStatuses"
@@ -902,7 +906,14 @@ const modalFileUjianTAFiles = ref({
         <ErrorMsg v-else-if="errorTabelPenjadwalan" :message="error" />
         <Table
           v-else
-          :headers="['NIM', 'Nama', 'Judul Tugas Akhir', 'Tanggal', 'Status']"
+          :headers="[
+            'NIM',
+            'Nama',
+            'Judul Tugas Akhir',
+            'Tahun Ajaran',
+            'Tanggal',
+            'Status',
+          ]"
           :items="listPenjadwalan"
           :pagination="paginationTabelPenjadwalan"
           @pageChange="
@@ -914,27 +925,32 @@ const modalFileUjianTAFiles = ref({
         >
           <template #row="{ item }">
             <td
-              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white rounded-l-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.mahasiswa?.nim }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.mahasiswa?.name }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.judul_tugas_akhir }}
             </td>
             <td
-              class="py-3 px-3 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-4 sm:px-6 body5 sm:body4 text-blackText border-r border-white"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
+            >
+              {{ item.ujian_ta?.tahun_ajaran }}
+            </td>
+            <td
+              class="py-2 px-3 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-3 sm:px-6 body5 sm:body4 text-blackText border-r border-white"
             >
               {{ item.ujian_ta?.tanggal_ujian || "-" }}
             </td>
             <td
-              class="px-3 py-3 border-r border-white rounded-r-lg sm:py-4 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white rounded-r-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               <div>
                 <StatusLabel

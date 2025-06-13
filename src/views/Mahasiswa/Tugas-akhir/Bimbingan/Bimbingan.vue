@@ -431,6 +431,7 @@ watch(
         <Table
           :headers="['Tanggal', 'BAB', 'Catatan', 'Status']"
           :items="numberedBimbingan"
+          min-width="min-w-[600px]"
           @rowClick="handleRowClick"
           :pagination="paginationBimbingan"
           @pageChange="
@@ -463,7 +464,7 @@ watch(
 
             <!-- Kolom Catatan -->
             <td
-              class="py-3 px-3 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-3 sm:px-6 border-r border-white body5 sm:body4 text-blackText"
+              class="py-3 px-3 max-w-[250px] truncate sm:max-w-[200px] md:max-w-[300px] lg:max-w-[200px] xl:max-w-[450px] lg:whitespace-nowrap sm:py-3 sm:px-6 border-r border-white body5 sm:body4 text-blackText"
             >
               {{ item.catatan }}
             </td>

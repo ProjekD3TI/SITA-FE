@@ -297,7 +297,7 @@ export function useTabelSeminarProposal() {
   const errorTabelSeminarProposal = ref(null);
   const paginationTabelSeminarProposal = ref({});
 
-  const fetchData = async (page = 1, search = "", kategori = "") => {
+  const fetchData = async (page = 1, search = "", statusNilai = "") => {
     loadingTabelSeminarProposal.value = true;
     try {
       const auth_token = VueCookies.get("auth_token");
@@ -308,7 +308,7 @@ export function useTabelSeminarProposal() {
       };
       const params = {};
       if (search) params.search = search;
-      if (kategori) params.kategori = kategori;
+      if (statusNilai) params.status_nilai = statusNilai;
       const response = await axios.get(
         `/api/admin_ta/seminar-proposal?page=${page}`,
         {

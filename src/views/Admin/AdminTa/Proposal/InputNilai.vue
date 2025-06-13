@@ -178,7 +178,7 @@ const updateNilai = async () => {
             id="nilai-proposal"
             v-model="nilaiInput"
             label="Nilai Proposal"
-            placeholder="Masukkan Nilai"
+            placeholder="Skala 0-100"
             :disabled="isSubmitting"
             required
           />

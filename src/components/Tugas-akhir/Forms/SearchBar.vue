@@ -23,7 +23,7 @@
       :placeholder="placeholder"
       :value="modelValue"
       @input="handleInput"
-      class="w-full py-2 pl-10 pr-4 border border-placeholder input-rounded sm:py-3 body5 sm:body4"
+      class="w-full py-2 pl-10 pr-4 border border-placeholder input-rounded sm:py-2.5 body5 sm:body4"
     />
     <div
       v-if="showClearButton && modelValue"

@@ -84,6 +84,7 @@ export const statuses = {
 };
 
 // Refactored updateStatusCard for better readability
+// filepath: [dashboard.js](http://_vscodecontentref_/7)
 export function updateStatusCard() {
   const [req, prop, ujian] = dataStatusCard.value;
 
@@ -115,9 +116,20 @@ export function updateStatusCard() {
 
   // Status untuk Proposal
   if (StatusCardIdentifier.value === 1) {
-    if (prop.status_proposal !== null) {
-      statuses.proposal.value = prop.status_proposal;
-      return;
+    if (prop.proposal_id) {
+      // Jika ada proposal id, cek status proposal
+      if (prop.status_proposal === 0) {
+        statuses.proposal.value = STATUS.WAITING;
+        return;
+      }
+      if (prop.status_proposal === 1) {
+        statuses.proposal.value = STATUS.ACCEPTED;
+        return;
+      }
+      if (prop.status_proposal === 2) {
+        statuses.proposal.value = STATUS.REJECTED;
+        return;
+      }
     }
     statuses.proposal.value = STATUS.PLACEHOLDER;
     return;
@@ -125,8 +137,23 @@ export function updateStatusCard() {
 
   // Status untuk Ujian TA
   if (StatusCardIdentifier.value === 2) {
-    if (ujian.status_valid !== null) {
-      statuses.ujianTA.value = ujian.status_valid;
+    // Jika sudah ada dosen penguji, status terplotted
+    // Jika status_valid ada, gunakan mapping status_valid
+    if (ujian.status_valid !== null && ujian.status_valid !== undefined) {
+      if (ujian.status_valid === 0) {
+        statuses.ujianTA.value = STATUS.WAITING;
+        return;
+      }
+      if (ujian.status_valid === 1) {
+        statuses.ujianTA.value = STATUS.ACCEPTED;
+        return;
+      }
+      if (ujian.status_valid === 2) {
+        statuses.ujianTA.value = STATUS.REJECTED;
+        return;
+      }
+    } else if (dataDashboard.value?.has_dosen_penguji) {
+      statuses.ujianTA.value = STATUS.PLOTTED;
       return;
     }
     statuses.ujianTA.value = STATUS.PLACEHOLDER;
@@ -186,10 +213,16 @@ watch(
           status_proposal: val.proposal?.status ?? null,
         },
         {
-          tugas_akhir_id: val.tugas_akhir_id ?? null,
-          status_valid: val.status_valid ?? null,
+          tugas_akhir_id: val.tugas_akhir?.id ?? null,
+          status_valid: val.tugas_akhir?.status_valid ?? null,
         },
       ];
+      // Otomatis pindah ke Ujian TA jika sudah ada dosen penguji
+      if (val.has_dosen_penguji) {
+        StatusCardIdentifier.value = 2;
+      } else if (val.proposal?.id) {
+        StatusCardIdentifier.value = 1;
+      }
     }
   },
   { immediate: true }
@@ -238,7 +271,7 @@ export const currentFlowStep = computed(() => {
   if (data.proposal?.catatan == null) return 1;
 
   // Step 3: Bimbingan minimal 9
-  if (!data.bimbingan || data.bimbingan.total_bimbingan < 9) return 2;
+  if (!data.has_dosen_penguji) return 2;
 
   // Step 4: Ujian TA sudah valid
   if (data.status_valid !== 1) return 3;

@@ -23,7 +23,7 @@
     <!-- Tombol untuk desktop -->
     <ButtonPrimary
       size="md"
-      class="hidden w-full font-normal sm:py-3 sm:flex"
+      class="hidden w-full font-normal sm:py-2.5 sm:flex"
       ref="triggerDesktopRef"
       v-if="showTrigger"
       @click="toggleModal"
