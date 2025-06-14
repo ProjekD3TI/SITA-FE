@@ -717,10 +717,10 @@ router.beforeEach(async (to, from, next) => {
           redirectTo(next, userData.jabatan);
           break;
         case "admin":
-          next({ name: "DashboardAdmin" });
+          next({ name: "Landing" });
           break;
         case "mahasiswa":
-          next({ name: "DashboardTugasAkhirMhs" });
+          next({ name: "Landing" });
           break;
         default:
           next();
@@ -735,7 +735,7 @@ router.beforeEach(async (to, from, next) => {
 function redirectTo(next, jabatan) {
   switch (jabatan) {
     case "Dosen":
-      next({ name: "DashboardDosen" });
+      next({ name: "Landing" });
       break;
     case "Kalab":
       next({ name: "DashboardKalab" });

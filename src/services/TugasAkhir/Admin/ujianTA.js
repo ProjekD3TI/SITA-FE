@@ -391,6 +391,39 @@ export function useTabelPenjadwalan() {
     }
   };
 
+  const exportToExcel = async (search = "", status = "") => {
+    try {
+      const auth_token = VueCookies.get("auth_token");
+      const params = new URLSearchParams();
+
+      if (search) params.append("search", search);
+      if (status) params.append("status", status);
+
+      const response = await axios.get(
+        `/api/admin_ta/penjadwalan-ujian/export/excel?${params.toString()}`,
+        {
+          responseType: "blob",
+          headers: {
+            Authorization: `Bearer ${auth_token}`,
+          },
+        }
+      );
+
+      // Download file
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "ujian_ta_filtered.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error(error);
+      alert("Gagal mendownload file. Pastikan Anda sudah login sebagai admin.");
+    }
+  };
+
   const downloadBeritaAcara = async (tugasAkhirId) => {
     try {
       const authToken = VueCookies.get("auth_token");
@@ -445,6 +478,7 @@ export function useTabelPenjadwalan() {
     loadingTabelPenjadwalan,
     errorTabelPenjadwalan,
     paginationTabelPenjadwalan,
+    exportToExcel,
     downloadBeritaAcara,
     fetchTabelPenjadwalan,
   };

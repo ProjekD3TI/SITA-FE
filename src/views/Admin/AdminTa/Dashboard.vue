@@ -152,7 +152,7 @@ watch(data, (val) => {
           <SummaryCard
             :icon="card.icon"
             :iconColor="card.iconColor"
-            :title="card.title || '-'"
+            :title="card.title || '0'"
             :subtitle="card.subtitle"
           />
         </div>

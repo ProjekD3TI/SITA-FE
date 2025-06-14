@@ -325,6 +325,38 @@ export function useTabelSeminarProposal() {
     }
   };
 
+  const exportToExcel = async (search = "", statusNilai = "") => {
+    try {
+      const auth_token = VueCookies.get("auth_token");
+      const params = new URLSearchParams();
+
+      if (search) params.append("search", search);
+      if (statusNilai) params.append("status_nilai", statusNilai);
+
+      const response = await axios.get(
+        `/api/admin_ta/seminar-proposal/export/excel?${params.toString()}`,
+        {
+          responseType: "blob",
+          headers: {
+            Authorization: `Bearer ${auth_token}`,
+          },
+        }
+      );
+
+      // Download file
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "seminar_proposal_filtered.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      alert("Gagal mendownload file. Pastikan Anda sudah login sebagai admin.");
+    }
+  };
+
   const handleError = (err) => {
     if (err.response?.status === 401) {
       toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
@@ -351,6 +383,7 @@ export function useTabelSeminarProposal() {
     loadingTabelSeminarProposal,
     errorTabelSeminarProposal,
     paginationTabelSeminarProposal,
+    exportToExcel,
     fetchData,
   };
 }

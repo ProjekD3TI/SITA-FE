@@ -155,7 +155,7 @@ watchEffect(() => {
     <!-- Jadwal Section -->
     <div
       v-if="dataJadwalUjianTA?.ujian_ta?.id"
-      class="p-6 bg-white card-rounded lg:p-8 shadow-custom"
+      class="p-6 mb-4 bg-white card-rounded lg:p-8 shadow-custom sm:mb-6"
     >
       <div class="mx-auto max-w-screen-2xl">
         <JadwalUjian :examiners="daftarPenguji" :jadwal="jadwalUjianTA" />
@@ -163,7 +163,7 @@ watchEffect(() => {
     </div>
 
     <!-- Tugas Akhir Details Section -->
-    <div class="p-6 mt-4 bg-white sm:mt-6 card-rounded lg:p-8 shadow-custom">
+    <div class="p-6 bg-white card-rounded lg:p-8 shadow-custom">
       <div class="mx-auto max-w-screen-2xl">
         <div class="flex flex-col md:flex-row">
           <!-- PDF Preview (Left Side) -->

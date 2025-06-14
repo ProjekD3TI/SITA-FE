@@ -539,7 +539,9 @@ watch(
       <ModalDetailBimbingan
         ref="modalDetailRef"
         v-if="showBimbinganModal && selectedBimbingan"
-        :bimbinganKe="totalBimbingan - selectedBimbingan.index"
+        :bimbinganKe="
+          paginationBimbingan?.total - selectedBimbingan.rowNumber + 1
+        "
         :tanggalBimbingan="selectedBimbingan.tanggal_bimbingan"
         :bab="selectedBimbingan.bab"
         :catatan="selectedBimbingan.catatan"
