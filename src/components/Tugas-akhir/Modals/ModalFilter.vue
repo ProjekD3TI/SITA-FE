@@ -84,6 +84,15 @@
           <div class="flex items-center justify-between mt-6">
             <span class="body5 text-placeholder">{{ hint }}</span>
             <div class="flex gap-2">
+              <!-- Tombol Clear Filter -->
+              <ButtonPrimary
+                v-if="internalSelectedValues.length > 0"
+                variant="outlined-danger"
+                size="sm"
+                @click="clearAllFilters"
+              >
+                Clear
+              </ButtonPrimary>
               <ButtonPrimary variant="primary" size="md" @click="applyAndClose">
                 {{ buttonText }}
               </ButtonPrimary>
@@ -269,7 +278,14 @@ const preventScrollKeys = (e) => {
     return false;
   }
 };
-
+const clearAllFilters = () => {
+  internalSelectedValues.value = [];
+  emit("apply", {
+    type: props.filterType,
+    values: [],
+  });
+  showModal.value = false;
+};
 // Fungsi untuk mengatur scroll lock
 // const lockScroll = () => {
 //   // Simpan posisi scroll saat ini
