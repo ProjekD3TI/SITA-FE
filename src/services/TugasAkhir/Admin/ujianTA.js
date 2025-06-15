@@ -366,7 +366,12 @@ export function useTabelPenjadwalan() {
   const loadingTabelPenjadwalan = ref(false);
   const errorTabelPenjadwalan = ref(null);
 
-  const fetchTabelPenjadwalan = async (page = 1, search = "", status = "") => {
+  const fetchTabelPenjadwalan = async (
+    page = 1,
+    search = "",
+    status = "",
+    tahunAjaranId = ""
+  ) => {
     loadingTabelPenjadwalan.value = true;
     try {
       const auth_token = VueCookies.get("auth_token");
@@ -378,6 +383,8 @@ export function useTabelPenjadwalan() {
       const params = {};
       if (search) params.search = search;
       if (status) params.status = status;
+      if (tahunAjaranId) params.tahun_ajaran_id = tahunAjaranId; // Tambah parameter tahun ajaran
+
       const response = await axios.get(
         `/api/admin_ta/penjadwalan-ujian?page=${page}`,
         { headers, params }
@@ -391,13 +398,18 @@ export function useTabelPenjadwalan() {
     }
   };
 
-  const exportToExcel = async (search = "", status = "") => {
+  const exportToExcel = async (
+    search = "",
+    status = "",
+    tahunAjaranId = ""
+  ) => {
     try {
       const auth_token = VueCookies.get("auth_token");
       const params = new URLSearchParams();
 
       if (search) params.append("search", search);
       if (status) params.append("status", status);
+      if (tahunAjaranId) params.append("tahun_ajaran_id", tahunAjaranId);
 
       const response = await axios.get(
         `/api/admin_ta/penjadwalan-ujian/export/excel?${params.toString()}`,
@@ -419,8 +431,27 @@ export function useTabelPenjadwalan() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      toast.error(error);
-      alert("Gagal mendownload file. Pastikan Anda sudah login sebagai admin.");
+      toast.error("Gagal mendownload file export.");
+    }
+  };
+
+  const downloadLembarRevisi = async () => {
+    try {
+      const response = await axios.get("/api/admin_ta/template-lembar-revisi", {
+        responseType: "blob", // penting agar axios menganggap response sebagai file
+      });
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], { type: "application/pdf" })
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "template_lembar_revisi.pdf");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      toast.error("Gagal mendownload template lembar revisi");
     }
   };
 
@@ -478,6 +509,7 @@ export function useTabelPenjadwalan() {
     loadingTabelPenjadwalan,
     errorTabelPenjadwalan,
     paginationTabelPenjadwalan,
+    downloadLembarRevisi,
     exportToExcel,
     downloadBeritaAcara,
     fetchTabelPenjadwalan,

@@ -52,15 +52,15 @@
           class="fixed z-50 bg-white border shadow-lg p-6 card-rounded max-h-[80vh] overflow-y-auto"
           :class="
             isMobile
-              ? 'w-[90vw] max-w-[420px]'
-              : 'w-[95%] sm:w-[50vw] md:w-[40vw] lg:w-[30vw] xl:w-[25vw]'
+              ? 'w-[90vw] max-w-[600px]'
+              : 'w-[95%] sm:w-[60vw] md:w-[50vw] lg:w-[40vw] xl:w-[35vw]'
           "
           :style="modalPositionStyle"
           @click.stop
         >
           <!-- Header -->
           <div class="flex items-center justify-between w-full mb-4">
-            <span class="body3-bold">Pilih {{ title }}</span>
+            <span class="body3-bold">{{ title }}</span>
           </div>
 
           <!-- Konten filter -->
@@ -68,7 +68,7 @@
             <div
               v-for="(item, index) in items"
               :key="index"
-              class="flex-grow px-4 py-2 text-center duration-200 border rounded-full cursor-pointer body5 active:scale-90"
+              class="flex-grow flex-shrink sm:basis-[120px] sm:min-w-[120px] px-2 py-2 text-center duration-200 border rounded-full cursor-pointer body5 active:scale-90"
               :class="
                 isSelected(item.value || item)
                   ? 'border-secondary bg-secondary text-white hover:opacity-90'
@@ -76,14 +76,35 @@
               "
               @click="toggleSelection(item.value || item)"
             >
-              <span>{{ item.label || item }}</span>
+              <span class="block w-full">{{ item.label || item }}</span>
+            </div>
+          </div>
+
+          <div v-if="title2 && items2 && items2.length > 0">
+            <div class="flex items-center justify-between w-full mt-4 mb-4">
+              <span class="body3-bold">{{ title2 }}</span>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4 max-h-[40vh] overflow-y-auto">
+              <div
+                v-for="(item, index) in items2"
+                :key="index"
+                class="flex-grow flex-shrink sm:basis-[120px] sm:min-w-[120px] px-2 py-2 text-center duration-200 border rounded-full cursor-pointer body5 active:scale-90"
+                :class="
+                  isSelected(item.value || item)
+                    ? 'border-secondary bg-secondary text-white hover:opacity-90'
+                    : 'border-placeholder hover:bg-secondary hover:text-white hover:border-secondary'
+                "
+                @click="toggleSelection(item.value || item)"
+              >
+                <span>{{ item.label || item }}</span>
+              </div>
             </div>
           </div>
 
           <!-- Footer -->
           <div class="flex items-center justify-between mt-6">
             <span class="body5 text-placeholder">{{ hint }}</span>
-            <div class="flex gap-2">
+            <div class="flex justify-end gap-2">
               <!-- Tombol Clear Filter -->
               <ButtonPrimary
                 v-if="internalSelectedValues.length > 0"
@@ -93,7 +114,12 @@
               >
                 Clear
               </ButtonPrimary>
-              <ButtonPrimary variant="primary" size="md" @click="applyAndClose">
+              <ButtonPrimary
+                variant="primary"
+                size="md"
+                @click="applyAndClose"
+                class="self-end"
+              >
                 {{ buttonText }}
               </ButtonPrimary>
             </div>
@@ -120,7 +146,15 @@ const props = defineProps({
     type: String,
     default: "Filter",
   },
+  title2: {
+    type: String,
+    default: "Filter",
+  },
   items: {
+    type: Array,
+    default: () => [],
+  },
+  items2: {
     type: Array,
     default: () => [],
   },
@@ -258,17 +292,6 @@ const handleKeyDown = (event) => {
   }
 };
 
-// Tambahkan fungsi scroll lock
-const scrollPosition = ref(0);
-const originalStyle = ref(null);
-
-// Fungsi untuk mencegah scroll dengan event listener
-const preventScroll = (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  return false;
-};
-
 // Mencegah scroll dengan keyboard (arrow keys, space, page up/down)
 const preventScrollKeys = (e) => {
   // Kunci arrow up, arrow down, space, page up, page down
@@ -286,77 +309,10 @@ const clearAllFilters = () => {
   });
   showModal.value = false;
 };
-// Fungsi untuk mengatur scroll lock
-// const lockScroll = () => {
-//   // Simpan posisi scroll saat ini
-//   scrollPosition.value =
-//     window.pageYOffset || document.documentElement.scrollTop;
-
-//   // Simpan style asli
-//   originalStyle.value = {
-//     overflow: document.body.style.overflow,
-//     position: document.body.style.position,
-//     top: document.body.style.top,
-//     width: document.body.style.width,
-//     paddingRight: document.body.style.paddingRight,
-//     height: document.body.style.height,
-//   };
-
-//   // Hitung lebar scrollbar untuk mencegah layout shift
-//   const scrollbarWidth =
-//     window.innerWidth - document.documentElement.clientWidth;
-
-//   // Terapkan style ke body secara agresif
-//   document.body.style.overflow = "hidden";
-//   document.body.style.position = "fixed";
-//   document.body.style.top = `-${scrollPosition.value}px`;
-//   document.body.style.width = "100%";
-//   document.body.style.paddingRight = `${scrollbarWidth}px`;
-//   document.body.style.height = "100vh";
-
-//   // Tambahkan event listener untuk wheel, touchmove, dan keydown
-//   window.addEventListener("wheel", preventScroll, { passive: false });
-//   window.addEventListener("touchmove", preventScroll, { passive: false });
-//   window.addEventListener("keydown", preventScrollKeys, { passive: false });
-// };
-
-// const unlockScroll = () => {
-//   // Kembalikan style body ke aslinya
-//   if (originalStyle.value) {
-//     for (const [key, value] of Object.entries(originalStyle.value)) {
-//       if (value) {
-//         document.body.style[key] = value;
-//       } else {
-//         document.body.style.removeProperty(key);
-//       }
-//     }
-//   } else {
-//     // Fallback jika tidak ada originalStyle
-//     document.body.style.removeProperty("overflow");
-//     document.body.style.removeProperty("position");
-//     document.body.style.removeProperty("top");
-//     document.body.style.removeProperty("width");
-//     document.body.style.removeProperty("padding-right");
-//     document.body.style.removeProperty("height");
-//   }
-
-//   // Hapus event listener
-//   window.removeEventListener("wheel", preventScroll);
-//   window.removeEventListener("touchmove", preventScroll);
-//   window.removeEventListener("keydown", preventScrollKeys);
-
-//   // Kembalikan posisi scroll
-//   window.scrollTo(0, scrollPosition.value);
-// };
 
 // Toggle modal state
 const toggleModal = () => {
   showModal.value = !showModal.value;
-  // if (showModal.value) {
-  //   lockScroll();
-  // } else {
-  //   unlockScroll();
-  // }
 };
 
 // Metode untuk menutup modal
@@ -364,7 +320,6 @@ const closeModal = () => {
   if (props.closeModalOnBackdrop) {
     syncInternalValues(); // Reset to preselected values
     showModal.value = false;
-    // unlockScroll();
   }
 };
 
@@ -375,7 +330,6 @@ const applyAndClose = () => {
     values: [...internalSelectedValues.value], // Gunakan shallow copy
   });
   showModal.value = false;
-  // unlockScroll();
 };
 const windowWidth = ref(window.innerWidth);
 const isMobile = computed(() => window.innerWidth < 640);
@@ -400,8 +354,6 @@ const updateModalPosition = () => {
     const modalRect = modalEl.getBoundingClientRect();
 
     if (isMobile.value) {
-      console.log("Mobile mode - Trigger position:", triggerRect); // Debug log
-
       // Mobile: posisikan modal tepat di bawah tombol mobile
       let top = triggerRect.bottom + 8;
       let left = triggerRect.left;

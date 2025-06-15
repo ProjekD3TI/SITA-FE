@@ -167,8 +167,11 @@ function onSearchDosen({ value }) {
     getSelectedStatusValue(selectedStatusesDosen.value)
   );
 }
-const filterOptionsMahasiswa = computed(() => [
+const mahasiswaStatus = computed(() => [
   ...statuses.map((s) => ({ ...s, type: "status" })),
+]);
+
+const mahasiswaAngkatan = computed(() => [
   ...angkatanList.value.map((a) => ({ value: a, label: a, type: "angkatan" })),
 ]);
 const selectedFiltersMahasiswa = ref([]);
@@ -279,9 +282,11 @@ function handleTabChanged(tabId) {
       >
         <ModalFilter
           title="Status"
-          :items="filterOptionsMahasiswa"
-          filterType="status"
-          triggerText="Status"
+          title2="Angkatan"
+          :items="mahasiswaStatus"
+          :items2="mahasiswaAngkatan"
+          filterType="filter"
+          triggerText="Filter"
           :preselectedValues="selectedFiltersMahasiswa"
           @apply="handleFilterMahasiswa"
         />

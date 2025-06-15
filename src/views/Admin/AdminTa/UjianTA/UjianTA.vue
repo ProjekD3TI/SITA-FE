@@ -49,6 +49,7 @@ const {
   fetchTabelPenjadwalan,
   downloadBeritaAcara,
   exportToExcel,
+  downloadLembarRevisi,
 } = useTabelPenjadwalan();
 
 const toast = useToast();
@@ -62,6 +63,8 @@ const currentPageTabelPendaftar = ref(1);
 const currentPageTabelPlottingPenguji = ref(1);
 const currentPageTabelPenjadwalan = ref(1);
 const selectedJadwalItem = ref(null);
+const selectedTahunAjaranId = ref("");
+const selectedFiltersPenjadwalan = ref([]);
 
 const dataNaskahTA = ref({});
 const dataTranskrip = ref({});
@@ -136,6 +139,9 @@ watch(
   },
   { immediate: true }
 );
+const tahunAjaranOptions = computed(() => {
+  return dataTabelPenjadwalan.value?.tahun_ajaran_list || [];
+});
 
 const listPlottingPenguji = computed(() => {
   return Array.isArray(dataTabelPlottingPenguji.value?.data)
@@ -176,7 +182,7 @@ onMounted(async () => {
     await Promise.all([]);
     isDataLoaded.value = true;
   } catch (error) {
-    console.error("Error saat memuat komponen:", error);
+    toast.error("Gagal memuat data. Silakan coba lagi.");
   }
 });
 
@@ -197,7 +203,13 @@ const penjadwalanStatuses = [
   { value: "3", label: "Ulang(Revisi)" },
   { value: "4", label: "Tidak Lulus" },
 ];
-
+const penjadwalanTahunAjaran = computed(() => [
+  ...tahunAjaranOptions.value.map((t) => ({
+    value: t.id,
+    label: t.tahun_ajaran,
+    type: "tahun_ajaran",
+  })),
+]);
 const daftarPenguji = computed(() => {
   const pengujiArr = selectedJadwalItem.value?.dosen_penguji || [];
   return pengujiArr.map((dosen) => ({
@@ -277,12 +289,22 @@ function handleFilterPendaftar({ values }) {
   fetchTabelPendaftar(1, searchQueryTab2.value, getSelectedStatusValue(values));
 }
 function handleFilterPenjadwalan({ values }) {
-  selectedStatusesPenjadwalan.value = values;
+  selectedFiltersPenjadwalan.value = values;
+
+  // Pisahkan values berdasarkan type
+  const statusValues = values.filter((v) =>
+    penjadwalanStatuses.some((s) => s.value === v)
+  );
+  const tahunAjaranValues = values.filter((v) =>
+    tahunAjaranOptions.value.some((t) => t.id === v)
+  );
+
   currentPageTabelPenjadwalan.value = 1;
   fetchTabelPenjadwalan(
     1,
     searchQueryTab3.value,
-    getSelectedStatusValue(values)
+    statusValues.join(","),
+    tahunAjaranValues.length > 0 ? tahunAjaranValues[0] : ""
   );
 }
 
@@ -303,11 +325,19 @@ function onSearchPendaftar({ value }) {
   );
 }
 function onSearchPenjadwalan({ value }) {
+  const statusValues = selectedFiltersPenjadwalan.value.filter((v) =>
+    penjadwalanStatuses.some((s) => s.value === v)
+  );
+  const tahunAjaranValues = selectedFiltersPenjadwalan.value.filter((v) =>
+    tahunAjaranOptions.value.some((t) => t.id === v)
+  );
+
   currentPageTabelPenjadwalan.value = 1;
   fetchTabelPenjadwalan(
     1,
     value,
-    getSelectedStatusValue(selectedStatusesPenjadwalan.value)
+    statusValues.join(","),
+    tahunAjaranValues.length > 0 ? tahunAjaranValues[0] : ""
   );
 }
 
@@ -321,6 +351,7 @@ function handleTabChange(tabId) {
   selectedStatusesPlotting.value = [];
   selectedStatusesPendaftar.value = [];
   selectedStatusesPenjadwalan.value = [];
+  selectedFiltersPenjadwalan.value = []; // Reset filter gabungan
 }
 
 function getSelectedStatusValue(selectedStatuses) {
@@ -576,9 +607,17 @@ async function handleModalSubmit() {
   }
 }
 function handleExport() {
+  const statusValues = selectedFiltersPenjadwalan.value.filter((v) =>
+    penjadwalanStatuses.some((s) => s.value === v)
+  );
+  const tahunAjaranValues = selectedFiltersPenjadwalan.value.filter((v) =>
+    tahunAjaranOptions.value.some((t) => t.id === v)
+  );
+
   exportToExcel(
     searchQueryTab3.value,
-    getSelectedStatusValue(selectedStatusesPenjadwalan.value)
+    statusValues.join(","),
+    tahunAjaranValues.length > 0 ? tahunAjaranValues[0] : ""
   );
 }
 // Jika batal
@@ -619,7 +658,8 @@ watch(currentPageTabelPenjadwalan, (val) => {
   fetchTabelPenjadwalan(
     val,
     searchQueryTab3.value,
-    getSelectedStatusValue(selectedStatusesPenjadwalan.value)
+    getSelectedStatusValue(selectedStatusesPenjadwalan.value),
+    selectedTahunAjaranId.value
   );
 });
 watch(
@@ -648,18 +688,21 @@ watch(
     });
   }
 );
-watch(
-  () => router.currentRoute.value.query.refreshPenjadwalan,
-  () => {
-    fetchTabelPenjadwalan(currentPageTabelPenjadwalan.value);
-    router.replace({
-      query: {
-        ...router.currentRoute.value.query,
-        refreshPenjadwalan: undefined,
-      },
-    });
-  }
-);
+watch(currentPageTabelPenjadwalan, (val) => {
+  const statusValues = selectedFiltersPenjadwalan.value.filter((v) =>
+    penjadwalanStatuses.some((s) => s.value === v)
+  );
+  const tahunAjaranValues = selectedFiltersPenjadwalan.value.filter((v) =>
+    tahunAjaranOptions.value.some((t) => t.id === v)
+  );
+
+  fetchTabelPenjadwalan(
+    val,
+    searchQueryTab3.value,
+    statusValues.join(","),
+    tahunAjaranValues.length > 0 ? tahunAjaranValues[0] : ""
+  );
+});
 const modalFileUjianTAVisible = ref(false);
 const modalFileUjianTAHeadText = ref("");
 const modalFileUjianTABodyText = ref("");
@@ -696,7 +739,6 @@ const modalFileUjianTAFiles = ref({
           class="flex items-center justify-between gap-2 mb-2 sm:mb-4 lg:gap-4"
         >
           <ModalFilter
-            class=""
             title="Status"
             :items="plottingStatuses"
             filterType="status"
@@ -895,10 +937,12 @@ const modalFileUjianTAFiles = ref({
           <ModalFilter
             class="flex-grow sm:flex-none"
             title="Status"
+            title2="Tahun Ajaran"
             :items="penjadwalanStatuses"
-            filterType="status"
+            :items2="penjadwalanTahunAjaran"
+            filterType="filter"
             @apply="handleFilterPenjadwalan"
-            triggerText="Status"
+            triggerText="Filter"
             :preselectedValues="selectedStatusesPenjadwalan"
           />
           <Button
@@ -938,6 +982,7 @@ const modalFileUjianTAFiles = ref({
             }
           "
           @rowClick="handleRowClickJadwal"
+          min-width="min-w-[1000px]"
         >
           <template #row="{ item }">
             <td
@@ -961,12 +1006,12 @@ const modalFileUjianTAFiles = ref({
               {{ item.ujian_ta?.tahun_ajaran || "-" }}
             </td>
             <td
-              class="py-2 px-3 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-3 sm:px-6 body5 sm:body4 text-blackText border-r border-white"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.ujian_ta?.tanggal_ujian || "-" }}
             </td>
             <td
-              class="py-2 px-3 max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px] lg:whitespace-nowrap sm:py-3 sm:px-6 body5 sm:body4 text-blackText border-r border-white"
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.nilai_akhir || "-" }}
             </td>
@@ -1183,7 +1228,10 @@ const modalFileUjianTAFiles = ref({
         />
         <div class="flex flex-wrap gap-2 sm:justify-end sm:gap-4">
           <Button
-            v-if="selectedJadwalItem.status_kelulusan !== 1 && 2"
+            v-if="
+              selectedJadwalItem.status_kelulusan !== 1 &&
+              selectedJadwalItem.status_kelulusan !== 2
+            "
             variant="secondary"
             size="lg"
             class="hidden w-fit sm:flex"
@@ -1193,7 +1241,10 @@ const modalFileUjianTAFiles = ref({
             Edit
           </Button>
           <Button
-            v-if="selectedJadwalItem.status_kelulusan !== 1 && 2"
+            v-if="
+              selectedJadwalItem.status_kelulusan !== 1 &&
+              selectedJadwalItem.status_kelulusan !== 2
+            "
             variant="secondary"
             size="md"
             class="w-full sm:hidden"
@@ -1221,6 +1272,7 @@ const modalFileUjianTAFiles = ref({
             size="lg"
             class="hidden w-fit sm:flex"
             leftIconPath="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+            @click="downloadLembarRevisi()"
           >
             Lembar Revisi
           </Button>
@@ -1243,6 +1295,7 @@ const modalFileUjianTAFiles = ref({
             size="md"
             class="w-full sm:hidden"
             leftIconPath="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+            @click="downloadLembarRevisi()"
           >
             Lembar Revisi
           </Button>
