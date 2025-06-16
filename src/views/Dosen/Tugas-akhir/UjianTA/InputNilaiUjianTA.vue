@@ -548,7 +548,7 @@ onMounted(() => {
           <!-- Show calculated total -->
           <div class="mt-4">
             <p class="body1-bold">
-              Nilai Rata-rata:
+              Nilai Akhir:
               <span class="text-primary">{{ totalNilai || "-" }}</span>
             </p>
           </div>

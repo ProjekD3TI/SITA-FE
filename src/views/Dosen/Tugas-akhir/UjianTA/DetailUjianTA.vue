@@ -13,6 +13,7 @@ import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Loading from "@/components/Loading.vue";
+import Label from "@/components/Tugas-akhir/Label.vue";
 
 // Services
 import {
@@ -153,6 +154,30 @@ const statusKelulusanText = computed(() => {
   };
 
   return statusMap[detailUjian.value.status_kelulusan] || "Belum ada status";
+});
+
+const statusKelulusanLabel = computed(() => {
+  if (!detailUjian.value || !detailUjian.value.status_kelulusan) {
+    return { status: "inactive", label: "Belum ada status" };
+  }
+
+  const statusCode = detailUjian.value.status_kelulusan;
+
+  switch (statusCode) {
+    case 1:
+      return { status: "success", label: "Lulus tanpa revisi" };
+    case 2:
+      return { status: "warning", label: "Lulus dengan revisi" };
+    case 3:
+      return {
+        status: "danger-outline",
+        label: "Belum lulus perlu diuji lagi",
+      };
+    case 4:
+      return { status: "danger", label: "Tidak lulus" };
+    default:
+      return { status: "inactive", label: "Belum ada status" };
+  }
 });
 
 // Data nilai mahasiswa untuk ditampilkan
@@ -488,65 +513,77 @@ onMounted(() => {
     headText="Nilai Ujian Tugas Akhir"
     :bodyText="modalBodyText"
   >
-    <div>
-      <div v-if="isSecretary" class="my-3">
-        <p class="heading5 text-[#00A2EA] font-semibold mb-2">
-          Status Kelulusan
-        </p>
-        <p class="body1 font-medium">{{ statusKelulusanText }}</p>
+    <div class="flex flex-col gap-4 mt-4">
+      <div v-if="isSecretary">
+        <h5 class="body3-bold lg:body1-bold text-primary">Status Kelulusan</h5>
+        <Label
+          class="hidden w-fit lg:block mt-2"
+          :status="statusKelulusanLabel.status"
+          :label="statusKelulusanLabel.label"
+          :customLabel="true"
+          size="lg"
+        />
+        <Label
+          class="block w-fit lg:hidden mt-2"
+          :status="statusKelulusanLabel.status"
+          :label="statusKelulusanLabel.label"
+          :customLabel="true"
+          size="md"
+        />
       </div>
-      <div class="my-5">
-        <p class="heading5 text-[#00A2EA] font-semibold mb-5">Nilai Ujian</p>
-        <div class="flex flex-wrap gap-4">
-          <div class="w-full sm:w-[calc(50%-0.5rem)]">
-            <InputNumber
-              id="tataLaporan"
-              label="Kualitas Tata Laporan Tugas Akhir (15%)"
-              placeholder="85"
-              v-model="tataLaporan"
-              disabled
-            />
-          </div>
 
-          <div class="w-full sm:w-[calc(50%-0.5rem)]">
-            <InputNumber
-              id="kemampuanTeknis"
-              label="Kemampuan Teknis (35%)"
-              placeholder="90"
-              v-model="kemampuanTeknis"
-              disabled
-            />
-          </div>
-
-          <div class="w-full sm:w-[calc(50%-0.5rem)]">
-            <InputNumber
-              id="hasilProduk"
-              label="Kualitas Produk yang Dihasilkan (25%)"
-              placeholder="88"
-              v-model="hasilProduk"
-              disabled
-            />
-          </div>
-
-          <div class="w-full sm:w-[calc(50%-0.5rem)]">
-            <InputNumber
-              id="presentasi"
-              label="Presentasi dan Question Handling (25%)"
-              placeholder="92"
-              v-model="presentasi"
-              disabled
-            />
-          </div>
+      <h5 class="body3-bold lg:body1-bold text-primary">Nilai Ujian</h5>
+      <div class="flex flex-wrap gap-4">
+        <div class="w-full sm:w-[calc(50%-0.5rem)]">
+          <InputNumber
+            id="tataLaporan"
+            label="Kualitas Tata Laporan Tugas Akhir (15%)"
+            placeholder="85"
+            v-model="tataLaporan"
+            disabled
+          />
         </div>
-        <div class="my-3">
-          <p class="heading5 text-[#00A2EA] font-semibold mb-2">
-            Nilai Rata-Rata
-          </p>
-          <p class="body1 font-bold text-xl">{{ totalNilai }}</p>
+
+        <div class="w-full sm:w-[calc(50%-0.5rem)]">
+          <InputNumber
+            id="kemampuanTeknis"
+            label="Kemampuan Teknis (35%)"
+            placeholder="90"
+            v-model="kemampuanTeknis"
+            disabled
+          />
+        </div>
+
+        <div class="w-full sm:w-[calc(50%-0.5rem)]">
+          <InputNumber
+            id="hasilProduk"
+            label="Kualitas Produk yang Dihasilkan (25%)"
+            placeholder="88"
+            v-model="hasilProduk"
+            disabled
+          />
+        </div>
+
+        <div class="w-full sm:w-[calc(50%-0.5rem)]">
+          <InputNumber
+            id="presentasi"
+            label="Presentasi dan Question Handling (25%)"
+            placeholder="92"
+            v-model="presentasi"
+            disabled
+          />
         </div>
       </div>
-      <div class="my-5" v-if="catatanRevisi">
-        <p class="heading5 text-[#00A2EA] font-semibold mb-5">Catatan Revisi</p>
+      <InputNumber
+        id="nilaiAkhir"
+        label="Nilai Akhir"
+        placeholder="85"
+        v-model="totalNilai"
+        disabled
+      />
+
+      <div v-if="catatanRevisi">
+        <h5 class="body3-bold lg:body1-bold text-primary">Catatan Revisi</h5>
         <InputTextarea
           id="catatanRevisi"
           label=""

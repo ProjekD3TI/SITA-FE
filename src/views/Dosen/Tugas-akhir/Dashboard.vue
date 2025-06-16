@@ -284,54 +284,52 @@ const PermintaanBimbingan = computed(() => {
           </router-link>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full text-left">
-            <tbody class="body5">
-              <template v-if="PermintaanBimbingan.length">
-                <tr
-                  v-for="(item, index) in PermintaanBimbingan"
-                  :key="index"
-                  class="border-b hover:bg-gray-50 transition"
-                  role="button"
-                  tabindex="0"
-                >
-                  <td class="p-2 sm:p-3">
-                    <div class="body5-bold sm:body4-bold">
-                      {{ item.nama }}
-                      <span class="block sm:inline">| {{ item.nim }}</span>
-                    </div>
-                    <div class="body6 sm:body5">{{ item.kategori }}</div>
-                  </td>
-                  <td class="p-2 sm:p-3 text-right align-middle">
-                    <div class="flex justify-end">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        class="sm:hidden"
-                        @click.stop="showResponModal(item)"
-                        >Respon</Button
-                      >
-                      <Button
-                        variant="secondary"
-                        size="md"
-                        class="hidden sm:inline-flex"
-                        @click.stop="showResponModal(item)"
-                        >Respon</Button
-                      >
-                    </div>
-                  </td>
-                </tr>
-              </template>
-              <template v-else>
-                <tr>
-                  <td colspan="2">
-                    <div
-                      class="text-center text-placeholder py-6 sm:py-8 body2-bold"
+          <table class="min-w-[400px] w-full">
+            <tbody>
+              <tr
+                v-for="item in PermintaanBimbingan"
+                :key="item.id"
+                class="bg-white border-b border-spacing-y-4 border-slate-200"
+              >
+                <td class="px-3 py-2 rounded-l-lg">
+                  <div class="body5-bold sm:body4-bold">
+                    {{ item.nama }}
+                    <span class="block sm:inline">| {{ item.nim }}</span>
+                  </div>
+                  <div class="body6 sm:body5">{{ item.kategori }}</div>
+                </td>
+                <td class="px-3 py-2 text-right align-middle rounded-r-lg">
+                  <div class="flex justify-end">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      class="sm:hidden"
+                      @click.stop="showResponModal(item)"
+                      >Respon</Button
                     >
-                      Tidak ada permintaan
-                    </div>
-                  </td>
-                </tr>
-              </template>
+                    <Button
+                      variant="secondary"
+                      size="md"
+                      class="hidden sm:inline-flex"
+                      @click.stop="showResponModal(item)"
+                      >Respon</Button
+                    >
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Empty state when no data available -->
+              <tr
+                v-if="!PermintaanBimbingan || PermintaanBimbingan.length === 0"
+              >
+                <td colspan="2">
+                  <div
+                    class="text-center text-placeholder py-6 sm:py-8 body2-bold"
+                  >
+                    Tidak ada permintaan
+                  </div>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
