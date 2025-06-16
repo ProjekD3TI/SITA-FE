@@ -64,7 +64,7 @@ const tableHeaders = ["NIM", "NAMA", "Sesi", "Ruang"];
 const navigateToDetail = (item) => {
   router.push({
     name: "DetailUjianTAforDosen",
-    params: { tugas_akhir_id: item.tugas_akhir_id },
+    params: { ujian_ta_id: item.ujian_ta_id },
   });
 };
 
