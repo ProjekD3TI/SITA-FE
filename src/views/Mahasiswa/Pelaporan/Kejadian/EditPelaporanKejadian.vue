@@ -2,7 +2,7 @@
     <div class="flex">
         <Sidebar />
         <div class="flex-1">
-            <Header />
+          <Header :userData="userData" />
     <div class="edit-laporan-container">
         <h1>Edit Laporan Kejadian</h1>
         

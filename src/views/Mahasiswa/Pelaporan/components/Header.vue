@@ -66,7 +66,7 @@ export default {
       } catch (error) {
         console.error("Error getting user data:", error);
       }
-    }
+    },
   },
   created() {
     // Get user data if not provided by parent

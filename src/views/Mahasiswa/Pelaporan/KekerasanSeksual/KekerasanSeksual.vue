@@ -2,7 +2,7 @@
     <div class="flex">
         <Sidebar />
         <div class="flex-1">
-            <Header />
+            <Header :userData="userData" />
             <div class="p-4">
                 <div class="bg-white shadow rounded-lg p-6 mb-4">
                     <h1 class="text-2xl font-semibold text-gray-800">Pelaporan Kekerasan Seksual</h1>

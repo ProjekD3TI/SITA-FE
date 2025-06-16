@@ -2,7 +2,7 @@
   <div class="flex">
     <Sidebar />
     <div class="flex-1">
-      <Header />
+      <Header :userData="userData" />
       <div class="content-wrapper">
         <div class="detail-header">
           <div class="back-button" @click="goBack">

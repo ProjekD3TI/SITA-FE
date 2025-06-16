@@ -2,7 +2,7 @@
     <div class="flex">
         <Sidebar />
         <div class="flex-1">
-            <Header />
+            <Header :userData="userData" />
             <div class="add-pk-container">
                 <div class="form-header">
                     <h1>Tambah Laporan Kejadian Mendesak</h1>
