@@ -80,6 +80,7 @@ const STATUS = {
   WAITING: 0,
   ACCEPTED: 1,
   REJECTED: 2,
+  REVISI: 3,
 };
 
 // App State
@@ -128,6 +129,9 @@ const formConfig = computed(() => {
   if (semuaNull) {
     isDisabled = false;
     status = STATUS.NULL;
+  } else if (statusList.map(Number).includes(3)) {
+    isDisabled = false;
+    status = STATUS.REVISI;
   } else if (statusList.map(Number).includes(2)) {
     isDisabled = false;
     status = STATUS.REJECTED;
@@ -143,7 +147,8 @@ const formConfig = computed(() => {
     isDisabled,
     wrapperClass: isDisabled ? "opacity-50" : "",
     showSubmitButton: status === STATUS.NULL,
-    showSubmitAgainButton: status === STATUS.REJECTED,
+    showSubmitAgainButton:
+      status === STATUS.REJECTED || status === STATUS.REVISI,
     status,
   };
 });
@@ -161,6 +166,10 @@ const userDataConfig = computed(() => {
 
   if (config.showStatus) {
     switch (statusValid.value) {
+      case STATUS.REVISI:
+        config.status = "warning-outline";
+        config.statusLabel = "Revisi";
+        break;
       case STATUS.WAITING:
         config.status = "warning";
         config.statusLabel = "Menunggu";
@@ -187,7 +196,9 @@ function isFileDisabled(status) {
 
 // Modular computed untuk setiap file
 const dangerNaskah = computed(
-  () => statusBerkasNaskahTA.value === STATUS.REJECTED && !fileNaskah.value
+  () =>
+    statusBerkasNaskahTA.value === STATUS.REJECTED ||
+    (statusBerkasNaskahTA.value === STATUS.REVISI && !fileNaskah.value)
 );
 const dangerKRS = computed(
   () => statusBerkasKRS.value === STATUS.REJECTED && !fileKRSLocal.value
@@ -503,7 +514,15 @@ watch(
                       clip-rule="evenodd"
                     />
                   </svg>
-                  <p class="body5 sm:text-[13px] text-danger">Berkas ditolak</p>
+                  <p
+                    v-if="statusBerkasNaskahTA.value === STATUS.REJECTED"
+                    class="body5 sm:text-[13px] text-danger"
+                  >
+                    Berkas ditolak
+                  </p>
+                  <p v-else class="body5 sm:text-[13px] text-danger">
+                    Berkas perlu direvisi
+                  </p>
                 </div>
               </div>
               <div>

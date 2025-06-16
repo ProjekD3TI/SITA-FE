@@ -78,25 +78,12 @@ const formSubmitted = ref(false);
 // Check if current user is Secretary (can edit status kelulusan)
 const isSecretary = computed(() => {
   if (!detailUjian.value) return false;
-
-  // Check if current user is a Secretary among the examiners
-  const isSecretaryExaminer = detailUjian.value.dosen_penguji?.some(
-    (penguji) => {
-      // Use the explicit is_current_user flag from API
-      const isCurrentUser = penguji.is_current_user === true;
-      const isSecretary =
-        penguji.jabatan_penguji?.toLowerCase() === "sekretaris";
-      return isCurrentUser && isSecretary;
-    }
+  // Cari dosen penguji yang sedang login
+  const currentPenguji = detailUjian.value.dosen_penguji?.find(
+    (penguji) => penguji.is_current_user === true
   );
-
-  // Check if current user is the supervising lecturer
-  const isSupervisingLecturer =
-    detailUjian.value.dosen_pembimbing?.dosen_pembimbing_id ===
-    detailUjian.value.dosen_penguji?.find((p) => p.is_current_user === true)
-      ?.dosen_penguji_id;
-
-  return isSecretaryExaminer || isSupervisingLecturer;
+  // Cek apakah jabatan penguji adalah sekretaris
+  return currentPenguji?.jabatan_penguji?.toLowerCase() === "sekretaris";
 });
 
 // Computed property untuk mengontrol status disabled pada textarea catatan revisi
@@ -192,10 +179,9 @@ const validateForm = () => {
 
 // Load data from API using route params
 const loadData = async () => {
-  const tugasAkhirId = route.params.tugas_akhir_id;
-
-  if (tugasAkhirId) {
-    await fetchDetailUjian(tugasAkhirId);
+  const ujianTaId = route.params.ujian_ta_id;
+  if (ujianTaId) {
+    await fetchDetailUjian(ujianTaId);
 
     if (detailUjian.value) {
       studentInfo.value = {
@@ -250,7 +236,8 @@ const handleSubmit = async () => {
 
   // Create data object with all required fields
   const nilaiData = {
-    tugas_akhir_id: route.params.tugas_akhir_id,
+    tugas_akhir_id: detailUjian.value?.tugas_akhir_id,
+    ujian_ta_id: detailUjian.value?.ujian_ta_id || null,
     tataLaporan: tataLaporan.value,
     kemampuanTeknis: kemampuanTeknis.value,
     hasilProduk: hasilProduk.value,
@@ -271,7 +258,7 @@ const handleSubmit = async () => {
     // Return to detail page with success parameter
     router.push({
       name: "DetailUjianTAforDosen",
-      params: { tugas_akhir_id: route.params.tugas_akhir_id },
+      params: { ujian_ta_id: detailUjian.value?.ujian_ta_id },
       query: {
         success: "true",
         action: isEdit.value ? "update" : "input",
@@ -316,11 +303,11 @@ onMounted(() => {
 
   <div v-else>
     <Breadcrumb />
-    <div class="card-rounded bg-white p-6 lg:p-8">
+    <div class="p-6 bg-white card-rounded lg:p-8">
       <!-- Header Section -->
       <div class="mb-6">
-        <h4 class="heading4 font-semibold">Input Nilai Ujian Tugas Akhir</h4>
-        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+        <h4 class="font-semibold heading4">Input Nilai Ujian Tugas Akhir</h4>
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
           <p class="body4-bold text-black/70">{{ studentInfo.name }}</p>
           <p class="body4-bold text-black/70 sm:border-l-2 sm:pl-2">
             {{ studentInfo.nim }}
@@ -338,7 +325,7 @@ onMounted(() => {
           <p class="heading5 text-[#00A2EA] font-semibold mb-3">
             Status Kelulusan <span class="text-red-500">*</span>
           </p>
-          <div class="w-full flex flex-col sm:flex-row sm:justify-between">
+          <div class="flex flex-col w-full sm:flex-row sm:justify-between">
             <div class="flex items-center mb-3 sm:mb-0 sm:flex-1">
               <div class="relative inline-flex items-center">
                 <input
@@ -351,7 +338,7 @@ onMounted(() => {
                 />
                 <svg
                   v-if="statusKelulusan === '1'"
-                  class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-white pointer-events-none"
+                  class="absolute w-4 h-4 text-white transform -translate-x-1/2 -translate-y-1/2 pointer-events-none left-1/2 top-1/2"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -364,7 +351,7 @@ onMounted(() => {
               </div>
               <label
                 for="lulusTanpaRevisi"
-                class="ml-2 body3-bold text-gray-700"
+                class="ml-2 text-gray-700 body3-bold"
                 >Lulus tanpa revisi</label
               >
             </div>
@@ -381,7 +368,7 @@ onMounted(() => {
                 />
                 <svg
                   v-if="statusKelulusan === '2'"
-                  class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-white pointer-events-none"
+                  class="absolute w-4 h-4 text-white transform -translate-x-1/2 -translate-y-1/2 pointer-events-none left-1/2 top-1/2"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -394,7 +381,7 @@ onMounted(() => {
               </div>
               <label
                 for="lulusDenganRevisi"
-                class="ml-2 body3-bold text-gray-700"
+                class="ml-2 text-gray-700 body3-bold"
                 >Lulus dengan revisi</label
               >
             </div>
@@ -411,7 +398,7 @@ onMounted(() => {
                 />
                 <svg
                   v-if="statusKelulusan === '3'"
-                  class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-white pointer-events-none"
+                  class="absolute w-4 h-4 text-white transform -translate-x-1/2 -translate-y-1/2 pointer-events-none left-1/2 top-1/2"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -422,7 +409,7 @@ onMounted(() => {
                   ></path>
                 </svg>
               </div>
-              <label for="belumLulus" class="ml-2 body3-bold text-gray-700"
+              <label for="belumLulus" class="ml-2 text-gray-700 body3-bold"
                 >Belum lulus perlu diuji lagi</label
               >
             </div>
@@ -439,7 +426,7 @@ onMounted(() => {
                 />
                 <svg
                   v-if="statusKelulusan === '4'"
-                  class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-white pointer-events-none"
+                  class="absolute w-4 h-4 text-white transform -translate-x-1/2 -translate-y-1/2 pointer-events-none left-1/2 top-1/2"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -450,14 +437,14 @@ onMounted(() => {
                   ></path>
                 </svg>
               </div>
-              <label for="tidakLulus" class="ml-2 body3-bold text-gray-700"
+              <label for="tidakLulus" class="ml-2 text-gray-700 body3-bold"
                 >Tidak lulus</label
               >
             </div>
           </div>
           <p
             v-if="formSubmitted && errors.statusKelulusan"
-            class="text-red-500 mt-2 error-text"
+            class="mt-2 text-red-500 error-text"
           >
             Status kelulusan wajib dipilih
           </p>
@@ -481,7 +468,7 @@ onMounted(() => {
               />
               <p
                 v-if="formSubmitted && errors.tataLaporan"
-                class="text-red-500 mt-1 error-text"
+                class="mt-1 text-red-500 error-text"
               >
                 Nilai tata laporan wajib diisi (0-100)
               </p>
@@ -500,7 +487,7 @@ onMounted(() => {
               />
               <p
                 v-if="formSubmitted && errors.kemampuanTeknis"
-                class="text-red-500 mt-1 error-text"
+                class="mt-1 text-red-500 error-text"
               >
                 Nilai kemampuan teknis wajib diisi (0-100)
               </p>
@@ -519,7 +506,7 @@ onMounted(() => {
               />
               <p
                 v-if="formSubmitted && errors.hasilProduk"
-                class="text-red-500 mt-1 error-text"
+                class="mt-1 text-red-500 error-text"
               >
                 Nilai hasil produk wajib diisi (0-100)
               </p>
@@ -538,7 +525,7 @@ onMounted(() => {
               />
               <p
                 v-if="formSubmitted && errors.presentasi"
-                class="text-red-500 mt-1 error-text"
+                class="mt-1 text-red-500 error-text"
               >
                 Nilai presentasi wajib diisi (0-100)
               </p>
@@ -578,7 +565,7 @@ onMounted(() => {
           ></InputTextarea>
           <p
             v-if="formSubmitted && errors.catatanRevisi"
-            class="text-red-500 mt-1 error-text"
+            class="mt-1 text-red-500 error-text"
           >
             Catatan revisi wajib diisi
           </p>

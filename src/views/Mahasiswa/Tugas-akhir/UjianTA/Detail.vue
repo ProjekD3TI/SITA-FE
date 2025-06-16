@@ -46,16 +46,22 @@ const { loadingJadwalUjianTA, errorJadwalUjianTA, dataJadwalUjianTA } =
 const { loadingNilaiUjianTA, errorNilaiUjianTA } = useNilaiUjianTA();
 
 const dinilai = computed(() => {
-  // Cek apakah ada penguji dan semua nilai > 0
-  const penguji = dataNilaiUjianTA.value?.dosen_penguji || [];
-  const nilai = rataRataNilaiUjianTA.value;
-  return (
-    penguji.length > 0 &&
-    nilai.kualitas_tata_laporan > 0 &&
-    nilai.kemampuan_teknis > 0 &&
-    nilai.kualitas_produk > 0 &&
-    nilai.presentasi > 0
+  const penguji = dataNilaiUjianTA.value?.ujian_ta?.dosen_penguji || [];
+  const pengujiSudahNilai = penguji.filter(
+    (dosen) =>
+      dosen.nilai_ujian_ta &&
+      [
+        "kualitas_tata_laporan",
+        "kemampuan_teknis",
+        "kualitas_produk",
+        "presentasi",
+      ].every(
+        (key) =>
+          dosen.nilai_ujian_ta[key] !== null &&
+          dosen.nilai_ujian_ta[key] !== undefined
+      )
   );
+  return pengujiSudahNilai.length >= 3;
 });
 const showNilaiModal = ref(false);
 

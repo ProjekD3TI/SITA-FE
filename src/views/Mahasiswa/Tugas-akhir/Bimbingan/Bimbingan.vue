@@ -450,7 +450,7 @@ watch(
 
             <!-- Kolom Tanggal -->
             <td
-              class="px-3 py-3 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-3 border-r border-white rounded-l-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.tanggal_bimbingan }}
             </td>

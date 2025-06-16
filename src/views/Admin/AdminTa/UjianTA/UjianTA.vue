@@ -272,7 +272,6 @@ const searchQueryTab2 = ref("");
 const searchQueryTab3 = ref("");
 const selectedStatusesPlotting = ref([]);
 const selectedStatusesPendaftar = ref([]);
-const selectedStatusesPenjadwalan = ref([]);
 
 function handleFilterPlotting({ values }) {
   selectedStatusesPlotting.value = values;
@@ -350,7 +349,6 @@ function handleTabChange(tabId) {
   searchQueryTab3.value = "";
   selectedStatusesPlotting.value = [];
   selectedStatusesPendaftar.value = [];
-  selectedStatusesPenjadwalan.value = [];
   selectedFiltersPenjadwalan.value = []; // Reset filter gabungan
 }
 
@@ -658,7 +656,7 @@ watch(currentPageTabelPenjadwalan, (val) => {
   fetchTabelPenjadwalan(
     val,
     searchQueryTab3.value,
-    getSelectedStatusValue(selectedStatusesPenjadwalan.value),
+    getSelectedStatusValue(selectedFiltersPenjadwalan.value),
     selectedTahunAjaranId.value
   );
 });
@@ -684,6 +682,18 @@ watch(
       query: {
         ...router.currentRoute.value.query,
         refreshPendaftar: undefined,
+      },
+    });
+  }
+);
+watch(
+  () => router.currentRoute.value.query.refreshPenjadwalan,
+  () => {
+    fetchTabelPenjadwalan(currentPageTabelPenjadwalan.value);
+    router.replace({
+      query: {
+        ...router.currentRoute.value.query,
+        refreshPenjadwalan: undefined,
       },
     });
   }
@@ -943,7 +953,7 @@ const modalFileUjianTAFiles = ref({
             filterType="filter"
             @apply="handleFilterPenjadwalan"
             triggerText="Filter"
-            :preselectedValues="selectedStatusesPenjadwalan"
+            :preselectedValues="selectedFiltersPenjadwalan"
           />
           <Button
             variant="outlined-secondary"
@@ -1229,8 +1239,8 @@ const modalFileUjianTAFiles = ref({
         <div class="flex flex-wrap gap-2 sm:justify-end sm:gap-4">
           <Button
             v-if="
-              selectedJadwalItem.status_kelulusan !== 1 &&
-              selectedJadwalItem.status_kelulusan !== 2
+              selectedJadwalItem.ujian_ta?.status_kelulusan == null ||
+              selectedJadwalItem.ujian_ta?.status_kelulusan == undefined
             "
             variant="secondary"
             size="lg"
@@ -1242,8 +1252,8 @@ const modalFileUjianTAFiles = ref({
           </Button>
           <Button
             v-if="
-              selectedJadwalItem.status_kelulusan !== 1 &&
-              selectedJadwalItem.status_kelulusan !== 2
+              selectedJadwalItem.ujian_ta?.status_kelulusan == null ||
+              selectedJadwalItem.ujian_ta?.status_kelulusan == undefined
             "
             variant="secondary"
             size="md"
@@ -1254,19 +1264,21 @@ const modalFileUjianTAFiles = ref({
             Edit
           </Button>
           <Button
-            v-if="selectedJadwalItem.status_kelulusan !== null"
+            v-if="selectedJadwalItem.ujian_ta?.status_kelulusan !== null"
             variant="primary"
             size="lg"
             class="hidden w-fit sm:flex"
             leftIconPath="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0-2.25 2.25h13.5M6 7.5h3v3H6v-3Z"
-            @click="downloadBeritaAcara(selectedJadwalItem.tugas_akhir_id)"
+            @click="
+              downloadBeritaAcara(selectedJadwalItem.ujian_ta?.ujian_ta_id)
+            "
           >
             Berita Acara
           </Button>
           <Button
             v-if="
-              selectedJadwalItem.status_kelulusan !== null &&
-              selectedJadwalItem.status_kelulusan !== 1
+              selectedJadwalItem.ujian_ta?.status_kelulusan !== null &&
+              selectedJadwalItem.ujian_ta?.status_kelulusan !== 1
             "
             variant="primary"
             size="lg"
@@ -1277,7 +1289,7 @@ const modalFileUjianTAFiles = ref({
             Lembar Revisi
           </Button>
           <Button
-            v-if="selectedJadwalItem.status_kelulusan !== null"
+            v-if="selectedJadwalItem.ujian_ta?.status_kelulusan !== null"
             variant="primary"
             size="md"
             class="w-full sm:hidden"
@@ -1288,8 +1300,8 @@ const modalFileUjianTAFiles = ref({
           </Button>
           <Button
             v-if="
-              selectedJadwalItem.status_kelulusan !== null &&
-              selectedJadwalItem.status_kelulusan !== 1
+              selectedJadwalItem.ujian_ta?.status_kelulusan !== null &&
+              selectedJadwalItem.ujian_ta?.status_kelulusan !== 1
             "
             variant="primary"
             size="md"

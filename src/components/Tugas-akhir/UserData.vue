@@ -121,32 +121,33 @@ const props = defineProps({
 
 // Map status dari berbagai format ke format yang diterima komponen Label
 const mappedStatus = computed(() => {
-  // Pemetaan status ke format yang didukung komponen Label
   switch (props.status.toLowerCase()) {
     case "approved":
     case "success":
     case "active":
     case "diterima":
       return "success";
-
     case "rejected":
     case "error":
     case "danger":
     case "ditolak":
       return "danger";
-
     case "warning":
     case "waiting":
     case "pending":
     case "menunggu":
       return "warning";
-
+    case "warning-outline":
+      return "warning-outline";
+    case "success-outline":
+      return "success-outline";
+    case "danger-outline":
+      return "danger-outline";
     case "inactive":
     case "nonaktif":
       return "inactive";
-
     default:
-      return "warning"; // Default fallback
+      return "warning";
   }
 });
 </script>

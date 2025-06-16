@@ -210,10 +210,10 @@ const modalBodyText = computed(() => {
 
 // Watch for route parameter changes to load data
 watch(
-  () => route.params.tugas_akhir_id,
-  (newTugasAkhirId) => {
-    if (newTugasAkhirId) {
-      fetchDetailUjian(newTugasAkhirId);
+  () => route.params.ujian_ta_id,
+  (newUjianTaId) => {
+    if (newUjianTaId) {
+      fetchDetailUjian(newUjianTaId);
     }
   },
   { immediate: true }
@@ -232,7 +232,7 @@ watch(
 
       // Check for refresh parameter to reload data
       if (newQuery.refresh) {
-        refreshDetailUjian(route.params.tugas_akhir_id);
+        refreshDetailUjian(route.params.ujian_ta_id);
       }
 
       // Remove success param from URL to prevent showing toast on refresh
@@ -300,7 +300,7 @@ const goToEditNilai = () => {
   router.push({
     name: "InputNilaiUjianTAforDosen",
     params: {
-      tugas_akhir_id: route.params.tugas_akhir_id,
+      ujian_ta_id: detailUjian.value?.ujian_ta_id,
     },
     query: {
       edit: "true",
@@ -334,9 +334,9 @@ watchEffect(() => {
 });
 
 onMounted(() => {
-  const tugasAkhirId = route.params.tugas_akhir_id;
-  if (tugasAkhirId) {
-    fetchDetailUjian(tugasAkhirId);
+  const ujianTaId = route.params.ujian_ta_id;
+  if (ujianTaId) {
+    fetchDetailUjian(ujianTaId);
   }
 });
 </script>
@@ -348,7 +348,7 @@ onMounted(() => {
   </div>
 
   <!-- Error state -->
-  <div v-else-if="error" class="bg-red-100 p-4 rounded-lg mt-4">
+  <div v-else-if="error" class="p-4 mt-4 bg-red-100 rounded-lg">
     <p class="text-red-700">{{ error }}</p>
     <Button
       @click="fetchDetailUjian(route.params.tugas_akhir_id)"
@@ -363,15 +363,15 @@ onMounted(() => {
   <div v-else-if="!$route.path.includes('input-nilai-ujian-ta') && detailUjian">
     <Breadcrumb />
     <!-- Jadwal Section -->
-    <div class="card-rounded bg-white p-6 lg:p-8 shadow-custom">
-      <div class="max-w-screen-2xl mx-auto">
+    <div class="p-6 bg-white card-rounded lg:p-8 shadow-custom">
+      <div class="mx-auto max-w-screen-2xl">
         <JadwalUjian :examiners="examiners" :jadwal="schedule" />
       </div>
     </div>
 
     <!-- Tugas Akhir Details Section -->
-    <div class="card-rounded bg-white p-6 lg:p-8 mt-6 shadow-custom">
-      <div class="max-w-screen-2xl mx-auto">
+    <div class="p-6 mt-6 bg-white card-rounded lg:p-8 shadow-custom">
+      <div class="mx-auto max-w-screen-2xl">
         <div class="flex flex-col md:flex-row">
           <!-- PDF Preview (Left Side) -->
           <div class="order-last basis-7/12 md:pe-8 md:order-first">
@@ -399,7 +399,7 @@ onMounted(() => {
           </div>
 
           <!-- Details (Right Side) -->
-          <div class="basis-5/12 flex flex-col gap-4">
+          <div class="flex flex-col gap-4 basis-5/12">
             <!-- Detail items -->
             <div class="flex flex-col gap-2">
               <div>
@@ -441,14 +441,14 @@ onMounted(() => {
 
             <!-- Action Buttons - Modified to use route params -->
             <div class="flex flex-col gap-4">
-              <div class="flex self-end gap-4 items-center">
+              <div class="flex items-center self-end gap-4">
                 <!-- If nilai exists, show Lihat Nilai button -->
                 <Button
                   v-if="hasGiven"
                   @click="openNilaiModal"
                   variant="success"
                   size="lg"
-                  class="w-fit sm:flex hidden"
+                  class="hidden w-fit sm:flex"
                 >
                   Lihat Nilai
                 </Button>
@@ -469,10 +469,10 @@ onMounted(() => {
                     :to="{
                       name: 'InputNilaiUjianTAforDosen',
                       params: {
-                        tugas_akhir_id: $route.params.tugas_akhir_id,
+                        ujian_ta_id: detailUjian?.ujian_ta_id,
                       },
                     }"
-                    class="sm:block hidden"
+                    class="hidden sm:block"
                   >
                     <Button variant="primary" size="lg" class="w-fit">
                       Input Nilai
@@ -483,10 +483,10 @@ onMounted(() => {
                     :to="{
                       name: 'InputNilaiUjianTAforDosen',
                       params: {
-                        tugas_akhir_id: $route.params.tugas_akhir_id,
+                        ujian_ta_id: detailUjian?.ujian_ta_id,
                       },
                     }"
-                    class="sm:hidden block"
+                    class="block sm:hidden"
                   >
                     <Button variant="primary" size="md" class="w-fit">
                       Input Nilai
@@ -495,7 +495,7 @@ onMounted(() => {
                 </template>
               </div>
 
-              <div v-if="hasGiven" class="text-green-600 text-sm self-end">
+              <div v-if="hasGiven" class="self-end text-sm text-green-600">
                 Anda sudah memberikan nilai untuk ujian ini
               </div>
             </div>
@@ -517,14 +517,14 @@ onMounted(() => {
       <div v-if="isSecretary">
         <h5 class="body3-bold lg:body1-bold text-primary">Status Kelulusan</h5>
         <Label
-          class="hidden w-fit lg:block mt-2"
+          class="hidden mt-2 w-fit lg:block"
           :status="statusKelulusanLabel.status"
           :label="statusKelulusanLabel.label"
           :customLabel="true"
           size="lg"
         />
         <Label
-          class="block w-fit lg:hidden mt-2"
+          class="block mt-2 w-fit lg:hidden"
           :status="statusKelulusanLabel.status"
           :label="statusKelulusanLabel.label"
           :customLabel="true"
@@ -594,7 +594,7 @@ onMounted(() => {
       </div>
 
       <!-- Add Edit Nilai button -->
-      <div class="mt-6 flex justify-end">
+      <div class="flex justify-end mt-6">
         <Button
           @click="goToEditNilai"
           variant="secondary"

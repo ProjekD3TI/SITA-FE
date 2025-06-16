@@ -455,11 +455,11 @@ export function useTabelPenjadwalan() {
     }
   };
 
-  const downloadBeritaAcara = async (tugasAkhirId) => {
+  const downloadBeritaAcara = async (ujianTaId) => {
     try {
       const authToken = VueCookies.get("auth_token");
       const response = await axios.get(
-        `/api/admin_ta/cetak-berita-acara-ujian/${tugasAkhirId}`,
+        `/api/admin_ta/cetak-berita-acara-ujian/${ujianTaId}`,
         {
           responseType: "blob",
           headers: {

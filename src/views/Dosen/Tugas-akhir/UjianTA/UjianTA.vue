@@ -83,7 +83,7 @@ onMounted(() => {
 const navigateToDetail = (item) => {
   router.push({
     name: "DetailUjianTAforDosen",
-    params: { tugas_akhir_id: item.tugas_akhir_id },
+    params: { ujian_ta_id: item.ujian_ta_id }, // Ganti ke ujian_ta_id
   });
 };
 </script>
@@ -92,7 +92,7 @@ const navigateToDetail = (item) => {
   <div v-if="!$route.path.includes('detail-ujian-ta')">
     <Breadcrumb />
 
-    <div class="bg-white rounded-lg shadow-md p-8">
+    <div class="p-8 bg-white rounded-lg shadow-md">
       <!-- Search and Filter - Stack on mobile -->
       <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
         <!-- Filter by Status -->
@@ -123,7 +123,7 @@ const navigateToDetail = (item) => {
       </div>
       <div
         v-else-if="errorUjian"
-        class="p-4 bg-red-100 text-red-700 rounded-lg my-4"
+        class="p-4 my-4 text-red-700 bg-red-100 rounded-lg"
       >
         <p>{{ errorUjian }}</p>
         <Button
@@ -139,11 +139,11 @@ const navigateToDetail = (item) => {
       <!-- Empty state -->
       <div
         v-else-if="!loadingUjian && ujianTAData.length === 0"
-        class="text-center py-8 bg-gray-50 rounded-lg"
+        class="py-8 text-center rounded-lg bg-gray-50"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          class="h-12 w-12 mx-auto text-gray-400"
+          class="w-12 h-12 mx-auto text-gray-400"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -168,7 +168,7 @@ const navigateToDetail = (item) => {
           @pageChange="handlePageChange"
         >
           <template #row="{ item }">
-            <td class="px-6 py-4 whitespace-nowrap rounded-l-lg">
+            <td class="px-6 py-4 rounded-l-lg whitespace-nowrap">
               {{ item.mahasiswa?.nim }}
             </td>
             <td class="px-6 py-4">

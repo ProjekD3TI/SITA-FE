@@ -460,7 +460,13 @@ watch(currentPagePendaftar, (val) => {
         <ErrorMsg v-else-if="errorTabelSeminarProposal" :message="error" />
         <Table
           v-else
-          :headers="['NIM', 'Nama', 'Judul Proposal', 'Dospem', 'Nilai']"
+          :headers="[
+            'NIM',
+            'Nama',
+            'Judul Proposal',
+            'Dosen Pembimbing',
+            'Nilai',
+          ]"
           :items="listTabelSeminarProposal"
           @rowClick="handleRowClickSeminar"
           :pagination="paginationTabelSeminarProposal"

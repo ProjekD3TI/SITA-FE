@@ -553,12 +553,13 @@ export const daftarPenguji = computed(() => {
 
 // --- Nilai Ujian TA ---
 export const catatanRevisi = computed(() => {
-  const penguji = dataNilaiUjianTA.value?.dosen_penguji || [];
-  // Return array of { nama, revisi }
-  return penguji.map((d) => ({
-    nama: d.nama || "",
-    revisi: d.revisi || "",
-  }));
+  const penguji = dataNilaiUjianTA.value?.ujian_ta?.dosen_penguji || [];
+  return penguji
+    .filter((d) => d.nilai_ujian_ta && d.nilai_ujian_ta.revisi)
+    .map((d) => ({
+      nama: d.nama || "",
+      revisi: d.nilai_ujian_ta.revisi || "",
+    }));
 });
 export const catatanRevisiTerisi = computed(() => {
   return (catatanRevisi.value || []).filter(
@@ -566,11 +567,11 @@ export const catatanRevisiTerisi = computed(() => {
   );
 });
 export const statusKelulusan = computed(
-  () => dataNilaiUjianTA.value?.status_kelulusan || null
+  () => dataNilaiUjianTA.value?.ujian_ta?.status_kelulusan || null
 );
 export const rataRataNilaiUjianTA = computed(() => {
-  const penguji = dataNilaiUjianTA.value?.dosen_penguji || [];
-  if (penguji.length === 0)
+  const penguji = dataNilaiUjianTA.value?.ujian_ta?.dosen_penguji || [];
+  if (!penguji.length) {
     return {
       kualitas_tata_laporan: 0,
       kemampuan_teknis: 0,
@@ -578,6 +579,7 @@ export const rataRataNilaiUjianTA = computed(() => {
       presentasi: 0,
       rerata_ujian: 0,
     };
+  }
 
   let total = {
     kualitas_tata_laporan: 0,
@@ -587,23 +589,28 @@ export const rataRataNilaiUjianTA = computed(() => {
     rerata_ujian: 0,
   };
 
+  let count = 0;
+
   penguji.forEach((dosen) => {
-    const nilai = dosen.nilai_ujian_ta || {};
-    total.kualitas_tata_laporan += nilai.kualitas_tata_laporan || 0;
-    total.kemampuan_teknis += nilai.kemampuan_teknis || 0;
-    total.kualitas_produk += nilai.kualitas_produk || 0;
-    total.presentasi += nilai.presentasi || 0;
-    total.rerata_ujian += nilai.rerata_ujian || 0;
+    const nilai = dosen.nilai_ujian_ta;
+    if (nilai) {
+      total.kualitas_tata_laporan += nilai.kualitas_tata_laporan || 0;
+      total.kemampuan_teknis += nilai.kemampuan_teknis || 0;
+      total.kualitas_produk += nilai.kualitas_produk || 0;
+      total.presentasi += nilai.presentasi || 0;
+      total.rerata_ujian += nilai.rerata_ujian || 0;
+      count++;
+    }
   });
 
+  if (count === 0) return total;
+
   return {
-    kualitas_tata_laporan: Math.round(
-      total.kualitas_tata_laporan / penguji.length
-    ),
-    kemampuan_teknis: Math.round(total.kemampuan_teknis / penguji.length),
-    kualitas_produk: Math.round(total.kualitas_produk / penguji.length),
-    presentasi: Math.round(total.presentasi / penguji.length),
-    rerata_ujian: Math.round(total.rerata_ujian / penguji.length),
+    kualitas_tata_laporan: +(total.kualitas_tata_laporan / count).toFixed(2),
+    kemampuan_teknis: +(total.kemampuan_teknis / count).toFixed(2),
+    kualitas_produk: +(total.kualitas_produk / count).toFixed(2),
+    presentasi: +(total.presentasi / count).toFixed(2),
+    rerata_ujian: +(total.rerata_ujian / count).toFixed(2),
   };
 });
 

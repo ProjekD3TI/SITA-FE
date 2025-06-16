@@ -175,6 +175,11 @@ watch(
       searchQuery.value,
       getSelectedKategoriLabel(selectedCategoriesPlot.value)
     );
+    fetchBimbingan(
+      1,
+      searchQueryBimbingan.value,
+      getSelectedKategoriLabel(selectedCategoriesBimbingan.value)
+    );
   }
 );
 </script>

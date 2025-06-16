@@ -140,9 +140,9 @@ export function useUjianTAForDosen() {
   };
 
   // Fetch detail of a specific UjianTA
-  const fetchDetailUjian = async (tugasAkhirId) => {
-    if (!tugasAkhirId) {
-      errorDetail.value = "ID Tugas Akhir tidak valid";
+  const fetchDetailUjian = async (ujianTaId) => {
+    if (!ujianTaId) {
+      errorDetail.value = "ID Ujian TA tidak valid";
       return;
     }
 
@@ -156,10 +156,9 @@ export function useUjianTAForDosen() {
         Accept: "application/json",
       };
 
-      // Add cache busting parameter
       const timestamp = new Date().getTime();
       const response = await axios.get(
-        `/api/dosen/tugas-akhir/detail-ujian-ta/${tugasAkhirId}?_t=${timestamp}`,
+        `/api/dosen/tugas-akhir/detail-ujian-ta/${ujianTaId}?_t=${timestamp}`,
         { headers }
       );
 
@@ -203,6 +202,8 @@ export function useUjianTAForDosen() {
     try {
       // Create payload with all required fields
       const payload = {
+        tugas_akhir_id: detailUjian.value?.tugas_akhir_id,
+        ujian_ta_id: data.ujian_ta_id,
         kualitas_tata_laporan: parseFloat(data.tataLaporan),
         kemampuan_teknis: parseFloat(data.kemampuanTeknis),
         kualitas_produk: parseFloat(data.hasilProduk),

@@ -290,7 +290,7 @@ const routes = [
             },
             children: [
               {
-                path: "detail-ujian-ta/:tugas_akhir_id",
+                path: "detail-ujian-ta/:ujian_ta_id",
                 name: "DetailUjianTAforDosen",
                 component: detailUjianTAforDosen,
                 meta: {
