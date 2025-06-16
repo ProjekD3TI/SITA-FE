@@ -36,9 +36,9 @@
                     </span>
                 </template>
 
-                <!-- <template #item-user_name="item">
+                <template #item-user_name="item">
                     <span>{{ extractUserName(item) }}</span>
-                </template> -->
+                </template>
 
                 <template #item-actions="item">
                     <div class="flex space-x-1">
@@ -142,8 +142,9 @@ const debugData = ref(null); // Untuk debugging
 const headers = [
     { text: "No", value: "no" },
     { text: "Kode RFID", value: "rfid_code" },
+    { text: "Nama User", value: "user_name" },
     { text: "Tipe User", value: "user_type" },
-    // { text: "Nama User", value: "user_name" },
+
     { text: "Aksi", value: "actions" },
 ];
 
@@ -202,6 +203,8 @@ const extractUserName = (item) => {
     if (item.mahasiswa_name) return item.mahasiswa_name;
     if (item.user_name) return item.user_name;
     if (item.nama_user) return item.nama_user;
+    // console.log("Item:", item);
+    // console.log("Mahasiswa:", item.mahasiswa);
 
     // Jika tidak ada, tampilkan placeholder
     return "Nama tidak tersedia";

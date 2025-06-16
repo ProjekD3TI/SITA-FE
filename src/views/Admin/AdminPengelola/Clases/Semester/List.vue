@@ -1,28 +1,49 @@
 <template>
-    <div class="p-6 max-w-6xl mx-auto">
+    <div class="p-6 max-w-5xl mx-auto overflow-hidden">
         <h2 class="text-2xl font-bold mb-6">Daftar Semester</h2>
 
-        <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-            <input v-model="searchTerm" type="text" placeholder="Cari mahasiswa, NIM, atau kelas..."
-                class="px-3 py-2 border rounded-md w-full md:w-80" @input="onSearch" />
+        <div class="grid grid-cols-1 gap-4 mb-4">
+            <div class="flex gap-2">
+                <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                    <input v-model="searchTerm" type="text"
+                        placeholder="Cari berdasarkan nama mahasiswa, NIM, atau kelas..."
+                        class="pl-10 pr-3 py-2 border rounded-md w-full" @input="onSearch" />
+                </div>
+            </div>
 
-            <div class="flex space-x-2 w-full md:w-auto">
+            <div class="flex flex-wrap justify-end gap-2">
                 <button @click="goToCreate()"
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition w-full md:w-auto">
+                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center gap-2">
+                    <i class="fas fa-plus"></i>
                     Tambah Semester
                 </button>
             </div>
         </div>
 
-        <div class="relative">
+        <div class="relative overflow-x-auto">
             <Vue3EasyDataTable ref="dataTable" :headers="headers" :items="semesterList" :loading="loading"
                 :server-options="serverOptions" :server-items-length="pagination.total"
-                @update:options="onOptionsUpdate" :rows-per-page="serverOptions.rowsPerPage" :rows-items="[10, 25, 50]"
-                :pagination="false" hide-footer class="bg-white shadow-md rounded-lg overflow-hidden"
-                empty-message="Tidak ada data semester" border-cell>
-                <template #item-actions="{ item }">
+                @update:server-options="onServerOptionsUpdate" :rows-per-page="serverOptions.rowsPerPage"
+                :rows-items="[10, 25, 50]" :pagination="false" hide-footer class="bg-white shadow-md rounded-lg"
+                empty-message="Tidak ada data Semester" border-cell server-side-sort :key="tableKey">
+                <template #item-student_info="item">
+                    <div class="flex flex-col">
+                        <span class="font-medium">{{ item.student_name }}</span>
+                    </div>
+                </template>
+
+                <template #item-class_name="item">
+                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
+                        {{ item.class_name }}
+                    </span>
+                </template>
+
+                <template #item-actions="item">
                     <div class="flex space-x-1">
-                        <button @click.stop="goToEdit(item.id)" class="text-blue-500 hover:text-blue-700 p-1"
+                        <button @click.stop="goToEdit(item.id_semester)" class="text-blue-500 hover:text-blue-700 p-1"
                             title="Edit">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -32,7 +53,6 @@
                         </button>
                     </div>
                 </template>
-
             </Vue3EasyDataTable>
         </div>
 
@@ -47,27 +67,28 @@
                 </select>
             </div>
 
-            <div class="text-sm text-gray-600">
+            <div class="text-sm text-gray-600 text-center">
                 {{
-                pagination.total > 0
-                ? (pagination.current_page - 1) * pagination.per_page + 1
-                : 0
+                    pagination.total > 0
+                        ? (pagination.current_page - 1) * pagination.per_page + 1
+                        : 0
                 }}-{{
-                Math.min(
-                pagination.current_page * pagination.per_page,
-                pagination.total
-                )
+                    Math.min(
+                        pagination.current_page * pagination.per_page,
+                        pagination.total
+                    )
                 }}
                 of {{ pagination.total }}
             </div>
 
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-2 w-full md:w-auto justify-center md:justify-end">
                 <button @click="goToPreviousPage" :disabled="pagination.current_page <= 1"
                     class="px-3 py-1 bg-gray-200 text-gray-800 rounded disabled:opacity-50 hover:bg-gray-300 transition min-w-[80px]">
                     Previous
                 </button>
                 <div class="px-3 py-1 bg-white border rounded">
-                    Page {{ pagination.current_page }} of {{ pagination.last_page || 1 }}
+                    Page {{ pagination.current_page }} of
+                    {{ pagination.last_page || 1 }}
                 </div>
                 <button @click="goToNextPage" :disabled="pagination.current_page >= pagination.last_page"
                     class="px-3 py-1 bg-gray-200 text-gray-800 rounded disabled:opacity-50 hover:bg-gray-300 transition min-w-[80px]">
@@ -80,10 +101,10 @@
             <div class="bg-white rounded-lg p-6 max-w-md w-full">
                 <h3 class="text-lg font-medium mb-4">Konfirmasi Hapus</h3>
                 <p class="mb-6">
-                    Apakah Anda yakin ingin menghapus semester untuk mahasiswa "{{
-                    selectedItem?.student_name
-                    }}" ({{ selectedItem?.student_nim }}) dari kelas "{{ selectedItem?.class_name }}"?
-                    Tindakan ini tidak dapat dibatalkan.
+                    Apakah Anda yakin ingin menghapus data semester untuk mahasiswa "{{
+                        selectedItem?.student_name
+                    }}" ({{ selectedItem?.student_nim }})? Tindakan ini tidak dapat
+                    dibatalkan.
                 </p>
                 <div class="flex justify-end space-x-2">
                     <button @click="showDeleteModal = false"
@@ -101,7 +122,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, nextTick, computed } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
@@ -119,18 +140,21 @@ const debounceTimeout = ref(null);
 const showDeleteModal = ref(false);
 const selectedItem = ref(null);
 const isDeleting = ref(false);
+const tableKey = ref(0);
 
 const headers = [
-    { text: "No", value: "no" },
-    { text: "NIM", value: "student_nim" },
-    { text: "Nama Mahasiswa", value: "student_name" },
-    { text: "Kelas", value: "class_name" },
-    { text: "Aksi", value: "actions" },
+    { text: "No", value: "no", sortable: true },
+    { text: "Nama Mahasiswa", value: "student_name", sortable: false },
+    { text: "NIM", value: "student_nim", sortable: true },
+    { text: "Kelas", value: "class_name", sortable: true },
+    { text: "Aksi", value: "actions", sortable: false },
 ];
 
 const serverOptions = reactive({
     page: 1,
     rowsPerPage: 10,
+    sortBy: null,
+    sortType: null,
 });
 
 const pagination = reactive({
@@ -156,7 +180,14 @@ const fetchSemesterList = async () => {
             ...(searchTerm.value && { search: searchTerm.value }),
         };
 
-        const response = await axios.get("/api/admin_pengelola/semester", { params });
+        if (serverOptions.sortBy && serverOptions.sortType) {
+            params.sort_by = serverOptions.sortBy;
+            params.sort_type = serverOptions.sortType;
+        }
+
+        const response = await axios.get("/api/admin_pengelola/semester", {
+            params,
+        });
 
         if (response.data && response.data.data) {
             const dataArray = Array.isArray(response.data.data)
@@ -169,17 +200,17 @@ const fetchSemesterList = async () => {
             }));
 
             Object.assign(pagination, {
-                current_page: response.data.pagination.current_page || 1,
-                per_page: response.data.pagination.per_page || 10,
-                total: response.data.pagination.total || 0,
-                last_page: response.data.pagination.last_page || 1,
+                current_page: response.data.pagination?.current_page || 1,
+                per_page: response.data.pagination?.per_page || 10,
+                total: response.data.pagination?.total || 0,
+                last_page: response.data.pagination?.last_page || 1,
             });
         } else {
             semesterList.value = [];
             toast.error("Format data tidak valid");
         }
     } catch (error) {
-        handleApiError(error, "Gagal memuat data semester");
+        handleApiError(error, "Gagal memuat data Semester");
         semesterList.value = [];
     } finally {
         loading.value = false;
@@ -187,7 +218,7 @@ const fetchSemesterList = async () => {
 };
 
 const goToCreate = () => router.push("/admin-pengelola/semester/create");
-const goToEdit = (id) => router.push(`/admin-pengelola/semester/edit/${id}`);
+const goToEdit = (id) => router.push(`/admin-pengelola/semester/update/${id}`);
 
 const onSearch = () => {
     if (debounceTimeout.value) clearTimeout(debounceTimeout.value);
@@ -197,9 +228,35 @@ const onSearch = () => {
     }, 300);
 };
 
-const onOptionsUpdate = async (options) => {
-    serverOptions.page = options.page || 1;
-    serverOptions.rowsPerPage = options.rowsPerPage || 10;
+const onServerOptionsUpdate = async (options) => {
+    if (options.page !== undefined) {
+        serverOptions.page = options.page;
+    }
+    if (options.rowsPerPage !== undefined) {
+        serverOptions.rowsPerPage = options.rowsPerPage;
+    }
+
+    if (options.sortBy !== undefined && options.sortType !== undefined) {
+        const newSortBy = options.sortBy;
+
+        if (serverOptions.sortBy === newSortBy) {
+            if (serverOptions.sortType === "asc") {
+                serverOptions.sortType = "desc";
+            } else if (serverOptions.sortType === "desc") {
+                serverOptions.sortBy = null;
+                serverOptions.sortType = null;
+            } else {
+                serverOptions.sortType = "asc";
+            }
+        } else {
+            serverOptions.sortBy = newSortBy;
+            serverOptions.sortType = "asc";
+        }
+    }
+
+    tableKey.value++;
+
+    await nextTick();
     await fetchSemesterList();
 };
 
@@ -222,8 +279,19 @@ const goToNextPage = () => {
     }
 };
 
+const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("id-ID", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+};
+
 const handleApiError = (error, message) => {
-    console.error(`${message}:`, error);
     if (error.response?.status === 401) {
         toast.error("Sesi anda telah berakhir. Silakan login kembali.");
         router.push("/login-admin");
@@ -244,12 +312,12 @@ const deleteSemester = async () => {
         isDeleting.value = true;
         setupAxios();
         const response = await axios.delete(
-            `/api/admin_pengelola/semester/${selectedItem.value.id}`
+            `/api/admin_pengelola/semester/${selectedItem.value.id_semester}`
         );
-        toast.success(response.data.message || "Semester berhasil dihapus");
+        toast.success(response.data.message || "Data Semester berhasil dihapus");
         fetchSemesterList();
     } catch (error) {
-        handleApiError(error, "Gagal menghapus semester");
+        handleApiError(error, "Gagal menghapus data Semester");
     } finally {
         isDeleting.value = false;
         showDeleteModal.value = false;
@@ -260,3 +328,4 @@ onMounted(() => {
     fetchSemesterList();
 });
 </script>
+  

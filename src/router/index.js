@@ -23,6 +23,11 @@ const routes = [
       ),
   },
   {
+    path: "/akses-ruang",
+    name: "AksesRuang",
+    component: () => import("../views/Monitoring/Akses.vue"),
+  },
+  {
     path: "/mahasiswa/reset-password/:token",
     name: "ResetPasswordMahasiswa",
     component: () =>
@@ -110,12 +115,27 @@ const routes = [
       {
         path: "dashboard",
         name: "DashboardMahasiswa",
-        component: () => import("../views/Mahasiswa/Dashboard.vue"),
+        component: () => import("../views/Mahasiswa/Landing.vue"),
       },
       {
         path: "profile",
         name: "ProfileMahasiswa",
         component: () => import("../views/Mahasiswa/Profile.vue"),
+      },
+      {
+        path: "pinjam",
+        name: "PinjamRuangMahasiswa",
+        component: () => import("../views/Mahasiswa/Booking/Create.vue"),
+      },
+      {
+        path: "booking-mahasiswa",
+        name: "ListBookingMahasiswa",
+        component: () => import("../views/Mahasiswa/Booking/Booking.vue"),
+      },
+      {
+        path: "jadwal-mahasiswa",
+        name: "JadwalMahasiswa",
+        component: () => import("../views/Mahasiswa/Jadwal/List.vue")
       },
       // route mahasiswa yg laenya
     ],
@@ -145,7 +165,7 @@ const routes = [
       {
         path: "dashboard",
         name: "DashboardDosen",
-        component: () => import("../views/Dosen/Dashboard.vue"),
+        component: () => import("../views/Dosen/Landing.vue"),
       },
       // route yg laen
     ],
@@ -160,9 +180,16 @@ const routes = [
       {
         path: "dashboard",
         name: "DashboardKalab",
-        component: () => import("../views/Dosen/Kalab/Dashboard.vue"),
+        component: () => import("../views/Dosen/Kalab/Landing.vue"),
       },
       // route yg laen
+
+      {
+        path: "list-peminjaman",
+        name: "ListPeminjamanKalab",
+        component: () => import("../views/Dosen/Kalab/Booking/List.vue"),
+      },
+
     ],
   },
 
@@ -254,7 +281,7 @@ const routes = [
       {
         path: "dashboard",
         name: "DashboardAdminPengelola",
-        component: () => import("../views/Admin/AdminPengelola/Dashboard.vue"),
+        component: () => import("../views/Admin/AdminPengelola/Landing.vue"),
       },
 
       // Kelola
@@ -291,7 +318,7 @@ const routes = [
           import("../views/Admin/AdminPengelola/Clases/Semester/Create.vue"),
       },
       {
-        path: "semester/edit/:id",
+        path: "semester/update/:id",
         name: "EditSemester",
         component: () =>
           import("../views/Admin/AdminPengelola/Clases/Semester/Edit.vue"),
@@ -337,6 +364,32 @@ const routes = [
         component: () =>
           import("../views/Admin/AdminPengelola/Jadwal/Sesi/Edit.vue"),
       },
+      //Jadwal
+      {
+        path: "jadwal",
+        name: "ListJadwal",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Jadwal/JadwalTetap/List.vue"),
+      },
+      {
+        path: "jadwal/create",
+        name: "CreateJadwal",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Jadwal/JadwalTetap/Create.vue"),
+      },
+      {
+        path: "jadwal/edit/:id",
+        name: "EditJadwal",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Jadwal/JadwalTetap/Edit.vue"),
+      },
+      {
+        path: "jadwal/detail/:id",
+        name: "DetailJadwal",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Jadwal/JadwalTetap/Detail.vue"),
+      },
+
       // RUANG
       // CRUD Lantai
       {

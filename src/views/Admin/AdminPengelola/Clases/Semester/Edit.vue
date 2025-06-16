@@ -10,34 +10,24 @@
             <div class="space-y-2">
                 <label
                     class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Kelas
+                    Mahasiswa
                 </label>
-                <select v-model="formData.id_class"
-                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-                    <option value="">Pilih Kelas</option>
-                    <option v-for="kelas in classList" :key="kelas.id" :value="kelas.id">
-                        {{ kelas.name }}
-                    </option>
-                </select>
-                <p v-if="errors.id_class" class="text-sm text-red-500">
-                    {{ errors.id_class[0] }}
+                <SearchableSelect v-model="formData.id_student" :options="studentList" value-key="id" label-key="name"
+                    placeholder="Pilih Mahasiswa" />
+                <p v-if="errors.id_student" class="text-sm text-red-500">
+                    {{ errors.id_student[0] }}
                 </p>
             </div>
 
             <div class="space-y-2">
                 <label
                     class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Mahasiswa
+                    Kelas
                 </label>
-                <select v-model="formData.id_student"
-                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-                    <option value="">Pilih Mahasiswa</option>
-                    <option v-for="student in studentList" :key="student.id" :value="student.id">
-                        {{ student.nim }} - {{ student.name }}
-                    </option>
-                </select>
-                <p v-if="errors.id_student" class="text-sm text-red-500">
-                    {{ errors.id_student[0] }}
+                <SearchableSelect v-model="formData.id_class" :options="classList" value-key="id" label-key="name"
+                    placeholder="Pilih Kelas" />
+                <p v-if="errors.id_class" class="text-sm text-red-500">
+                    {{ errors.id_class[0] }}
                 </p>
             </div>
 
@@ -62,6 +52,7 @@ import axios from "axios";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 import VueCookies from "vue-cookies";
+import SearchableSelect from "../../../../../components/SearchableSelect.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -69,13 +60,12 @@ const toast = useToast();
 const id = route.params.id;
 const isSubmitting = ref(false);
 const loading = ref(true);
-const classList = ref([]);
 const studentList = ref([]);
+const classList = ref([]);
 
 const formData = reactive({
-    id_class: "",
     id_student: "",
-    _method: "PUT",
+    id_class: "",
 });
 
 const errors = reactive({});
@@ -87,29 +77,35 @@ const setupAxios = () => {
     }
 };
 
-const fetchClasses = async () => {
-    try {
-        setupAxios();
-        const response = await axios.get("/api/admin_pengelola/classes");
-        if (response.data && response.data.data) {
-            classList.value = response.data.data;
-        }
-    } catch (error) {
-        console.error("Error fetching classes:", error);
-        toast.error("Gagal memuat data kelas");
-    }
-};
-
-const fetchStudents = async () => {
+const fetchStudentList = async () => {
     try {
         setupAxios();
         const response = await axios.get("/api/admin_pengelola/mahasiswa");
-        if (response.data && response.data.data) {
-            studentList.value = response.data.data;
-        }
+        studentList.value = response.data.data;
     } catch (error) {
-        console.error("Error fetching students:", error);
-        toast.error("Gagal memuat data mahasiswa");
+        console.error("Error fetching student list:", error);
+        if (error.response?.status === 401) {
+            toast.error("Sesi anda telah berakhir. Silakan login kembali.");
+            router.push("/login-admin");
+        } else {
+            toast.error("Gagal memuat data mahasiswa");
+        }
+    }
+};
+
+const fetchClassList = async () => {
+    try {
+        setupAxios();
+        const response = await axios.get("/api/admin_pengelola/classes");
+        classList.value = response.data.data;
+    } catch (error) {
+        console.error("Error fetching class list:", error);
+        if (error.response?.status === 401) {
+            toast.error("Sesi anda telah berakhir. Silakan login kembali.");
+            router.push("/login-admin");
+        } else {
+            toast.error("Gagal memuat data kelas");
+        }
     }
 };
 
@@ -117,12 +113,11 @@ const fetchSemester = async () => {
     try {
         loading.value = true;
         setupAxios();
-
         const response = await axios.get(`/api/admin_pengelola/semester/${id}`);
-        const semesterData = response.data.data;
+        const semester = response.data.data;
 
-        formData.id_class = semesterData.id_class || "";
-        formData.id_student = semesterData.id_student || "";
+        formData.id_student = semester.id_student || "";
+        formData.id_class = semester.id_class || "";
     } catch (error) {
         if (error.response?.status === 401) {
             toast.error("Sesi anda telah berakhir. Silakan login kembali.");
@@ -131,7 +126,7 @@ const fetchSemester = async () => {
             toast.error("Semester tidak ditemukan");
             router.push("/admin-pengelola/semester");
         } else {
-            toast.error("Gagal memuat data semester");
+            toast.error("Gagal memuat data Semester");
         }
     } finally {
         loading.value = false;
@@ -145,20 +140,16 @@ const handleSubmit = async () => {
 
         Object.keys(errors).forEach((key) => delete errors[key]);
 
-        const response = await axios.post(
+        const response = await axios.put(
             `/api/admin_pengelola/semester/update/${id}`,
             {
-                ...formData,
-                _method: "PUT",
-            },
-            {
-                headers: {
-                    "X-HTTP-Method-Override": "PUT",
-                },
+                id_student: formData.id_student,
+                id_class: formData.id_class,
             }
         );
 
         toast.success(response.data.message || "Semester berhasil diupdate");
+
         setTimeout(() => {
             router.push(`/admin-pengelola/semester/`);
         }, 500);
@@ -166,6 +157,9 @@ const handleSubmit = async () => {
         if (error.response?.status === 400 || error.response?.status === 422) {
             if (error.response.data.errors) {
                 Object.assign(errors, error.response.data.errors);
+                if (error.response.data.message) {
+                    toast.error(error.response.data.message);
+                }
             } else if (typeof error.response.data === "object") {
                 Object.assign(errors, error.response.data);
             } else {
@@ -174,8 +168,11 @@ const handleSubmit = async () => {
         } else if (error.response?.status === 401) {
             toast.error("Sesi anda telah berakhir. Silakan login kembali.");
             router.push("/login-admin");
+        } else if (error.response?.status === 404) {
+            toast.error("Semester tidak ditemukan");
+            router.push("/admin-pengelola/semester");
         } else {
-            toast.error(error.response?.data?.message || "Gagal mengupdate semester");
+            toast.error(error.response?.data?.message || "Gagal mengupdate Semester");
         }
     } finally {
         isSubmitting.value = false;
@@ -183,7 +180,7 @@ const handleSubmit = async () => {
 };
 
 onMounted(async () => {
-    await Promise.all([fetchClasses(), fetchStudents()]);
+    await Promise.all([fetchStudentList(), fetchClassList()]);
     await fetchSemester();
 });
 </script>

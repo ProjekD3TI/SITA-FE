@@ -137,7 +137,7 @@ const headers = [
     { text: "Kapasitas", value: "kapasitas" },
     { text: "Dimensi", value: "dimensi" },
     { text: "Gedung", value: "gedung_name" },
-    { text: "Status", value: "status" },
+    // { text: "Status", value: "status" },
     { text: "Aksi", value: "actions" },
 ];
 
@@ -272,13 +272,16 @@ const handleDelete = (item) => {
 };
 
 const deleteRuang = async () => {
-    if (!selectedItem.value) return;
+    if (!selectedItem.value || !selectedItem.value.id_ruang) {
+        toast.error("ID ruang tidak ditemukan");
+        return;
+    }
 
     try {
         isDeleting.value = true;
         setupAxios();
         const response = await axios.delete(
-            `/api/admin_pengelola/ruang/${selectedItem.value.id}`
+            `/api/admin_pengelola/ruang/${selectedItem.value.id_ruang}`
         );
         toast.success(response.data.message || "Ruang berhasil dihapus");
         fetchRuangList();
@@ -289,6 +292,7 @@ const deleteRuang = async () => {
         showDeleteModal.value = false;
     }
 };
+
 
 onMounted(() => {
     fetchRuangList();

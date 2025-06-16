@@ -47,7 +47,7 @@ export function authAdmin() {
         VueCookies.set("user_session", encryptedUserData, "4h");
 
         toast.success(response.data.message || "Login Admin berhasil!");
-        router.push("/admin/dashboard");
+        router.push("/admin-pengelola/dashboard");
       } else {
         toast.error(response.data.message || "Login gagal");
       }
