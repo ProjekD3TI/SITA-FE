@@ -703,10 +703,10 @@ export default {
       categories: [],
       selectedBukti: [],
       buktiOptions: [
-        'Bukti transfer, cek, bukti penyetoran, dan rekening koran bank',
+        'Bukti pemeriksaan medis',
         'Dokumen dan/atau rekaman',
-        'Foto dokumentasi',
-        'Surat disposisi perintah',
+        'Foto dan/atau video dokumentasi',
+        'Surat atau kesaksian tertulis',
         'Identitas sumber informasi'
       ],
       unitKerjaOptions: [

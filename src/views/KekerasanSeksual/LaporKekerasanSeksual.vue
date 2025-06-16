@@ -82,7 +82,7 @@
 
                 <!-- Bukti Pelanggaran Checkboxes -->
                 <div class="mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Bukti Pelanggaran <span class="text-red-500">*</span></label>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Bukti Pelaporan <span class="text-red-500">*</span></label>
                   <div class="bg-gray-50 p-3 rounded-md border border-gray-300">
                     <div v-for="(bukti, index) in buktiOptions" :key="index" class="mb-2">
                       <div class="flex items-start">
@@ -212,6 +212,13 @@
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Section Divider -->
+          <div class="relative py-5">
+            <div class="absolute inset-0 flex items-center" aria-hidden="true">
+              <div class="w-full border-t border-gray-300"></div>
             </div>
           </div>
 
@@ -356,6 +363,13 @@
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Section Divider -->
+          <div class="relative py-5">
+            <div class="absolute inset-0 flex items-center" aria-hidden="true">
+              <div class="w-full border-t border-gray-300"></div>
             </div>
           </div>
 
@@ -535,6 +549,13 @@
               + Tambah Terduga/Terlapor
             </button>
           </div>
+
+          <!-- Section Divider -->
+          <div class="relative py-5">
+            <div class="absolute inset-0 flex items-center" aria-hidden="true">
+              <div class="w-full border-t border-gray-300"></div>
+            </div>
+          </div>
           
           <!-- Informasi Saksi Section -->
           <div class="mb-6">
@@ -604,6 +625,13 @@
             >
               + Tambah Saksi
             </button>
+          </div>
+
+          <!-- Section Divider -->
+          <div class="relative py-5">
+            <div class="absolute inset-0 flex items-center" aria-hidden="true">
+              <div class="w-full border-t border-gray-300"></div>
+            </div>
           </div>
 
           <!-- Pernyataan Section -->
@@ -712,10 +740,10 @@ export default {
       categories: [],
       selectedBukti: [],
       buktiOptions: [
-        'Bukti transfer, cek, bukti penyetoran, dan rekening koran bank',
+        'Bukti pemeriksaan medis',
         'Dokumen dan/atau rekaman',
-        'Foto dokumentasi',
-        'Surat disposisi perintah',
+        'Foto dan/atau video dokumentasi',
+        'Surat atau kesaksian tertulis',
         'Identitas sumber informasi'
       ],
       showLainnyaInput: false,
@@ -725,8 +753,6 @@ export default {
       isSubmitting: false,
       imagePreviews: [],
       selectedFiles: [],
-      currentDateTime: '2025-04-29 09:25:10', // Updated with the time you just provided
-      currentUser: 'miftahul01',
       
       // reCAPTCHA v2 Configuration
       recaptchaSiteKey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // Replace with your reCAPTCHA v2 site key
@@ -986,6 +1012,14 @@ export default {
       
       // Create FormData object to handle file upload
       const formData = new FormData();
+      
+      // Generate current date time dynamically
+      const now = new Date();
+      const currentDateTime = now.toISOString().slice(0, 19).replace('T', ' ');
+      
+      // Get current username dynamically - could be from a store, localStorage, or another source
+      const currentUser = 'miftahul01'; // You can replace this with dynamic source
+      
       formData.append('judul', this.report.title);
       formData.append('category_id', this.report.category);
       formData.append('deskripsi', this.report.description);
@@ -993,13 +1027,13 @@ export default {
       formData.append('nim_pelapor', this.report.nim);
       formData.append('nomor_telepon', this.report.phone);
       formData.append('tanggal_kejadian', this.report.incidentDate);
-      formData.append('current_datetime', this.currentDateTime);
-      formData.append('username', this.currentUser);
+      formData.append('current_datetime', currentDateTime);
+      formData.append('username', currentUser);
       formData.append('g-recaptcha-response', this.recaptchaResponse);
       formData.append('profesi', this.report.profesi);
       formData.append('jenis_kelamin', this.report.jenis_kelamin);
       formData.append('umur_pelapor', this.report.umur_pelapor);
-  
+
       
       // Add lampiran_link
       if (this.report.lampiran_link) {
