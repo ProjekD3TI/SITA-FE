@@ -585,11 +585,12 @@
           <h3 class="text-xl font-semibold mb-4">Pernyataan</h3>
           <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
             <p class="font-medium mb-2">Dengan ini saya menyatakan bahwa:</p>
-            <ol class="list-decimal ml-5 my-3 space-y-2">
-              <li>Segala informasi yang saya berikan dalam laporan ini adalah benar dan dapat dipertanggungjawabkan.</li>
-              <li>Saya bersedia memberikan keterangan lebih lanjut apabila diperlukan untuk proses penanganan laporan.</li>
-              <li>Saya memahami bahwa memberikan laporan palsu dapat dikenakan sanksi sesuai dengan peraturan yang berlaku.</li>
-            </ol>
+              <ol class="list-decimal pl-6 mb-4 space-y-2">
+                <li>Segala informasi yang saya berikan dalam laporan ini adalah benar dan dapat dipertanggungjawabkan.</li>
+                <li>Saya bersedia memberikan keterangan lebih lanjut apabila diperlukan untuk proses penanganan laporan.</li>
+                <li>Saya memahami bahwa memberikan laporan palsu dapat dikenakan sanksi sesuai dengan peraturan yang berlaku.</li>
+                <li>Saya menyatakan bersedia laporan ini diproses lebih lanjut sesuai dengan prosedur yang berlaku di D3 TI UNS.</li>
+              </ol>
             
             <div class="mt-4">
               <label class="inline-flex items-center">
