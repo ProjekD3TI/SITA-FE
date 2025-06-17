@@ -10,7 +10,7 @@ import JadwalUjian from "@/components/Tugas-akhir/JadwalUjian.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Tooltip from "@/components/Tugas-akhir/Tooltip.vue";
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
-import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
+// import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Loading from "@/components/Loading.vue";
 import Label from "@/components/Tugas-akhir/Label.vue";
@@ -535,7 +535,8 @@ onMounted(() => {
       <h5 class="body3-bold lg:body1-bold text-primary">Nilai Ujian</h5>
       <div class="flex flex-wrap gap-4">
         <div class="w-full sm:w-[calc(50%-0.5rem)]">
-          <InputNumber
+          <InputText
+            type="number"
             id="tataLaporan"
             label="Kualitas Tata Laporan Tugas Akhir (15%)"
             placeholder="85"
@@ -545,7 +546,8 @@ onMounted(() => {
         </div>
 
         <div class="w-full sm:w-[calc(50%-0.5rem)]">
-          <InputNumber
+          <InputText
+            type="number"
             id="kemampuanTeknis"
             label="Kemampuan Teknis (35%)"
             placeholder="90"
@@ -555,7 +557,8 @@ onMounted(() => {
         </div>
 
         <div class="w-full sm:w-[calc(50%-0.5rem)]">
-          <InputNumber
+          <InputText
+            type="number"
             id="hasilProduk"
             label="Kualitas Produk yang Dihasilkan (25%)"
             placeholder="88"
@@ -565,7 +568,8 @@ onMounted(() => {
         </div>
 
         <div class="w-full sm:w-[calc(50%-0.5rem)]">
-          <InputNumber
+          <InputText
+            type="number"
             id="presentasi"
             label="Presentasi dan Question Handling (25%)"
             placeholder="92"
@@ -574,7 +578,8 @@ onMounted(() => {
           />
         </div>
       </div>
-      <InputNumber
+      <InputText
+        type="number"
         id="nilaiAkhir"
         label="Nilai Akhir"
         placeholder="85"

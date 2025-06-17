@@ -2,7 +2,7 @@
 import { ref, onMounted, watch, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
-import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
+// import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
@@ -281,11 +281,11 @@ const resetErrorMessage = () => {
   <!-- Konten utama -->
   <div v-else>
     <Breadcrumb :items="breadcrumbItems" />
-    <div class="card-rounded bg-white p-6 lg:p-8">
+    <div class="p-6 bg-white card-rounded lg:p-8">
       <!-- Bagian Header -->
       <div class="mb-6">
-        <h4 class="heading4 font-semibold">Input Nilai Bimbingan</h4>
-        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+        <h4 class="font-semibold heading4">Input Nilai Bimbingan</h4>
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
           <p class="body4-bold text-black/70">{{ studentInfo.name }}</p>
           <p class="body4-bold text-black/70 sm:border-l-2 sm:pl-2">
             {{ studentInfo.nim }}
@@ -310,7 +310,7 @@ const resetErrorMessage = () => {
           />
           <p
             v-if="formSubmitted && errors.disiplin"
-            class="text-red-500 mt-1 error-text"
+            class="mt-1 text-red-500 error-text"
           >
             Nilai disiplin wajib diisi
           </p>
@@ -328,7 +328,7 @@ const resetErrorMessage = () => {
           />
           <p
             v-if="formSubmitted && errors.komunikasi"
-            class="text-red-500 mt-1 error-text"
+            class="mt-1 text-red-500 error-text"
           >
             Nilai komunikasi wajib diisi
           </p>
@@ -346,7 +346,7 @@ const resetErrorMessage = () => {
           />
           <p
             v-if="formSubmitted && errors.pengetahuan"
-            class="text-red-500 mt-1 error-text"
+            class="mt-1 text-red-500 error-text"
           >
             Nilai pengetahuan wajib diisi
           </p>
@@ -364,7 +364,7 @@ const resetErrorMessage = () => {
           />
           <p
             v-if="formSubmitted && errors.tingkahLaku"
-            class="text-red-500 mt-1 error-text"
+            class="mt-1 text-red-500 error-text"
           >
             Nilai tingkah laku wajib diisi
           </p>
@@ -379,7 +379,7 @@ const resetErrorMessage = () => {
             disabled
             class="font-semibold"
           />
-          <p class="text-gray-500 mt-1 text-sm">
+          <p class="mt-1 text-sm text-gray-500">
             Nilai rata-rata dihitung otomatis berdasarkan bobot
           </p>
         </div>

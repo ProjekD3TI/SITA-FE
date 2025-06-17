@@ -2,7 +2,6 @@
 import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
-import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
@@ -544,7 +543,7 @@ onMounted(() => {
                 disabled
                 class="font-semibold"
               />
-              <p class="text-gray-500 mt-1 text-sm">
+              <p class="mt-1 text-sm text-gray-500">
                 Nilai Akhir dihitung otomatis berdasarkan bobot
               </p>
             </div>

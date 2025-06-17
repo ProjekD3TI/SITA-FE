@@ -6,7 +6,7 @@ import ProgressBarBAB from "@/components/Tugas-akhir/ProgressBarBAB.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Table from "@/components/Tugas-akhir/Table.vue";
 import StatusLabel from "@/components/Tugas-akhir/Label.vue";
-import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
+// import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import ModalVerifikasiBimbingan from "@/components/Tugas-akhir/Modals/ModalVerifikasiBimbingan.vue";
 import ModalDetailBimbingan from "@/components/Tugas-akhir/Modals/ModalDetailBimbingan.vue";
@@ -453,7 +453,7 @@ const handleActionClick = (item, action) => {
     <!-- Header: Info Dosen & Progress BAB -->
     <div class="p-6 bg-white card-rounded lg:p-8 shadow-custom">
       <!-- Info Dosen Pembimbing -->
-      <div class="flex gap-2 sm:gap-4 max-w-screen-xl mx-auto">
+      <div class="flex max-w-screen-xl gap-2 mx-auto sm:gap-4">
         <!-- Icon Dosen -->
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -471,7 +471,7 @@ const handleActionClick = (item, action) => {
         </svg>
 
         <!-- Detail Informasi -->
-        <div class="self-center flex flex-wrap justify-between w-full">
+        <div class="flex flex-wrap self-center justify-between w-full">
           <!-- Mahasiswa Info -->
           <div>
             <span class="body5 sm:body4-bold">{{ studentInfo.name }}</span>
@@ -481,7 +481,7 @@ const handleActionClick = (item, action) => {
           </div>
 
           <!-- Kategori TA -->
-          <div class="lg:border-l-2 border-black lg:pl-4">
+          <div class="border-black lg:border-l-2 lg:pl-4">
             <span class="body5 sm:body5-bold">{{ studentInfo.category }}</span>
             <h5 class="body5-bold sm:body3-bold lg:body2-bold text-primary">
               {{ studentInfo.title }}
@@ -489,7 +489,7 @@ const handleActionClick = (item, action) => {
           </div>
 
           <!-- Tahun Ajaran -->
-          <div class="lg:border-l-2 border-black lg:pl-4">
+          <div class="border-black lg:border-l-2 lg:pl-4">
             <span class="body5 sm:body4-bold">Tahun Ajaran</span>
             <h5 class="body5-bold sm:body3-bold lg:body2-bold text-primary">
               {{ tahunAjaran }}
@@ -500,7 +500,7 @@ const handleActionClick = (item, action) => {
 
       <!-- Progress BAB & Tombol Input -->
       <div
-        class="flex flex-wrap justify-between items-center max-w-screen-xl mx-auto"
+        class="flex flex-wrap items-center justify-between max-w-screen-xl mx-auto"
       >
         <!-- Progress Bar BAB -->
         <ProgressBarBAB class="sm:ms-3" :currentStep="highestChapter" />
@@ -570,12 +570,12 @@ const handleActionClick = (item, action) => {
       >
         <template #row="{ item }">
           <!-- Kolom Tanggal -->
-          <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-l-lg">
+          <td class="px-1 py-3 rounded-l-lg sm:py-3 sm:px-4">
             {{ item.tanggal }}
           </td>
 
           <!-- Kolom BAB -->
-          <td class="sm:py-3 py-3 sm:px-4 px-1">
+          <td class="px-1 py-3 sm:py-3 sm:px-4">
             {{
               item.bab === "1"
                 ? "BAB I"
@@ -599,10 +599,10 @@ const handleActionClick = (item, action) => {
           </td>
 
           <!-- Kolom Status -->
-          <td class="sm:py-3 py-3 sm:px-4 px-1">
+          <td class="px-1 py-3 sm:py-3 sm:px-4">
             <!-- Desktop Status -->
             <StatusLabel
-              class="w-fit hidden lg:block mx-auto"
+              class="hidden mx-auto w-fit lg:block"
               :status="getStatusClass(item.status)"
               size="md"
               :label="getStatusLabel(item.status)"
@@ -610,7 +610,7 @@ const handleActionClick = (item, action) => {
 
             <!-- Mobile Status -->
             <StatusLabel
-              class="w-fit lg:hidden block mx-auto"
+              class="block mx-auto w-fit lg:hidden"
               :status="getStatusClass(item.status)"
               size="sm"
               :label="getStatusLabel(item.status)"
@@ -618,7 +618,7 @@ const handleActionClick = (item, action) => {
           </td>
 
           <!-- Kolom Aksi -->
-          <td class="sm:py-3 py-3 sm:px-4 px-1 rounded-r-lg">
+          <td class="px-1 py-3 rounded-r-lg sm:py-3 sm:px-4">
             <!-- Button for Menunggu status -->
             <Button
               v-if="item.status === 'Menunggu'"
@@ -681,31 +681,35 @@ const handleActionClick = (item, action) => {
     :bodyText="`${studentInfo.name} | ${studentInfo.nim} | ${studentInfo.title}`"
   >
     <div class="space-y-6">
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-        <InputNumber
+      <div class="grid grid-cols-1 gap-4 pt-4 sm:grid-cols-2">
+        <InputText
+          type="number"
           id="disiplin"
           label="Disiplin (20%)"
           :modelValue="bimbinganDetail.nilaiDisiplin"
           disabled
-        ></InputNumber>
-        <InputNumber
+        />
+        <InputText
+          type="number"
           id="komunikasi"
           label="Komunikasi (20%)"
           :modelValue="bimbinganDetail.nilaiKomunikasi"
           disabled
-        ></InputNumber>
-        <InputNumber
+        />
+        <InputText
+          type="number"
           id="pengetahuan"
           label="Skill / Pengetahuan (45%)"
           :modelValue="bimbinganDetail.nilaiPengetahuan"
           disabled
-        ></InputNumber>
-        <InputNumber
+        />
+        <InputText
+          type="number"
           id="tingkahLaku"
           label="Tingkah Laku (15%)"
           :modelValue="bimbinganDetail.nilaiTingkahLaku"
           disabled
-        ></InputNumber>
+        />
       </div>
 
       <div>
@@ -718,13 +722,14 @@ const handleActionClick = (item, action) => {
       </div>
 
       <div class="">
-        <InputNumber
+        <InputText
+          type="number"
           id="nilaiRataRata"
           label="Nilai Rata-Rata"
           :modelValue="bimbinganDetail.nilaiRataRata"
           class="font-semibold"
           disabled
-        ></InputNumber>
+        />
       </div>
 
       <div class="flex justify-end mt-6">
