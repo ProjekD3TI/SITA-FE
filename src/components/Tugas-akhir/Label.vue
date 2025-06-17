@@ -81,7 +81,7 @@ const bgColorClass = computed(() => {
     case "inactive":
       return "bg-placeholder/20";
     default:
-      return "";
+      return "bg-primary-bg/80";
   }
 });
 
@@ -103,7 +103,7 @@ const textColorClass = computed(() => {
     case "inactive":
       return "text-placeholder";
     default:
-      return "";
+      return "text-primary";
   }
 });
 
