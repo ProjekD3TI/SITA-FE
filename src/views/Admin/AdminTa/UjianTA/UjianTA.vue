@@ -380,7 +380,7 @@ const getStatusClassBeritaAcara = (status) => {
       return "success-outline";
     case "belum_lulus_revisi_diujikan_lagi":
       return "warning-outline";
-    case "tidak_lulus_ulang_ta_diujikan_lagi":
+    case "tidak_lulus_ulang_ta":
       return "danger-outline";
     case "menunggu":
       return "warning";
@@ -395,10 +395,10 @@ const getStatusLabelBeritaAcara = (status) => {
     case "lulus_tanpa_revisi":
       return "Lulus";
     case "lulus_revisi_tanpa_diujikan":
-      return "Lulus(Revisi)";
+      return "Lulus (Revisi)";
     case "belum_lulus_revisi_diujikan_lagi":
       return "Revisi";
-    case "tidak_lulus_ulang_ta_diujikan_lagi":
+    case "tidak_lulus_ulang_ta":
       return "Tidak Lulus";
     case "menunggu":
       return "Menunggu";
@@ -1278,7 +1278,8 @@ const modalFileUjianTAFiles = ref({
           <Button
             v-if="
               selectedJadwalItem.ujian_ta?.status_kelulusan !== null &&
-              selectedJadwalItem.ujian_ta?.status_kelulusan !== 1
+              selectedJadwalItem.ujian_ta?.status_kelulusan !== 1 &&
+              selectedJadwalItem.ujian_ta?.status_kelulusan !== 4
             "
             variant="primary"
             size="lg"
@@ -1301,7 +1302,8 @@ const modalFileUjianTAFiles = ref({
           <Button
             v-if="
               selectedJadwalItem.ujian_ta?.status_kelulusan !== null &&
-              selectedJadwalItem.ujian_ta?.status_kelulusan !== 1
+              selectedJadwalItem.ujian_ta?.status_kelulusan !== 1 &&
+              selectedJadwalItem.ujian_ta?.status_kelulusan !== 4
             "
             variant="primary"
             size="md"

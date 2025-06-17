@@ -205,6 +205,7 @@ const routes = [
           },
           {
             path: "ujian-ta",
+            name: "UjianTAMhs",
             component: TugasAkhirforMhs,
             meta: {
               breadcrumb: "Ujian",

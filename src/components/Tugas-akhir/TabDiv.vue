@@ -8,7 +8,7 @@ const props = defineProps({
     default: () => [],
   },
   defaultTab: {
-    type: String,
+    type: [String, Number],
     default: "",
   },
   useNamedSlots: {
@@ -16,7 +16,12 @@ const props = defineProps({
     default: false,
   },
   activeTab: {
-    type: String,
+    type: [String, Number],
+    default: "",
+  },
+  // Tambahkan prop untuk v-model:selected
+  selected: {
+    type: [String, Number],
     default: "",
   },
 });
@@ -25,10 +30,20 @@ function countValue(val) {
   return isRef(val) ? val.value : val;
 }
 
-const emit = defineEmits(["tab-changed", "update:activeTab"]);
+const emit = defineEmits([
+  "tab-changed",
+  "update:activeTab",
+  "update:selected",
+]);
 const slots = useSlots();
+
+// Inisialisasi dengan selected (untuk v-model:selected) atau activeTab atau defaultTab
 const internalActiveTab = ref(
-  props.activeTab || props.defaultTab || props.tabs[0]?.id || ""
+  props.selected ||
+    props.activeTab ||
+    props.defaultTab ||
+    props.tabs[0]?.id ||
+    ""
 );
 
 const tabItems = computed(() => {
@@ -41,6 +56,17 @@ const tabItems = computed(() => {
   }));
 });
 
+// Watch untuk selected (v-model:selected)
+watch(
+  () => props.selected,
+  (val) => {
+    if (val && val !== internalActiveTab.value) {
+      internalActiveTab.value = val;
+    }
+  }
+);
+
+// Watch untuk activeTab juga
 watch(
   () => props.activeTab,
   (val) => {
@@ -49,10 +75,12 @@ watch(
     }
   }
 );
+
 function selectTab(tabId) {
   internalActiveTab.value = tabId;
   emit("tab-changed", tabId);
   emit("update:activeTab", tabId);
+  emit("update:selected", tabId);
 }
 
 defineExpose({

@@ -246,6 +246,7 @@ export function useNilaiUjianTA() {
       dataNilaiUjianTA.value = response.data.data;
     } catch (err) {
       handleError(err);
+      router.push({ name: "UjianTAMhs" });
     } finally {
       loadingNilaiUjianTA.value = false;
     }
