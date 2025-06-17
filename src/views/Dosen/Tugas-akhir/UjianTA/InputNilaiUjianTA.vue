@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
+import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Loading from "@/components/Loading.vue";
@@ -456,7 +457,8 @@ onMounted(() => {
           </p>
           <div class="flex flex-wrap gap-4">
             <div class="w-full sm:w-[calc(50%-0.5rem)]">
-              <InputNumber
+              <InputText
+                type="number"
                 id="tataLaporan"
                 label="Kualitas Tata Laporan Tugas Akhir(15%)"
                 placeholder="Masukkan nilai tata laporan"
@@ -475,7 +477,8 @@ onMounted(() => {
             </div>
 
             <div class="w-full sm:w-[calc(50%-0.5rem)]">
-              <InputNumber
+              <InputText
+                type="number"
                 id="kemampuanTeknis"
                 label="Kemampuan Teknis (35%)"
                 placeholder="Masukkan nilai kemampuan teknis"
@@ -494,7 +497,8 @@ onMounted(() => {
             </div>
 
             <div class="w-full sm:w-[calc(50%-0.5rem)]">
-              <InputNumber
+              <InputText
+                type="number"
                 id="hasilProduk"
                 label="Kualitas Produk yang Dihasilkan (25%)"
                 placeholder="Masukkan nilai hasil produk"
@@ -513,7 +517,8 @@ onMounted(() => {
             </div>
 
             <div class="w-full sm:w-[calc(50%-0.5rem)]">
-              <InputNumber
+              <InputText
+                type="number"
                 id="presentasi"
                 label="Presentasi dan Question Handling (25%)"
                 placeholder="Masukkan nilai presentasi"
@@ -530,14 +535,19 @@ onMounted(() => {
                 Nilai presentasi wajib diisi (0-100)
               </p>
             </div>
-          </div>
-
-          <!-- Show calculated total -->
-          <div class="mt-4">
-            <p class="body1-bold">
-              Nilai Akhir:
-              <span class="text-primary">{{ totalNilai || "-" }}</span>
-            </p>
+            <!-- Show calculated total -->
+            <div class="w-full">
+              <InputText
+                id="rerataValue"
+                label="Nilai Akhir"
+                :modelValue="totalNilai"
+                disabled
+                class="font-semibold"
+              />
+              <p class="text-gray-500 mt-1 text-sm">
+                Nilai Akhir dihitung otomatis berdasarkan bobot
+              </p>
+            </div>
           </div>
         </div>
 

@@ -3,6 +3,7 @@ import { ref, onMounted, watch, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
+import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Loading from "@/components/Loading.vue";
@@ -298,7 +299,8 @@ const resetErrorMessage = () => {
       <!-- Bagian Form -->
       <div class="flex flex-wrap gap-4">
         <div class="w-full sm:w-[calc(50%-0.5rem)]">
-          <InputNumber
+          <InputText
+            type="number"
             id="disiplin"
             label="Disiplin (20%) *"
             placeholder="Masukkan nilai kedisiplinan"
@@ -315,7 +317,8 @@ const resetErrorMessage = () => {
         </div>
 
         <div class="w-full sm:w-[calc(50%-0.5rem)]">
-          <InputNumber
+          <InputText
+            type="number"
             id="komunikasi"
             label="Komunikasi (20%) *"
             placeholder="Masukkan nilai komunikasi"
@@ -332,7 +335,8 @@ const resetErrorMessage = () => {
         </div>
 
         <div class="w-full sm:w-[calc(50%-0.5rem)]">
-          <InputNumber
+          <InputText
+            type="number"
             id="pengetahuan"
             label="Skill / Pengetahuan (45%) *"
             placeholder="Masukkan nilai pengetahuan"
@@ -349,7 +353,8 @@ const resetErrorMessage = () => {
         </div>
 
         <div class="w-full sm:w-[calc(50%-0.5rem)]">
-          <InputNumber
+          <InputText
+            type="number"
             id="tingkahLaku"
             label="Tingkah Laku (15%) *"
             placeholder="Masukkan nilai tingkah laku"
@@ -366,8 +371,8 @@ const resetErrorMessage = () => {
         </div>
 
         <!-- Rata-rata yang dihitung (Hanya baca) -->
-        <div class="w-full sm:w-[calc(50%-0.5rem)]">
-          <InputNumber
+        <div class="w-full">
+          <InputText
             id="rerataValue"
             label="Nilai Rata-Rata"
             :modelValue="rerataValue"
