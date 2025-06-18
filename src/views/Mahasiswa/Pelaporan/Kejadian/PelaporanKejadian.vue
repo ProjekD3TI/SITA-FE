@@ -236,7 +236,10 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-for="(laporan, index) in paginatedLaporan" :key="laporan.laporan_id" class="hover:bg-gray-50">
+                                <tr v-for="(laporan, index) in paginatedLaporan" 
+                                    :key="laporan.laporan_id" 
+                                    class="hover:bg-gray-50"
+                                    :class="{'urgent-highlight': isMendesakCategory(laporan.category_id)}">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ startIndex + index + 1 }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ laporan.nomor_laporan }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ formatedDate(laporan.created_at, 'long') }}</td>
@@ -907,6 +910,12 @@ export default {
                 return `${day}-${month}-${year}`;
             }
         },
+
+        isMendesakCategory(categoryId) {
+            const categoryName = this.getCategoryName(categoryId);
+            return categoryName.toLowerCase().includes('darurat') || 
+                categoryName.toLowerCase().includes('mendesak');
+        },
     },
     created() {
         // Set up basic axios config
@@ -1003,7 +1012,7 @@ export default {
 }
 
 .urgent-report-btn {
-  background-color: #FF5252; /* error color for urgency */
+  background-color: #9C27B0; /* purple color for urgency */
   color: white;
   border: none;
   border-radius: 8px; /* matching the rounded corners of other buttons */
@@ -1017,15 +1026,20 @@ export default {
   margin-right: 8px; /* consistent spacing between buttons */
   margin-left: 8px; /* consistent spacing between buttons */
   height: 40px; /* ensuring consistent height */
-  box-shadow: 0 2px 5px rgba(255, 82, 82, 0.2); /* subtle shadow like other buttons */
+  box-shadow: 0 2px 5px rgba(156, 39, 176, 0.2); /* subtle shadow like other buttons */
   transition: background-color 0.2s;
 }
 
 .urgent-report-btn:hover {
-  background-color: #FF1744; /* darker shade on hover */
+  background-color: #7B1FA2; /* darker purple shade on hover */
 }
 
 .urgent-report-btn i {
   font-size: 16px; /* slightly smaller icon size for better alignment */
+}
+
+.urgent-highlight {
+  background-color: rgba(156, 39, 176, 0.05); /* Light purple background */
+  border-left: 3px solid #9C27B0; /* Purple left border */
 }
 </style>

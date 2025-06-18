@@ -53,7 +53,7 @@
 
                   <!-- Bukti Pelanggaran Checkboxes -->
                   <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Bukti Pelanggaran <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Bukti Pelaporan <span class="text-red-500">*</span></label>
                     <div class="bg-gray-50 p-3 rounded-md border border-gray-300">
                       <div v-for="(bukti, index) in buktiOptions" :key="index" class="mb-2">
                         <div class="flex items-start">
@@ -584,7 +584,7 @@
                   <li>Segala informasi yang saya berikan dalam laporan ini adalah benar dan dapat dipertanggungjawabkan.</li>
                   <li>Saya bersedia memberikan keterangan lebih lanjut apabila diperlukan untuk proses penanganan laporan.</li>
                   <li>Saya memahami bahwa memberikan laporan palsu dapat dikenakan sanksi sesuai dengan peraturan yang berlaku.</li>
-                  <li>Saya menyatakan bersedia laporan ini diproses lebih lanjut sesuai dengan prosedur yang berlaku di D3 TI UNS.</li>
+                  <li>Saya menyatakan bersedia laporan ini diproses lebih lanjut sesuai dengan prosedur yang berlaku di UNS.</li>
                 </ol>
                 
                 <div class="flex items-start mt-3">
