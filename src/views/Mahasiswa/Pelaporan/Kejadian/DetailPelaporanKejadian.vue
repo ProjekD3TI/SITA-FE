@@ -93,7 +93,7 @@
           
           <div class="card">
             <h3>Informasi Pelapor</h3>
-            <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 40px; row-gap: 20px;">
+            <div class="info-grid">
               <div class="info-item">
                 <div class="label">Nama</div>
                 <div class="value">{{ laporan.nama_pelapor }}</div>
@@ -104,7 +104,7 @@
               </div>
               <div class="info-item">
                 <div class="label">Email</div>
-                <div class="value" style="word-break: break-word; overflow-wrap: break-word;">{{ laporan.email || laporan.email_pelapor || "-" }}</div>
+                <div class="value">{{ laporan.email || laporan.email_pelapor || "-" }}</div>
               </div>
               <div class="info-item">
                 <div class="label">Telepon</div>
@@ -125,12 +125,12 @@
             </div>
           </div>
           
-          <!-- NEW SECTION: Terlapor (Reported Person) -->
+          <!-- Terlapor (Reported Person) Section -->
           <div class="card" v-if="hasReportedPersons">
             <h3>Informasi Terlapor</h3>
             <div v-for="(person, index) in laporan.terlapor" :key="'reported-' + index" class="person-item">
               <h4 class="person-title">Terlapor {{ index + 1 }}</h4>
-              <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 40px; row-gap: 20px;">
+              <div class="info-grid">
                 <div class="info-item">
                   <div class="label">Nama Lengkap</div>
                   <div class="value">{{ person.nama_lengkap || '-' }}</div>
@@ -155,12 +155,12 @@
             </div>
           </div>
           
-          <!-- NEW SECTION: Saksi (Witnesses) -->
+          <!-- Saksi (Witnesses) Section -->
           <div class="card" v-if="hasWitnesses">
             <h3>Informasi Saksi</h3>
             <div v-for="(witness, index) in laporan.saksi" :key="'witness-' + index" class="person-item">
               <h4 class="person-title">Saksi {{ index + 1 }}</h4>
-              <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 40px; row-gap: 20px;">
+              <div class="info-grid">
                 <div class="info-item">
                   <div class="label">Nama Lengkap</div>
                   <div class="value">{{ witness.nama_lengkap || '-' }}</div>
@@ -224,7 +224,6 @@
             <div v-else class="tanggapan-list">
               <div v-for="(item, index) in laporan.tanggapan" :key="index" class="tanggapan-item">
                 <div class="tanggapan-header">
-                  <!-- Add Kalab prefix for items with role "kalab" -->
                   <span class="tanggapan-user">
                     {{ item.role === 'kalab' ? 'Kalab - ' : '' }}{{ item.user || 'Admin' }}
                   </span>
@@ -235,7 +234,7 @@
             </div>
           </div>
           
-          <!-- Action Buttons - Tombol untuk admin -->
+          <!-- Action Buttons for admin -->
           <div class="action-buttons" v-if="isAdmin">
             <button class="btn btn-secondary" @click="showTanggapanModal = true" v-if="laporan.status !== 'finished'">
               <i class="fas fa-comment"></i> Tambah Tanggapan
@@ -301,6 +300,7 @@ import Footer from '../components/Footer.vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import VueCookies from 'vue-cookies';
+import { decryptData } from '../../../../services/encrypt';
 
 export default {
   components: {
@@ -322,19 +322,19 @@ export default {
       tanggapanText: '',
       currentUser: localStorage.getItem('userName') || 'Miftahul',
       apiBaseUrl: 'https://v3422040.mhs.d3tiuns.com/api',
-      baseUrl: 'https://v3422040.mhs.d3tiuns.com', // Added baseUrl definition
+      baseUrl: 'https://v3422040.mhs.d3tiuns.com',
       
-      // New properties for better image handling
+      // Image handling properties
       imagePaths: [],
       currentImageIndex: 0,
-      currentFullImageUrl: ''
+      currentFullImageUrl: '',
+      userData: null
     };
   },
   created() {
     this.getAuthToken();
     this.laporanId = this.$route.params.id;
     
-    // Get current user information
     this.getCurrentUser();
     
     if (!this.laporanId) {
@@ -368,21 +368,19 @@ export default {
       return typeof this.laporan.tanggapan === 'string' && this.laporan.tanggapan.trim() !== '';
     },
     hasReportedPersons() {
-      return this.laporan && this.laporan.terlapor && Array.isArray(this.laporan.terlapor) && this.laporan.terlapor.length > 0;
+      return this.laporan && this.laporan.terlapor && 
+             Array.isArray(this.laporan.terlapor) && this.laporan.terlapor.length > 0;
     },
     hasWitnesses() {
-      return this.laporan && this.laporan.saksi && Array.isArray(this.laporan.saksi) && this.laporan.saksi.length > 0;
+      return this.laporan && this.laporan.saksi && 
+             Array.isArray(this.laporan.saksi) && this.laporan.saksi.length > 0;
     }
   },
-  // Replace the methods section with this cleaned version
-
   methods: {
     checkAuth() {
       const token = VueCookies.get("auth_token");
       if (!token) {
         this.error = "Sesi login telah berakhir. Silakan login kembali.";
-        // Optionally redirect to login page
-        // this.$router.push({ name: 'Login' });
         return false;
       }
       return true;
@@ -410,35 +408,17 @@ export default {
       }
     },
 
-    capitalizeSentence(text) {
-      if (!text) return '';
-      return text.split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(' ');
-    },
-
-    getAuthToken() {
-      const token = VueCookies.get("auth_token");
-      if (token) {
-        this.authToken = token;
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      } else {
-        this.error = "Sesi login telah berakhir. Silakan login kembali.";
-      }
-    },
-
     getCurrentUser() {
-      this.currentUser = localStorage.getItem('userName') || 'Miftahul';
-      
-      if (this.currentUser === 'Miftahul' && localStorage.getItem('user')) {
-        try {
-          const userObj = JSON.parse(localStorage.getItem('user'));
-          if (userObj && userObj.name) {
-            this.currentUser = userObj.name;
-          }
-        } catch (e) {
-          console.error('Failed to parse user from localStorage', e);
+      try {
+        const encryptedUserData = this.$cookies.get("user_session");
+        if (encryptedUserData) {
+          this.userData = decryptData(encryptedUserData);
+          return true;
         }
+        return false;
+      } catch (error) {
+        console.error("Error getting user data:", error);
+        return false;
       }
     },
     
@@ -518,16 +498,11 @@ export default {
       
       img.src = newUrl;
     },
-
-    async checkImageUrlsViaFetch() {
-      // Image URL verification skipped to avoid CORS issues
-    },
     
     async fetchCategories() {
       try {
         const response = await axios.get(`${this.apiBaseUrl}/category`);
         if (response.data && response.data.data && Array.isArray(response.data.data)) {
-          // Handle API that returns data inside a data property
           this.categories = response.data.data.reduce((acc, category) => {
             acc[category.category_id || category.id] = category.nama || category.name;
             return acc;
@@ -560,7 +535,6 @@ export default {
       try {
         const response = await axios.get(`${this.apiBaseUrl}/laporan/${id}`);
         
-        // Handle different response formats
         if (response.data && response.data.data) {
           this.laporan = response.data.data;
         } else {
@@ -569,10 +543,8 @@ export default {
         
         // Process image paths
         if (this.laporan.image_path) {
-          // Try to fix common issues with data format before parsing
           let imagePathData = this.laporan.image_path;
           
-          // Fix double-encoded JSON (common issue)
           if (typeof imagePathData === 'string' && imagePathData.startsWith('"[') && imagePathData.endsWith(']"')) {
             try {
               imagePathData = JSON.parse(imagePathData);
@@ -582,8 +554,6 @@ export default {
           }
           
           this.imagePaths = this.parseImagePaths(imagePathData);
-          
-          // Store in laporan object for consistency
           this.laporan.image_paths = this.imagePaths;
         }
         
@@ -648,9 +618,8 @@ export default {
       if (!dateString) return '-';
       
       try {
-        let date = new Date(dateString.replace(' ', 'T') + 'Z'); // Menambahkan 'Z' untuk menunjukkan UTC
+        let date = new Date(dateString.replace(' ', 'T') + 'Z');
         
-        // Format tanggal dalam gaya Indonesia dengan timezone UTC
         const options = { 
           day: 'numeric', 
           month: 'long', 
@@ -671,17 +640,15 @@ export default {
       if (!dateString) return '-';
       
       try {
-        // Create a new date object from the dateString
         const date = new Date(dateString);
         
-        // Using Intl.DateTimeFormat for proper localization in Indonesian
         const formatter = new Intl.DateTimeFormat('id-ID', {
           day: 'numeric',
           month: 'long',
           year: 'numeric',
           hour: '2-digit',
           minute: '2-digit',
-          timeZone: 'Asia/Jakarta' // Setting to Indonesia timezone (GMT+7)
+          timeZone: 'Asia/Jakarta'
         });
         
         return formatter.format(date);
@@ -707,7 +674,6 @@ export default {
     },
     
     checkUserRole() {
-      // Implement your logic to check if user is admin
       // For demonstration, set to true
       this.isAdmin = true;
     },
@@ -727,7 +693,6 @@ export default {
           return;
         }
         
-        // Show confirmation dialog first
         const result = await Swal.fire({
           title: 'Tutup Kasus Laporan',
           text: 'Apakah Anda yakin ingin menutup dan menyelesaikan kasus laporan ini?',
@@ -740,21 +705,17 @@ export default {
         });
         
         if (!result.isConfirmed) {
-          return; // User canceled
+          return;
         }
         
-        // Make the API call using POST with _method: PUT
         const formData = new FormData();
         formData.append('_method', 'PUT');
         formData.append('status', 'finished');
         
-        // IMPORTANT: Preserve the existing tanggapan data
         if (this.laporan.tanggapan) {
           let tanggapanData = this.laporan.tanggapan;
           
-          // If it's already a string (old format), keep it as is
           if (typeof tanggapanData !== 'string') {
-            // If it's an array (new format), convert it to JSON string
             tanggapanData = JSON.stringify(tanggapanData);
           }
           
@@ -766,10 +727,8 @@ export default {
           formData
         );
                       
-        // Update local data after successful completion
         this.laporan.status = 'finished';
         
-        // Show success message with Swal
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
@@ -780,15 +739,12 @@ export default {
           timer: 3000
         });
         
-        // Refresh data to ensure we have the latest tanggapan
         await this.fetchLaporan(this.laporanId);
         
       } catch (error) {
         console.error('Error finishing report:', error);
-        // Safely access error message with optional chaining
         const errorMessage = error.response?.data?.message || 'Gagal menyelesaikan laporan';
         
-        // Show error message with Swal
         Swal.fire({
           icon: 'error',
           title: 'Gagal!',
@@ -816,12 +772,10 @@ export default {
           return;
         }
         
-        // Make the API call first to get updated_at value
         const formData = new FormData();
         formData.append('_method', 'PUT');
-        formData.append('tanggapan', this.tanggapanText); // Temporary single string for API call
+        formData.append('tanggapan', this.tanggapanText);
         
-        // Include the current status to maintain it
         if (this.laporan && this.laporan.status) {
           formData.append('status', this.laporan.status);
         } else {
@@ -833,62 +787,49 @@ export default {
           formData
         );
         
-        // Get the updated data to get the new updated_at timestamp
         const updatedResponse = await axios.get(`${this.apiBaseUrl}/laporan/${this.laporanId}`);
         const updatedData = updatedResponse.data.data || updatedResponse.data;
         
-        // Now create the tanggapan array with the new timestamp from updated_at
-        // Create a new response object with text and timestamp from the API's updated_at
         const newTanggapan = {
           text: this.tanggapanText,
-          timestamp: updatedData.updated_at, // Using the updated_at from API response
+          timestamp: updatedData.updated_at,
           user: this.currentUser
         };
         
-        // Prepare the tanggapan array
         let tanggapanArray = [];
         
         if (this.laporan.tanggapan) {
-          // If tanggapan exists and is already an array, use it
           if (Array.isArray(this.laporan.tanggapan)) {
             tanggapanArray = [...this.laporan.tanggapan];
-          } 
-          // If tanggapan exists but is a string (old format), convert it to array
-          else if (typeof this.laporan.tanggapan === 'string' && this.laporan.tanggapan.trim() !== '') {
+          } else if (typeof this.laporan.tanggapan === 'string' && this.laporan.tanggapan.trim() !== '') {
             tanggapanArray = [{
               text: this.laporan.tanggapan,
-              timestamp: this.laporan.updated_at, // Use the previous update time 
+              timestamp: this.laporan.updated_at,
               user: 'Admin'
             }];
           }
         }
         
-        // Add the new response
         tanggapanArray.push(newTanggapan);
         
-        // Update tanggapan with the array format
         const arrayFormData = new FormData();
         arrayFormData.append('_method', 'PUT');
         arrayFormData.append('tanggapan', JSON.stringify(tanggapanArray));
         
-        // Include the current status to maintain it
         if (this.laporan && this.laporan.status) {
           arrayFormData.append('status', this.laporan.status);
         } else {
           arrayFormData.append('status', 'pending');
         }
 
-        // Make second API call to update with the array
         await axios.post(
           `${this.apiBaseUrl}/laporan/update_status/${this.laporanId}`, 
           arrayFormData
         );
         
-        // Update local data after successful submission
         this.laporan.tanggapan = tanggapanArray;
         this.laporan.updated_at = updatedData.updated_at;
         
-        // Show success message
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
@@ -899,20 +840,17 @@ export default {
           timer: 3000
         });
         
-        // Reset and close modal
         this.tanggapanText = '';
         this.showTanggapanModal = false;
         
-        // Refresh data
         await this.fetchLaporan(this.laporanId);
         
       } catch (error) {
         console.error('Error saving tanggapan:', error);
         
-        // Try to get a more specific error message
         const errorMessage = error.response?.data?.message || 
-                      error.response?.data?.error || 
-                      'Gagal menyimpan tanggapan';
+                            error.response?.data?.error || 
+                            'Gagal menyimpan tanggapan';
         
         Swal.fire({
           icon: 'error',
@@ -930,18 +868,6 @@ export default {
 </script>
 
 <style scoped>
-/* All styles remain the same as in your original file */
-.detail-laporan-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-
-.main-content {
-  display: flex;
-  flex: 1;
-}
-
 .content-wrapper {
   flex: 1;
   padding: 20px;
@@ -977,6 +903,8 @@ export default {
 }
 
 .header-section {
+  position: relative;
+  width: 100%;
   display: flex;
   flex-direction: column;
   margin-bottom: 20px;
@@ -1004,6 +932,20 @@ export default {
   margin-right: 8px;
 }
 
+.header-section .flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.header-section .left-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .header-section h2 {
   margin-right: 15px;
   margin-bottom: 0;
@@ -1016,6 +958,7 @@ export default {
 }
 
 .status-badge {
+  margin-left: auto;
   padding: 6px 12px;
   border-radius: 16px;
   font-size: 14px;
@@ -1042,6 +985,41 @@ export default {
   color: #ef6c00;
 }
 
+.status-finished {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.action-btn-container {
+  display: flex;
+  align-items: center;
+  margin-right: 16px;
+  gap: 10px;
+}
+
+.blue-btn {
+  background-color: #3490dc;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.blue-btn:hover {
+  background-color: #2779bd;
+}
+
+.blue-btn i {
+  font-size: 1rem;
+}
+
 .card {
   background-color: white;
   border-radius: 8px;
@@ -1055,33 +1033,6 @@ export default {
   margin-bottom: 16px;
   padding-bottom: 10px;
   border-bottom: 1px solid #eee;
-  color: #333;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 20px;
-}
-
-.info-item .label {
-  color: #666;
-  font-size: 14px;
-  margin-bottom: 4px;
-}
-
-.info-item .value {
-  font-weight: 500;
-}
-
-.deskripsi, .tanggapan {
-  line-height: 1.6;
-  white-space: pre-line;
-}
-
-.kejadian-judul {
-  font-size: 18px;
-  margin-bottom: 16px;
   color: #333;
 }
 
@@ -1100,6 +1051,35 @@ export default {
   margin-right: 4px;
 }
 
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.info-item .label {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.info-item .value {
+  font-weight: 500;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.kejadian-judul {
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.deskripsi, .tanggapan-text {
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
 .foto-section {
   margin-top: 20px;
 }
@@ -1108,7 +1088,6 @@ export default {
   margin-bottom: 10px;
 }
 
-/* Image grid styles */
 .image-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -1142,6 +1121,76 @@ export default {
   font-size: 0.875rem;
   color: #6b7280;
   text-align: center;
+}
+
+.person-item {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.person-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.person-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 16px;
+  padding-left: 8px;
+  border-left: 3px solid #3b82f6;
+}
+
+.link-container {
+  margin-top: 10px;
+}
+
+.external-link {
+  display: inline-block;
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.external-link:hover {
+  text-decoration: underline;
+}
+
+.external-link i {
+  margin-right: 6px;
+}
+
+.tanggapan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tanggapan-item {
+  border-left: 3px solid #3b82f6;
+  padding-left: 16px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.tanggapan-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.tanggapan-user {
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.tanggapan-time {
+  font-size: 0.875rem;
+  color: #6b7280;
 }
 
 .action-buttons {
@@ -1183,7 +1232,6 @@ export default {
   background-color: #059669;
 }
 
-/* Fullscreen modal */
 .fullscreen-modal {
   position: fixed;
   top: 0;
@@ -1213,7 +1261,6 @@ export default {
   cursor: pointer;
 }
 
-/* Image navigation */
 .image-navigation {
   position: absolute;
   bottom: 20px;
@@ -1252,7 +1299,6 @@ export default {
   border-radius: 15px;
 }
 
-/* Modal overlay */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1339,107 +1385,24 @@ export default {
   border: none;
 }
 
-/* Tanggapan styling */
-.tanggapan-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.tanggapan-item {
-  border-left: 3px solid #3b82f6;
-  padding-left: 16px;
-  padding-top: 8px;
-  padding-bottom: 8px;
-}
-
-.tanggapan-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.tanggapan-user {
-  font-weight: 600;
-  color: #4b5563;
-}
-
-.tanggapan-time {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.tanggapan-text {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: #374151;
-  white-space: pre-line;
-  margin: 0;
-}
-
-.status-finished {
-  background-color: #d1fae5;
-  color: #059669;
-}
-
-person-item {
-  margin-bottom: 24px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.person-item:last-child {
-  margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-}
-
-.person-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #4b5563;
-  margin-bottom: 16px;
-  padding-left: 8px;
-  border-left: 3px solid #3b82f6;
-}
-
-/* External link styles */
-.link-container {
-  margin-top: 10px;
-}
-
-.external-link {
-  display: inline-block;
-  color: #2563eb;
-  text-decoration: none;
-  font-weight: 500;
-  word-break: break-all;
-}
-
-.external-link:hover {
-  text-decoration: underline;
-}
-
-.external-link i {
-  margin-right: 6px;
-}
-
 @media (max-width: 768px) {
   .info-grid {
     grid-template-columns: 1fr;
   }
   
-  .header-section {
+  .header-section .flex {
     flex-direction: column;
     align-items: flex-start;
   }
   
-  .header-section h2 {
-    margin-bottom: 10px;
+  .status-badge {
+    margin-left: 0;
+    margin-top: 10px;
   }
   
-  .laporan-id, .status-badge {
-    margin-bottom: 10px;
+  .action-btn-container {
+    margin-top: 10px;
+    margin-right: 0;
   }
   
   .action-buttons {
@@ -1448,96 +1411,10 @@ person-item {
   
   .btn {
     width: 100%;
-    margin-bottom: 10px;
   }
   
   .image-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-}
-
-/* Add to your <style scoped> section */
-.blue-btn {
-  background-color: #3490dc;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.blue-btn:hover {
-  background-color: #2779bd;
-}
-
-.blue-btn i {
-  font-size: 1rem;
-}
-
-.action-btn-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Add or update these styles in your <style scoped> section */
-.header-section {
-  position: relative;
-  width: 100%;
-}
-
-.header-section .flex {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  flex-wrap: wrap;
-}
-
-.header-section .left-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.status-badge {
-  margin-left: auto; /* Push to the right side */
-  padding: 6px 12px;
-  border-radius: 16px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.action-btn-container {
-  display: flex;
-  align-items: center;
-  margin-right: 16px; /* Add space between button and status badge */
-}
-
-.blue-btn {
-  background-color: #3490dc;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.blue-btn:hover {
-  background-color: #2779bd;
 }
 </style>
