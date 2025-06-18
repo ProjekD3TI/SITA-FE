@@ -24,6 +24,17 @@
                   </div>
                 </div>
 
+                <!-- Daily Limit Warning Banner -->
+                <div v-if="hasReachedDailyLimit" class="warning-banner mb-4">
+                  <div class="warning-content">
+                    <i class="fas fa-exclamation-circle warning-icon"></i>
+                    <div class="warning-text">
+                      Anda telah mencapai batas maksimal 5 laporan kekerasan seksual dalam sehari.
+                      <span class="warning-secondary-text">Laporan baru dapat dibuat kembali pada hari berikutnya.</span>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Laporan Kejadian with Search, Filters and Pagination -->
                 <div class="bg-white shadow rounded-lg p-6">
                     <div class="flex flex-col md:flex-row md:items-center justify-between mb-4">
@@ -52,10 +63,12 @@
                                 </button>
                             </div>
                             
-                            <!-- Tambah Laporan Button -->
+                            <!-- Tambah Laporan Button with Daily Limit Check -->
                             <button 
                                 class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center"
                                 @click="addNewReport"
+                                :disabled="hasReachedDailyLimit"
+                                :class="{'opacity-50 cursor-not-allowed': hasReachedDailyLimit}"
                             >
                                 <i class="fas fa-plus mr-2"></i> Tambah Laporan
                             </button>
@@ -240,14 +253,14 @@
 </template>
 
 <script>
-import { ref, computed, watch, reactive } from 'vue';
-import Header from '../components/Header.vue';
-import Sidebar from '../components/Sidebar.vue';
-import Footer from '../components/Footer.vue';
+import { ref, computed, watch, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import VueCookies from 'vue-cookies';
 import { decryptData } from '../../../../services/encrypt';
+import Header from '../components/Header.vue';
+import Sidebar from '../components/Sidebar.vue';
+import Footer from '../components/Footer.vue';
 
 export default {
     name: 'KekerasanSeksual',
@@ -265,6 +278,7 @@ export default {
         const categories = ref({});
         const userData = ref(null);
         const authToken = ref('');
+        const todaysReportsCount = ref(0);
         
         // Loading state
         const loading = ref(false);
@@ -276,6 +290,7 @@ export default {
         const itemsPerPage = ref(10);
         const sortKey = ref('tanggal_kejadian');
         const sortDirection = ref('desc');
+        const dailyReportLimit = 5; // Set maximum daily report limit
         
         const filters = reactive({
             category_id: '',
@@ -283,33 +298,11 @@ export default {
             startDate: '',
             endDate: ''
         });
-
-        const formatedDate = (dateString, format = 'long') => {
-            if (!dateString) return '-';
-            
-            const date = new Date(dateString);
-            
-            if (format === 'long') {
-                // Format to "DD Bulan YYYY" (e.g., "08 April 2025")
-                const day = date.getDate().toString().padStart(2, '0');
-                
-                // Get month name in Indonesian
-                const monthNames = [
-                  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-                  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-                ];
-                const month = monthNames[date.getMonth()];
-                
-                const year = date.getFullYear();
-                return `${day} ${month} ${year}`;
-            } else if (format === 'short') {
-                // Format to DD-MM-YYYY
-                const day = date.getDate().toString().padStart(2, '0');
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const year = date.getFullYear();
-                return `${day}-${month}-${year}`;
-            }
-        };
+        
+        // Check if user has reached daily report limit
+        const hasReachedDailyLimit = computed(() => {
+            return todaysReportsCount.value >= dailyReportLimit;
+        });
         
         // Get current user and auth token from cookies
         const getCurrentUser = () => {
@@ -317,7 +310,6 @@ export default {
                 const encryptedUserData = VueCookies.get("user_session");
                 if (encryptedUserData) {
                     userData.value = decryptData(encryptedUserData);
-                    console.log("Current user loaded:", userData.value.name);
                 }
                 
                 // Get auth token from cookies
@@ -326,13 +318,37 @@ export default {
                     authToken.value = token;
                     // Set default Authorization header for all axios requests
                     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-                    console.log("Auth token loaded");
                 } else {
                     console.warn("No auth token found in cookies");
                 }
             } catch (error) {
                 console.error("Error getting user data:", error);
             }
+        };
+        
+        // Count today's reports by the current user
+        const countTodaysReports = () => {
+            if (!userData.value || !laporan.value.length) return 0;
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Set to beginning of the day
+            
+            // Filter reports created today by the current user
+            const todaysReports = laporan.value.filter(item => {
+                // Check if report is from current user
+                const isCurrentUser = (item.nama_pelapor && userData.value.name && item.nama_pelapor.trim() === userData.value.name.trim()) || 
+                                     (item.ni_pelapor && (item.ni_pelapor === userData.value.nim || item.ni_pelapor === userData.value.nik));
+                
+                if (!isCurrentUser) return false;
+                
+                // Check if report was created today
+                const reportDate = new Date(item.created_at);
+                reportDate.setHours(0, 0, 0, 0);
+                return reportDate.getTime() === today.getTime();
+            });
+            
+            todaysReportsCount.value = todaysReports.length;
+            return todaysReports.length;
         };
         
         // Fetch data from API
@@ -367,6 +383,9 @@ export default {
                 
                 laporan.value = laporanResponse.data;
                 
+                // Count today's reports after loading data
+                countTodaysReports();
+                
                 // Apply initial filtering based on user
                 filterReports();
                 
@@ -384,8 +403,6 @@ export default {
         
         // Filter reports based on user and search/filter criteria
         const filterReports = () => {
-            console.log('Filtering reports...');
-            
             // Start with all data
             let filtered = [...laporan.value];
             
@@ -395,7 +412,6 @@ export default {
                     (item.nama_pelapor && item.nama_pelapor.trim() === userData.value.name.trim()) || 
                     (item.ni_pelapor && (item.ni_pelapor === userData.value.nim || item.ni_pelapor === userData.value.nik))
                 );
-                console.log(`Filtered to ${filtered.length} reports for user: ${userData.value.name}`);
             }
             
             // Apply search query if it exists
@@ -455,16 +471,100 @@ export default {
             currentPage.value = 1;
         };
         
-        // Compute filtered categories for dropdown
-        const filteredCategories = computed(() => {
-            const result = {};
-            for (const [id, name] of Object.entries(categories.value)) {
-                if (name && typeof name === 'string' && name.startsWith('Kekerasan')) {
-                    result[id] = name;
-                }
+        // Format date for display
+        const formatedDate = (dateString, format = 'long') => {
+            if (!dateString) return '-';
+            
+            const date = new Date(dateString);
+            
+            if (format === 'long') {
+                // Format to "DD Bulan YYYY" (e.g., "08 April 2025")
+                const day = date.getDate().toString().padStart(2, '0');
+                
+                // Get month name in Indonesian
+                const monthNames = [
+                  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+                ];
+                const month = monthNames[date.getMonth()];
+                
+                const year = date.getFullYear();
+                return `${day} ${month} ${year}`;
+            } else if (format === 'short') {
+                // Format to DD-MM-YYYY
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}-${month}-${year}`;
             }
-            return result;
-        });
+        };
+        
+        // Get category name by ID
+        const getCategoryName = (categoryId) => {
+            return categories.value[categoryId] || `Kategori ${categoryId}`;
+        };
+        
+        // Navigate to add new report page if daily limit not reached
+        const addNewReport = () => {
+            if (hasReachedDailyLimit.value) {
+                return; // Don't allow navigation if limit is reached
+            }
+            router.push('/pelaporan/add-kekerasan-seksual');
+        };
+        
+        // Navigate to view report detail
+        const viewDetail = (laporan) => {
+            if (!laporan) {
+                return;
+            }
+            
+            // Extract the correct ID based on the data structure
+            let actualId;
+            
+            if (typeof laporan === 'object') {
+                // Try all possible ID field names in the object
+                if (laporan.laporan_kekerasan_id) {
+                    actualId = laporan.laporan_kekerasan_id;
+                } else if (laporan.id) {
+                    actualId = laporan.id;
+                } else {
+                    return;
+                }
+            } else {
+                actualId = laporan;
+            }
+            
+            if (!actualId && actualId !== 0) {
+                return;
+            }
+            
+            router.push({
+                name: "DetailKekekerasanSeksual",
+                params: { id: actualId }
+            });
+        };
+        
+        // Apply filters
+        const applyFilters = () => {
+            filterReports();
+        };
+        
+        // Reset all filters
+        const resetFilters = () => {
+            searchQuery.value = '';
+            filters.category_id = '';
+            filters.status = '';
+            filters.startDate = '';
+            filters.endDate = '';
+            
+            // Re-apply filtering (which will only filter by user)
+            filterReports();
+        };
+        
+        // Handle search input
+        const handleSearch = () => {
+            filterReports();
+        };
         
         // Sort by column
         const sortBy = (key) => {
@@ -500,90 +600,6 @@ export default {
             return sortDirection.value === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
         };
         
-        // Reset all filters
-        const resetFilters = () => {
-            searchQuery.value = '';
-            filters.category_id = '';
-            filters.status = '';
-            filters.startDate = '';
-            filters.endDate = '';
-            
-            // Re-apply filtering (which will only filter by user)
-            filterReports();
-        };
-        
-        // Handle search input
-        const handleSearch = () => {
-            filterReports();
-        };
-        
-        // Format date for display
-        const formatDate = (dateString) => {
-            if (!dateString) return '-';
-            const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
-            return new Date(dateString).toLocaleDateString('id-ID', options);
-        };
-        
-        // Get category name by ID
-        const getCategoryName = (categoryId) => {
-            return categories.value[categoryId] || `Kategori ${categoryId}`;
-        };
-        
-        // Navigate to add new report page
-        const addNewReport = () => {
-            router.push('/pelaporan/add-kekerasan-seksual');
-        };
-        
-        // Navigate to view report detail
-        const viewDetail = (laporan) => {
-            // Accept the entire laporan object instead of just the ID
-            console.log('Laporan being passed:', laporan);
-            
-            // Exit early if no laporan object was provided
-            if (!laporan) {
-                console.error('No laporan object provided to viewDetail');
-                return;
-            }
-            
-            // Extract the correct ID based on the data structure
-            let actualId;
-            
-            if (typeof laporan === 'object') {
-                // Try all possible ID field names in the object
-                if (laporan.laporan_kekerasan_id) {
-                actualId = laporan.laporan_kekerasan_id;
-                } else if (laporan.id) {
-                actualId = laporan.id;
-                } else {
-                // Log the object structure if we can't find the ID
-                console.error('Cannot find ID in laporan object. Available keys:', Object.keys(laporan));
-                return; // Don't navigate without a valid ID
-                }
-            } else {
-                // If laporan is already a primitive value (number or string)
-                actualId = laporan;
-            }
-            
-            // Make sure we have an ID value before navigating
-            if (!actualId && actualId !== 0) {
-                console.error('Invalid ID for navigation:', actualId);
-                return;
-            }
-            
-            console.log('Navigating with ID:', actualId);
-            
-            // Navigate using the exact route name from your configuration
-            router.push({
-                name: "DetailKekekerasanSeksual",
-                params: { id: actualId }
-            });
-        };
-        
-        // Apply filters
-        const applyFilters = () => {
-            filterReports();
-        };
-        
         // Pagination controls
         const prevPage = () => {
             if (currentPage.value > 1) {
@@ -597,7 +613,17 @@ export default {
             }
         };
         
-        // Computed properties for filtered user reports
+        // Computed properties
+        const filteredCategories = computed(() => {
+            const result = {};
+            for (const [id, name] of Object.entries(categories.value)) {
+                if (name && typeof name === 'string' && name.startsWith('Kekerasan')) {
+                    result[id] = name;
+                }
+            }
+            return result;
+        });
+        
         const userFilteredLaporan = computed(() => {
             if (!userData.value) return [];
             
@@ -607,7 +633,6 @@ export default {
             );
         });
         
-        // Pagination data
         const startIndex = computed(() => {
             return (currentPage.value - 1) * itemsPerPage.value;
         });
@@ -626,7 +651,6 @@ export default {
             return userFilteredLaporan.value.slice(start, end);
         });
         
-        // Stats for dashboard cards
         const totalLaporan = computed(() => {
             if (!userData.value) return 0;
             
@@ -662,10 +686,10 @@ export default {
         });
         
         // Initialize data on component mount
-        getCurrentUser();
-        fetchData();
-        
-        
+        onMounted(() => {
+            getCurrentUser();
+            fetchData();
+        });
         
         return {
             // Data
@@ -680,6 +704,9 @@ export default {
             currentPage,
             itemsPerPage,
             
+            // Daily limit
+            hasReachedDailyLimit,
+            
             // Computed properties
             filteredCategories,
             userFilteredLaporan,
@@ -692,18 +719,14 @@ export default {
             selesai,
             
             // Methods
-            getCurrentUser,
-            fetchData,
-            filterReports,
-            sortBy,
-            getSortIcon,
-            resetFilters,
-            handleSearch,
-            formatDate,
             formatedDate,
             getCategoryName,
             addNewReport,
             viewDetail,
+            resetFilters,
+            handleSearch,
+            sortBy,
+            getSortIcon,
             applyFilters,
             prevPage,
             nextPage
@@ -711,3 +734,54 @@ export default {
     }
 };
 </script>
+
+<style scoped>
+.filter-container {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid #edf2f7;
+}
+
+.warning-banner {
+  background-color: #FFF5F5;
+  border: 1px solid #FED7D7;
+  border-left: 4px solid #E53E3E;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  margin-top: 8px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.warning-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.warning-icon {
+  font-size: 18px;
+  color: #E53E3E;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.warning-text {
+  color: #E53E3E;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.warning-secondary-text {
+  display: block;
+  color: #718096;
+  font-weight: normal;
+  font-size: 13px;
+  margin-top: 2px;
+}
+</style>
