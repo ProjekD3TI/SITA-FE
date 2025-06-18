@@ -1,10 +1,28 @@
 <template>
   <div class="p-6 max-w-5xl mx-auto">
     <div class="flex justify-between items-center mb-6">
-      <h2 class="text-2xl font-bold">Detail Peminjaman BHP</h2>
+      <div>
+        <h2 class="text-2xl font-bold">Detail Peminjaman BHP</h2>
+
+        <div class="flex">
+          <button
+            @click="exportPDF"
+            class="rounded-md w-1/4 mt-3 disabled:opacity-50 bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2"
+          >
+            Print
+          </button>
+        </div>
+      </div>
       <div class="space-x-2">
         <button
-          v-if="peminjamanData.status_pengembalian === 0"
+          v-if="peminjamanData.status_pengembalian == 'dipinjam'"
+          @click="goToEdit()"
+          class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-600 text-white hover:bg-green-700 h-10 px-6 py-2"
+        >
+          Edit
+        </button>
+        <button
+          v-if="peminjamanData.status_pengembalian !== 'selesai'"
           @click="goToReturn()"
           class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-green-600 text-white hover:bg-green-700 h-10 px-4 py-2"
         >
@@ -69,18 +87,16 @@
               <span
                 v-if="peminjamanData.status_pengembalian !== null"
                 :class="{
-                  'px-2 py-1 rounded text-xs font-medium': true,
                   'bg-blue-100 text-blue-800':
-                    peminjamanData.status_pengembalian === 0,
+                    peminjamanData.status_pengembalian === 'dipinjam',
+                  'bg-yellow-100 text-yellow-800':
+                    peminjamanData.status_pengembalian ===
+                    'dikembalikan_sebagian',
                   'bg-green-100 text-green-800':
-                    peminjamanData.status_pengembalian === 1,
+                    peminjamanData.status_pengembalian === 'selesai',
                 }"
               >
-                {{
-                  peminjamanData.status_pengembalian === 0
-                    ? "Belum Dikembalikan"
-                    : "Sudah Dikembalikan"
-                }}
+                {{ statusText }}
               </span>
               <span v-else>-</span>
             </p>
@@ -120,7 +136,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
@@ -143,6 +159,19 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString("id-ID");
 };
 
+const statusText = computed(() => {
+  switch (peminjamanData.value.status_pengembalian) {
+    case "dipinjam":
+      return "Dipinjam";
+    case "dikembalikan_sebagian":
+      return "Dikembalikan Sebagian";
+    case "selesai":
+      return "Selesai";
+    default:
+      return peminjamanData.value.status_pengembalian || "Unknown";
+  }
+});
+
 const setupAxios = () => {
   const token = VueCookies.get("auth_token");
   if (token) {
@@ -158,7 +187,7 @@ const fetchPeminjamanDetail = async () => {
       `/api/admin_pengelola/peminjaman_bhp/${id.value}`
     );
 
-    peminjamanData.value = response.data;
+    peminjamanData.value = response.data.data;
 
     if (peminjamanData.value.id_bhp) {
       try {
@@ -187,8 +216,33 @@ const fetchPeminjamanDetail = async () => {
   }
 };
 
+const exportPDF = () => {
+  axios
+    .get(`/api/admin_pengelola/peminjaman_bhp/${id.value}?export=pdf`, {
+      responseType: "blob",
+    })
+    .then((response) => {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `peminjaman_${peminjamanData.value.id_peminjaman_bhp}.pdf`
+      );
+      document.body.appendChild(link);
+      link.click();
+    })
+    .catch((error) => {
+      console.error("Export error:", error);
+      toast.error("Gagal mengekspor PDF");
+    });
+};
+
 const goToReturn = () => {
   router.push(`/admin-pengelola/peminjaman-bhp/kembalikan/${id.value}`);
+};
+const goToEdit = () => {
+  router.push(`/admin-pengelola/peminjaman-bhp/edit/${id.value}`);
 };
 
 const goToList = () => {

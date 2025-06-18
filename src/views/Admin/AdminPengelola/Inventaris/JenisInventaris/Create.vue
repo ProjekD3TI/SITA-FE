@@ -32,6 +32,8 @@
           value-key="id_merk"
           label-key="nama_merk"
           placeholder="Pilih Merk"
+          api-endpoint="/api/admin_pengelola/get_merk"
+          :use-server-search="true"
         />
         <p v-if="errors.id_merk" class="text-sm text-red-500">
           {{ errors.id_merk[0] }}
@@ -50,6 +52,8 @@
           value-key="id_tipe"
           label-key="nama_tipe"
           placeholder="Pilih Tipe"
+          api-endpoint="/api/admin_pengelola/get_tipe"
+          :use-server-search="true"
         />
         <p v-if="errors.id_tipe" class="text-sm text-red-500">
           {{ errors.id_tipe[0] }}
@@ -223,7 +227,7 @@ const removeImage = (index) => {
 const fetchMerkList = async () => {
   try {
     setupAxios();
-    const response = await axios.get("/api/admin_pengelola/merk");
+    const response = await axios.get("/api/admin_pengelola/get_merk");
     merkList.value = response.data.data;
   } catch (error) {
     console.error("Error fetching merk list:", error);
@@ -239,7 +243,7 @@ const fetchMerkList = async () => {
 const fetchTipeList = async () => {
   try {
     setupAxios();
-    const response = await axios.get("/api/admin_pengelola/tipe");
+    const response = await axios.get("/api/admin_pengelola/get_tipe");
     tipeList.value = response.data.data;
   } catch (error) {
     console.error("Error fetching tipe list:", error);

@@ -6,6 +6,7 @@ import { useToast } from "vue-toastification";
 import UserLayout from "../layout/UserLayout.vue";
 import DosenLayout from "../layout/DosenLayout.vue";
 import AdminLayout from "../layout/AdminLayout.vue";
+// import { describe } from "node:test";
 
 //define a routes
 const routes = [
@@ -13,6 +14,11 @@ const routes = [
     path: "/",
     name: "Landing",
     component: () => import("../views/Landing/Landing.vue"),
+    meta: {
+      title: "Landing Portal D3TI UNS",
+      description: "Selamat datang di portal D3TI UNS",
+      keywords: "landing, home, utama",
+    },
   },
   {
     path: "/mahasiswa/forgot-password",
@@ -21,6 +27,11 @@ const routes = [
       import(
         /* webpackChunkName: "login" */ "../views/auth/Mahasiswa/ForgotPassword.vue"
       ),
+    meta: {
+      title: "Lupa Password",
+      description: "Halaman lupa password mahasiswa",
+      keywords: "lupa password, mahasiswa, reset password",
+    },
   },
   {
     path: "/mahasiswa/reset-password/:token",
@@ -37,6 +48,11 @@ const routes = [
       import(
         /* webpackChunkName: "login" */ "../views/auth/Dosen/ForgotPassword.vue"
       ),
+    meta: {
+      title: "Lupa Password",
+      description: "Halaman lupa password dosen",
+      keywords: "lupa password, dosen, reset password",
+    },
   },
   {
     path: "/dosen/reset-password/:token",
@@ -67,12 +83,22 @@ const routes = [
     name: "loginmhs",
     component: () =>
       import(/* webpackChunkName: "login" */ "../views/auth/LoginMhs.vue"),
+    meta: {
+      title: "Login Mahasiswa",
+      description: "Halaman login mahasiswa",
+      keywords: "login, mahasiswa",
+    },
   },
   {
     path: "/dosen/login",
     name: "logindosen",
     component: () =>
       import(/* webpackChunkName: "login" */ "../views/auth/LoginDosen.vue"),
+    meta: {
+      title: "Login Dosen",
+      description: "Halaman login dosen",
+      keywords: "login, dosen",
+    },
   },
   {
     path: "/login-admin",
@@ -118,6 +144,28 @@ const routes = [
         path: "dashboard",
         name: "DashboardMahasiswa",
         component: () => import("../views/Mahasiswa/Dashboard.vue"),
+      },
+      {
+        path: "peminjaman/inventaris",
+        name: "PeminjamanInventarisMahasiswa",
+        component: () =>
+          import("../views/Mahasiswa/Peminjaman/ListInventaris.vue"),
+      },
+      {
+        path: "peminjaman/bhp",
+        name: "PeminjamanBhpMahasiswa",
+        component: () => import("../views/Mahasiswa/Peminjaman/ListBhp.vue"),
+      },
+      {
+        path: "peminjaman/inventaris/detail/:id",
+        name: "DetailPeminjamanInventarisMahasiswa",
+        component: () =>
+          import("../views/Mahasiswa/Peminjaman/DetailInventaris.vue"),
+      },
+      {
+        path: "peminjaman/bhp/detail/:id",
+        name: "DetailPeminjamanBhpMahasiswa",
+        component: () => import("../views/Mahasiswa/Peminjaman/DetailBhp.vue"),
       },
       {
         path: "profile",
@@ -512,6 +560,14 @@ const routes = [
           ),
       },
       {
+        path: "peminjaman-inventaris/edit/:id",
+        name: "EditPeminjamanInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Inventaris/EditPeminjaman.vue"
+          ),
+      },
+      {
         path: "peminjaman-inventaris/detail/:id",
         name: "DetailPeminjamanInventaris",
         component: () =>
@@ -527,6 +583,7 @@ const routes = [
             "../views/Admin/AdminPengelola/Peminjaman/Inventaris/KembalikanPeminjaman.vue"
           ),
       },
+      //semester
     ],
   },
 

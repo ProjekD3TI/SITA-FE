@@ -177,20 +177,6 @@
               :class="{ hidden: isCollapsed && !isMobile }"
             >
               <router-link
-                :to="getRouteByRole('inventaris')"
-                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-                @click="closeSidebar"
-              >
-                <span> Inventaris</span>
-              </router-link>
-              <router-link
-                :to="getRouteByRole('jenis-inventaris')"
-                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-                @click="closeSidebar"
-              >
-                <span> Jenis Inventaris</span>
-              </router-link>
-              <router-link
                 :to="getRouteByRole('merk')"
                 class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
                 @click="closeSidebar"
@@ -203,6 +189,20 @@
                 @click="closeSidebar"
               >
                 <span> Tipe</span>
+              </router-link>
+              <router-link
+                :to="getRouteByRole('jenis-inventaris')"
+                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                @click="closeSidebar"
+              >
+                <span> Jenis Inventaris</span>
+              </router-link>
+              <router-link
+                :to="getRouteByRole('inventaris')"
+                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                @click="closeSidebar"
+              >
+                <span> Inventaris</span>
               </router-link>
             </div>
           </div>

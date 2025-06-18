@@ -90,15 +90,20 @@
                     <i class="fas fa-calendar-alt text-gray-400 mr-2"></i>
                     Tahun Pengadaan
                   </label>
-                  <input
+                  <select
                     v-model="filters.year"
-                    type="number"
-                    placeholder="Contoh: 2024"
-                    min="2000"
-                    :max="currentYear"
                     class="w-full px-3 py-2 border rounded-md"
-                    @input="onYearChange"
-                  />
+                    @change="onYearChange"
+                  >
+                    <option value="">Pilih Tahun</option>
+                    <option
+                      v-for="year in yearOptions"
+                      :key="year"
+                      :value="year"
+                    >
+                      {{ year }}
+                    </option>
+                  </select>
                 </div>
               </div>
 
@@ -363,8 +368,15 @@ const pagination = reactive({
   last_page: 1,
 });
 
-const currentYear = computed(() => new Date().getFullYear());
+const currentYear = new Date().getFullYear();
 
+const yearOptions = computed(() => {
+  const years = [];
+  for (let year = currentYear; year >= 2000; year--) {
+    years.push(year);
+  }
+  return years;
+});
 const hasActiveFilters = computed(() => {
   return filters.kondisi || filters.status || filters.year;
 });

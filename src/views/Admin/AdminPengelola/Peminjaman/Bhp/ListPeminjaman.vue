@@ -63,8 +63,11 @@
                     class="w-full px-3 py-2 border rounded-md"
                   >
                     <option value="">Semua Status</option>
-                    <option value="0">Belum Dikembalikan</option>
-                    <option value="1">Sudah Dikembalikan</option>
+                    <option value="dipinjam">Dipinjam</option>
+                    <option value="dikembalikan_sebagian">
+                      Dikembalikan Sebagian
+                    </option>
+                    <option value="selesai">Selesai</option>
                   </select>
                 </div>
 
@@ -154,14 +157,18 @@
         <span
           :class="{
             'px-2 py-1 rounded text-xs font-medium flex items-center gap-1': true,
-            'bg-green-100 text-green-800': item.status === 'Sudah Dikembalikan',
-            'bg-blue-100 text-blue-800': item.status === 'Belum Dikembalikan',
+            'bg-green-100 text-green-800': item.status === 'Selesai',
+            'bg-yellow-100 text-yellow-800':
+              item.status === 'Dikembalikan Sebagian',
+            'bg-blue-100 text-blue-800': item.status === 'Dipinjam',
           }"
         >
           <i
             :class="{
-              'fas fa-check-circle': item.status === 'Sudah Dikembalikan',
-              'fas fa-clock': item.status === 'Belum Dikembalikan',
+              'fas fa-check-circle': item.status === 'Selesai',
+              'fas fa-exclamation-circle':
+                item.status === 'Dikembalikan Sebagian',
+              'fas fa-clock': item.status === 'Dipinjam',
             }"
           ></i>
           {{ item.status }}
@@ -172,18 +179,35 @@
         <div class="flex space-x-2">
           <button
             @click="goToDetail(item.id_peminjaman_bhp)"
-            class="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition"
+            class="inline-flex items-center px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
           >
             <i class="fas fa-eye mr-1"></i>
             Detail
           </button>
           <button
-            v-if="item.status === 'Belum Dikembalikan'"
+            v-if="item.status == 'Dipinjam'"
+            @click="goToEdit(item.id_peminjaman_bhp)"
+            class="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          >
+            <i class="fas fa-edit mr-1"></i>
+            Edit
+          </button>
+          <button
+            v-if="item.status !== 'Selesai'"
             @click="goToReturn(item.id_peminjaman_bhp)"
-            class="inline-flex items-center px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition"
+            class="inline-flex items-center px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition"
           >
             <i class="fas fa-undo mr-1"></i>
             Kembalikan
+          </button>
+          <button
+            v-if="item.status == 'Dipinjam'"
+            @click.stop="handleDelete(item)"
+            class="bg-red-600 text-white hover:bg-red-700 rounded py-1 px-3 transition w-24"
+            title="Hapus"
+          >
+            <i class="fas fa-trash-alt"></i>
+            Hapus
           </button>
         </div>
       </template>
@@ -247,6 +271,35 @@
     </div>
 
     <div
+      v-if="showDeleteModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg p-6 max-w-md w-full">
+        <h3 class="text-lg font-medium mb-4">Konfirmasi Hapus</h3>
+        <p class="mb-6">
+          Apakah Anda yakin ingin menghapus Peminjaman untuk "{{
+            selectedItem?.nama_peminjam
+          }}"? Tindakan ini tidak dapat dibatalkan.
+        </p>
+        <div class="flex justify-end space-x-2">
+          <button
+            @click="showDeleteModal = false"
+            class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+          >
+            Batal
+          </button>
+          <button
+            @click="deletePeminjaman"
+            class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            :disabled="isDeleting"
+          >
+            {{ isDeleting ? "Menghapus..." : "Hapus" }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
       v-if="showFilterDropdown"
       @click="closeFilterDropdown"
       class="fixed inset-0 z-40"
@@ -269,8 +322,12 @@ const dataTable = ref(null);
 const peminjamanList = ref([]);
 const loading = ref(false);
 const searchTerm = ref("");
+const selectedItem = ref(null);
+const isDeleting = ref(false);
 const debounceTimeout = ref(null);
 const dateDebounceTimeout = ref(null);
+const showDeleteModal = ref(false);
+
 const tableKey = ref(0);
 const showFilterDropdown = ref(false);
 
@@ -278,6 +335,7 @@ const headers = [
   { text: "No", value: "no", sortable: true },
   { text: "Nama Peminjam", value: "nama_peminjam", sortable: true },
   { text: "Tanggal Pinjam", value: "tanggal_pinjam_formatted", sortable: true },
+  { text: "Nama BHP", value: "nama_bhp", sortable: true },
   { text: "Jumlah Pinjam", value: "jumlah_penggunaan", sortable: true },
   { text: "Status", value: "status", sortable: true },
   { text: "Aksi", value: "actions", sortable: false },
@@ -343,6 +401,19 @@ const clearAllFilters = () => {
   fetchPeminjamanList();
 };
 
+const getStatusText = (status) => {
+  switch (status) {
+    case "dipinjam":
+      return "Dipinjam";
+    case "dikembalikan_sebagian":
+      return "Dikembalikan Sebagian";
+    case "selesai":
+      return "Selesai";
+    default:
+      return "Tidak Diketahui";
+  }
+};
+
 const fetchPeminjamanList = async () => {
   try {
     loading.value = true;
@@ -377,10 +448,7 @@ const fetchPeminjamanList = async () => {
         ...item,
         no: (serverOptions.page - 1) * serverOptions.rowsPerPage + index + 1,
         tanggal_pinjam_formatted: formatDate(item.tanggal_pinjam),
-        status:
-          item.status_pengembalian === 1
-            ? "Sudah Dikembalikan"
-            : "Belum Dikembalikan",
+        status: getStatusText(item.status_pengembalian),
       }));
 
       Object.assign(pagination, {
@@ -533,12 +601,39 @@ const exportPeminjamanBhp = async () => {
   }
 };
 
+const handleDelete = (item) => {
+  selectedItem.value = item;
+  showDeleteModal.value = true;
+};
+
+const deletePeminjaman = async () => {
+  if (!selectedItem.value) return;
+
+  try {
+    isDeleting.value = true;
+    setupAxios();
+    const response = await axios.delete(
+      `/api/admin_pengelola/peminjaman_bhp/${selectedItem.value.id_peminjaman_bhp}`
+    );
+    toast.success(response.data.message || "Peminjaman berhasil dihapus");
+    fetchPeminjamanList();
+  } catch (error) {
+    handleApiError(error, "Gagal menghapus Peminjaman");
+  } finally {
+    isDeleting.value = false;
+    showDeleteModal.value = false;
+  }
+};
+
 const goToCreate = () => {
   router.push(`/admin-pengelola/peminjaman-bhp/create`);
 };
 
 const goToDetail = (id) => {
   router.push(`/admin-pengelola/peminjaman-bhp/detail/${id}`);
+};
+const goToEdit = (id) => {
+  router.push(`/admin-pengelola/peminjaman-bhp/edit/${id}`);
 };
 
 const goToReturn = (id) => {

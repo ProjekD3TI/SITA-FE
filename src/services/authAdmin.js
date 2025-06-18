@@ -85,7 +85,40 @@ export function authAdmin() {
         ] = `Bearer ${token.value}`;
 
         toast.success(response.data.message || "Login Admin berhasil!");
-        router.push("/admin/dashboard");
+        switch (role.value) {
+          case "admin_pengelola":
+            router.push({ name: "DashboardAdminPengelola" });
+            break;
+          case "superadmin":
+            router.push({ name: "DashboardSuperadmin" });
+            break;
+          case "admin_ta":
+            router.push({ name: "DashboardAdminTa" });
+            break;
+          default:
+            console.warn(`Unknown or invalid role detected: "${role.value}"`);
+
+            VueCookies.remove("auth_token");
+            VueCookies.remove("user_session");
+            delete axios.defaults.headers.common["Authorization"];
+
+            user.value = null;
+            token.value = null;
+            role.value = null;
+
+            if (!role.value || role.value.trim() === "") {
+              toast.error(
+                "Role pengguna tidak ditemukan. Silakan hubungi administrator."
+              );
+            } else {
+              toast.error(
+                `Role "${role.value}" tidak dikenali. Silakan hubungi administrator.`
+              );
+            }
+
+            router.push({ name: "LoginAdmin" });
+            return;
+        }
       } else {
         toast.error(response.data.message || "Login gagal");
       }

@@ -21,6 +21,8 @@
           value-key="id_jenis_inventaris"
           label-key="nama_inventaris"
           placeholder="Pilih Jenis Inventaris"
+          api-endpoint="/api/admin_pengelola/get_jenis_inventaris"
+          :use-server-search="true"
         />
         <p v-if="errors.id_jenis_inventaris" class="text-sm text-red-500">
           {{ errors.id_jenis_inventaris[0] }}
@@ -76,6 +78,8 @@
           value-key="id_ruang"
           label-key="nama_ruang"
           placeholder="Pilih Ruang"
+          api-endpoint="/api/admin_pengelola/get_ruang"
+          :use-server-search="true"
         />
         <p v-if="errors.id_ruang" class="text-sm text-red-500">
           {{ errors.id_ruang[0] }}

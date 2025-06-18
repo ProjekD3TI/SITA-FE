@@ -63,15 +63,11 @@
                     class="w-full px-3 py-2 border rounded-md"
                   >
                     <option value="">Semua Status</option>
-                    <option value="Belum Dikembalikan">
-                      Belum Dikembalikan
+                    <option value="Dipinjam">Dipinjam</option>
+                    <option value="Dikembalikan Sebagian">
+                      Dikembalikan Sebagian
                     </option>
-                    <option value="Sebagian Dikembalikan">
-                      Sebagian Dikembalikan
-                    </option>
-                    <option value="Sudah Dikembalikan">
-                      Sudah Dikembalikan
-                    </option>
+                    <option value="Selesai">Selesai</option>
                   </select>
                 </div>
 
@@ -157,22 +153,54 @@
       server-side-sort
       :key="tableKey"
     >
+      <template #item-nomor_inventaris="item">
+        <div class="max-w-xs">
+          <div
+            v-if="item.inventaris_data && item.inventaris_data.length > 0"
+            class="text-sm"
+          >
+            <div class="flex flex-wrap gap-1">
+              <span
+                v-for="(inventaris, index) in item.inventaris_data.slice(0, 3)"
+                :key="index"
+                class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium"
+              >
+                {{ inventaris.no_inventaris }}
+              </span>
+              <span
+                v-if="item.inventaris_data.length > 3"
+                class="inline-block bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium cursor-pointer"
+                :title="`+${
+                  item.inventaris_data.length - 3
+                } inventaris lainnya: ${item.inventaris_data
+                  .slice(3)
+                  .map((inv) => inv.no_inventaris)
+                  .join(', ')}`"
+              >
+                +{{ item.inventaris_data.length - 3 }} lainnya
+              </span>
+            </div>
+          </div>
+          <div v-else class="text-gray-400 text-sm italic">Tidak ada data</div>
+        </div>
+      </template>
+
       <template #item-status="item">
         <span
           :class="{
             'px-2 py-1 rounded text-xs font-medium flex items-center gap-1': true,
-            'bg-green-100 text-green-800': item.status === 'Sudah Dikembalikan',
+            'bg-green-100 text-green-800': item.status === 'Selesai',
             'bg-yellow-100 text-yellow-800':
-              item.status === 'Sebagian Dikembalikan',
-            'bg-blue-100 text-blue-800': item.status === 'Belum Dikembalikan',
+              item.status === 'Dikembalikan Sebagian',
+            'bg-blue-100 text-blue-800': item.status === 'Dipinjam',
           }"
         >
           <i
             :class="{
-              'fas fa-check-circle': item.status === 'Sudah Dikembalikan',
+              'fas fa-check-circle': item.status === 'Selesai',
               'fas fa-exclamation-triangle':
-                item.status === 'Sebagian Dikembalikan',
-              'fas fa-clock': item.status === 'Belum Dikembalikan',
+                item.status === 'Dikembalikan Sebagian',
+              'fas fa-clock': item.status === 'Dipinjam',
             }"
           ></i>
           {{ item.status }}
@@ -183,18 +211,35 @@
         <div class="flex space-x-2">
           <button
             @click="goToDetail(item.id_peminjaman_inventaris)"
-            class="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition"
+            class="inline-flex items-center px-3 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 transition"
           >
             <i class="fas fa-eye mr-1"></i>
             Detail
           </button>
           <button
-            v-if="item.status !== 'Sudah Dikembalikan'"
+            v-if="item.status == 'Dipinjam'"
+            @click="goToEdit(item.id_peminjaman_inventaris)"
+            class="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition"
+          >
+            <i class="fas fa-edit mr-1"></i>
+            Edit
+          </button>
+          <button
+            v-if="item.status !== 'Selesai'"
             @click="goToReturn(item.id_peminjaman_inventaris)"
             class="inline-flex items-center px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition"
           >
             <i class="fas fa-undo mr-1"></i>
             Kembalikan
+          </button>
+          <button
+            v-if="item.status == 'Dipinjam'"
+            @click.stop="handleDelete(item)"
+            class="text-white bg-red-600 rounded px-3 py-1 transition hover:bg-red-700 w-24"
+            title="Hapus"
+          >
+            <i class="fas fa-trash-alt mr-1"></i>
+            Hapus
           </button>
         </div>
       </template>
@@ -258,6 +303,35 @@
     </div>
 
     <div
+      v-if="showDeleteModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg p-6 max-w-md w-full">
+        <h3 class="text-lg font-medium mb-4">Konfirmasi Hapus</h3>
+        <p class="mb-6">
+          Apakah Anda yakin ingin menghapus Peminjaman untuk "{{
+            selectedItem?.nama_peminjam
+          }}"? Tindakan ini tidak dapat dibatalkan.
+        </p>
+        <div class="flex justify-end space-x-2">
+          <button
+            @click="showDeleteModal = false"
+            class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+          >
+            Batal
+          </button>
+          <button
+            @click="deletePeminjaman"
+            class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            :disabled="isDeleting"
+          >
+            {{ isDeleting ? "Menghapus..." : "Hapus" }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
       v-if="showFilterDropdown"
       @click="closeFilterDropdown"
       class="fixed inset-0 z-40"
@@ -280,6 +354,8 @@ const dataTable = ref(null);
 const peminjamanList = ref([]);
 const loading = ref(false);
 const searchTerm = ref("");
+const selectedItem = ref(null);
+const isDeleting = ref(false);
 const debounceTimeout = ref(null);
 const dateDebounceTimeout = ref(null);
 const tableKey = ref(0);
@@ -290,8 +366,14 @@ const headers = [
   { text: "No Referensi", value: "referensi", sortable: true },
   { text: "Nama Peminjam", value: "nama_peminjam", sortable: true },
   { text: "Tanggal Pinjam", value: "tanggal_pinjam_formatted", sortable: true },
-  { text: "Jumlah Item", value: "total_Peminjaman", sortable: false },
-  { text: "Status", value: "status", sortable: false },
+  {
+    text: "Nomor Inventaris",
+    value: "nomor_inventaris",
+    sortable: true,
+    width: 200,
+  },
+  { text: "Jumlah Item", value: "total_Peminjaman", sortable: true },
+  { text: "Status", value: "status", sortable: true },
   { text: "Aksi", value: "actions", sortable: false },
 ];
 
@@ -355,6 +437,24 @@ const clearAllFilters = () => {
   fetchPeminjamanList();
 };
 
+const extractInventarisData = (detailPeminjamanInventaris) => {
+  if (
+    !detailPeminjamanInventaris ||
+    !Array.isArray(detailPeminjamanInventaris)
+  ) {
+    return [];
+  }
+
+  return detailPeminjamanInventaris
+    .map((detail) => ({
+      no_inventaris:
+        detail.inventaris?.no_inventaris ||
+        detail.no_inventaris ||
+        `INV-${detail.id}`,
+    }))
+    .filter((item) => item.no_inventaris);
+};
+
 const fetchPeminjamanList = async () => {
   try {
     loading.value = true;
@@ -391,6 +491,9 @@ const fetchPeminjamanList = async () => {
         no: (serverOptions.page - 1) * serverOptions.rowsPerPage + index + 1,
         tanggal_pinjam_formatted: formatDate(item.tanggal_pinjam),
         status: item.return_status,
+        inventaris_data: extractInventarisData(
+          item.detail_peminjaman_inventaris
+        ),
       }));
 
       Object.assign(pagination, {
@@ -538,6 +641,30 @@ const exportPeminjamanInventaris = async () => {
   }
 };
 
+const handleDelete = (item) => {
+  selectedItem.value = item;
+  showDeleteModal.value = true;
+};
+
+const deletePeminjaman = async () => {
+  if (!selectedItem.value) return;
+
+  try {
+    isDeleting.value = true;
+    setupAxios();
+    const response = await axios.delete(
+      `/api/admin_pengelola/peminjaman_inventaris/${selectedItem.value.id_peminjaman_bhp}`
+    );
+    toast.success(response.data.message || "Peminjaman berhasil dihapus");
+    fetchPeminjamanList();
+  } catch (error) {
+    handleApiError(error, "Gagal menghapus Peminjaman");
+  } finally {
+    isDeleting.value = false;
+    showDeleteModal.value = false;
+  }
+};
+
 const goToCreate = () => {
   router.push(`/admin-pengelola/peminjaman-inventaris/create`);
 };
@@ -548,6 +675,9 @@ const goToDetail = (id) => {
 
 const goToReturn = (id) => {
   router.push(`/admin-pengelola/peminjaman-inventaris/kembalikan/${id}`);
+};
+const goToEdit = (id) => {
+  router.push(`/admin-pengelola/peminjaman-inventaris/edit/${id}`);
 };
 
 onMounted(() => {

@@ -44,6 +44,37 @@
             <p class="text-sm text-gray-600">Jumlah Penggunaan</p>
             <p class="font-medium">{{ peminjamanData.jumlah_penggunaan }}</p>
           </div>
+          <div>
+            <p class="text-sm text-gray-600">Status Pengembalian</p>
+            <p class="font-medium">
+              <span
+                :class="{
+                  'bg-yellow-100 text-yellow-800':
+                    peminjamanData.status_pengembalian === 'dipinjam',
+                  'bg-blue-100 text-blue-800':
+                    peminjamanData.status_pengembalian ===
+                    'dikembalikan_sebagian',
+                  'bg-green-100 text-green-800':
+                    peminjamanData.status_pengembalian === 'selesai',
+                }"
+                class="px-2 py-1 rounded-md text-xs font-medium"
+              >
+                {{ statusText }}
+              </span>
+            </p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600">Jumlah Kembali Bagus</p>
+            <p class="font-medium">
+              {{ peminjamanData.jumlah_kembali_bagus || 0 }}
+            </p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600">Jumlah Kembali Rusak</p>
+            <p class="font-medium">
+              {{ peminjamanData.jumlah_kembali_rusak || 0 }}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -71,7 +102,7 @@
                 v-model.number="formData.jumlah_kembali_bagus"
                 type="number"
                 min="0"
-                :max="peminjamanData.jumlah_penggunaan"
+                :max="sisaBelumKembali"
                 class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 required
                 @input="validateQuantities"
@@ -84,7 +115,7 @@
                 v-model.number="formData.jumlah_kembali_rusak"
                 type="number"
                 min="0"
-                :max="peminjamanData.jumlah_penggunaan"
+                :max="sisaBelumKembali"
                 class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 required
                 @input="validateQuantities"
@@ -103,12 +134,10 @@
 
           <div class="text-sm text-blue-600 bg-blue-50 p-3 rounded">
             <p>Total jumlah yang dikembalikan: {{ totalReturned }}</p>
-            <p>Jumlah penggunaan: {{ peminjamanData.jumlah_penggunaan }}</p>
-            <p
-              v-if="totalReturned !== peminjamanData.jumlah_penggunaan"
-              class="text-red-600 font-medium"
-            >
-              Jumlah yang dikembalikan harus sama dengan jumlah penggunaan
+            <p>Sisa belum dikembalikan : {{ sisaBelumKembali }}</p>
+            <p>
+              Jumlah penggunaan total:
+              {{ peminjamanData.jumlah_penggunaan || 0 }}
             </p>
           </div>
 
@@ -171,7 +200,12 @@ const toast = useToast();
 const id = ref(route.params.id);
 const peminjamanData = ref({
   jumlah_penggunaan: 0,
+  jumlah_kembali_bagus: 0,
+  jumlah_kembali_rusak: 0,
   status_pengembalian: null,
+  nama_peminjam: "",
+  tipe_peminjam: "",
+  tanggal_pinjam: null,
 });
 const bhpData = ref({});
 const loading = ref(true);
@@ -192,11 +226,41 @@ const totalReturned = computed(() => {
   );
 });
 
-const isFormValid = computed(() => {
+const sisaBelumKembali = computed(() => {
+  if (!peminjamanData.value || !peminjamanData.value.jumlah_penggunaan) {
+    return 0;
+  }
+
   return (
-    totalReturned.value === peminjamanData.value.jumlah_penggunaan &&
+    peminjamanData.value.jumlah_penggunaan -
+    (peminjamanData.value.jumlah_kembali_bagus || 0) -
+    (peminjamanData.value.jumlah_kembali_rusak || 0)
+  );
+});
+
+const isFormValid = computed(() => {
+  if (!peminjamanData.value || !peminjamanData.value.jumlah_penggunaan) {
+    return false;
+  }
+
+  return (
+    totalReturned.value > 0 &&
+    totalReturned.value <= sisaBelumKembali.value &&
     formData.value.tanggal_kembali
   );
+});
+
+const statusText = computed(() => {
+  switch (peminjamanData.value.status_pengembalian) {
+    case "dipinjam":
+      return "Dipinjam";
+    case "dikembalikan_sebagian":
+      return "Dikembalikan Sebagian";
+    case "selesai":
+      return "Selesai";
+    default:
+      return peminjamanData.value.status_pengembalian || "Tidak diketahui";
+  }
 });
 
 const formatDate = (dateString) => {
@@ -215,43 +279,43 @@ const setupAxios = () => {
 const validateQuantities = () => {
   validationError.value = "";
 
+  if (!peminjamanData.value || !peminjamanData.value.jumlah_penggunaan) {
+    return;
+  }
+
   formData.value.jumlah_kembali_bagus =
     Number(formData.value.jumlah_kembali_bagus) || 0;
   formData.value.jumlah_kembali_rusak =
     Number(formData.value.jumlah_kembali_rusak) || 0;
 
-  if (
-    formData.value.jumlah_kembali_bagus > peminjamanData.value.jumlah_penggunaan
-  ) {
-    formData.value.jumlah_kembali_bagus =
-      peminjamanData.value.jumlah_penggunaan;
+  const sisaBelumKembaliValue = sisaBelumKembali.value;
+
+  if (formData.value.jumlah_kembali_bagus > sisaBelumKembaliValue) {
+    formData.value.jumlah_kembali_bagus = sisaBelumKembaliValue;
   }
 
-  if (
-    formData.value.jumlah_kembali_rusak > peminjamanData.value.jumlah_penggunaan
-  ) {
-    formData.value.jumlah_kembali_rusak =
-      peminjamanData.value.jumlah_penggunaan;
+  if (formData.value.jumlah_kembali_rusak > sisaBelumKembaliValue) {
+    formData.value.jumlah_kembali_rusak = sisaBelumKembaliValue;
   }
 
-  if (totalReturned.value > peminjamanData.value.jumlah_penggunaan) {
+  if (totalReturned.value > sisaBelumKembaliValue) {
     validationError.value =
-      "Total jumlah yang dikembalikan melebihi jumlah penggunaan";
+      "Total jumlah yang dikembalikan melebihi jumlah yang belum dikembalikan";
   }
 };
 
 const fetchPeminjamanDetail = async () => {
+  setupAxios();
   loading.value = true;
   try {
-    setupAxios();
     const response = await axios.get(
       `/api/admin_pengelola/peminjaman_bhp/${id.value}`
     );
 
     peminjamanData.value = response.data;
 
-    if (peminjamanData.value.status_pengembalian === 1) {
-      toast.info("BHP ini sudah dikembalikan");
+    if (peminjamanData.value.status_pengembalian === "selesai") {
+      toast.info("BHP ini sudah dikembalikan sepenuhnya");
       router.push(`/admin-pengelola/peminjaman-bhp/detail/${id.value}`);
       return;
     }

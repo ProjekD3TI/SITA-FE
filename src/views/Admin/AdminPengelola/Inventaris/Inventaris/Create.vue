@@ -4,17 +4,44 @@
 
     <form @submit.prevent="handleSubmit" class="space-y-4">
       <div class="space-y-2">
-        <label
-          class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
+        <label class="text-sm font-medium leading-none"> Mode Pembuatan </label>
+        <div class="flex space-x-4">
+          <label class="flex items-center space-x-2">
+            <input
+              type="radio"
+              v-model="creationMode"
+              value="single"
+              class="w-4 h-4 text-blue-600"
+            />
+            <span class="text-sm">Inventaris Tunggal</span>
+          </label>
+          <label class="flex items-center space-x-2">
+            <input
+              type="radio"
+              v-model="creationMode"
+              value="multiple"
+              class="w-4 h-4 text-blue-600"
+            />
+            <span class="text-sm">Inventaris Ganda</span>
+          </label>
+        </div>
+        <p v-if="errors.creation_mode" class="text-sm text-red-500">
+          {{ errors.creation_mode[0] }}
+        </p>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none">
           Jenis Inventaris
         </label>
         <SearchableSelect
           v-model="formData.id_jenis_inventaris"
           :options="jenisInventarisList"
           value-key="id_jenis_inventaris"
-          label-key="nama_inventaris"
+          label-key="name"
           placeholder="Pilih Jenis Inventaris"
+          api-endpoint="/api/admin_pengelola/get_jenis_inventaris"
+          :use-server-search="true"
         />
         <p v-if="errors.id_jenis_inventaris" class="text-sm text-red-500">
           {{ errors.id_jenis_inventaris[0] }}
@@ -22,31 +49,63 @@
       </div>
 
       <div class="space-y-2">
-        <label
-          class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
+        <label class="text-sm font-medium leading-none">
           Nomor Inventaris
         </label>
         <input
           v-model="formData.no_inventaris"
           type="text"
           class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          placeholder="Masukkan nomor inventaris"
+          :class="{ '': errors.no_inventaris }"
+          :placeholder="
+            creationMode === 'single'
+              ? 'Ex: 3.05.02.01.001.001'
+              : 'Ex: 3.05.02.01.001'
+          "
         />
+        <p class="text-xs text-gray-500">
+          <span v-if="creationMode === 'single'">
+            <strong>Inventaris Tunggal:</strong> Masukkan nomor inventaris
+            lengkap
+          </span>
+          <span v-else>
+            <strong>Inventaris Ganda:</strong> Masukkan nomor inventaris dasar
+          </span>
+        </p>
         <p v-if="errors.no_inventaris" class="text-sm text-red-500">
           {{ errors.no_inventaris[0] }}
         </p>
       </div>
 
-      <div class="space-y-2">
-        <label
-          class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
-          Kondisi
+      <div v-if="creationMode === 'multiple'" class="space-y-2">
+        <label class="text-sm font-medium leading-none">
+          Jumlah Inventaris
         </label>
+        <input
+          v-model.number="formData.jumlah"
+          type="number"
+          min="2"
+          max="100"
+          class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          :class="{ '': errors.jumlah }"
+          placeholder="Masukkan jumlah inventaris"
+        />
+        <p class="text-xs text-gray-500">
+          Sistem akan membuat inventaris dengan nomor:
+          {{ formData.no_inventaris }}.001, {{ formData.no_inventaris }}.002,
+          dst.
+        </p>
+        <p v-if="errors.jumlah" class="text-sm text-red-500">
+          {{ errors.jumlah[0] }}
+        </p>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none"> Kondisi </label>
         <select
           v-model="formData.kondisi"
           class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          :class="{ '': errors.kondisi }"
         >
           <option value="">Pilih Kondisi</option>
           <option value="baik">Baik</option>
@@ -59,17 +118,15 @@
       </div>
 
       <div class="space-y-2">
-        <label
-          class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
-          Ruang
-        </label>
+        <label class="text-sm font-medium leading-none"> Ruang </label>
         <SearchableSelect
           v-model="formData.id_ruang"
           :options="ruangList"
           value-key="id_ruang"
           label-key="nama_ruang"
           placeholder="Pilih Ruang"
+          api-endpoint="/api/admin_pengelola/get_ruang"
+          :use-server-search="true"
         />
         <p v-if="errors.id_ruang" class="text-sm text-red-500">
           {{ errors.id_ruang[0] }}
@@ -77,15 +134,14 @@
       </div>
 
       <div class="space-y-2">
-        <label
-          class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
+        <label class="text-sm font-medium leading-none">
           Tahun Pengadaan
         </label>
         <input
           v-model="formData.tahun_pengadaan"
           type="number"
           class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          :class="{ '': errors.tahun_pengadaan }"
           placeholder="Masukkan tahun pengadaan"
         />
         <p v-if="errors.tahun_pengadaan" class="text-sm text-red-500">
@@ -99,7 +155,13 @@
           class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
           :disabled="isSubmitting"
         >
-          {{ isSubmitting ? "Menyimpan..." : "Simpan" }}
+          {{
+            isSubmitting
+              ? "Menyimpan..."
+              : creationMode === "multiple"
+              ? `Simpan ${formData.jumlah || 0} Inventaris`
+              : "Simpan"
+          }}
         </button>
         <button
           type="button"
@@ -114,7 +176,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from "vue";
+import { ref, reactive, onMounted, watch } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
@@ -126,6 +188,7 @@ const toast = useToast();
 const isSubmitting = ref(false);
 const jenisInventarisList = ref([]);
 const ruangList = ref([]);
+const creationMode = ref("single");
 
 const formData = reactive({
   id_jenis_inventaris: "",
@@ -133,9 +196,19 @@ const formData = reactive({
   kondisi: "",
   id_ruang: "",
   tahun_pengadaan: "",
+  jumlah: 2,
 });
 
 const errors = reactive({});
+
+watch(creationMode, (newMode) => {
+  if (newMode === "single") {
+    formData.jumlah = 1;
+  } else {
+    formData.jumlah = 2;
+  }
+  Object.keys(errors).forEach((key) => delete errors[key]);
+});
 
 const setupAxios = () => {
   const token = VueCookies.get("auth_token");
@@ -150,7 +223,7 @@ const fetchJenisInventarisList = async () => {
     const response = await axios.get("/api/admin_pengelola/jenis_inventaris");
     jenisInventarisList.value = response.data.data;
   } catch (error) {
-    console.error("Error fetching jenis inventaris list:", error);
+    console.error("Error fetching jenis inventaris:", error);
     if (error.response?.status === 401) {
       toast.error("Sesi anda telah berakhir. Silakan login kembali.");
       router.push("/login-admin");
@@ -166,7 +239,7 @@ const fetchRuangList = async () => {
     const response = await axios.get("/api/admin_pengelola/ruang");
     ruangList.value = response.data.data;
   } catch (error) {
-    console.error("Error fetching ruang list:", error);
+    console.error("Error fetching ruang:", error);
     if (error.response?.status === 401) {
       toast.error("Sesi anda telah berakhir. Silakan login kembali.");
       router.push("/login-admin");
@@ -183,9 +256,19 @@ const handleSubmit = async () => {
 
     Object.keys(errors).forEach((key) => delete errors[key]);
 
+    const submitData = { ...formData };
+
+    if (creationMode.value === "single") {
+      submitData.jumlah = 1;
+    } else {
+      if (!submitData.jumlah || submitData.jumlah < 2) {
+        submitData.jumlah = 2;
+      }
+    }
+
     const response = await axios.post(
       "/api/admin_pengelola/inventaris/create",
-      formData
+      submitData
     );
 
     toast.success(response.data.message || "Inventaris berhasil ditambahkan");

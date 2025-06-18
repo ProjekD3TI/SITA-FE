@@ -1,10 +1,37 @@
 <template>
   <div class="p-6 max-w-5xl mx-auto">
     <div class="flex justify-between items-center mb-6">
-      <h2 class="text-2xl font-bold">Detail Peminjaman Inventaris</h2>
+      <div>
+        <h2 class="text-2xl font-bold">Detail Peminjaman Inventaris</h2>
+
+        <div class="flex">
+          <button
+            @click="exportPDF"
+            class="rounded-md w-1/4 mt-3 disabled:opacity-50 bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2"
+          >
+            Print
+          </button>
+        </div>
+      </div>
+      <!-- <h2 class="text-2xl font-bold">Detail Peminjaman Inventaris</h2>
+      <div class="flex object-bottom">
+        <button
+          @click="exportPDF"
+          class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2"
+        >
+          Ekspor PDF
+        </button>
+      </div> -->
       <div class="space-x-2">
         <button
-          v-if="infoUmum.status !== 'Sudah Dikembalikan'"
+          v-if="infoUmum.status == 'Dipinjam'"
+          @click="goToEdit()"
+          class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-600 text-white hover:bg-green-700 h-10 px-6 py-2"
+        >
+          Edit
+        </button>
+        <button
+          v-if="infoUmum.status !== 'Selesai'"
           @click="goToReturn()"
           class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-green-600 text-white hover:bg-green-700 h-10 px-4 py-2"
         >
@@ -212,11 +239,11 @@ const fetchPeminjamanDetail = async () => {
     ).length;
 
     if (returnedItems === 0) {
-      infoUmum.value.status = "Belum Dikembalikan";
+      infoUmum.value.status = "Dipinjam";
     } else if (returnedItems < totalItems) {
       infoUmum.value.status = "Sebagian Dikembalikan";
     } else {
-      infoUmum.value.status = "Sudah Dikembalikan";
+      infoUmum.value.status = "Selesai";
     }
   } catch (error) {
     console.error("Error fetching peminjaman detail:", error);
@@ -234,8 +261,33 @@ const fetchPeminjamanDetail = async () => {
   }
 };
 
+const exportPDF = () => {
+  axios
+    .get(`/api/admin_pengelola/peminjaman_inventaris/${id.value}?export=pdf`, {
+      responseType: "blob",
+    })
+    .then((response) => {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `peminjaman_${infoUmum.value.referensi}.pdf`
+      );
+      document.body.appendChild(link);
+      link.click();
+    })
+    .catch((error) => {
+      console.error("Export error:", error);
+      toast.error("Gagal mengekspor PDF");
+    });
+};
+
 const goToReturn = () => {
   router.push(`/admin-pengelola/peminjaman-inventaris/kembalikan/${id.value}`);
+};
+const goToEdit = () => {
+  router.push(`/admin-pengelola/peminjaman-inventaris/edit/${id.value}`);
 };
 
 const goToList = () => {

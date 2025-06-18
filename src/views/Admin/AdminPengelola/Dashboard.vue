@@ -193,7 +193,7 @@
               <div>
                 <div class="font-medium text-gray-900">BHP</div>
                 <div class="text-sm text-gray-600">
-                  Lihat Data Bahan Habis Pakai
+                  Lihat Data Barang Habis Pakai
                 </div>
               </div>
             </button>

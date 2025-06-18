@@ -38,6 +38,8 @@
           value-key="id_merk"
           label-key="nama_merk"
           placeholder="Pilih Merk"
+          api-endpoint="/api/admin_pengelola/get_merk"
+          :use-server-search="true"
         />
         <p v-if="errors.id_merk" class="text-sm text-red-500">
           {{ errors.id_merk[0] }}
@@ -56,6 +58,8 @@
           value-key="id_tipe"
           label-key="nama_tipe"
           placeholder="Pilih Tipe"
+          api-endpoint="/api/admin_pengelola/get_tipe"
+          :use-server-search="true"
         />
         <p v-if="errors.id_tipe" class="text-sm text-red-500">
           {{ errors.id_tipe[0] }}
