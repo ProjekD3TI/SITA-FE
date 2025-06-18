@@ -1,5 +1,5 @@
 <template>
-  <div class="p-4">
+  <div class="p-4 overflow-x-hidden w-full">
     <div class="bg-white shadow rounded-lg p-6 mb-4">
       <h1 class="text-2xl font-semibold text-gray-800">Pelaporan Kekerasan Seksual</h1>
       <p class="text-gray-600 mt-2">Sistem pencatatan dan manajemen laporan kekerasan seksual yang terjadi di D3 TI SV UNS. Gunakan halaman ini untuk mengirim, memantau, dan mengelola laporan kejadian.</p>
@@ -20,6 +20,17 @@
       </div>
     </div>
 
+    <!-- Daily Limit Warning Banner -->
+    <div v-if="hasReachedDailyLimit" class="warning-banner mb-4">
+      <div class="warning-content">
+        <i class="fas fa-exclamation-circle warning-icon"></i>
+        <div class="warning-text">
+          Anda telah mencapai batas maksimal 5 laporan kekerasan seksual dalam sehari.
+          <span class="warning-secondary-text">Laporan baru dapat dibuat kembali pada hari berikutnya.</span>
+        </div>
+      </div>
+    </div>
+
     <div class="bg-white shadow rounded-lg p-6">
       <div class="mb-6">
         <div class="flex flex-col md:flex-row justify-between md:items-center">
@@ -32,11 +43,11 @@
                 <i class="fas fa-search text-gray-400"></i>
               </div>
               <input
-                  v-model="searchQuery"
-                  type="text"
-                  placeholder="Cari laporan..."
-                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  @input="handleSearch"
+                v-model="searchQuery"
+                type="text"
+                placeholder="Cari laporan..."
+                class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                @input="handleSearch"
               />
               <button 
                 v-if="searchQuery || filters.category_id || filters.status || filters.startDate || filters.endDate"
@@ -47,12 +58,14 @@
               </button>
             </div>
             
-            <!-- Tambah Laporan Button -->
+            <!-- Tambah Laporan Button with Daily Limit Check -->
             <button 
-                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center"
-                @click="addNewReport"
+              class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center"
+              @click="addNewReport"
+              :disabled="hasReachedDailyLimit"
+              :class="{'opacity-50 cursor-not-allowed': hasReachedDailyLimit}"
             >
-                <i class="fas fa-plus mr-2"></i> Tambah Laporan
+              <i class="fas fa-plus mr-2"></i> Tambah Laporan
             </button>
           </div>
         </div>
@@ -60,42 +73,42 @@
       
       <!-- Filters Section -->
       <div class="mb-4 flex flex-wrap gap-3">
-      <!-- Kategori Filter -->
-      <div class="flex-1 min-w-[200px]">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-        <select 
-          v-model="filters.category_id" 
-          class="w-med border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          @change="applyFilters"
-        >
-          <option value="">Semua Kategori</option>
-          <option v-for="(name, id) in filteredCategories" :key="id" :value="id">
-            {{ name }}
-          </option>
-        </select>
-      </div>
+        <!-- Kategori Filter -->
+        <div class="flex-1 min-w-[200px]">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+          <select 
+            v-model="filters.category_id" 
+            class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            @change="applyFilters"
+          >
+            <option value="">Semua Kategori</option>
+            <option v-for="(name, id) in filteredCategories" :key="id" :value="id">
+              {{ name }}
+            </option>
+          </select>
+        </div>
 
-      <!-- Date Range Filters -->
-      <div class="flex-1 min-w-[200px]">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
-        <input
-          type="date"
-          v-model="filters.startDate"
-          class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          @change="applyFilters"
-        />
-      </div>
+        <!-- Date Range Filters -->
+        <div class="flex-1 min-w-[200px]">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
+          <input
+            type="date"
+            v-model="filters.startDate"
+            class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            @change="applyFilters"
+          />
+        </div>
 
-      <div class="flex-1 min-w-[200px]">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Akhir</label>
-        <input
-          type="date"
-          v-model="filters.endDate"
-          class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          @change="applyFilters"
-        />
-      </div>
-        
+        <div class="flex-1 min-w-[200px]">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Akhir</label>
+          <input
+            type="date"
+            v-model="filters.endDate"
+            class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            @change="applyFilters"
+          />
+        </div>
+          
         <!-- Reset Filter Button -->
         <div class="flex items-end">
           <button 
@@ -124,10 +137,10 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead>
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 No
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 <div class="flex items-center cursor-pointer" @click="sortBy('nomor_laporan_kekerasan')">
                   Nomor Laporan
                   <span class="ml-1">
@@ -135,15 +148,15 @@
                   </span>
                 </div>
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 <div class="flex items-center cursor-pointer" @click="sortBy('created_at')">
-                  Tanggal Laporan Masuk
+                  Tanggal
                   <span class="ml-1">
                     <i class="fas" :class="getSortIcon('created_at')"></i>
                   </span>
                 </div>
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 <div class="flex items-center cursor-pointer" @click="sortBy('judul')">
                   Judul
                   <span class="ml-1">
@@ -151,41 +164,41 @@
                   </span>
                 </div>
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Kategori
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Nama Pelapor
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Pelapor
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Aksi
               </th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="(laporan, index) in paginatedLaporan" :key="laporan.id">
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                 {{ startIndex + index + 1 }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                 {{ laporan.nomor_laporan_kekerasan }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ formatedDate(laporan.created_at, 'long') }}
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                {{ formatedDate(laporan.created_at, 'short') }}
               </td>
-              <td class="px-6 py-4 text-sm text-gray-900">
+              <td class="px-4 py-3 text-sm text-gray-900 truncate max-w-[200px]">
                 {{ laporan.judul }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                 {{ getCategoryName(laporan.category_id) }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                 {{ laporan.nama_pelapor }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
                 <button 
                   @click="viewDetail(laporan)" 
-                  class="text-blue-600 hover:text-blue-900 mr-2"
+                  class="text-blue-600 hover:text-blue-900"
                 >
                   <i class="fas fa-eye"></i> Detail
                 </button>
@@ -223,7 +236,7 @@
           </button>
           
           <span class="text-sm text-gray-700">
-            Halaman {{ currentPage }} dari {{ totalPages }}
+            Halaman {{ currentPage }} dari {{ totalPages || 1 }}
           </span>
           
           <button 
@@ -257,7 +270,11 @@ export default {
       // Current user data
       userData: null,
       
-      // Other data properties...
+      // Daily limit tracking
+      todaysReportsCount: 0,
+      dailyReportLimit: 5, // Set maximum daily report limit to 5
+      
+      // Other data properties
       loading: false,
       error: null,
       sortKey: 'tanggal_kejadian',
@@ -275,6 +292,11 @@ export default {
   },
   
   computed: {
+    // Check if user has reached daily report limit
+    hasReachedDailyLimit() {
+      return this.todaysReportsCount >= this.dailyReportLimit;
+    },
+
     // Calculate filtered data based on search query and filters
     filteredLaporan() {
       if (!this.laporan || this.laporan.length === 0) return [];
@@ -283,7 +305,7 @@ export default {
         // Apply search filter
         const searchTerms = this.searchQuery.toLowerCase().trim();
         const matchesSearch = !searchTerms || 
-          (laporan.nomor_laporan && laporan.nomor_laporan.toLowerCase().includes(searchTerms)) ||
+          (laporan.nomor_laporan_kekerasan && laporan.nomor_laporan_kekerasan.toLowerCase().includes(searchTerms)) ||
           (laporan.judul && laporan.judul.toLowerCase().includes(searchTerms)) ||
           (laporan.nama_pelapor && laporan.nama_pelapor.toLowerCase().includes(searchTerms)) ||
           (laporan.deskripsi && laporan.deskripsi.toLowerCase().includes(searchTerms));
@@ -299,7 +321,7 @@ export default {
         // Apply date range filter
         let matchesDateRange = true;
         if (this.filters.startDate || this.filters.endDate) {
-          const incidentDate = new Date(laporan.tanggal_kejadian);
+          const incidentDate = new Date(laporan.tanggal_kejadian || laporan.created_at);
           
           if (this.filters.startDate) {
             const startDate = new Date(this.filters.startDate);
@@ -322,12 +344,16 @@ export default {
         const modifier = this.sortDirection === 'asc' ? 1 : -1;
         
         // Handle different data types for sorting
-        if (this.sortKey === 'tanggal_kejadian') {
-          return modifier * (new Date(a[this.sortKey]) - new Date(b[this.sortKey]));
+        if (this.sortKey === 'tanggal_kejadian' || this.sortKey === 'created_at') {
+          return modifier * (new Date(a[this.sortKey] || 0) - new Date(b[this.sortKey] || 0));
         } else {
+          // Handle null or undefined values
+          const valA = a[this.sortKey] || '';
+          const valB = b[this.sortKey] || '';
+          
           // String comparison for other fields
-          if (a[this.sortKey] < b[this.sortKey]) return -1 * modifier;
-          if (a[this.sortKey] > b[this.sortKey]) return 1 * modifier;
+          if (valA < valB) return -1 * modifier;
+          if (valA > valB) return 1 * modifier;
           return 0;
         }
       });
@@ -336,30 +362,14 @@ export default {
     // Statistics computations
     totalLaporanCount() {
       if (!this.userData) return 0;
+      
       return this.laporan.filter(item => 
         (item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
         (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))
       ).length;
     },
 
-    dalamProsesCount() {
-      if (!this.userData) return 0;
-      return this.laporan.filter(item => 
-        ((item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
-        (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))) &&
-        item.status === 'unverified'
-      ).length;
-    },
-
-    selesaiCount() {
-      if (!this.userData) return 0;
-      return this.laporan.filter(item => 
-        ((item.nama_pelapor && item.nama_pelapor.trim() === this.userData.name.trim()) || 
-        (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik))) &&
-        item.status === 'verified'
-      ).length;
-    },
-
+    // Pagination computed properties
     startIndex() {
       return (this.currentPage - 1) * this.itemsPerPage;
     },
@@ -373,13 +383,12 @@ export default {
       );
     },
 
-    // Pagination computed properties
     endIndex() {
       return Math.min(this.startIndex + this.itemsPerPage, this.userFilteredLaporan.length);
     },
 
     totalPages() {
-      return Math.ceil(this.userFilteredLaporan.length / this.itemsPerPage);
+      return Math.max(1, Math.ceil(this.userFilteredLaporan.length / this.itemsPerPage));
     },
 
     paginatedLaporan() {
@@ -391,7 +400,7 @@ export default {
     filteredCategories() {
       const result = {};
       for (const [id, name] of Object.entries(this.categories)) {
-        if (name.startsWith('Kekerasan')) {
+        if (name && typeof name === 'string' && name.startsWith('Kekerasan')) {
           result[id] = name;
         }
       }
@@ -400,6 +409,31 @@ export default {
   },
   
   methods: {
+    // Count today's reports by the current user
+    countTodaysReports() {
+      if (!this.userData || !this.laporan.length) return 0;
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Set to beginning of the day
+      
+      // Filter reports created today by the current user
+      const todaysReports = this.laporan.filter(item => {
+        // Check if report is from current user
+        const isCurrentUser = (item.nama_pelapor && this.userData.name && item.nama_pelapor.trim() === this.userData.name.trim()) || 
+                              (item.ni_pelapor && (item.ni_pelapor === this.userData.nim || item.ni_pelapor === this.userData.nik));
+        
+        if (!isCurrentUser) return false;
+        
+        // Check if report was created today
+        const reportDate = new Date(item.created_at);
+        reportDate.setHours(0, 0, 0, 0);
+        return reportDate.getTime() === today.getTime();
+      });
+      
+      this.todaysReportsCount = todaysReports.length;
+      return todaysReports.length;
+    },
+    
     // Fetch data from API
     async fetchData() {
       this.loading = true;
@@ -416,6 +450,9 @@ export default {
         
         // Store all reports in this.laporan
         this.laporan = laporanResponse.data;
+        
+        // Count today's reports after loading data
+        this.countTodaysReports();
         
         // Apply filtering based on user
         this.filterReports();
@@ -434,10 +471,23 @@ export default {
     },
     
     // Format date for display
-    formatDate(dateString) {
+    formatedDate(dateString, format = 'long') {
       if (!dateString) return '-';
-      const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
-      return new Date(dateString).toLocaleDateString('id-ID', options);
+      
+      const date = new Date(dateString);
+      
+      if (format === 'long') {
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return date.toLocaleDateString('id-ID', options);
+      } else if (format === 'short') {
+        // Format to DD-MM-YYYY
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      }
+      
+      return dateString;
     },
     
     // Format status for display
@@ -456,10 +506,11 @@ export default {
       this.filterReports();
     },
     
+    // Navigate to add new report page if daily limit not reached
     addNewReport() {
-      // Navigate to form page or show modal for adding a new report
-      console.log('Add new incident report');
-      // For example:
+      if (this.hasReachedDailyLimit) {
+        return; // Don't allow navigation if limit is reached
+      }
       this.$router.push('/dosen/addpelaporanksdosen');
     },
 
@@ -475,8 +526,6 @@ export default {
     },
     
     filterReports() {
-      console.log('Filtering reports...');
-      
       // Using the computed filteredLaporan data to update the data property
       this.filteredLaporanList = this.filteredLaporan;
       
@@ -497,12 +546,7 @@ export default {
     },
     
     viewDetail(laporan) {
-      // Accept the entire laporan object instead of just the ID
-      console.log('Laporan being passed:', laporan);
-      
-      // Exit early if no laporan object was provided
       if (!laporan) {
-        console.error('No laporan object provided to viewDetail');
         return;
       }
       
@@ -516,35 +560,21 @@ export default {
         } else if (laporan.id) {
           actualId = laporan.id;
         } else {
-          // Log the object structure if we can't find the ID
-          console.error('Cannot find ID in laporan object. Available keys:', Object.keys(laporan));
-          return; // Don't navigate without a valid ID
+          return;
         }
       } else {
-        // If laporan is already a primitive value (number or string)
         actualId = laporan;
       }
       
-      // Make sure we have an ID value before navigating
       if (!actualId && actualId !== 0) {
-        console.error('Invalid ID for navigation:', actualId);
         return;
       }
       
-      console.log('Navigating with ID:', actualId);
-      
       // Navigate to detail page with the correct route name
-      try {
-        this.$router.push({
-          name: "DetailKSDosen",
-          params: { id: actualId }
-        });
-      } catch (error) {
-        console.error('Navigation error:', error);
-        
-        // Fallback navigation method using the path directly
-        this.$router.push(`/laporan_kekerasan/${actualId}`);
-      }
+      this.$router.push({
+        name: "DetailKSDosen",
+        params: { id: actualId }
+      });
     },
     
     sortBy(key) {
@@ -565,39 +595,21 @@ export default {
       return this.sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
     },
     
-    // Add a method to get the current user from cookies
+    // Get the current user from cookies
     getCurrentUser() {
       try {
         const encryptedUserData = VueCookies.get("user_session");
         if (encryptedUserData) {
           this.userData = decryptData(encryptedUserData);
-          console.log("Current user loaded:", this.userData.name);
         }
       } catch (error) {
         console.error("Error getting user data:", error);
       }
     },
 
-    // Add a method to apply filters
+    // Apply filters
     applyFilters() {
       this.filterReports();
-    },
-
-    formatedDate(dateString, format = 'long') {
-      if (!dateString) return '-';
-      
-      const date = new Date(dateString);
-      
-      if (format === 'long') {
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date(dateString).toLocaleDateString('id-ID', options);
-      } else if (format === 'short') {
-        // Format to DD-MM-YYYY
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const year = date.getFullYear();
-        return `${day}-${month}-${year}`;
-      }
     },
   },
   
@@ -615,17 +627,165 @@ export default {
     // Get current user first, then fetch data
     this.getCurrentUser();
     this.fetchData();
-  },
-  
-  // Add Vue Router navigation guards if needed
-  beforeRouteEnter(to, from, next) {
-    // Make sure to call next() only ONCE
-    next();
-  },
-  
-  beforeRouteUpdate(to, from, next) {
-    // Make sure to call next() only ONCE
-    next();
   }
 };
 </script>
+
+<style>
+/* Global styles to prevent horizontal scrolling */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+</style>
+
+<style scoped>
+/* Container styles */
+.p-4 {
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Card and table container styles */
+.bg-white.shadow.rounded-lg {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Make table fit container width */
+table {
+  width: 100%;
+  table-layout: fixed; /* This ensures columns respect their width settings */
+}
+
+/* Set specific widths for each column to balance the spacing */
+table th:nth-child(1), /* NO column */
+table td:nth-child(1) {
+  width: 5%;
+}
+
+table th:nth-child(2), /* NOMOR LAPORAN column */
+table td:nth-child(2) {
+  width: 15%;
+}
+
+table th:nth-child(3), /* TANGGAL column */
+table td:nth-child(3) {
+  width: 10%;
+}
+
+table th:nth-child(4), /* JUDUL column - give it more space */
+table td:nth-child(4) {
+  width: 25%;
+}
+
+table th:nth-child(5), /* KATEGORI column */
+table td:nth-child(5) {
+  width: 18%;
+}
+
+table th:nth-child(6), /* PELAPOR column */
+table td:nth-child(6) {
+  width: 10%;
+}
+
+table th:nth-child(7), /* AKSI column */
+table td:nth-child(7) {
+  width: 10%;
+  text-align: center;
+}
+
+/* Add proper text handling for long content */
+.truncate-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Add tooltip capability for truncated text */
+.has-tooltip {
+  position: relative;
+}
+
+.has-tooltip:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 0;
+  top: 100%;
+  background: #333;
+  color: white;
+  padding: 5px;
+  border-radius: 4px;
+  z-index: 10;
+  white-space: normal;
+  max-width: 300px;
+  word-break: break-word;
+}
+
+/* Reduce horizontal padding in cells */
+th, td {
+  padding-left: 1rem;
+  padding-right: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Daily limit warning banner */
+.warning-banner {
+  background-color: #FFF5F5;
+  border: 1px solid #FED7D7;
+  border-left: 4px solid #E53E3E;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  margin-top: 8px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.warning-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.warning-icon {
+  font-size: 18px;
+  color: #E53E3E;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.warning-text {
+  color: #E53E3E;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.warning-secondary-text {
+  display: block;
+  color: #718096;
+  font-weight: normal;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .flex-col.md\:flex-row {
+    width: 100%;
+  }
+  
+  button {
+    width: 100%;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
