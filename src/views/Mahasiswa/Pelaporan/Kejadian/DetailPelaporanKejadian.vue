@@ -32,18 +32,21 @@
                 <div class="laporan-id">{{ laporan.nomor_laporan }}</div>
               </div>
               
-              <div class="action-btn-container">
-                <button 
-                  v-if="laporan && laporan.status !== 'finished'" 
-                  class="edit-button blue-btn"
-                  @click="goToEditLaporan"
-                  title="Lengkapi atau ubah data laporan">
-                  <i class="fas fa-edit"></i> <span>Edit Laporan</span>
-                </button>
-              </div>
-              
-              <div class="status-badge" :class="getStatusClass">
-                {{ formatStatus(laporan.status) }}
+              <!-- Wrap both buttons and status badge in a single container -->
+              <div class="actions-status-wrapper">
+                <div class="action-btn-container">
+                  <button 
+                    v-if="laporan && laporan.status !== 'finished'" 
+                    class="edit-button blue-btn"
+                    @click="goToEditLaporan"
+                    title="Lengkapi atau ubah data laporan">
+                    <i class="fas fa-edit"></i> <span>Edit Laporan</span>
+                  </button>
+                </div>
+                
+                <div class="status-badge" :class="getStatusClass">
+                  {{ formatStatus(laporan.status) }}
+                </div>
               </div>
             </div>
           </div>
@@ -902,14 +905,6 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
-.header-section {
-  position: relative;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 20px;
-}
-
 .back-button {
   display: inline-flex;
   align-items: center;
@@ -932,6 +927,14 @@ export default {
   margin-right: 8px;
 }
 
+.header-section {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
 .header-section .flex {
   display: flex;
   align-items: center;
@@ -944,6 +947,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-right: auto; /* Pushes other content to the right */
 }
 
 .header-section h2 {
@@ -958,11 +962,17 @@ export default {
 }
 
 .status-badge {
-  margin-left: auto;
+  margin-left: 0; /* Remove auto margin that was pushing it to the right edge */
   padding: 6px 12px;
   border-radius: 16px;
   font-size: 14px;
   font-weight: 500;
+}
+
+.actions-status-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Controls spacing between button and badge */
 }
 
 .status-processing {
@@ -993,7 +1003,7 @@ export default {
 .action-btn-container {
   display: flex;
   align-items: center;
-  margin-right: 16px;
+  margin-right: 8px; /* Small space between button and badge */
   gap: 10px;
 }
 
@@ -1395,13 +1405,17 @@ export default {
     align-items: flex-start;
   }
   
+  .actions-status-wrapper {
+    margin-top: 10px;
+    width: 100%;
+    justify-content: space-between; /* On mobile, space them out more */
+  }
+  
   .status-badge {
     margin-left: 0;
-    margin-top: 10px;
   }
   
   .action-btn-container {
-    margin-top: 10px;
     margin-right: 0;
   }
   

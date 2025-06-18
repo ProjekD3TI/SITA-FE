@@ -995,9 +995,11 @@ export default {
 }
 
 h1 {
-    text-align: center;
-    margin-bottom: 30px;
-    color: #333;
+  text-align: center;
+  margin-bottom: 30px;
+  color: #333;
+  font-weight: 700; /* Very bold */
+  font-size: 2.25rem;
 }
 
 .loading-container {
