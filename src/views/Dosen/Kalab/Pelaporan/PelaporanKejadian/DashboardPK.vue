@@ -156,8 +156,11 @@
                 Nomor Laporan
                 <i :class="getSortIcon('nomor_laporan')"></i>
               </th>
-              <th @click="sortBy('created_at')" class="sortable">
-                Tanggal Laporan Masuk
+              <th @click="sortBy('created_at')" class="sortable two-line-header">
+                <div>
+                  <span>Tanggal</span>
+                  <span>Laporan Masuk</span>
+                </div>
                 <i :class="getSortIcon('created_at')"></i>
               </th>
               <th @click="sortBy('judul')" class="sortable">
@@ -888,6 +891,21 @@ watch(totalFilteredCount, (newCount) => {
   gap: 10px;
 }
 
+.two-line-header {
+  width: 10%;
+}
+
+.two-line-header div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+}
+
+.two-line-header i {
+  margin-top: 4px;
+}
+
 .search-container {
   position: relative;
   flex: 1;
@@ -1063,7 +1081,7 @@ watch(totalFilteredCount, (newCount) => {
 
 .data-table th:nth-child(6),
 .data-table td:nth-child(6) {
-  width: 15%;
+  width: 10%;
 }
 
 .data-table th:nth-child(7),
