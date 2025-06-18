@@ -295,8 +295,13 @@ watchEffect(() => {
           size="md"
           :label="getStatusLabel(statusKelulusan)"
         />
-        <h5 class="body3-bold lg:body1-bold text-primary">Nilai Ujian</h5>
-        <div class="flex flex-wrap gap-2">
+        <h5
+          v-if="rerata_ujian !== 0"
+          class="body3-bold lg:body1-bold text-primary"
+        >
+          Nilai Ujian
+        </h5>
+        <div v-if="rerata_ujian !== 0" class="flex flex-wrap gap-2">
           <InputText
             class="flex-grow mb-2 min-w-[260px] sm:min-w-[320px]"
             id="kualitas_tata_laporan"
@@ -327,6 +332,7 @@ watchEffect(() => {
           />
         </div>
         <InputText
+          v-if="rerata_ujian !== 0"
           id="rerata_ujian"
           label="Nilai Rata-rata"
           :modelValue="rerata_ujian"

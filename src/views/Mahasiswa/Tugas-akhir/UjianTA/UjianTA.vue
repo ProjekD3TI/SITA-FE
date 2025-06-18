@@ -791,33 +791,11 @@ watch(
                 </Button>
               </template>
 
-              <!-- Tombol Update untuk pengajuan ditolak -->
-              <template v-if="formConfig.showSubmitAgainButton">
-                <Button
-                  variant="primary"
-                  size="lg"
-                  type="button"
-                  class="self-end hidden w-fit sm:flex"
-                  @click="handleUpdate"
-                >
-                  Kirim Ulang
-                </Button>
-                <Button
-                  variant="primary"
-                  size="md"
-                  type="button"
-                  class="self-end w-fit sm:hidden"
-                  @click="handleUpdate"
-                >
-                  Kirim Ulang
-                </Button>
-              </template>
-
               <!-- Action Buttons - show for accepted application -->
-              <template v-if="statusValid === STATUS.ACCEPTED">
+              <template v-if="statusValid === STATUS.ACCEPTED || STATUS.REVISI">
                 <!-- Schedule tooltip and button -->
                 <Tooltip
-                  v-if="!terjadwal"
+                  v-if="!terjadwal && statusValid !== STATUS.REVISI"
                   text="Menunggu Dijadwalkan"
                   size="md"
                   position="left"
@@ -839,6 +817,7 @@ watch(
                 </Tooltip>
 
                 <Button
+                  v-if="statusValid !== STATUS.REVISI"
                   @click="showModal"
                   type="button"
                   variant="success"
@@ -882,6 +861,27 @@ watch(
                     Detail
                   </Button>
                 </router-link>
+              </template>
+              <!-- Tombol Update untuk pengajuan ditolak -->
+              <template v-if="formConfig.showSubmitAgainButton">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  type="button"
+                  class="self-end hidden w-fit sm:flex"
+                  @click="handleUpdate"
+                >
+                  Kirim Ulang
+                </Button>
+                <Button
+                  variant="primary"
+                  size="md"
+                  type="button"
+                  class="self-end w-fit sm:hidden"
+                  @click="handleUpdate"
+                >
+                  Kirim Ulang
+                </Button>
               </template>
             </div>
           </form>
