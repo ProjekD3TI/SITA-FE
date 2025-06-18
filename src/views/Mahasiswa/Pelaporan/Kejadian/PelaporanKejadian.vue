@@ -95,20 +95,31 @@
                             </div>
 
                             <button 
-                                class="urgent-report-btn ms-2" 
-                                @click="openUrgentReportDialog"
-                            >
-                                <i class="mdi mdi-alert-circle"></i>
-                                Tambah Laporan Mendesak
+                                @click="openUrgentReportDialog" 
+                                :disabled="hasReachedUnverifiedLimit"
+                                class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transition ml-2"
+                                :class="{'opacity-50 cursor-not-allowed': hasReachedUnverifiedLimit}">
+                                <i class="fas fa-exclamation-circle mr-2"></i> Tambah Laporan Mendesak
                             </button>
                             
                             <!-- Tambah Laporan Button -->
                             <button 
-                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
-                                @click="addNewReport"
-                            >
+                                @click="addNewReport" 
+                                :disabled="hasReachedUnverifiedLimit"
+                                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition"
+                                :class="{'opacity-50 cursor-not-allowed': hasReachedUnverifiedLimit}">
                                 <i class="fas fa-plus mr-2"></i> Tambah Laporan
                             </button>
+                        </div>
+                    </div>
+
+                    <div v-if="hasReachedUnverifiedLimit" class="warning-banner">
+                        <div class="warning-content">
+                            <i class="fas fa-exclamation-circle warning-icon"></i>
+                            <div class="warning-text">
+                            Anda telah mencapai batas maksimal 3 laporan yang belum diverifikasi.
+                            <span class="warning-secondary-text">Silakan tunggu verifikasi laporan sebelumnya.</span>
+                            </div>
                         </div>
                     </div>
                     
@@ -380,7 +391,13 @@ export default {
         };
     },
     computed: {
-        // Your computed properties remain the same
+        hasReachedUnverifiedLimit() {
+            // Fixed the original computation by counting unverified and pending reports
+            return this.laporan.filter(item => 
+                item.status === 'unverified' || item.status === 'pending'
+            ).length >= 3;
+        },
+
         filteredLaporan() {
             if (!this.laporan || !this.laporan.length) return [];
             
@@ -398,9 +415,15 @@ export default {
             
             // Apply status filter
             if (this.filters.status) {
-                const statusValue = this.filters.status === 'Dalam Proses' ? 'verified' : 
-                                  this.filters.status === 'Dalam Antrian' ? 'unverified' : null;
+                // Map the display status back to the database status values
+                const statusMap = {
+                    'Belum Diverifikasi': 'unverified',
+                    'Diverifikasi': 'verified', 
+                    'Ditolak': 'rejected',
+                    'Selesai': 'finished'
+                };
                 
+                const statusValue = statusMap[this.filters.status];
                 if (statusValue) {
                     result = result.filter(item => item.status === statusValue);
                 }
@@ -510,101 +533,7 @@ export default {
             }
             
             return filtered;
-        },
-
-        filteredLaporan() {
-            if (!this.laporan || !this.laporan.length) return [];
-            
-            let result = [...this.laporan];
-            
-            // Apply search filter
-            if (this.searchQuery) {
-                const query = this.searchQuery.toLowerCase();
-                result = result.filter(item => 
-                    (item.judul && item.judul.toLowerCase().includes(query)) || 
-                    (item.nomor_laporan && item.nomor_laporan.toLowerCase().includes(query)) ||
-                    (item.nama_pelapor && item.nama_pelapor.toLowerCase().includes(query))
-                );
-            }
-            
-            // Apply status filter - FIX HERE
-            if (this.filters.status) {
-                // Map the display status back to the database status values
-                const statusMap = {
-                    'Belum Diverifikasi': 'unverified',
-                    'Diproses': 'verified', 
-                    'Ditolak': 'rejected',
-                    'Selesai': 'finished'
-                };
-                
-                const statusValue = statusMap[this.filters.status];
-                if (statusValue) {
-                    result = result.filter(item => item.status === statusValue);
-                }
-            }
-            
-            // Apply category filter
-            if (this.filters.category_id) {
-                result = result.filter(item => 
-                    String(item.category_id) === String(this.filters.category_id)
-                );
-            }
-            
-            // Apply date range filter
-            if (this.filters.startDate || this.filters.endDate) {
-                result = result.filter(item => {
-                    const itemDate = new Date(item.created_at);
-                    
-                    if (this.filters.startDate) {
-                        const startDate = new Date(this.filters.startDate);
-                        startDate.setHours(0, 0, 0, 0);
-                        if (itemDate < startDate) return false;
-                    }
-                    
-                    if (this.filters.endDate) {
-                        const endDate = new Date(this.filters.endDate);
-                        endDate.setHours(23, 59, 59, 999);
-                        if (itemDate > endDate) return false;
-                    }
-                    
-                    return true;
-                });
-            }
-            
-            // Apply sorting
-            result.sort((a, b) => {
-                let fieldA, fieldB;
-                
-                // Handle special fields
-                if (this.sortField === 'laporan_id') {
-                    fieldA = a.laporan_id;
-                    fieldB = b.laporan_id;
-                } else if (this.sortField === 'tanggal') {
-                    fieldA = new Date(a.created_at);
-                    fieldB = new Date(b.created_at);
-                } else if (this.sortField === 'category_id') {
-                    fieldA = this.getCategoryName(a.category_id);
-                    fieldB = this.getCategoryName(b.category_id);
-                } else if (this.sortField === 'status') {
-                    fieldA = a.status;
-                    fieldB = b.status;
-                } else {
-                    fieldA = a[this.sortField];
-                    fieldB = b[this.sortField];
-                }
-                
-                let comparison = 0;
-                if (fieldA > fieldB) {
-                    comparison = 1;
-                } else if (fieldA < fieldB) {
-                    comparison = -1;
-                }
-                
-                return this.sortDirection === 'asc' ? comparison : -comparison;
-            });
-            
-            return result;
-        },
+        }
     },
     methods: {
         // Simplified method to get the auth token - now focuses on the auth_token cookie
@@ -819,10 +748,12 @@ export default {
         },
         
         addNewReport() {
+            if (this.hasReachedUnverifiedLimit) return;
             this.$router.push('/pelaporan/add-kejadian');
         },
 
         openUrgentReportDialog() {
+            if (this.hasReachedUnverifiedLimit) return;
             this.$router.push('/pelaporan/add-kejadian-mendesak-mhs');
         },
         
@@ -885,13 +816,10 @@ export default {
                 });
             }
             
-            // Update filtered data
-            this.filteredLaporan = filtered;
-            
             // Reset to first page when filters change
             this.currentPage = 1;
             
-            console.log('Filtered results:', this.filteredLaporan.length); // Debug log
+            console.log('Filtered results:', filtered.length); // Debug log
         },
 
         formatedDate(dateString, format = 'long') {
@@ -929,6 +857,47 @@ export default {
 </script>
 
 <style scoped>
+.warning-banner {
+  background-color: #FFF5F5;
+  border: 1px solid #FED7D7;
+  border-left: 4px solid #E53E3E;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  margin-top: 8px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.warning-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.warning-icon {
+  font-size: 18px;
+  color: #E53E3E;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.warning-text {
+  color: #E53E3E;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.warning-secondary-text {
+  display: block;
+  color: #718096;
+  font-weight: normal;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
 /* Filter styles */
 .filter-container {
   background-color: #f8f9fa;
