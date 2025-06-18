@@ -98,7 +98,7 @@
             
             <!-- Bukti Pelanggaran Checkboxes Section -->
             <div class="form-group bukti-pelanggaran-container">
-              <label>Bukti Pelanggaran <span class="required">*</span></label>
+              <label>Bukti Pelaporan <span class="required">*</span></label>
               <div class="bukti-checkbox-group" :class="{ 'is-invalid': errors.bukti_pelanggaran }">
                 <div class="form-check bukti-check" v-for="(bukti, index) in buktiOptions" :key="index">
                   <input

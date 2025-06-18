@@ -86,7 +86,7 @@
 </div>
             
             <div class="form-group">
-              <h2>Bukti Pelanggaran <span class="required">*</span></h2>
+              <h2>Bukti Pelaporan <span class="required">*</span></h2>
               <div v-if="errors.bukti_pelanggaran" class="alert alert-danger">
                 {{ typeof errors.bukti_pelanggaran === 'string' ? errors.bukti_pelanggaran : 'Harap pilih minimal satu alat bukti' }}
               </div>

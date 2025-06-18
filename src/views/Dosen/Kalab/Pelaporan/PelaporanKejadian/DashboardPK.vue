@@ -55,22 +55,24 @@
           <!-- Tombol Export PDF - langsung trigger download -->
           <button
             class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center mr-2"
-            @click="exportToPDF">
-            <i class="fas fa-file-pdf"></i> Export PDF
+            @click="exportToPDF"
+          >
+            <i class="fas fa-file-pdf mr-2"></i> Export PDF
           </button>
 
           <button 
-            class="urgent-report-btn ms-2" 
+            class="urgent-report-btn" 
             @click="openUrgentReportDialog"
           >
-            <i class="mdi mdi-alert-circle"></i>
+            <i class="fas fa-exclamation-circle mr-2"></i>
             Tambah Laporan Mendesak
           </button>
           
           <button                               
-            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
-            @click="addNewReport">
-            <i class="fas fa-plus"></i> Tambah Laporan
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center ml-2"
+            @click="addNewReport"
+          >
+            <i class="fas fa-plus mr-2"></i> Tambah Laporan
           </button>
         </div>
       </div>
@@ -139,14 +141,15 @@
           
           <!-- Reset Filter Button -->
           <button class="btn-reset-filter" @click="resetFilters">
-            <i class="fas fa-undo"></i> Reset Filter
+            <i class="fas fa-undo mr-1"></i> Reset Filter
           </button>
         </div>
       </div>
       
       <!-- Table section -->
-      <table class="data-table">
-        <thead>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
             <tr>
               <th>No</th>
               <th @click="sortBy('nomor_laporan')" class="sortable">
@@ -176,38 +179,39 @@
               <th>Aksi</th>
             </tr>
           </thead>
-        <tbody>
-          <tr v-for="(item, index) in filteredLaporan" :key="item.id">
-            <td>{{ startIndex + index + 1 }}</td>
-            <td>{{ item.nomor_laporan }}</td>
-            <td>{{ formatDate(item.created_at) }}</td>
-            <td>{{ item.judul }}</td>
-            <td>{{ getCategoryName(item.category_id) }}</td>
-            <td>{{ item.nama_pelapor }}</td>
-            <td>
-              <span :class="['status-badge', item.status.toLowerCase()]">
-                {{ formatStatus(item.status) }}
-              </span>
-            </td>
-            <td>
-              <button class="btn-detail" @click="viewDetail(item.laporan_id)">
-                <i class="fas fa-eye"></i> Detail
-              </button>
-            </td>
-          </tr>
-          <tr v-if="displayedLaporan.length === 0">
-            <td colspan="8" class="no-data">Tidak ada data yang ditampilkan</td>
-          </tr>
-        </tbody>
-      </table>
-      
-      <div v-if="filteredLaporan.length === 0" class="no-data">
-        <p>Tidak ada data yang sesuai dengan kriteria pencarian dan filter.</p>
+          <tbody>
+            <tr 
+              v-for="(item, index) in filteredLaporan" 
+              :key="item.id" 
+              :class="{ 'urgent-row': isUrgentReport(item.category_id) }"
+            >
+              <td>{{ startIndex + index + 1 }}</td>
+              <td>{{ item.nomor_laporan }}</td>
+              <td>{{ formatDate(item.created_at) }}</td>
+              <td class="truncate-cell" :title="item.judul">{{ item.judul }}</td>
+              <td>{{ getCategoryName(item.category_id) }}</td>
+              <td>{{ item.nama_pelapor }}</td>
+              <td>
+                <span :class="['status-badge', item.status.toLowerCase()]">
+                  {{ formatStatus(item.status) }}
+                </span>
+              </td>
+              <td>
+                <button class="btn-detail" @click="viewDetail(item.laporan_id)">
+                  <i class="fas fa-eye"></i> Detail
+                </button>
+              </td>
+            </tr>
+            <tr v-if="filteredLaporan.length === 0">
+              <td colspan="8" class="no-data">Tidak ada data yang ditampilkan</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
       
       <div class="pagination-container">
         <div class="pagination-info-total">
-          Total: {{ filteredLaporan.length }} laporan
+          Total: {{ totalFilteredCount }} laporan
         </div>
         
         <div class="pagination-controls">
@@ -240,7 +244,7 @@
       </div>
     </div>
     
-    <!-- Style Tabel untuk ekspor PDF -->
+    <!-- Style Tabel untuk ekspor PDF (hidden) -->
     <div id="pdf-content" style="display: none;">
       <div style="padding: 20px;">
         <!-- Logo di atas -->
@@ -280,20 +284,26 @@
           <thead>
             <tr style="background-color: #f2f2f2;">
               <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle; width: 5%;">No</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Nomor Laporan</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Tanggal</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Judul</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Kategori</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Nama Pelapor</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">Status</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle; width: 15%;">Nomor Laporan</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle; width: 12%;">Tanggal</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle; width: 25%;">Judul</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle; width: 15%;">Kategori</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle; width: 15%;">Nama Pelapor</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle; width: 12%;">Status</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, index) in dataToExport" :key="index" :style="index % 2 === 0 ? '' : 'background-color: #f9f9f9;'">
+            <tr 
+              v-for="(item, index) in dataToExport" 
+              :key="index" 
+              :style="isUrgentReport(item.category_id) 
+                ? 'background-color: rgba(156, 39, 176, 0.05); border-left: 4px solid #9C27B0;' 
+                : index % 2 === 0 ? '' : 'background-color: #f9f9f9;'"
+            >
               <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ index + 1 }}</td>
               <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ item.nomor_laporan }}</td>
               <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ formatDate(item.created_at) }}</td>
-              <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ item.judul }}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: middle;">{{ item.judul }}</td>
               <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ getCategoryName(item.category_id) }}</td>
               <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ item.nama_pelapor }}</td>
               <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle;">{{ formatStatus(item.status) }}</td>
@@ -329,15 +339,21 @@ const filters = ref({
 const laporan = ref([]); // This will store API data
 const categories = ref({});
 const selectedStatus = ref('all');
-const itemsPerPage = ref(10);
 const loading = ref(true); // Start with loading true
 const error = ref(null);
-const search = ref(''); // Replace or use alongside searchQuery if you prefer
-const totalFilteredCount = ref(0); // New property to store total filtered count
+const search = ref(''); 
+const totalFilteredCount = ref(0); 
 const exportInProgress = ref(false); // Flag to prevent multiple exports at once
 const dataToExport = ref([]); // Data that will be exported to PDF
 const sortKey = ref('created_at');  // Default sort by creation date
 const sortOrder = ref('desc');      // Default to descending (newest first)
+
+// Check if a report is an urgent/emergency report
+const isUrgentReport = (categoryId) => {
+  const categoryName = getCategoryName(categoryId);
+  return categoryName.toLowerCase().includes('darurat') || 
+         categoryName.toLowerCase().includes('mendesak');
+};
 
 // Computed properties
 const filteredLaporan = computed(() => {
@@ -434,14 +450,14 @@ const filteredLaporan = computed(() => {
   // Store total filtered count before pagination
   totalFilteredCount.value = result.length;
   
-  // Apply pagination directly in filteredLaporan
+  // Apply pagination
   const start = (currentPage.value - 1) * pageSize.value;
   const end = start + pageSize.value;
   
   return result.slice(start, end);
 });
 
-// Computed property untuk mendapatkan semua data yang terfilter tanpa pagination
+// Computed property for all filtered data without pagination
 const allFilteredData = computed(() => {
   // Start with all reports
   let result = [...laporan.value];
@@ -469,7 +485,8 @@ const allFilteredData = computed(() => {
     const statusMap = {
       'Belum Diverifikasi': 'unverified',
       'Diproses': 'verified',
-      'Ditolak': 'rejected'
+      'Ditolak': 'rejected',
+      'Selesai': 'finished'
     };
     
     const statusValue = statusMap[filters.value.status] || filters.value.status;
@@ -516,7 +533,7 @@ const isFilterActive = computed(() => {
 
 // Update totalPages to use totalFilteredCount
 const totalPages = computed(() => {
-  return Math.ceil(totalFilteredCount.value / pageSize.value);
+  return Math.ceil(totalFilteredCount.value / pageSize.value) || 1;
 });
 
 const startIndex = computed(() => {
@@ -535,19 +552,12 @@ const verifiedCount = computed(() => {
   return laporan.value.filter(item => item.status === 'finished').length;
 });
 
-// Display data should be based on filteredLaporan instead of laporan directly
-const displayedLaporan = computed(() => {
-  const start = startIndex.value;
-  const end = start + itemsPerPage.value;
-  return filteredLaporan.value.slice(start, end);
-});
-
 const filteredCategories = computed(() => {
   const filtered = {};
   
   // Loop through the categories object and exclude those starting with "Kekerasan"
   for (const [id, name] of Object.entries(categories.value)) {
-    if (!name.startsWith('Kekerasan')) {
+    if (name && !name.startsWith('Kekerasan')) {
       filtered[id] = name;
     }
   }
@@ -562,9 +572,6 @@ const fetchData = async () => {
     // Check for authentication token in cookies
     const token = VueCookies.get('auth_token');
     if (token) {
-      // You can use the decryptData function here if needed
-      // const decryptedToken = decryptData(token);
-      
       // Set axios headers
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
@@ -580,9 +587,6 @@ const fetchData = async () => {
     // Then fetch laporan data
     const laporanResponse = await axios.get('https://v3422040.mhs.d3tiuns.com/api/laporan');
     laporan.value = laporanResponse.data;
-    
-    console.log('Laporan data loaded:', laporan.value); // Debug log
-    console.log('Categories loaded:', categories.value); // Debug log
   } catch (error) {
     console.error('Error fetching data:', error);
     error.value = 'Gagal memuat data. Silakan coba lagi nanti.';
@@ -591,7 +595,6 @@ const fetchData = async () => {
   }
 };
 
-// Modify your sortBy function (if it exists) or add it
 const sortBy = (key) => {
   if (sortKey.value === key) {
     // Toggle order if clicking the same column
@@ -603,7 +606,6 @@ const sortBy = (key) => {
   }
 };
 
-// Update your getSortIcon function if it exists
 const getSortIcon = (key) => {
   if (sortKey.value !== key) return 'fas fa-sort';
   return sortOrder.value === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
@@ -625,19 +627,14 @@ const formatStatus = (status) => {
 };
 
 const openUrgentReportDialog = () => {
-  // Add your logic to open a dialog or navigate to urgent report form
-  router.push('/kalab/addpelaporankejadianmendesakkalab'); // Or use a dialog instead
+  router.push('/kalab/addpelaporankejadianmendesakkalab');
 };
 
 const addNewReport = () => {
-  // Navigate to form page or show modal for adding a new report
-  console.log('Add new incident report');
-  // For example:
   router.push('/kalab/addpelaporankejadiankalab');
 };
 
 const viewDetail = (laporanId) => {
-  // Explicitly use the correct route name with parameter
   router.push({ 
     name: 'DetailPK', 
     params: { id: laporanId } 
@@ -663,10 +660,7 @@ const nextPage = () => {
   }
 };
 
-// New filtering method
 const applyFilters = () => {
-  // The computed property will automatically apply filters
-  // Just reset the current page
   currentPage.value = 1;
 };
 
@@ -682,12 +676,10 @@ const resetFilters = () => {
 };
 
 const handleSearch = () => {
-  // Reset to first page when search term changes
   currentPage.value = 1;
 };
 
 const resetPage = () => {
-  // Reset to page 1 when page size changes
   currentPage.value = 1;
 };
 
@@ -758,19 +750,14 @@ onMounted(() => {
   }
 });
 
-// Clean up any event listeners or resources when component unmounts
-onBeforeUnmount(() => {
-  // Any cleanup logic needed
-});
-
 // Watchers
 watch(search, () => {
   currentPage.value = 1;
 });
 
 watch(pageSize, (newValue) => {
-  // Optionally save the user's preference to localStorage
   localStorage.setItem('dashboardPkPageSize', newValue);
+  resetPage();
 });
 
 watch(filters, () => {
@@ -788,6 +775,8 @@ watch(totalFilteredCount, (newCount) => {
 <style scoped>
 .dashboard-pelaporan-kejadian {
   padding: 20px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .page-title {
@@ -872,6 +861,7 @@ watch(totalFilteredCount, (newCount) => {
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   padding: 20px;
+  overflow: hidden;
 }
 
 /* Table actions and add button */
@@ -882,28 +872,11 @@ watch(totalFilteredCount, (newCount) => {
   margin-bottom: 20px;
 }
 
-.btn-add-report {
-  background-color: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: background-color 0.2s;
-  box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
-}
-
-.btn-add-report:hover {
-  background-color: #1d4ed8;
-}
-
-.btn-add-report i {
-  font-size: 12px;
+.table-actions h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
 }
 
 .table-header {
@@ -911,26 +884,22 @@ watch(totalFilteredCount, (newCount) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .search-container {
-  position: relative; /* Add this line */
+  position: relative;
   flex: 1;
   max-width: 400px;
+  min-width: 200px;
 }
 
 .action-buttons {
-  margin-left: 15px;
   display: flex;
   position: relative;
-}
-
-.search-input {
-  padding: 10px 15px 10px 40px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  width: 300px;
-  font-size: 14px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .search-icon {
@@ -939,7 +908,7 @@ watch(totalFilteredCount, (newCount) => {
   top: 50%;
   transform: translateY(-50%);
   color: #7f8c8d;
-  z-index: 1; /* Add this to ensure icon appears above input */
+  z-index: 1;
 }
 
 /* Filter styles */
@@ -958,7 +927,7 @@ watch(totalFilteredCount, (newCount) => {
   gap: 15px;
 }
 
-.filter-group > label {
+.filter-title {
   font-weight: 600;
   margin-right: 5px;
   color: #4a5568;
@@ -975,7 +944,7 @@ watch(totalFilteredCount, (newCount) => {
   color: #4a5568;
 }
 
-.filter-select select, .filter-date input {
+.filter-input {
   padding: 8px 12px;
   border: 1px solid #e2e8f0;
   border-radius: 4px;
@@ -989,7 +958,7 @@ watch(totalFilteredCount, (newCount) => {
   gap: 8px;
 }
 
-.date-inputs span {
+.date-separator {
   color: #718096;
   font-size: 14px;
 }
@@ -1003,154 +972,21 @@ watch(totalFilteredCount, (newCount) => {
   cursor: pointer;
   font-size: 14px;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .btn-reset-filter:hover {
   background-color: #e2e8f0;
 }
 
-.incident-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.incident-table th,
-.incident-table td {
-  padding: 12px 15px;
-  text-align: left;
-  border-bottom: 1px solid #eee;
-}
-
-.incident-table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-}
-
-.status-badge {
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.status-badge.selesai {
-  background-color: #d4f9e2;
-  color: #16a34a;
-}
-
-.status-badge.proses {
-  background-color: #fef3c7;
-  color: #d97706;
-}
-
-.btn-detail {
-  background-color: #e6f7ff;
-  color: #0ea5e9;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.btn-detail:hover {
-  background-color: #d1eeff;
-}
-
-.no-data {
-  text-align: center;
-  padding: 30px;
-  color: #7f8c8d;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 20px;
-}
-
-.pagination-info-total {
-  font-size: 14px;
-  color: #64748b;
-}
-
-.pagination-controls {
-  display: flex;
-  align-items: center;
-}
-
-.pagination-btn {
-  background: #f8f9fa;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 8px 12px;
-  margin: 0 5px;
-  cursor: pointer;
-}
-
-.pagination-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination-info {
-  margin: 0 15px;
-  font-size: 14px;
-  color: #64748b;
-}
-
-.page-size-select {
-  margin-left: 15px;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-@media (max-width: 768px) {
-  .statistics-cards {
-    flex-direction: column;
-  }
-  
-  .table-actions {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-  
-  .action-buttons {
-    width: 100%;
-  }
-  
-  .btn-add-report {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .filter-group {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .filter-select, .filter-date {
-    width: 100%;
-    margin-bottom: 10px;
-  }
-  
-  .pagination-container {
-    flex-direction: column;
-    gap: 15px;
-  }
-  
-  .search-input {
-    width: 100%;
-  }
-}
-</style>
-
-<style scoped>
 /* Table styling for proper spacing and layout */
+.table-responsive {
+  overflow-x: auto;
+  width: 100%;
+}
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -1159,6 +995,7 @@ watch(totalFilteredCount, (newCount) => {
   background-color: white;
   border-radius: 8px;
   overflow: hidden;
+  table-layout: fixed;
 }
 
 .data-table th,
@@ -1177,6 +1014,15 @@ watch(totalFilteredCount, (newCount) => {
   font-size: 12px;
   letter-spacing: 0.05em;
   white-space: nowrap;
+}
+
+.data-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.data-table th.sortable:hover {
+  background-color: #f3f4f6;
 }
 
 .data-table tr:last-child td {
@@ -1201,12 +1047,13 @@ watch(totalFilteredCount, (newCount) => {
 
 .data-table th:nth-child(3),
 .data-table td:nth-child(3) {
-  width: 20%;
+  width: 10%;
+  white-space: nowrap;
 }
 
 .data-table th:nth-child(4),
 .data-table td:nth-child(4) {
-  width: 15%;
+  width: 20%;
 }
 
 .data-table th:nth-child(5),
@@ -1221,13 +1068,22 @@ watch(totalFilteredCount, (newCount) => {
 
 .data-table th:nth-child(7),
 .data-table td:nth-child(7) {
-  width: 15%;
+  width: 10%;
+  text-align: center;
 }
 
 .data-table th:nth-child(8),
 .data-table td:nth-child(8) {
-  width: 15%;
+  width: 10%;
   text-align: center;
+}
+
+/* Add truncation to cells that might contain long text */
+.truncate-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
 
 /* Status badge styling */
@@ -1266,7 +1122,6 @@ watch(totalFilteredCount, (newCount) => {
   color: #dc2626;
 }
 
-
 /* Button styling */
 .btn-detail {
   background-color: #e6f7ff;
@@ -1277,7 +1132,7 @@ watch(totalFilteredCount, (newCount) => {
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, color 0.2s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1305,24 +1160,10 @@ watch(totalFilteredCount, (newCount) => {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.loading-indicator {
-  color: #4b5563;
-}
-
-.error-message {
-  color: #dc2626;
-}
-
 .no-data {
   color: #6b7280;
   font-style: italic;
-}
-
-/* Container styling */
-.dashboard-container {
-  padding: 1.5rem;
-  background-color: #f9fafb;
-  min-height: calc(100vh - 64px); /* Adjust based on your header height */
+  padding: 20px 0;
 }
 
 /* Pagination styling */
@@ -1331,10 +1172,8 @@ watch(totalFilteredCount, (newCount) => {
   justify-content: space-between;
   align-items: center;
   margin-top: 1rem;
-  background-color: white;
   padding: 0.75rem 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-top: 1px solid #e5e7eb;
 }
 
 .pagination-info-total {
@@ -1348,70 +1187,43 @@ watch(totalFilteredCount, (newCount) => {
   align-items: center;
 }
 
-.pagination-button {
+.pagination-btn {
   background-color: white;
   border: 1px solid #d1d5db;
   color: #374151;
   font-size: 14px;
-  padding: 4px 8px;
-  min-width: 32px;
-  height: 32px;
+  padding: 6px 12px;
   border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.pagination-button:hover:not(:disabled) {
+.pagination-btn:hover:not(:disabled) {
   background-color: #f3f4f6;
 }
 
-.pagination-button:disabled {
+.pagination-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.pagination-button.active {
-  background-color: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
+.pagination-info {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 8px;
 }
 
-/* You can keep your existing styles and add these if needed */
-.status-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
+.page-size-select {
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: white;
+  color: #374151;
+  font-size: 14px;
+  margin-left: 8px;
 }
 
-.unverified {
-  background-color: #f3f4f6;
-  color: #4b5563;
-}
-
-.verified {
-  background-color: #dbeafe;
-  color: #2563eb;
-}
-
-.processed {
-  background-color: #fef3c7;
-  color: #d97706;
-}
-
-.completed {
-  background-color: #d1fae5;
-  color: #059669;
-}
-
-.rejected {
-  background-color: #fee2e2;
-  color: #dc2626;
-}
-
+/* PDF export styling */
 #pdf-content table {
   width: 100%;
   border-collapse: collapse;
@@ -1438,30 +1250,99 @@ watch(totalFilteredCount, (newCount) => {
   page-break-inside: auto; /* Ensure the container doesn't break poorly */
 }
 
+/* Updated urgent report button to purple */
 .urgent-report-btn {
-  background-color: #FF5252; /* error color for urgency */
+  background-color: #9C27B0; /* Changed to purple color */
   color: white;
   border: none;
-  border-radius: 8px; /* matching the rounded corners of other buttons */
-  padding: 8px 16px; /* same padding as other buttons */
-  font-size: 14px; /* match font size */
-  font-weight: 500; /* adding medium font weight for consistency */
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-right: 8px; /* consistent spacing between buttons */
-  margin-left: 8px; /* consistent spacing between buttons */
-  height: 40px; /* ensuring consistent height */
-  box-shadow: 0 2px 5px rgba(255, 82, 82, 0.2); /* subtle shadow like other buttons */
+  height: 40px;
+  box-shadow: 0 2px 5px rgba(156, 39, 176, 0.3); /* Adjusted shadow for purple */
   transition: background-color 0.2s;
 }
 
 .urgent-report-btn:hover {
-  background-color: #FF1744; /* darker shade on hover */
+  background-color: #7B1FA2; /* Darker purple on hover */
 }
 
-.urgent-report-btn i {
-  font-size: 16px; /* slightly smaller icon size for better alignment */
+/* Add new style for highlighting urgent reports in the table */
+.data-table tbody tr.urgent-row {
+  background-color: rgba(156, 39, 176, 0.05); /* Light purple background */
+  border-left: 4px solid #9C27B0; /* Purple left border */
+}
+
+.data-table tbody tr.urgent-row:hover {
+  background-color: rgba(156, 39, 176, 0.1); /* Slightly darker on hover */
+}
+
+/* Responsive styling */
+@media (max-width: 768px) {
+  .statistics-cards {
+    flex-direction: column;
+  }
+  
+  .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .search-container {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 10px;
+  }
+  
+  .action-buttons {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .filter-group {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .filter-select, 
+  .filter-date {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    margin-bottom: 10px;
+  }
+  
+  .filter-select select, 
+  .filter-date .date-inputs {
+    width: 100%;
+  }
+  
+  .date-inputs {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  
+  .btn-reset-filter {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .pagination-container {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  
+  .pagination-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 </style>
