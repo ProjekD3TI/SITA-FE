@@ -83,6 +83,7 @@
                                 required
                             />
                             <div v-if="errors.tanggal_kejadian" class="invalid-feedback">{{ errors.tanggal_kejadian[0] }}</div>
+                            <small class="text-muted">Terisi otomatis dengan waktu Indonesia saat ini (WIB)</small>
                         </div>
                         <!-- Add this input field in your template, in a suitable location -->
                         <div class="form-group">
@@ -174,7 +175,7 @@ export default {
                 nama_pelapor: '',
                 ni_pelapor: '',
                 nomor_telepon: '',
-                lampiran_link: '-',
+                lampiran_link: '',
                 profesi: 'Dosen', // Default value
                 jenis_kelamin: 'laki-laki', // Default value
                 umur_pelapor: '20-40', // Default value
@@ -221,15 +222,69 @@ export default {
     mounted() {
         this.fetchCategories();
         this.loadUserData();
+        this.setIndonesianDateTime(); // Set current Indonesian date and time when component mounts
+        
+        // Update the time every minute to keep it current
+        this.timeUpdateInterval = setInterval(() => {
+            this.setIndonesianDateTime();
+        }, 60000); // 60000 ms = 1 minute
+    },
+    beforeDestroy() {
+        // Clear the interval when component is destroyed
+        if (this.timeUpdateInterval) {
+            clearInterval(this.timeUpdateInterval);
+        }
     },
     methods: {
+        // Method for setting current Indonesian date and time (UTC+7)
+        setIndonesianDateTime() {
+            // Create a date object with the current time
+            const now = new Date();
+            
+            // Add 7 hours to get Indonesian time (UTC+7)
+            const indonesianTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+            
+            // Format date and time as required by datetime-local input (YYYY-MM-DDThh:mm)
+            const year = indonesianTime.getUTCFullYear();
+            const month = String(indonesianTime.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(indonesianTime.getUTCDate()).padStart(2, '0');
+            const hours = String(indonesianTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(indonesianTime.getUTCMinutes()).padStart(2, '0');
+            
+            // Format: YYYY-MM-DDThh:mm
+            this.formData.tanggal_kejadian = `${year}-${month}-${day}T${hours}:${minutes}`;
+            
+            console.log('Current Indonesian date and time set:', this.formData.tanggal_kejadian);
+        },
         loadUserData() {
-            const encryptedUserData = VueCookies.get("user_session");
-            if (encryptedUserData) {
-                const userData = decryptData(encryptedUserData);
-                this.formData.nama_pelapor = userData.name || '';
-                this.formData.ni_pelapor = userData.nim || userData.nik || '';
-                this.formData.nomor_telepon = userData.no_telp || '';
+            try {
+                const encryptedUserData = VueCookies.get("user_session");
+                if (encryptedUserData) {
+                    const userData = decryptData(encryptedUserData);
+                    
+                    // Set user data from the decrypted session
+                    this.formData.nama_pelapor = userData.name || '';
+                    this.formData.ni_pelapor = userData.nim || userData.nik || '';
+                    this.formData.nomor_telepon = userData.no_telp || '';
+                    
+                    // Set profession based on user role if available
+                    if (userData.profesi) {
+                        this.formData.profesi = userData.profesi;
+                    } else if (userData.email) {
+                        // Determine profession based on email domain
+                        if (userData.email.includes('@student')) {
+                            this.formData.profesi = 'Mahasiswa';
+                        } else if (userData.email.includes('@staff')) {
+                            this.formData.profesi = 'Dosen';
+                        }
+                    }
+                    
+                    console.log('User data loaded for current user');
+                } else {
+                    console.warn('No user session found in cookies');
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
             }
         },
         async fetchCategories() {
@@ -298,6 +353,14 @@ export default {
                 this.errors.image_path = ['Lampiran foto harus diisi'];
                 isValid = false;
             }
+            
+            if (!this.formData.lampiran_link) {
+                this.errors.lampiran_link = ['Lampiran link harus diisi'];
+                isValid = false;
+            } else if (!this.isValidUrl(this.formData.lampiran_link)) {
+                this.errors.lampiran_link = ['Masukkan URL yang valid, contoh: https://www.example.com'];
+                isValid = false;
+            }
 
             if (!this.formData.agreement) {
                 this.errors.agreement = ['Anda harus menyetujui pernyataan untuk melanjutkan'];
@@ -306,102 +369,121 @@ export default {
 
             return isValid;
         },
-        submitForm() {
-        // Set loading state
-        this.loading = true;
-        this.errors = {};
-
-        // Auto-fill essential fields with dummy data if not provided
-        const formData = new FormData();
-
-        // 1. Required fields from error message
-        formData.append('judul', this.formData.judul || 'Laporan Kejadian Mendesak');
-        formData.append('category_id', this.formData.category_id || '1'); // Use default category ID
-        formData.append('deskripsi', this.formData.deskripsi || 'Laporan kejadian mendesak yang perlu segera ditangani');
-        formData.append('tanggal_kejadian', this.formData.tanggal_kejadian || new Date().toISOString().split('.')[0].replace('T', ' '));
-        formData.append('profesi', this.formData.profesi || 'Mahasiswa'); // Default profession
-        formData.append('jenis_kelamin', this.formData.jenis_kelamin || 'laki-laki'); // Default gender
-        formData.append('umur_pelapor', this.formData.umur_pelapor || '20-40'); // Default age range
-        
-        // Replace your current lampiran_link line with this
-        if (this.formData.lampiran_link) {
-            formData.append('lampiran_link', this.formData.lampiran_link);
-        } else {
-            // Show validation error if not provided
-            this.errors.lampiran_link = ['Lampiran link harus diisi dengan URL yang valid'];
-            this.loading = false;
-            return; // Stop submission if validation fails
-        }
-        
-        // 3. For image upload, if available
-        if (this.formData.image_path && this.formData.image_path.length > 0) {
-            this.formData.image_path.forEach((file, index) => {
-            formData.append('image_path[]', file);
-            });
-        }
-        
-        // 4. Handle terlapor with valid data
-        const terlapor = {
-            nama_lengkap: 'Nama Terlapor',
-            email: 'terlapor@example.com', // Valid email format
-            nomor_telepon: '081234567890',
-            status_warga: 'mahasiswa',
-            unit_kerja: 'Fakultas Teknik',
-            jenis_kelamin: 'laki-laki',
-            umur_terlapor: '20-40'
-        };
-        
-        // Add terlapor data
-        formData.append('terlapor[0][nama_lengkap]', terlapor.nama_lengkap);
-        formData.append('terlapor[0][email]', terlapor.email);
-        formData.append('terlapor[0][nomor_telepon]', terlapor.nomor_telepon);
-        formData.append('terlapor[0][status_warga]', terlapor.status_warga);
-        formData.append('terlapor[0][unit_kerja]', terlapor.unit_kerja);
-        formData.append('terlapor[0][jenis_kelamin]', terlapor.jenis_kelamin);
-        formData.append('terlapor[0][umur_terlapor]', terlapor.umur_terlapor);
-
-        // 5. Handle saksi with valid data
-        const saksi = {
-            nama_lengkap: 'Nama Saksi',
-            email: 'saksi@example.com', // Valid email format
-            nomor_telepon: '089876543210'
-        };
-        
-        // Add saksi data
-        formData.append('saksi[0][nama_lengkap]', saksi.nama_lengkap);
-        formData.append('saksi[0][email]', saksi.email);
-        formData.append('saksi[0][nomor_telepon]', saksi.nomor_telepon);
-        
-        // 6. Add bukti_pelanggaran from AddPK.vue
-        formData.append('bukti_pelanggaran[0]', 'foto_dokumentasi');
-        
-        // 7. Add agreement
-        formData.append('agreement', '1');
-
-        // Log what we're sending
-        console.log("Submitting form with auto-filled data");
-
-        // Use XMLHttpRequest for upload
-        this.uploadWithXHR(formData)
-            .then(response => {
-            this.loading = false;
-            console.log("Submission successful:", response);
-            this.$router.push('/pelaporan/kejadian');
-            })
-            .catch(error => {
-            this.loading = false;
-            console.error("Submission error:", error);
-            
-            // Parse and display errors if available
-            if (error.response) {
-                try {
-                const errorData = JSON.parse(error.response);
-                this.errors = errorData;
-                } catch (e) {
-                console.error("Error parsing server response:", e);
-                }
+        isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
             }
-            });
+        },
+        submitForm() {
+            // Validate form first
+            if (!this.validateForm()) {
+                return;
+            }
+            
+            // Set loading state
+            this.loading = true;
+            this.errors = {};
+
+            // Auto-fill essential fields with dummy data if not provided
+            const formData = new FormData();
+
+            // 1. Required fields from error message
+            formData.append('judul', this.formData.judul || 'Laporan Kejadian Mendesak');
+            formData.append('category_id', this.formData.category_id || '1'); // Use default category ID
+            formData.append('deskripsi', this.formData.deskripsi || 'Laporan kejadian mendesak yang perlu segera ditangani');
+            formData.append('tanggal_kejadian', this.formData.tanggal_kejadian || new Date().toISOString().split('.')[0].replace('T', ' '));
+            formData.append('profesi', this.formData.profesi || 'Dosen'); // Default profession
+            formData.append('jenis_kelamin', this.formData.jenis_kelamin || 'laki-laki'); // Default gender
+            formData.append('umur_pelapor', this.formData.umur_pelapor || '20-40'); // Default age range
+            
+            // For lampiran_link
+            formData.append('lampiran_link', this.formData.lampiran_link);
+            
+            // 3. For image upload, if available
+            if (this.formData.image_path && this.formData.image_path.length > 0) {
+                this.formData.image_path.forEach((file, index) => {
+                    formData.append('image_path[]', file);
+                });
+            }
+            
+            // 4. Handle terlapor with valid data
+            const terlapor = {
+                nama_lengkap: 'Nama Terlapor',
+                email: 'terlapor@example.com', // Valid email format
+                nomor_telepon: '081234567890',
+                status_warga: 'mahasiswa',
+                unit_kerja: 'Fakultas Teknik',
+                jenis_kelamin: 'laki-laki',
+                umur_terlapor: '20-40'
+            };
+            
+            // Add terlapor data
+            formData.append('terlapor[0][nama_lengkap]', terlapor.nama_lengkap);
+            formData.append('terlapor[0][email]', terlapor.email);
+            formData.append('terlapor[0][nomor_telepon]', terlapor.nomor_telepon);
+            formData.append('terlapor[0][status_warga]', terlapor.status_warga);
+            formData.append('terlapor[0][unit_kerja]', terlapor.unit_kerja);
+            formData.append('terlapor[0][jenis_kelamin]', terlapor.jenis_kelamin);
+            formData.append('terlapor[0][umur_terlapor]', terlapor.umur_terlapor);
+
+            // 5. Handle saksi with valid data
+            const saksi = {
+                nama_lengkap: 'Nama Saksi',
+                email: 'saksi@example.com', // Valid email format
+                nomor_telepon: '089876543210'
+            };
+            
+            // Add saksi data
+            formData.append('saksi[0][nama_lengkap]', saksi.nama_lengkap);
+            formData.append('saksi[0][email]', saksi.email);
+            formData.append('saksi[0][nomor_telepon]', saksi.nomor_telepon);
+            
+            // 6. Add bukti_pelanggaran from AddPK.vue
+            formData.append('bukti_pelanggaran[0]', 'foto_dokumentasi');
+            
+            // 7. Add agreement
+            formData.append('agreement', '1');
+
+            // Log what we're sending
+            console.log("Submitting form");
+
+            // Use XMLHttpRequest for upload
+            this.uploadWithXHR(formData)
+                .then(response => {
+                    this.loading = false;
+                    console.log("Submission successful:", response);
+                    Swal.fire({
+                        title: 'Berhasil!',
+                        text: 'Laporan kejadian mendesak berhasil dikirim',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        this.$router.push('/pelaporan/kejadian');
+                    });
+                })
+                .catch(error => {
+                    this.loading = false;
+                    console.error("Submission error:", error);
+                    
+                    // Parse and display errors if available
+                    if (error.response) {
+                        try {
+                            const errorData = JSON.parse(error.response);
+                            this.errors = errorData;
+                        } catch (e) {
+                            console.error("Error parsing server response:", e);
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'Terjadi kesalahan saat mengirim laporan',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    }
+                });
         },
         
         uploadWithXHR(formData) {

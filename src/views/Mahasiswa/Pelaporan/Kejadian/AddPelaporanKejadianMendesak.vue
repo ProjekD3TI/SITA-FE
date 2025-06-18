@@ -87,6 +87,7 @@
                                         required
                                     />
                                     <div v-if="errors.tanggal_kejadian" class="invalid-feedback">{{ errors.tanggal_kejadian[0] }}</div>
+                                    <small class="text-muted">Tanggal dan waktu diisi otomatis dengan waktu Indonesia saat ini</small>
                                 </div>
                                 
                                 <div class="form-group">
@@ -180,6 +181,7 @@ export default {
     },
     data() {
         return {
+            userData: {}, // Define userData object to pass to Header component
             formData: {
                 judul: '',
                 category_id: null,
@@ -235,20 +237,42 @@ export default {
     mounted() {
         this.fetchCategories();
         this.loadUserData();
+        this.setIndonesianDateTime(); // Set current Indonesian date and time when component mounts
     },
     methods: {
+        // Method for setting current Indonesian date and time (UTC+7)
+        setIndonesianDateTime() {
+            // Create a date object with the current UTC time
+            const now = new Date();
+            
+            // Add 7 hours to get Indonesian time (UTC+7)
+            const indonesianTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+            
+            // Format date and time as required by datetime-local input (YYYY-MM-DDThh:mm)
+            const year = indonesianTime.getUTCFullYear();
+            const month = String(indonesianTime.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(indonesianTime.getUTCDate()).padStart(2, '0');
+            const hours = String(indonesianTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(indonesianTime.getUTCMinutes()).padStart(2, '0');
+            
+            // Format: YYYY-MM-DDThh:mm
+            this.formData.tanggal_kejadian = `${year}-${month}-${day}T${hours}:${minutes}`;
+            
+            console.log('Current Indonesian date and time set:', this.formData.tanggal_kejadian);
+        },
         loadUserData() {
             try {
                 const encryptedUserData = VueCookies.get("user_session");
                 if (encryptedUserData) {
                     const userData = decryptData(encryptedUserData);
-                    this.form.nama_pelapor = userData.name || '';
-                    this.form.nim_pelapor = userData.nim || userData.nik || '';
-                    this.form.nomor_telepon = userData.no_telp || '';
+                    this.userData = userData; // Set userData for Header component
+                    this.formData.nama_pelapor = userData.name || '';
+                    this.formData.ni_pelapor = userData.nim || userData.nik || '';
+                    this.formData.nomor_telepon = userData.no_telp || '';
                 
                     // Auto-select profession based on email domain
                     if (userData.email && userData.email.includes('@student')) {
-                        this.form.profesi = 'Mahasiswa';
+                        this.formData.profesi = 'Mahasiswa';
                         console.log('Auto-selected profession: Mahasiswa based on student email');
                     }
                 }
