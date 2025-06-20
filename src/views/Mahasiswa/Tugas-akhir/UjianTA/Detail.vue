@@ -6,7 +6,7 @@ import Button from "@/components/Tugas-akhir/Button.vue";
 import Tooltip from "@/components/Tugas-akhir/Tooltip.vue";
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
-import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
+import QuillTextReader from "@/components/Tugas-akhir/Forms/QuillTextReader.vue";
 import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
 import StatusLabel from "@/components/Tugas-akhir/Label.vue";
@@ -35,6 +35,7 @@ import {
   statusKelulusan,
 } from "@/services/TugasAkhir/Mhs/ujianTA.js";
 import { getUserData } from "@/services/authMahasiswa";
+import QuillTextEditor from "@/components/Tugas-akhir/Forms/QuillTextEditor.vue";
 
 const userData = getUserData();
 const username = userData?.name || userData?.email?.split("@")[0] || "User";
@@ -349,12 +350,12 @@ watchEffect(() => {
           class="flex flex-col gap-2"
         >
           <template v-for="(item, idx) in catatanRevisi" :key="idx">
-            <InputTextarea
+            <QuillTextReader
+              class="mb-2"
               v-if="item.revisi"
               :id="`catatan_revisi_${idx + 1}`"
               :label="`${item.nama}`"
-              :modelValue="item.revisi"
-              disabled
+              :content="item.revisi"
             />
           </template>
         </div>

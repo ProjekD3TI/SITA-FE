@@ -1,5 +1,6 @@
 <template>
-  <div class="relative w-full">
+  <!-- 1. Tambahkan class binding untuk state disabled -->
+  <div class="relative w-full" :class="{ 'is-disabled': disabled }">
     <!-- Label ini yang menjadi sumber masalah, tapi kita akan akali -->
     <label
       :for="id"
@@ -25,6 +26,7 @@ const props = defineProps({
   label: { type: String, required: true },
   required: { type: Boolean, default: false },
   modelValue: { type: String, default: "" },
+  disabled: { type: Boolean, default: false }, // 2. Tambahkan prop 'disabled'
 });
 
 const emit = defineEmits(["update:modelValue"]);
@@ -47,6 +49,9 @@ onMounted(() => {
       },
     });
 
+    // 3. Atur state awal disabled saat komponen dimuat
+    quillInstance.enable(!props.disabled);
+
     if (props.modelValue) {
       quillInstance.root.innerHTML = props.modelValue;
     }
@@ -67,6 +72,16 @@ watch(
     }
   }
 );
+
+// 4. Tambahkan watcher untuk prop 'disabled'
+watch(
+  () => props.disabled,
+  (isDisabled) => {
+    if (quillInstance) {
+      quillInstance.enable(!isDisabled);
+    }
+  }
+);
 </script>
 
 <style scoped>
@@ -75,6 +90,7 @@ watch(
   border: 1px solid #9a9a9a;
   border-radius: 0.75rem;
   overflow: hidden; /* Penting agar sudutnya rapi */
+  transition: background-color 0.2s; /* Tambahkan transisi untuk disabled state */
 }
 
 /* 
@@ -130,5 +146,23 @@ watch(
     font-size: 12px;
     /* padding: 16px 16px; */
   }
+}
+
+/* 5. Tambahkan style untuk state disabled */
+.is-disabled .quill-wrapper {
+  background-color: #f3f4f6; /* Tailwind's gray-100 */
+  cursor: not-allowed;
+}
+
+.is-disabled :deep(.ql-toolbar.ql-snow) {
+  background-color: #f3f4f6;
+}
+
+.is-disabled :deep(.ql-editor) {
+  background-color: #f3f4f6;
+}
+
+.is-disabled label {
+  color: #6b7280; /* Tailwind's gray-500 */
 }
 </style>

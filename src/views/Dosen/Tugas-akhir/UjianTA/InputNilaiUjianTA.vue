@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
+import QuillTextEditor from "@/components/Tugas-akhir/Forms/QuillTextEditor.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Loading from "@/components/Loading.vue";
@@ -203,18 +204,19 @@ const loadData = async () => {
 
     // If editing, pre-populate form with existing data
     if (isEdit.value && detailUjian.value) {
-      // Find current user's data from API response
+      // BUG FIX: Find the currently logged-in user's data, not the first one found.
       const currentDosenPenguji = detailUjian.value.dosen_penguji.find(
-        (penguji) => penguji.nilai_ujian_ta !== null
+        (penguji) => penguji.is_current_user === true
       );
 
-      if (currentDosenPenguji) {
+      // Check if the current user has existing grades
+      if (currentDosenPenguji && currentDosenPenguji.nilai_ujian_ta) {
         const nilai = currentDosenPenguji.nilai_ujian_ta;
-        tataLaporan.value = nilai?.kualitas_tata_laporan || "";
-        kemampuanTeknis.value = nilai?.kemampuan_teknis || "";
-        hasilProduk.value = nilai?.kualitas_produk || "";
-        presentasi.value = nilai?.presentasi || "";
-        catatanRevisi.value = currentDosenPenguji.revisi || "";
+        tataLaporan.value = nilai?.kualitas_tata_laporan ?? "";
+        kemampuanTeknis.value = nilai?.kemampuan_teknis ?? "";
+        hasilProduk.value = nilai?.kualitas_produk ?? "";
+        presentasi.value = nilai?.presentasi ?? "";
+        catatanRevisi.value = nilai?.revisi ?? "";
       }
     }
   }
@@ -564,14 +566,13 @@ onMounted(() => {
               >*</span
             >
           </p>
-          <InputTextarea
+          <QuillTextEditor
             id="catatanRevisi"
             label="Catatan Revisi"
-            placeholder="Masukkan catatan revisi"
             v-model="catatanRevisi"
             :disabled="isCatatanRevisiDisabled"
-            :class="{ 'border-red': formSubmitted && errors.catatanRevisi }"
-          ></InputTextarea>
+          />
+
           <p
             v-if="formSubmitted && errors.catatanRevisi"
             class="mt-1 text-red-500 error-text"

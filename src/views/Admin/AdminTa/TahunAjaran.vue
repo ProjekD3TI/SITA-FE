@@ -313,7 +313,7 @@ watch(currentPage, (val) => {
     <!-- Modal Set Aktif Tahun Ajaran dan Semester -->
     <DefaultModal
       v-if="showModalSetAktif"
-      :headText="'Set Tahun Ajaran dan Semester Aktif'"
+      :headText="'Tahun Ajaran & Semester Aktif'"
       bodyText=""
       @close="showModalSetAktif = false"
     >
@@ -325,11 +325,15 @@ watch(currentPage, (val) => {
             placeholder="Pilih Tahun Ajaran"
             v-model="selectedTahunAjaranAktif"
             :options="formattedTahunAjaranOptions"
+            :searchable="false"
+            maxHeight="100px"
             required
           />
         </div>
-        <div>
-          <label class="block mb-1 font-semibold">Semester</label>
+        <div class="">
+          <label class="block mb-1 body5-bold sm:body4-bold text-blackText"
+            >Semester <span class="text-secondary">*</span></label
+          >
           <div class="flex gap-4">
             <!-- Radio button standard -->
             <div
@@ -344,7 +348,10 @@ watch(currentPage, (val) => {
                 v-model="selectedSemesterAktif"
                 class="mr-2"
               />
-              <label :for="`semester-${semester.id}`">
+              <label
+                class="body5-bold sm:body4-bold text-blackText"
+                :for="`semester-${semester.id}`"
+              >
                 {{ semester.nama_semester === "A" ? "Ganjil" : "Genap" }}
               </label>
             </div>

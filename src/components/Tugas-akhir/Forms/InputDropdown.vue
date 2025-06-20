@@ -46,10 +46,10 @@
         v-if="isDropdownOpen"
         ref="dropdownPanel"
         class="absolute z-50 w-full mt-1 bg-white border border-gray-100 shadow-lg card-rounded"
-        style="max-height: 300px"
+        :style="{ maxHeight: maxHeight }"
       >
-        <!-- Search input di dalam dropdown -->
-        <div class="sticky top-0 z-10 p-2 bg-white border-b">
+        <!-- Search input di dalam dropdown (sekarang kondisional) -->
+        <div v-if="searchable" class="sticky top-0 z-10 p-2 bg-white border-b">
           <div class="flex items-center p-2 border border-gray-300 rounded-lg">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -78,7 +78,7 @@
         </div>
 
         <!-- Daftar opsi hasil pencarian -->
-        <div class="overflow-y-auto" style="max-height: 200px">
+        <div class="overflow-y-auto" :style="{ maxHeight: listMaxHeight }">
           <div
             v-for="option in filteredOptions"
             :key="option.value"
@@ -138,6 +138,8 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
   showDefaultOption: { type: Boolean, default: true }, // ✅ TAMBAHAN: Show default option
   defaultOptionText: { type: String, default: "-- Pilih --" }, // ✅ TAMBAHAN: Customizable default text
+  searchable: { type: Boolean, default: true }, // Tambahkan prop ini
+  maxHeight: { type: String, default: "300px" }, // Tambahkan prop ini
 });
 
 const selectedValue = ref(props.modelValue ?? null);
@@ -145,6 +147,17 @@ const searchQuery = ref("");
 const isDropdownOpen = ref(false);
 const searchInput = ref(null);
 const dropdownPanel = ref(null);
+
+// Hitung max-height untuk list secara dinamis
+const listMaxHeight = computed(() => {
+  const outerHeight = parseInt(props.maxHeight);
+  if (isNaN(outerHeight)) {
+    return "250px"; // Fallback
+  }
+  // Perkirakan tinggi search bar ~50px
+  const searchBarHeight = props.searchable ? 100 : 0;
+  return `${outerHeight - searchBarHeight}px`;
+});
 
 // Filtered options based on search query
 const filteredOptions = computed(() => {
@@ -231,7 +244,8 @@ const toggleDropdown = () => {
   if (isDropdownOpen.value) {
     searchQuery.value = "";
     nextTick(() => {
-      if (searchInput.value) {
+      // Fokus hanya jika search input ada
+      if (props.searchable && searchInput.value) {
         searchInput.value.focus();
       }
     });
