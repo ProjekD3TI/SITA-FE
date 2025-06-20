@@ -6,7 +6,7 @@ import VueCookies from "vue-cookies";
 import { encryptData, decryptData } from "./encrypt";
 
 // Set the base URL for all axios requests
-axios.defaults.baseURL = 'https://v3422040.mhs.d3tiuns.com';
+axios.defaults.baseURL = 'http://pelaporan-d3ti.my.id';
 axios.defaults.withCredentials = true;
 
 export function authMahasiswa() {
@@ -32,7 +32,7 @@ export function authMahasiswa() {
         }
         
         // Ensure every request uses the correct baseURL
-        config.baseURL = 'https://v3422040.mhs.d3tiuns.com';
+        config.baseURL = 'http://pelaporan-d3ti.my.id';
         
         // Add common headers
         config.headers["Accept"] = "application/json";

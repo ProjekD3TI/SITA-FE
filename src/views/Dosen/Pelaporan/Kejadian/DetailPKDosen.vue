@@ -385,7 +385,7 @@ export default {
             if (!this.checkAuth()) return;
             
             try {
-                const response = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category', {
+                const response = await axios.get('http://pelaporan-d3ti.my.id/api/category', {
                     headers: { Authorization: `Bearer ${this.token}` }
                 });
                 
@@ -408,7 +408,7 @@ export default {
             this.error = null;
             
             try {
-                const response = await axios.get(`https://v3422040.mhs.d3tiuns.com/api/laporan/${this.laporanId}`, {
+                const response = await axios.get(`http://pelaporan-d3ti.my.id/api/laporan/${this.laporanId}`, {
                     headers: { Authorization: `Bearer ${this.token}` }
                 });
                 
@@ -783,7 +783,7 @@ export default {
                 }
 
                 const response = await axios.post(
-                    `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${this.laporanId}`, 
+                    `http://pelaporan-d3ti.my.id/api/laporan/update_status/${this.laporanId}`, 
                     formData,
                     {
                         headers: { 
@@ -886,7 +886,7 @@ export default {
                 }
 
                 const response = await axios.post(
-                    `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${this.laporanId}`, 
+                    `http://pelaporan-d3ti.my.id/api/laporan/update_status/${this.laporanId}`, 
                     formData,
                     {
                         headers: { 

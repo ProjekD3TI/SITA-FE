@@ -764,7 +764,7 @@ export default {
 
     fetchCategories() {
       this.loading = true;
-      axios.get('https://v3422040.mhs.d3tiuns.com/api/category')
+      axios.get('http://pelaporan-d3ti.my.id/api/category')
         .then(response => {
           if (response.data && response.data.data) {
             this.categories = response.data.data;
@@ -1178,7 +1178,7 @@ export default {
       
       // Use XMLHttpRequest directly like in AddPelaporanKejadian.vue
       const xhr = new XMLHttpRequest();
-      xhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan/add_laporan');
+      xhr.open('POST', 'http://pelaporan-d3ti.my.id/api/laporan/add_laporan');
       xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
       
       xhr.onload = () => {
@@ -1367,7 +1367,7 @@ export default {
   },
   created() {
     // Set the base URL for all axios requests
-    axios.defaults.baseURL = 'https://v3422040.mhs.d3tiuns.com';
+    axios.defaults.baseURL = 'http://pelaporan-d3ti.my.id';
     
     // Get the auth token
     this.token = this.getAuthTokenFromCookie();

@@ -195,7 +195,7 @@ export default {
       
       // Use XMLHttpRequest instead of axios
       const xhr = new XMLHttpRequest();
-      xhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/category/add_category');
+      xhr.open('POST', 'http://pelaporan-d3ti.my.id/category/add_category');
       
       // Set request headers
       xhr.setRequestHeader('Authorization', `Bearer ${token}`);
@@ -276,7 +276,7 @@ export default {
       };
       
       // Send the request
-      console.log('Sending request to:', 'https://v3422040.mhs.d3tiuns.com/api/category/add_category');
+      console.log('Sending request to:', 'http://pelaporan-d3ti.my.id/category/add_category');
       console.log('With token:', token ? `${token.substring(0, 10)}...${token.substring(token.length - 10)}` : 'No token');
       xhr.send(formData);
     }

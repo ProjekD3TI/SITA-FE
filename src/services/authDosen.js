@@ -6,7 +6,7 @@ import VueCookies from "vue-cookies";
 import { encryptData, decryptData } from "./encrypt";
 
 // Set the base URL for all axios requests
-axios.defaults.baseURL = 'https://v3422040.mhs.d3tiuns.com';
+axios.defaults.baseURL = 'http://pelaporan-d3ti.my.id';
 axios.defaults.withCredentials = true;
 
 export function authDosen() {
@@ -32,10 +32,13 @@ export function authDosen() {
         const authToken = VueCookies.get("auth_token");
         if (authToken) {
           config.headers["Authorization"] = `Bearer ${authToken}`;
+          console.log("[Interceptor] Added auth token to request");
+        } else {
+          console.log("[Interceptor] No auth token found for request");
         }
         
         // Ensure every request uses the correct baseURL
-        config.baseURL = 'https://v3422040.mhs.d3tiuns.com';
+        config.baseURL = 'http://pelaporan-d3ti.my.id';
         
         // Add common headers
         config.headers["Accept"] = "application/json";
@@ -44,6 +47,7 @@ export function authDosen() {
         return config;
       },
       (error) => {
+        console.error("[Interceptor] Request error:", error);
         return Promise.reject(error);
       }
     );
@@ -53,7 +57,9 @@ export function authDosen() {
         return response;
       },
       (error) => {
+        console.error("[Interceptor] Response error:", error.response?.status, error.message);
         if (error.response?.status === 401) {
+          console.log("[Interceptor] 401 Unauthorized - clearing auth tokens");
           VueCookies.remove("auth_token");
           VueCookies.remove("user_session");
 
@@ -66,12 +72,14 @@ export function authDosen() {
         return Promise.reject(error);
       }
     );
+    
+    console.log("[Auth] Interceptors setup complete");
   };
 
   const loginDosen = async (email, password) => {
     try {
       isLoading.value = true;
-      console.log("Attempting login with API:", axios.defaults.baseURL);
+      console.log("[Auth] Attempting login with API:", axios.defaults.baseURL);
       
       const response = await axios.post(
         "/api/login/dosen",
@@ -87,13 +95,16 @@ export function authDosen() {
         }
       );
 
-      console.log("Login response received:", response.status);
+      console.log("[Auth] Login response received:", response.status);
 
       if (response.data.status) {
         user.value = response.data.data.dosen;
         token.value = response.data.data.token;
         currentJabatan.value = response.data.data.jabatan_sekarang;
         availableJabatan.value = response.data.data.punya_jabatan;
+
+        console.log("[Auth] Login successful - current jabatan:", currentJabatan.value?.name);
+        console.log("[Auth] Available jabatan:", availableJabatan.value.map(j => j.name));
 
         storeAuthData({
           token: token.value,
@@ -111,17 +122,18 @@ export function authDosen() {
 
         // Set token for future requests
         axios.defaults.headers.common["Authorization"] = `Bearer ${token.value}`;
-        console.log("Auth token set in headers:", token.value ? "Yes" : "No");
+        console.log("[Auth] Auth token set in headers:", token.value ? "Yes" : "No");
 
         toast.success(response.data.message || "Login Dosen berhasil!");
 
         return redirectByJabatan(currentJabatan.value.name);
       } else {
+        console.error("[Auth] Login failed:", response.data.message);
         toast.error(response.data.message || "Login gagal");
         return false;
       }
     } catch (error) {
-      console.error("Login error details:", {
+      console.error("[Auth] Login error details:", {
         status: error.response?.status,
         message: error.response?.data?.message,
         error: error.message
@@ -146,10 +158,14 @@ export function authDosen() {
     }
   };
 
+  // FIXED VERSION
   const switchJabatan = async (jabatanId) => {
     try {
       isLoading.value = true;
-
+      
+      console.log("[switchJabatan] Starting jabatan switch to ID:", jabatanId);
+      console.log("[switchJabatan] Current jabatan before switch:", currentJabatan.value?.name);
+  
       const response = await axios.post(
         "/api/dosen/switch_jabatan",
         { jabatan_id: jabatanId },
@@ -157,53 +173,78 @@ export function authDosen() {
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
-            Authorization: `Bearer ${
-              token.value || VueCookies.get("auth_token")
-            }`,
+            Authorization: `Bearer ${token.value || VueCookies.get("auth_token")}`,
           },
         }
       );
-
+  
+      console.log("[switchJabatan] API Response:", response.data);
+  
       if (response.data.status) {
         const newJabatan = response.data.data.jabatan_sekarang;
         const existingUserData = getUserData();
-
-        if (existingUserData.jabatanId === newJabatan.id) {
+        
+        console.log("[switchJabatan] New jabatan from API:", newJabatan);
+        console.log("[switchJabatan] Existing user data:", existingUserData);
+  
+        if (existingUserData?.jabatanId === newJabatan.id) {
+          console.log("[switchJabatan] Already in this role - no change needed");
           toast.info("Anda sudah berada di jabatan ini");
           return false;
         }
-
+        
+        // CRITICAL FIX: Create completely new user data object to avoid stale references
         const userData = {
           ...existingUserData,
           type: "dosen",
           jabatan: newJabatan.name,
           jabatanId: newJabatan.id,
           timestamp: new Date().getTime(),
-          availableJabatan: response.data.data.punya_jabatan,
         };
-
+        
+        console.log("[switchJabatan] Updating user data to:", userData);
+  
+        // CRITICAL FIX: Clear cookies before setting new ones
+        VueCookies.remove("user_session");
+        
         storeAuthData({
           token: token.value || VueCookies.get("auth_token"),
           userData: userData,
         });
-
-        currentJabatan.value = newJabatan;
-        availableJabatan.value = response.data.data.punya_jabatan;
-
-        const targetRoute = `/${newJabatan.name.toLowerCase()}/dashboard`;
-
-        setTimeout(() => {
-          window.location = targetRoute;
-          window.location.reload(true);
-        }, 100);
+        
+        console.log("[switchJabatan] User data stored in cookies - verifying...");
+        const verifyData = getUserData();
+        console.log("[switchJabatan] Verification of stored data:", verifyData);
+  
+        // CRITICAL FIX: Create new object for reactive state to avoid reference issues
+        currentJabatan.value = { ...newJabatan };
+        console.log("[switchJabatan] Updated currentJabatan.value to:", currentJabatan.value);
+        
+        // CRITICAL FIX: Properly mark active jabatan
+        if (response.data.data.punya_jabatan) {
+          console.log("[switchJabatan] Updating available jabatan");
+          
+          availableJabatan.value = response.data.data.punya_jabatan.map(j => ({
+            ...j,
+            is_active: j.id === newJabatan.id
+          }));
+          
+          console.log("[switchJabatan] Updated availableJabatan:", 
+            availableJabatan.value.map(j => `${j.name}(${j.is_active ? "active" : "inactive"})`));
+        }
+  
         toast.success(response.data.message || "Berhasil mengganti jabatan");
-
+        console.log("[switchJabatan] Switch completed successfully ✅");
+        
+        // Return true to signal success
         return true;
       }
-
+  
+      console.log("[switchJabatan] Failed - API returned status false");
       return false;
     } catch (error) {
-      console.error("Switch jabatan error:", error.message);
+      console.error("[switchJabatan] Error:", error);
+      toast.error("Gagal mengganti jabatan: " + (error.response?.data?.message || error.message));
       return false;
     } finally {
       isLoading.value = false;
@@ -211,6 +252,12 @@ export function authDosen() {
   };
 
   const storeAuthData = ({ token: authToken, userData }) => {
+    console.log("[storeAuthData] Storing auth data");
+    
+    // CRITICAL FIX: Clear cookies first to ensure clean state
+    VueCookies.remove("auth_token");
+    VueCookies.remove("user_session");
+    
     // Store token with better options
     VueCookies.set("auth_token", authToken, {
       expires: "4h",
@@ -229,6 +276,8 @@ export function authDosen() {
       secure: window.location.protocol === "https:",
       sameSite: "Lax"
     });
+    
+    console.log("[storeAuthData] Auth data stored with jabatan:", userData.jabatan);
   };
 
   const jabatanRoute = (jabatanName) => {
@@ -248,10 +297,11 @@ export function authDosen() {
 
   const redirectByJabatan = (jabatanName) => {
     const route = jabatanRoute(jabatanName);
+    console.log(`[redirectByJabatan] Redirecting to ${route} for role ${jabatanName}`);
 
     router.push(route).catch((err) => {
       if (err.name !== "NavigationDuplicated") {
-        console.error("Navigation error:", err.message);
+        console.error("[redirectByJabatan] Navigation error:", err.message);
         window.location.href = route;
       }
     });
@@ -262,9 +312,11 @@ export function authDosen() {
   const getUserJabatan = async () => {
     try {
       isLoading.value = true;
+      console.log("[getUserJabatan] Fetching user jabatan data...");
 
       const authToken = token.value || VueCookies.get("auth_token");
       if (!authToken) {
+        console.error("[getUserJabatan] No auth token available");
         throw new Error("No auth token available");
       }
 
@@ -281,16 +333,25 @@ export function authDosen() {
         }),
       ]);
 
+      console.log("[getUserJabatan] Responses received");
+
       if (currentResponse.data.status) {
         const serverJabatan = currentResponse.data.data.jabatan_sekarang;
-        currentJabatan.value = serverJabatan;
+        console.log("[getUserJabatan] Server current jabatan:", serverJabatan);
+        
+        // CRITICAL FIX: Create new object to break references
+        currentJabatan.value = { ...serverJabatan };
 
         const existingData = getUserData();
+        console.log("[getUserJabatan] Existing user data:", existingData);
+        
         if (
           existingData?.type === "dosen" &&
           (existingData.jabatan !== serverJabatan.name ||
             existingData.jabatanId !== serverJabatan.id)
         ) {
+          console.log("[getUserJabatan] Jabatan mismatch detected - updating cookie data");
+          
           const userData = {
             ...existingData,
             jabatan: serverJabatan.name,
@@ -301,20 +362,32 @@ export function authDosen() {
             token: authToken,
             userData: userData,
           });
+          
+          console.log("[getUserJabatan] Cookie data updated to match server data");
         }
       }
 
       if (availableResponse.data.status) {
         user.value = availableResponse.data.data.dosen;
-        availableJabatan.value = availableResponse.data.data.punya_jabatan;
+        
+        // CRITICAL FIX: Mark active jabatan
+        const currentId = currentJabatan.value?.id;
+        availableJabatan.value = availableResponse.data.data.punya_jabatan.map(j => ({
+          ...j,
+          is_active: j.id === currentId
+        }));
+        
+        console.log("[getUserJabatan] Available jabatan:", 
+          availableJabatan.value.map(j => `${j.name}(${j.is_active ? "active" : "inactive"})`));
       }
 
+      console.log("[getUserJabatan] Fetch complete");
       return {
         currentJabatan: currentJabatan.value,
         availableJabatan: availableJabatan.value,
       };
     } catch (error) {
-      console.error("Get user jabatan error:", error.message);
+      console.error("[getUserJabatan] Error:", error);
       if (error.response?.status === 401) {
         logout();
       }
@@ -326,6 +399,7 @@ export function authDosen() {
 
   const logout = async () => {
     try {
+      console.log("[logout] Starting logout process");
       // Get current token
       const currentToken = VueCookies.get("auth_token");
       
@@ -335,9 +409,10 @@ export function authDosen() {
             Authorization: `Bearer ${currentToken}`,
           },
         });
+        console.log("[logout] Logout API call successful");
       }
     } catch (error) {
-      console.error("Logout error:", error.message);
+      console.error("[logout] Error:", error);
     } finally {
       user.value = null;
       token.value = null;
@@ -347,49 +422,56 @@ export function authDosen() {
       // Clear cookies
       VueCookies.remove("auth_token");
       VueCookies.remove("user_session");
+      console.log("[logout] Cookies and state cleared");
 
       // Clear authorization header
       delete axios.defaults.headers.common["Authorization"];
 
       router.push({ name: "logindosen" });
+      console.log("[logout] Redirected to login page");
     }
   };
 
   const checkAuth = () => {
+    console.log("[checkAuth] Checking authentication status");
     const storedToken = VueCookies.get("auth_token");
     const userData = getUserData();
 
-    console.log("Auth check - Token exists:", !!storedToken);
-    console.log("Auth check - User data exists:", !!userData);
+    console.log("[checkAuth] Token exists:", !!storedToken);
+    console.log("[checkAuth] User data exists:", !!userData);
     
     if (userData) {
-      console.log("User type:", userData.type);
+      console.log("[checkAuth] User type:", userData.type);
+      console.log("[checkAuth] User jabatan:", userData.jabatan);
     }
 
     if (storedToken && userData && userData.type === "dosen") {
       token.value = storedToken;
       axios.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
-      console.log("Authorization header set:", !!axios.defaults.headers.common["Authorization"]);
+      console.log("[checkAuth] Authorization header set");
 
       if (userData.jabatan) {
         currentJabatan.value = {
           id: userData.jabatanId || 0,
           name: userData.jabatan,
         };
+        console.log("[checkAuth] Current jabatan set from cookie:", currentJabatan.value.name);
       }
 
       return true;
     }
     
-    console.log("Auth check failed - missing token or user data");
+    console.log("[checkAuth] Authentication check failed");
     return false;
   };
 
   const initializeFromCookies = async () => {
+    console.log("[initializeFromCookies] Initializing from cookies");
     const savedToken = VueCookies.get("auth_token");
     const userData = getUserData();
 
     if (savedToken && userData && userData.type === "dosen") {
+      console.log("[initializeFromCookies] Valid cookie data found");
       token.value = savedToken;
       axios.defaults.headers.common["Authorization"] = `Bearer ${savedToken}`;
 
@@ -398,28 +480,35 @@ export function authDosen() {
           id: userData.jabatanId || 0,
           name: userData.jabatan,
         };
+        console.log("[initializeFromCookies] Set current jabatan from cookie:", userData.jabatan);
+        
         if (userData.availableJabatan) {
           availableJabatan.value = userData.availableJabatan;
+          console.log("[initializeFromCookies] Set available jabatan from cookie");
         }
       }
 
       VueCookies.remove("jabatan_sekarang");
       VueCookies.remove("punya_jabatan");
 
+      console.log("[initializeFromCookies] Fetching latest data from server");
       await getUserJabatan();
+    } else {
+      console.log("[initializeFromCookies] No valid cookie data found");
     }
   };
 
   const initializeAuth = () => {
-    console.log("Initializing auth...");
+    console.log("[initializeAuth] Starting auth initialization");
     setupAxiosInterceptors();
     initializeFromCookies();
     const result = checkAuth();
-    console.log("Auth initialization result:", result);
+    console.log("[initializeAuth] Auth initialization complete:", result);
     return result;
   };
 
   onMounted(() => {
+    console.log("[authDosen] Component mounted - initializing auth");
     initializeAuth();
   });
 
@@ -440,17 +529,25 @@ export function authDosen() {
 }
 
 export function getUserData() {
+  console.log("[getUserData] Getting user data from cookie");
   const encryptedUserData = VueCookies.get("user_session");
   if (encryptedUserData) {
     try {
       const userData = decryptData(encryptedUserData);
+      console.log("[getUserData] User data retrieved:", {
+        type: userData?.type,
+        jabatan: userData?.jabatan,
+        jabatanId: userData?.jabatanId
+      });
       return userData;
     } catch (error) {
-      console.error("Error decrypting user data:", error.message);
+      console.error("[getUserData] Error decrypting user data:", error);
       VueCookies.remove("auth_token");
       VueCookies.remove("user_session");
       return null;
     }
+  } else {
+    console.log("[getUserData] No user_session cookie found");
   }
   return null;
 }
@@ -463,6 +560,7 @@ export function validateToken(token) {
     // Simple validation - check if token is a non-empty string
     return typeof token === 'string' && token.length > 0;
   } catch (e) {
+    console.error("[validateToken] Error:", e);
     return false;
   }
 }
