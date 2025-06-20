@@ -34,9 +34,11 @@ export function useTahunAjaran() {
       const response = await axios.get(url, { headers });
       dataTahunAjaran.value = response.data.data;
       paginationTahunAjaran.value = response.data.data.pagination;
-      
+
       // Ambil tahun ajaran default
-      const defaultTA = dataTahunAjaran.value.data.find(item => item.is_default === 1);
+      const defaultTA = dataTahunAjaran.value.data.find(
+        (item) => item.is_default === 1
+      );
       if (defaultTA) {
         defaultTahunAjaran.value = defaultTA.tahun_ajaran;
       }
@@ -105,7 +107,7 @@ export function useTahunAjaran() {
         {},
         { headers }
       );
-      toast.success("Default Tahun ajaran berhasil diubah.");
+      // toast.success("Default Tahun ajaran berhasil diubah.");
     } catch (err) {
       handleError(err);
     } finally {
@@ -156,7 +158,7 @@ export function useSemester() {
   const dataSemester = ref([]);
   const defaultSemester = ref(null); // untuk menyimpan semester default
   const paginationSemester = ref({});
-  
+
   const fetchData = async () => {
     loadingSemester.value = true;
     try {
@@ -166,22 +168,24 @@ export function useSemester() {
         "Content-Type": "application/json",
         Accept: "application/json",
       };
-      
+
       // Panggil API semester
-      const response = await axios.get(
-        `/api/admin_ta/semester`,
-        { headers }
-      );
+      const response = await axios.get(`/api/admin_ta/semester`, { headers });
 
       dataSemester.value = response.data.data;
-      
+
       // Cari semester default dan konversi nama: A → Ganjil, B → Genap
-      const defaultSem = dataSemester.value.find(item => item.is_default === 1);
+      const defaultSem = dataSemester.value.find(
+        (item) => item.is_default === 1
+      );
       if (defaultSem) {
         const semesterName = defaultSem.nama_semester;
-        defaultSemester.value = semesterName === "A" ? "Ganjil" : 
-                                semesterName === "B" ? "Genap" : 
-                                semesterName;
+        defaultSemester.value =
+          semesterName === "A"
+            ? "Ganjil"
+            : semesterName === "B"
+            ? "Genap"
+            : semesterName;
       }
     } catch (err) {
       handleError(err);
@@ -204,7 +208,7 @@ export function useSemester() {
         {},
         { headers }
       );
-      toast.success("Default Semester berhasil diubah.");
+      // toast.success("Default Semester berhasil diubah.");
       fetchData(); // Refresh data setelah update
     } catch (err) {
       handleError(err);
@@ -212,14 +216,13 @@ export function useSemester() {
       loadingSemester.value = false;
     }
   };
-  
+
   const handleError = (err) => {
     if (err.response?.status === 401) {
       toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
       router.push("/admin/login");
     } else {
-      errorSemester.value =
-        err.response?.data?.message || "Terjadi kesalahan.";
+      errorSemester.value = err.response?.data?.message || "Terjadi kesalahan.";
       toast.error(errorSemester.value);
     }
   };
@@ -227,13 +230,13 @@ export function useSemester() {
   onMounted(() => {
     fetchData();
   });
-  
+
   onUnmounted(() => {
     if (abortController) {
       abortController.abort();
     }
   });
-  
+
   return {
     dataSemester,
     loadingSemester,

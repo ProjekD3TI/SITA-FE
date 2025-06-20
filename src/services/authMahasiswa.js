@@ -131,7 +131,7 @@ export function authMahasiswa() {
 
       delete axios.defaults.headers.common["Authorization"];
 
-      router.push({ name: "loginmhs" });
+      window.location.href = "/";
     }
   };
 

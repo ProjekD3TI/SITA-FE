@@ -97,8 +97,6 @@ const isSubmitDisabled = computed(
     !selectedDosenData.value || !selectedCategory.value || loadingRequest.value
 );
 
-const totalBimbingan = computed(() => listBimbingan.value.length);
-
 // ============================================
 // METHODS & HANDLERS
 // ============================================

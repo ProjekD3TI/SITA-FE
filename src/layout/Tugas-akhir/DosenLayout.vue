@@ -2,7 +2,6 @@
   <div class="min-h-screen bg-gray-100">
     <!-- Sidebar -->
     <aside
-      v-if="isSidebarReady"
       id="dosen-sidebar"
       :class="{
         'translate-x-0 w-60': showNavbar,
@@ -138,8 +137,10 @@ const { logout } = authMahasiswa();
 // State
 const showBimbingan = ref(false);
 const showTugasAkhir = ref(false);
-const showNavbar = ref(false);
-const isSidebarReady = ref(false); // Tambahkan ini
+const savedSidebarState = localStorage.getItem("dosenSidebarOpen");
+const showNavbar = ref(
+  savedSidebarState === null ? true : savedSidebarState === "true"
+);
 const showUser = ref(false);
 const isLgScreen = ref(false);
 const hasNotification = ref(false);
@@ -342,13 +343,13 @@ const closeDropdownOnClickOutside = (event) => {
 // Lifecycle Hooks
 onMounted(() => {
   // Restore sidebar state from localStorage, default open if not set
-  const savedSidebar = localStorage.getItem("dosenSidebarOpen");
-  if (savedSidebar === null) {
-    showNavbar.value = true; // default open
-  } else {
-    showNavbar.value = savedSidebar === "true";
-  }
-  isSidebarReady.value = true;
+  // const savedSidebar = localStorage.getItem("dosenSidebarOpen");
+  // if (savedSidebar === null) {
+  //   showNavbar.value = true; // default open
+  // } else {
+  //   showNavbar.value = savedSidebar === "true";
+  // }
+  // isSidebarReady.value = true;
 
   // Get user data
   const userData = getUserData();

@@ -47,6 +47,11 @@ import path from "path";
 //define a routes
 const routes = [
   {
+    path: "/test",
+    name: "Test",
+    component: () => import("../views/Landing/test.vue"),
+  },
+  {
     path: "/",
     name: "Landing",
     component: () => import("../views/Landing/Landing.vue"),
@@ -558,7 +563,7 @@ const routes = [
         path: "semester-tahun-ajaran",
         component: TahunAjaranForAdmin,
         meta: {
-          breadcrumb: "Semester & Tahun Ajaran",
+          breadcrumb: "Tahun Ajaran & Semester",
         },
       },
     ],

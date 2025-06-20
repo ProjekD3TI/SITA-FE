@@ -792,7 +792,12 @@ watch(
               </template>
 
               <!-- Action Buttons - show for accepted application -->
-              <template v-if="statusValid === STATUS.ACCEPTED || STATUS.REVISI">
+              <template
+                v-if="
+                  statusValid === STATUS.ACCEPTED ||
+                  statusValid === STATUS.REVISI
+                "
+              >
                 <!-- Schedule tooltip and button -->
                 <Tooltip
                   v-if="!terjadwal && statusValid !== STATUS.REVISI"

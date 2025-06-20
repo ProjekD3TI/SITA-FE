@@ -9,6 +9,7 @@ import { useShowSeminarProposal } from "@/services/TugasAkhir/Admin/proposal.js"
 import { useToast } from "vue-toastification";
 import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
+import QuillTextEditor from "@/components/Tugas-akhir/Forms/QuillTextEditor.vue";
 
 // Ambil inputNilaiProposal dari composable
 const {
@@ -182,14 +183,20 @@ const updateNilai = async () => {
             :disabled="isSubmitting"
             required
           />
-          <InputTextArea
+          <QuillTextEditor
+            v-model="catatanInput"
+            id="catatan-proposal"
+            label="Catatan Proposal"
+            required
+          />
+          <!-- <InputTextArea
             id="catatan-proposal"
             v-model="catatanInput"
             label="Catatan Proposal"
             placeholder="Masukkan Catatan"
             :disabled="isSubmitting"
             required
-          />
+          /> -->
           <Button
             v-if="!isUpdateMode"
             variant="primary"

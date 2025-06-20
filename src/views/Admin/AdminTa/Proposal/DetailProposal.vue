@@ -6,6 +6,7 @@ import DefaultAvatar from "@/assets/images/Profile Avatar.svg";
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
+import QuillTextReader from "@/components/Tugas-akhir/Forms/QuillTextReader.vue";
 import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
 import { useRoute, useRouter } from "vue-router";
@@ -52,6 +53,9 @@ onMounted(() => {
       if (newValue && route.params.proposal_id) {
         // console.log("Refreshing data after nilai update...");
         fetchData(route.params.proposal_id);
+        // --- TAMBAHKAN BARIS INI ---
+        // Hapus query parameter dari URL setelah selesai refresh
+        router.replace({ path: route.path });
       }
     }
   );
@@ -242,12 +246,17 @@ async function loadPdfPreview() {
           :modelValue="nilai_proposal"
           :disabled="true"
         />
-        <InputTextarea
+        <QuillTextReader
+          id="catatan-proposal"
+          :content="catatan_proposal"
+          label="Catatan"
+        />
+        <!-- <InputTextarea
           id="catatan-proposal"
           label="Catatan"
           :modelValue="catatan_proposal"
           :disabled="true"
-        />
+        /> -->
         <Button
           variant="secondary"
           class="self-end hidden w-fit sm:flex"

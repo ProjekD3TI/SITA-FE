@@ -6,6 +6,7 @@ import InputFile from "@/components/Tugas-akhir/Forms/InputFile.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import UserData from "@/components/Tugas-akhir/UserData.vue";
 import Loading from "@/components/Loading.vue";
+import QuillTextReader from "@/components/Tugas-akhir/Forms/QuillTextReader.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
 import Tooltip from "@/components/Tugas-akhir/Tooltip.vue";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
@@ -449,13 +450,18 @@ watch(
             :value="nilaiProposalTA"
             :disabled="true"
           />
-          <InputTextarea
+          <QuillTextReader
+            id="catatan-proposal-ta"
+            label="Catatan Proposal "
+            :content="catatanProposalTA"
+          />
+          <!-- <InputTextarea
             id="catatan-proposal-ta"
             label="Catatan"
             v-model="catatanProposalTA"
             :value="catatanProposalTA"
             :disabled="true"
-          />
+          /> -->
         </div>
       </DefaultModal>
     </template>

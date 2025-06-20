@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-100">
     <!-- Sidebar -->
-    <div
+    <aside
       id="user-sidebar"
       v-bind:class="{
         'translate-x-0 w-60': showNavbar,
@@ -79,7 +79,7 @@
           :icon="link.icon"
         />
       </div>
-    </div>
+    </aside>
 
     <!-- Main Content -->
     <div class="flex flex-col flex-1">
@@ -139,7 +139,10 @@ const { logout } = authMahasiswa();
 // State
 const showBimbingan = ref(false);
 const showTugasAkhir = ref(false);
-const showNavbar = ref(false);
+const savedSidebarState = localStorage.getItem("userSidebarOpen");
+const showNavbar = ref(
+  savedSidebarState === null ? true : savedSidebarState === "true"
+);
 const showUser = ref(false);
 const isLgScreen = ref(false);
 const hasNotification = ref(false);
@@ -291,8 +294,8 @@ const toggleUser = () => {
 const handleLogout = () => {
   try {
     logout();
-    toast.success("Berhasil Logout!");
-    router.push("/");
+    // toast.success("Berhasil Logout!");
+    // router.push("/");
   } catch (error) {
     toast.error("Terjadi kesalahan saat logout.");
   }
@@ -348,12 +351,12 @@ const closeDropdownOnClickOutside = (event) => {
 // Lifecycle Hooks
 onMounted(() => {
   // Restore sidebar state from localStorage, default open if not set
-  const savedSidebar = localStorage.getItem("userSidebarOpen");
-  if (savedSidebar === null) {
-    showNavbar.value = true; // default open
-  } else {
-    showNavbar.value = savedSidebar === "true";
-  }
+  // const savedSidebar = localStorage.getItem("userSidebarOpen");
+  // if (savedSidebar === null) {
+  //   showNavbar.value = true; // default open
+  // } else {
+  //   showNavbar.value = savedSidebar === "true";
+  // }
 
   // Get user data
   const userData = getUserData();

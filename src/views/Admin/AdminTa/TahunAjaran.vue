@@ -10,7 +10,7 @@ import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
 import { useToast } from "vue-toastification";
 import Label from "@/components/Tugas-akhir/Label.vue";
-import ModalSetAktifTahunAjaran from "@/components/Tugas-akhir/Modals/ModalSetAktifTahunAjaran.vue";
+import InputDropdown from "@/components/Tugas-akhir/Forms/InputDropdown.vue";
 import {
   useTahunAjaran,
   useSemester,
@@ -30,7 +30,13 @@ const {
 } = useTahunAjaran();
 
 // Import untuk ambil semester
-const { defaultSemester, loadingSemester, errorSemester } = useSemester();
+const {
+  dataSemester,
+  defaultSemester,
+  loadingSemester,
+  errorSemester,
+  updateDefaultSemester,
+} = useSemester();
 
 const toast = useToast();
 const searchQuery = ref("");
@@ -43,7 +49,6 @@ function handleSearch({ value }) {
 
 // Ambil list tahun ajaran dari response API yang benar
 const tahunAjaranList = computed(() => {
-  // dataTahunAjaran.value.data karena response API: { data: { data: [...], pagination: {...} } }
   return Array.isArray(dataTahunAjaran.value?.data)
     ? dataTahunAjaran.value.data
     : [];
@@ -58,6 +63,10 @@ const selectedTahunAjaran = ref(null);
 const isEditing = ref(false);
 const isModalOpen = ref(false);
 const showModalSetAktif = ref(false);
+
+// State untuk modal set aktif (sebelumnya ada di ModalSetAktifTahunAjaran)
+const selectedTahunAjaranAktif = ref(null);
+const selectedSemesterAktif = ref(null);
 
 const openAddModalTahunAjaran = () => {
   selectedTahunAjaran.value = { tahun_ajaran: "" };
@@ -84,12 +93,10 @@ const saveTahunAjaran = async () => {
       await updateTahunAjaran(selectedTahunAjaran.value.id, {
         tahun_ajaran: selectedTahunAjaran.value.tahun_ajaran,
       });
-      // toast.success("Tahun ajaran berhasil diubah!");
     } else {
       await submitTahunAjaran({
         tahun_ajaran: selectedTahunAjaran.value.tahun_ajaran,
       });
-      // toast.success("Tahun ajaran berhasil ditambahkan!");
     }
     isModalOpen.value = false;
     fetchData(currentPage.value, searchQuery.value);
@@ -100,27 +107,75 @@ const saveTahunAjaran = async () => {
 
 const tableHeaders = ["Tahun Ajaran", "Aksi"];
 
+// Format tahun ajaran untuk InputDropdown
+const formattedTahunAjaranOptions = computed(() => {
+  return tahunAjaranList.value.map((tahun) => ({
+    value: tahun.tahun_ajaran,
+    label: tahun.tahun_ajaran,
+  }));
+});
+
+// Fungsi untuk membuka modal set aktif
+function openModalSetAktifTahunAjaran() {
+  // Set nilai default berdasarkan data yang sudah ada
+  const defaultTA = tahunAjaranList.value.find((t) => t.is_default === 1);
+  selectedTahunAjaranAktif.value = defaultTA
+    ? defaultTA.tahun_ajaran
+    : tahunAjaranList.value.length > 0
+    ? tahunAjaranList.value[0].tahun_ajaran
+    : null;
+
+  const defaultSem = dataSemester.value.find((s) => s.is_default === 1);
+  selectedSemesterAktif.value = defaultSem
+    ? defaultSem.id
+    : dataSemester.value.length > 0
+    ? dataSemester.value[0].id
+    : null;
+
+  showModalSetAktif.value = true;
+}
+
+// Fungsi untuk menyimpan pengaturan aktif
+async function saveAktifSettings() {
+  try {
+    // Temukan ID tahun ajaran dari nama
+    const tahunAjaranObj = tahunAjaranList.value.find(
+      (t) => t.tahun_ajaran === selectedTahunAjaranAktif.value
+    );
+
+    if (tahunAjaranObj) {
+      await updateDefaultTahunAjaran(tahunAjaranObj.id);
+    }
+
+    if (selectedSemesterAktif.value) {
+      await updateDefaultSemester(selectedSemesterAktif.value);
+    }
+
+    toast.success("Tahun ajaran dan semester default berhasil diubah.");
+    showModalSetAktif.value = false;
+    fetchData(currentPage.value, searchQuery.value);
+  } catch (e) {
+    toast.error("Gagal mengubah tahun ajaran/semester default.");
+  }
+}
+
 onMounted(() => {
   fetchData(currentPage.value, searchQuery.value);
 });
+
 watch(currentPage, (val) => {
   fetchData(val, searchQuery.value);
 });
-
-function openModalSetAktifTahunAjaran() {
-  showModalSetAktif.value = true;
-}
-function handleSetAktifTahunAjaran({ tahunAjaran, semester }) {
-  // proses simpan data di sini
-}
 </script>
 
 <template>
   <Breadcrumb />
 
   <div class="p-4 bg-white shadow-custom card-rounded lg:p-6">
-    <div class="flex justify-between mb-2">
-      <div class="flex gap-x-2">
+    <div
+      class="flex flex-wrap justify-between gap-2 mb-2 sm:mb-4 sm:flex-nowrap"
+    >
+      <div class="flex flex-grow gap-x-2">
         <SearchBar
           v-model="searchQuery"
           @search="handleSearch"
@@ -131,22 +186,65 @@ function handleSetAktifTahunAjaran({ tahunAjaran, semester }) {
           size="md"
           @click="openAddModalTahunAjaran"
           leftIconPath="M12 4v16m8-8H4"
-          class="hidden sm:flex"
+          class="hidden md:flex"
         >
-          Tahun Ajaran
+          Tambah
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
+          @click="openAddModalTahunAjaran"
+          leftIconPath="M12 4v16m8-8H4"
+          class="md:hidden"
+        >
+          Tambah
         </Button>
         <Button
           variant="secondary"
           size="md"
           @click="openModalSetAktifTahunAjaran"
-          class="hidden sm:flex"
+          class="hidden md:flex"
         >
-          Set Tahun Ajaran
+          Default
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          @click="openModalSetAktifTahunAjaran"
+          class="md:hidden"
+        >
+          Default
         </Button>
       </div>
-      <div class="flex gap-2">
-        <Label v-if="defaultTahunAjaran" :label="defaultTahunAjaran" />
-        <Label v-if="defaultSemester" :label="defaultSemester" />
+      <div class="flex items-center w-full sm:w-fit gap-x-2">
+        <Label
+          v-if="defaultTahunAjaran"
+          :label="defaultTahunAjaran"
+          class="w-full sm:hidden"
+          size="sm"
+          status="primary"
+        />
+        <Label
+          v-if="defaultSemester"
+          :label="defaultSemester"
+          class="w-full sm:hidden"
+          size="sm"
+          status="primary"
+        />
+        <Label
+          v-if="defaultTahunAjaran"
+          :label="defaultTahunAjaran"
+          class="hidden sm:flex"
+          size="lg"
+          status="primary"
+        />
+        <Label
+          v-if="defaultSemester"
+          :label="defaultSemester"
+          class="hidden sm:flex"
+          size="lg"
+          status="primary"
+        />
       </div>
     </div>
     <div v-if="loadingTahunAjaran" class="py-8">
@@ -172,7 +270,7 @@ function handleSetAktifTahunAjaran({ tahunAjaran, semester }) {
         >
           <span>
             {{ item.tahun_ajaran }}
-            <span v-if="item.is_default" class="ml-2 font-bold text-green-600"
+            <span v-if="item.is_default" class="ml-2 font-bold text-primary"
               >(Default)</span
             >
           </span>
@@ -189,6 +287,7 @@ function handleSetAktifTahunAjaran({ tahunAjaran, semester }) {
         </td>
       </template>
     </Table>
+
     <!-- Modal Tambah/Edit Tahun Ajaran -->
     <DefaultModal
       v-if="isModalOpen"
@@ -211,12 +310,57 @@ function handleSetAktifTahunAjaran({ tahunAjaran, semester }) {
         </div>
       </div>
     </DefaultModal>
-    <ModalSetAktifTahunAjaran
+    <!-- Modal Set Aktif Tahun Ajaran dan Semester -->
+    <DefaultModal
       v-if="showModalSetAktif"
-      :tahunAjaranList="tahunAjaranList.map((t) => t.tahun_ajaran)"
+      :headText="'Set Tahun Ajaran dan Semester Aktif'"
+      bodyText=""
       @close="showModalSetAktif = false"
-      @submit="handleSetAktifTahunAjaran"
-    />
+    >
+      <div class="mt-4 space-y-4">
+        <div>
+          <InputDropdown
+            id="tahun-ajaran-dropdown"
+            label="Tahun Ajaran"
+            placeholder="Pilih Tahun Ajaran"
+            v-model="selectedTahunAjaranAktif"
+            :options="formattedTahunAjaranOptions"
+            required
+          />
+        </div>
+        <div>
+          <label class="block mb-1 font-semibold">Semester</label>
+          <div class="flex gap-4">
+            <!-- Radio button standard -->
+            <div
+              v-for="semester in dataSemester"
+              :key="semester.id"
+              class="flex items-center"
+            >
+              <input
+                type="radio"
+                :id="`semester-${semester.id}`"
+                :value="semester.id"
+                v-model="selectedSemesterAktif"
+                class="mr-2"
+              />
+              <label :for="`semester-${semester.id}`">
+                {{ semester.nama_semester === "A" ? "Ganjil" : "Genap" }}
+              </label>
+            </div>
+            <p
+              v-if="!dataSemester || dataSemester.length === 0"
+              class="text-sm text-gray-500"
+            >
+              Tidak ada data semester
+            </p>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-4">
+          <Button variant="primary" @click="saveAktifSettings">Simpan</Button>
+        </div>
+      </div>
+    </DefaultModal>
   </div>
 </template>
 

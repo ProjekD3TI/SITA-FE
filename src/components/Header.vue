@@ -287,8 +287,8 @@ export default {
     const handleLogout = () => {
       try {
         logout();
-        toast.success("Berhasil Logout!");
-        router.push("/");
+        // toast.success("Berhasil Logout!");
+        // router.push("/");
       } catch (error) {
         toast.error("Terjadi kesalahan saat logout.");
       }

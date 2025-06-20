@@ -1,9 +1,11 @@
 <template>
   <div
-    class="flex items-center label-rounded"
+    class="flex items-center justify-center label-rounded"
     :class="[bgColorClass, sizeClass]"
   >
-    <span class="capitalize" :class="textColorClass">{{ label }}</span>
+    <span class="text-center capitalize" :class="textColorClass">{{
+      label
+    }}</span>
   </div>
 </template>
 
@@ -23,6 +25,7 @@ const props = defineProps({
         "danger-outline",
         "warning-outline",
         "inactive",
+        "primary",
       ].includes(value),
   },
   label: {
@@ -58,6 +61,8 @@ const displayLabel = computed(() => {
       return props.label || "Menunggu";
     case "inactive":
       return props.label || "Inactive";
+    case "primary":
+      return props.label || "";
     default:
       return props.label;
   }
@@ -80,6 +85,8 @@ const bgColorClass = computed(() => {
       return "border border-warning-bg";
     case "inactive":
       return "bg-placeholder/20";
+    case "primary":
+      return "bg-primary-bg/80";
     default:
       return "bg-primary-bg/80";
   }
@@ -102,6 +109,8 @@ const textColorClass = computed(() => {
       return "text-warning";
     case "inactive":
       return "text-placeholder";
+    case "primary":
+      return "text-primary";
     default:
       return "text-primary";
   }
