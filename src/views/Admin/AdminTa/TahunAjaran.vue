@@ -216,7 +216,27 @@ watch(currentPage, (val) => {
           Default
         </Button>
       </div>
-      <div class="flex items-center w-full sm:w-fit gap-x-2">
+      <!-- Skeleton Loader for Default Labels -->
+      <div
+        v-if="loadingTahunAjaran || loadingSemester"
+        class="flex items-center w-full sm:w-fit gap-x-2"
+      >
+        <!-- Mobile Skeleton -->
+        <div class="flex w-full gap-x-2 sm:hidden">
+          <div class="w-24 h-6 label-rounded bg-primary-bg animate-pulse"></div>
+          <div class="w-20 h-6 label-rounded bg-primary-bg animate-pulse"></div>
+        </div>
+        <!-- Desktop Skeleton -->
+        <div class="hidden gap-x-2 sm:flex">
+          <div
+            class="w-32 h-10 label-rounded bg-primary-bg animate-pulse"
+          ></div>
+          <div
+            class="w-24 h-10 label-rounded bg-primary-bg animate-pulse"
+          ></div>
+        </div>
+      </div>
+      <div v-else class="flex items-center w-full sm:w-fit gap-x-2">
         <Label
           v-if="defaultTahunAjaran"
           :label="defaultTahunAjaran"

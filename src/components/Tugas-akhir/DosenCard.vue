@@ -1,6 +1,6 @@
 <template>
   <div
-    class="p-4 sm:p-6 bg-white card-rounded border w-full max-w-[200px] sm:max-w-[250px] h-[180px] sm:h-[300px] flex flex-col gap-y-3 sm:gap-y-5"
+    class="p-4 sm:p-6 bg-white card-rounded border w-full max-w-[200px] sm:max-w-[250px] h-[220px] sm:h-[300px] flex flex-col gap-y-3 sm:gap-y-5"
   >
     <div class="flex justify-between">
       <div class="body5-bold sm:body4-bold">{{ role }}</div>
@@ -26,7 +26,7 @@
     >
       <div
         :class="[
-          'flex items-center justify-center size-16 sm:size-32 rounded-full',
+          'flex items-center justify-center size-24 sm:size-32 rounded-full',
           randomBgClass,
         ]"
       >
