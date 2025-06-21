@@ -3,9 +3,11 @@
     class="flex items-center justify-center label-rounded"
     :class="[bgColorClass, sizeClass]"
   >
-    <span class="text-center capitalize" :class="textColorClass">{{
-      label
-    }}</span>
+    <span
+      class="text-center capitalize whitespace-nowrap"
+      :class="textColorClass"
+      >{{ label }}</span
+    >
   </div>
 </template>
 

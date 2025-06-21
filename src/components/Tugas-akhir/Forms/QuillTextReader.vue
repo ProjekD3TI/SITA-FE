@@ -17,8 +17,6 @@
 </template>
 
 <script setup>
-import { defineProps } from "vue";
-
 // 3. Tambahkan props yang diperlukan untuk label
 defineProps({
   id: { type: String, required: true },

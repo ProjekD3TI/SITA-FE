@@ -553,10 +553,10 @@ const routes = [
         },
       },
       {
-        path: "mahasiswa-dosen-aktif",
+        path: "mahasiswa-dosen",
         component: MahasiswaDosenForAdmin,
         meta: {
-          breadcrumb: "Mahasiswa & Dosen Aktif",
+          breadcrumb: "Mahasiswa & Dosen",
         },
       },
       {

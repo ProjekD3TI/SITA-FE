@@ -16,7 +16,7 @@
         type="text"
         class="w-full outline-none cursor-pointer"
         :class="{
-          'text-gray-400': !selectedValue, // ✅ TAMBAHAN: Gray jika belum dipilih
+          'text-gray-400': !selectedValue,
           'text-blackText': selectedValue,
         }"
         :placeholder="placeholder"

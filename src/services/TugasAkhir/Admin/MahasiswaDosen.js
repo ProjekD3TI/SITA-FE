@@ -195,3 +195,101 @@ export function useTabelDosen() {
     updateAksesDosen,
   };
 }
+
+export function useJabatanDosen() {
+  const router = useRouter();
+  const toast = useToast();
+  const dataJabatanDosen = ref([]);
+  const loadingJabatanDosen = ref(false);
+  const errorJabatanDosen = ref(null);
+
+  const fetchDataJabatanDosen = async () => {
+    loadingJabatanDosen.value = true;
+    try {
+      const auth_token = VueCookies.get("auth_token");
+      const headers = {
+        Authorization: `Bearer ${auth_token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+      const response = await axios.get("/api/admin_ta/jabatan-dosen", {
+        headers,
+      });
+      dataJabatanDosen.value = response.data.data;
+    } catch (err) {
+      handleError(err);
+    } finally {
+      loadingJabatanDosen.value = false;
+    }
+  };
+
+  const handleError = (err) => {
+    if (err.response?.status === 401) {
+      toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
+      router.push("/admin/login");
+    } else {
+      errorJabatanDosen.value =
+        err.response?.data?.message || "Terjadi kesalahan.";
+      toast.error(errorJabatanDosen.value);
+    }
+  };
+
+  const setKaprodi = async (dosenId) => {
+    loadingJabatanDosen.value = true;
+    try {
+      const auth_token = VueCookies.get("auth_token");
+      const headers = {
+        Authorization: `Bearer ${auth_token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+      const response = await axios.post(
+        `/api/admin_ta/set-kaprodi`,
+        { dosen_id: dosenId },
+        { headers }
+      );
+      toast.success("Kaprodi berhasil ditetapkan!");
+      fetchDataJabatanDosen(); // Refresh data after setting
+    } catch (err) {
+      handleError(err);
+    } finally {
+      loadingJabatanDosen.value = false;
+    }
+  };
+
+  const setDivisiTA = async (dosenId) => {
+    loadingJabatanDosen.value = true;
+    try {
+      const auth_token = VueCookies.get("auth_token");
+      const headers = {
+        Authorization: `Bearer ${auth_token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+      const response = await axios.post(
+        `/api/admin_ta/set-divisi-ta`,
+        { dosen_id: dosenId },
+        { headers }
+      );
+      toast.success("Divisi Tugas Akhir berhasil ditetapkan!");
+      fetchDataJabatanDosen(); // Refresh data after setting
+    } catch (err) {
+      handleError(err);
+    } finally {
+      loadingJabatanDosen.value = false;
+    }
+  };
+
+  onMounted(() => {
+    fetchDataJabatanDosen();
+  });
+
+  return {
+    dataJabatanDosen,
+    loadingJabatanDosen,
+    errorJabatanDosen,
+    fetchDataJabatanDosen,
+    setKaprodi,
+    setDivisiTA,
+  };
+}

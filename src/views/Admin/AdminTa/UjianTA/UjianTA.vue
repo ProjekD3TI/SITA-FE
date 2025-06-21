@@ -624,13 +624,13 @@ function handleModalCancel() {
 }
 const modalTimerHeadText = computed(() => {
   return statusForm.value === 0
-    ? "Buka Form Pengajuan Proposal"
-    : "Tutup Form Pengajuan Proposal";
+    ? "Buka Form Pendaftaran Ujian"
+    : "Tutup Form Pendaftaran Ujian";
 });
 const modalTimerBodyText = computed(() => {
   return statusForm.value === 0
-    ? "Apakah anda yakin ingin membuka form pengajuan proposal tugas akhir?"
-    : "Apakah anda yakin ingin menutup form pengajuan proposal tugas akhir?";
+    ? "Apakah anda yakin ingin membuka form pendaftaran ujian?"
+    : "Apakah anda yakin ingin menutup form pendaftaran ujian?";
 });
 
 onMounted(() => {
