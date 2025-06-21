@@ -15,6 +15,9 @@ import {
   useTabelMahasiswa,
   useTabelDosen,
 } from "@/services/TugasAkhir/Admin/MahasiswaDosen.js";
+import DosenCard from "@/components/Tugas-akhir/DosenCard.vue";
+import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
+import InputDropdown from "@/components/Tugas-akhir/Forms/InputDropdown.vue";
 
 const {
   dataTabelMahasiswa,
@@ -53,6 +56,11 @@ const tabs = [
   {
     id: "tab2",
     label: "Dosen",
+    icon: "M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z",
+  },
+  {
+    id: "tab3",
+    label: "Jabatan",
     icon: "M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z",
   },
 ];
@@ -264,60 +272,50 @@ function handleTabChanged(tabId) {
   checkedMahasiswa.value = [];
   checkedDosen.value = [];
 }
+
+const showModal = ref(false);
+const modalTitle = ref('');
+const modalBody = ref('');
+const selectedDropdown = ref("");
+const dropdownOptions = [
+  { value: "1", label: "Opsi 1" },
+  { value: "2", label: "Opsi 2" },
+  { value: "3", label: "Opsi 3" },
+];
+
+function openModal(role) {
+  modalTitle.value = role;
+  modalBody.value = `Ini modal untuk ${role}`;
+  showModal.value = true;
+}
+function closeModal() {
+  showModal.value = false;
+}
 </script>
 
 <template>
   <Breadcrumb />
 
-  <TabDiv
-    :tabs="tabs"
-    :use-named-slots="true"
-    v-model="activeTab"
-    @tab-changed="handleTabChanged"
-  >
+  <TabDiv :tabs="tabs" :use-named-slots="true" v-model="activeTab" @tab-changed="handleTabChanged">
     <!-- === TAB 1: MAHASISWA === -->
     <template #tab1>
-      <div
-        class="flex items-center justify-between gap-2 mb-2 sm:mb-4 lg:gap-4"
-      >
-        <ModalFilter
-          title="Status"
-          title2="Angkatan"
-          :items="mahasiswaStatus"
-          :items2="mahasiswaAngkatan"
-          filterType="filter"
-          triggerText="Filter"
-          :preselectedValues="selectedFiltersMahasiswa"
-          @apply="handleFilterMahasiswa"
-        />
-        <SearchBar
-          v-model="searchQueryMahasiswa"
-          @search="onSearchMahasiswa"
-          filterKey="mahasiswa"
-        />
+      <div class="flex items-center justify-between gap-2 mb-2 sm:mb-4 lg:gap-4">
+        <ModalFilter title="Status" title2="Angkatan" :items="mahasiswaStatus" :items2="mahasiswaAngkatan"
+          filterType="filter" triggerText="Filter" :preselectedValues="selectedFiltersMahasiswa"
+          @apply="handleFilterMahasiswa" />
+        <SearchBar v-model="searchQueryMahasiswa" @search="onSearchMahasiswa" filterKey="mahasiswa" />
       </div>
       <div v-if="loadingTabelMahasiswa" class="py-8">
         <Loading />
       </div>
-      <ErrorMsg
-        v-else-if="errorTabelMahasiswa"
-        :message="errorTabelMahasiswa"
-      />
-      <Table
-        v-else
-        :headers="tableHeadersMahasiswa"
-        :items="listMahasiswa"
-        :showCheckbox="true"
-        :checkedItems="checkedMahasiswa"
-        rowKey="mahasiswa_id"
-        @update:checkedItems="checkedMahasiswa = $event"
-        :pagination="paginationTabelMahasiswa"
-        @pageChange="
+      <ErrorMsg v-else-if="errorTabelMahasiswa" :message="errorTabelMahasiswa" />
+      <Table v-else :headers="tableHeadersMahasiswa" :items="listMahasiswa" :showCheckbox="true"
+        :checkedItems="checkedMahasiswa" rowKey="mahasiswa_id" @update:checkedItems="checkedMahasiswa = $event"
+        :pagination="paginationTabelMahasiswa" @pageChange="
           (page) => {
             currentPageTabelMahasiswa = page;
           }
-        "
-      >
+        ">
         <template #row="{ item }">
           <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
             {{ item.name }}
@@ -332,20 +330,10 @@ function handleTabChanged(tabId) {
             {{ item.email }}
           </td>
           <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
-            <StatusLabel
-              class="w-fit sm:hidden"
-              :status="getStatusClass(item.akses_ta)"
-              :label="getStatusLabel(item.akses_ta)"
-              :customLabel="true"
-              size="sm"
-            />
-            <StatusLabel
-              class="hidden w-fit sm:flex"
-              :status="getStatusClass(item.akses_ta)"
-              :label="getStatusLabel(item.akses_ta)"
-              :customLabel="true"
-              size="md"
-            />
+            <StatusLabel class="w-fit sm:hidden" :status="getStatusClass(item.akses_ta)"
+              :label="getStatusLabel(item.akses_ta)" :customLabel="true" size="sm" />
+            <StatusLabel class="hidden w-fit sm:flex" :status="getStatusClass(item.akses_ta)"
+              :label="getStatusLabel(item.akses_ta)" :customLabel="true" size="md" />
           </td>
         </template>
       </Table>
@@ -354,39 +342,20 @@ function handleTabChanged(tabId) {
     <!-- === TAB 2: DOSEN === -->
     <template #tab2>
       <div class="flex items-center justify-between gap-2 mb-4 lg:gap-4">
-        <ModalFilter
-          title="Status"
-          :items="statuses"
-          filterType="status"
-          triggerText="Status"
-          @apply="handleFilterDosen"
-          :preselectedValues="selectedStatusesDosen"
-        />
-        <SearchBar
-          v-model="searchQueryDosen"
-          @search="onSearchDosen"
-          filterKey="dosen"
-        />
+        <ModalFilter title="Status" :items="statuses" filterType="status" triggerText="Status"
+          @apply="handleFilterDosen" :preselectedValues="selectedStatusesDosen" />
+        <SearchBar v-model="searchQueryDosen" @search="onSearchDosen" filterKey="dosen" />
       </div>
       <div v-if="loadingTabelDosen" class="py-8">
         <Loading />
       </div>
       <ErrorMsg v-else-if="errorTabelDosen" :message="errorTabelDosen" />
-      <Table
-        v-else
-        :headers="tableHeadersDosen"
-        :items="listDosen"
-        :showCheckbox="true"
-        :checkedItems="checkedDosen"
-        rowKey="dosen_id"
-        @update:checkedItems="checkedDosen = $event"
-        :pagination="paginationTabelDosen"
-        @pageChange="
+      <Table v-else :headers="tableHeadersDosen" :items="listDosen" :showCheckbox="true" :checkedItems="checkedDosen"
+        rowKey="dosen_id" @update:checkedItems="checkedDosen = $event" :pagination="paginationTabelDosen" @pageChange="
           (page) => {
             currentPageTabelDosen = page;
           }
-        "
-      >
+        ">
         <template #row="{ item }">
           <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
             {{ item.name }}
@@ -398,38 +367,57 @@ function handleTabChanged(tabId) {
             {{ item.email }}
           </td>
           <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
-            <StatusLabel
-              class="w-fit sm:hidden"
-              :status="getStatusClass(item.akses_ta)"
-              :label="getStatusLabel(item.akses_ta)"
-              :customLabel="true"
-              size="sm"
-            />
-            <StatusLabel
-              class="hidden w-fit sm:flex"
-              :status="getStatusClass(item.akses_ta)"
-              :label="getStatusLabel(item.akses_ta)"
-              :customLabel="true"
-              size="md"
-            />
+            <StatusLabel class="w-fit sm:hidden" :status="getStatusClass(item.akses_ta)"
+              :label="getStatusLabel(item.akses_ta)" :customLabel="true" size="sm" />
+            <StatusLabel class="hidden w-fit sm:flex" :status="getStatusClass(item.akses_ta)"
+              :label="getStatusLabel(item.akses_ta)" :customLabel="true" size="md" />
           </td>
         </template>
       </Table>
     </template>
+    <template #tab3>
+      <div class="body1-bold text-center mb-3">
+        Pengurus Ujian Tugas Akhir
+      </div>
+      <div class="flex flex-wrap justify-center gap-2">
+        <DosenCard :showButton="true" role="Kepala Program Studi" @click="openModal('Kepala Program Studi')" />
+        <DosenCard :showButton="true" role="Divisi Tugas Akhir" @click="openModal('Divisi Tugas Akhir')" />
+      </div>
+      <div class="flex flex-wrap justify-center gap-2 mt-4">
+        <DosenCard />
+        <DosenCard />
+        <DosenCard />
+        <DosenCard />
+        <DosenCard />
+        <DosenCard />
+        <DosenCard />
+        <DosenCard />
+        <DosenCard />
+      </div>
+    </template>
   </TabDiv>
   <!-- ModalSelected muncul jika ada yang dicentang -->
-  <ModalSelected
-    v-if="checkedMahasiswa.length > 0"
-    :count="checkedMahasiswa.length"
-    @close="closeModalSelected"
-    @setActive="setMahasiswaStatus('success')"
-    @setInactive="setMahasiswaStatus('inactive')"
-  />
-  <ModalSelected
-    v-if="checkedDosen.length > 0"
-    :count="checkedDosen.length"
-    @close="closeModalSelectedDosen"
-    @setActive="setDosenStatus('success')"
-    @setInactive="setDosenStatus('inactive')"
-  />
+  <ModalSelected v-if="checkedMahasiswa.length > 0" :count="checkedMahasiswa.length" @close="closeModalSelected"
+    @setActive="setMahasiswaStatus('success')" @setInactive="setMahasiswaStatus('inactive')" />
+  <ModalSelected v-if="checkedDosen.length > 0" :count="checkedDosen.length" @close="closeModalSelectedDosen"
+    @setActive="setDosenStatus('success')" @setInactive="setDosenStatus('inactive')" />
+  <DefaultModal v-if="showModal" :headText="modalTitle" @close="closeModal">
+    <div class="mt-4">
+      <InputDropdown id="dropdown-modal" label="Pilih Opsi" v-model="selectedDropdown" :options="dropdownOptions"
+        placeholder="Pilih salah satu" />
+    </div>
+  </DefaultModal>
+  <DefaultModal v-if="isModalOpen" :headText="isEditing ? 'Edit Kategori' : 'Tambah Kategori'" bodyText=""
+    @close="isModalOpen = false">
+    <div class="mt-4">
+      <InputText id="category-name" label="Nama Kategori" placeholder="Masukkan Nama Kategori"
+        v-model="selectedCategory.name" />
+      <div class="flex justify-end gap-2 mt-4">
+        <Button variant="danger" @click="isModalOpen = false"> Batal </Button>
+        <Button variant="primary" @click="saveKategori">
+          {{ isEditing ? "Simpan" : "Tambah" }}
+        </Button>
+      </div>
+    </div>
+  </DefaultModal>
 </template>

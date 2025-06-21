@@ -173,7 +173,7 @@ onBeforeUnmount(() => {
 }
 
 .modal-content {
-  max-height: 90vh;
+  max-height: 100vh;
   overflow-y: auto;
   opacity: 0;
   transform: translateY(30px);

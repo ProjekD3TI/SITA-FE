@@ -53,7 +53,7 @@ const openEditModalKategori = (category) => {
   selectedCategory.value = { ...category };
   isEditing.value = true;
   isModalOpen.value = true;
-};
+};  
 
 const saveKategori = async () => {
   // Validasi input tidak boleh kosong
