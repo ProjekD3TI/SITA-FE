@@ -450,7 +450,7 @@ const fetchCategories = async () => {
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         }
         
-        const response = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
+        const response = await axios.get('http://pelaporan-d3ti.my.id/api/category');
         categories.value = response.data.reduce((acc, category) => {
             acc[category.category_id] = category.nama;
             return acc;
@@ -504,7 +504,7 @@ const fetchLaporanDetail = async () => {
     error.value = null;
     
     try {
-        const response = await axios.get(`https://v3422040.mhs.d3tiuns.com/api/laporan/${laporanId.value}`);
+        const response = await axios.get(`http://pelaporan-d3ti.my.id/api/laporan/${laporanId.value}`);
         laporan.value = response.data;
         
         // Process tanggapan data
@@ -726,7 +726,7 @@ const getImageUrl = (imagePath) => {
     }
     
     // Define the base URL
-    const baseUrl = 'https://v3422040.mhs.d3tiuns.com';
+    const baseUrl = 'http://pelaporan-d3ti.my.id';
     
     // Primary URL - use this as default
     return `${baseUrl}/Backend-Port/backend/engine/public/storage/laporan/${cleanPath}`;
@@ -775,7 +775,7 @@ const confirmVerification = async () => {
         formData.append('status', 'verified');
         
         // Make the API call using POST with _method: PUT for compatibility
-        await axios.post(`https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${laporanId.value}`, formData);
+        await axios.post(`http://pelaporan-d3ti.my.id/api/laporan/update_status/${laporanId.value}`, formData);
         
         // Update local data after successful verification
         laporan.value.status = 'verified';
@@ -833,7 +833,7 @@ const rejectReport = async () => {
         formData.append('status', 'rejected');
 
         await axios.post(
-            `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${laporanId.value}`, 
+            `http://pelaporan-d3ti.my.id/api/laporan/update_status/${laporanId.value}`, 
             formData
         );
                     
@@ -940,7 +940,7 @@ const saveTanggapan = async () => {
         }
 
         await axios.post(
-            `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${laporanId.value}`, 
+            `http://pelaporan-d3ti.my.id/api/laporan/update_status/${laporanId.value}`, 
             formData
         );
         
@@ -1032,7 +1032,7 @@ const finishReport = async () => {
         }
 
         await axios.post(
-            `https://v3422040.mhs.d3tiuns.com/api/laporan/update_status/${laporanId.value}`, 
+            `http://pelaporan-d3ti.my.id/api/laporan/update_status/${laporanId.value}`, 
             formData
         );
                     
