@@ -11,6 +11,7 @@ import Button from "@/components/Tugas-akhir/Button.vue";
 import Tooltip from "@/components/Tugas-akhir/Tooltip.vue";
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 // import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
+import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Loading from "@/components/Loading.vue";
 import Label from "@/components/Tugas-akhir/Label.vue";
@@ -192,11 +193,17 @@ const catatanRevisi = computed(() => {
   if (!detailUjian.value?.dosen_penguji) return "";
 
   const currentDosenPenguji = detailUjian.value.dosen_penguji.find(
-    (penguji) =>
-      penguji.is_current_user === true && penguji.nilai_ujian_ta !== null
+    (penguji) => penguji.is_current_user === true
   );
 
-  return currentDosenPenguji?.revisi || "";
+  const revisiHTML = currentDosenPenguji?.nilai_ujian_ta?.revisi || "";
+  
+  // Hilangkan semua tag HTML
+  const stripHTMLTags = (html) => {
+    return html ? html.replace(/<[^>]+>/g, "") : "";
+  };
+
+  return stripHTMLTags(revisiHTML);
 });
 
 // Computed for modal body text
