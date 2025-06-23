@@ -183,7 +183,7 @@ export default {
                 terlapor: [
                     {
                         nama_lengkap: '-',
-                        email: '-',
+                        email: '', // Changed to empty string to pass validation if nullable on backend
                         nomor_telepon: '-',
                         status_warga: 'lainnya',
                         unit_kerja: 'Fakultas Teknik',
@@ -194,7 +194,7 @@ export default {
                 saksi: [
                     {
                         nama_lengkap: '-',
-                        email: '-',
+                        email: '', // Changed to empty string to pass validation if nullable on backend
                         nomor_telepon: '-'
                     }
                 ],
@@ -216,44 +216,53 @@ export default {
             showModal: false,
             modalTitle: '',
             modalMessage: '',
-            isSuccess: false
+            isSuccess: false,
+            csrfToken: null
         };
     },
-    mounted() {
+    async mounted() {
+        await this.fetchCsrfCookie();
         this.fetchCategories();
         this.loadUserData();
-        this.setIndonesianDateTime(); // Set current Indonesian date and time when component mounts
-        
-        // Update the time every minute to keep it current
+        this.setIndonesianDateTime();
+
         this.timeUpdateInterval = setInterval(() => {
             this.setIndonesianDateTime();
-        }, 60000); // 60000 ms = 1 minute
+        }, 60000);
     },
-    beforeDestroy() {
-        // Clear the interval when component is destroyed
+    beforeUnmount() {
         if (this.timeUpdateInterval) {
             clearInterval(this.timeUpdateInterval);
         }
     },
     methods: {
-        // Method for setting current Indonesian date and time (UTC+7)
+        async fetchCsrfCookie() {
+            try {
+                await axios.get('http://pelaporan-d3ti.my.id/sanctum/csrf-cookie', { withCredentials: true });
+                this.csrfToken = VueCookies.get('XSRF-TOKEN');
+                console.log('CSRF Cookie fetched:', this.csrfToken ? 'Success' : 'Failed');
+            } catch (error) {
+                console.error('Error fetching CSRF cookie:', error);
+                Swal.fire({
+                    title: 'Error Autentikasi!',
+                    text: 'Gagal mendapatkan token keamanan. Coba refresh halaman.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        },
         setIndonesianDateTime() {
-            // Create a date object with the current time
             const now = new Date();
-            
-            // Add 7 hours to get Indonesian time (UTC+7)
             const indonesianTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
-            
-            // Format date and time as required by datetime-local input (YYYY-MM-DDThh:mm)
+
             const year = indonesianTime.getUTCFullYear();
             const month = String(indonesianTime.getUTCMonth() + 1).padStart(2, '0');
             const day = String(indonesianTime.getUTCDate()).padStart(2, '0');
             const hours = String(indonesianTime.getUTCHours()).padStart(2, '0');
             const minutes = String(indonesianTime.getUTCMinutes()).padStart(2, '0');
-            
-            // Format: YYYY-MM-DDThh:mm
+
             this.formData.tanggal_kejadian = `${year}-${month}-${day}T${hours}:${minutes}`;
-            
+
             console.log('Current Indonesian date and time set:', this.formData.tanggal_kejadian);
         },
         loadUserData() {
@@ -261,24 +270,20 @@ export default {
                 const encryptedUserData = VueCookies.get("user_session");
                 if (encryptedUserData) {
                     const userData = decryptData(encryptedUserData);
-                    
-                    // Set user data from the decrypted session
+
                     this.formData.nama_pelapor = userData.name || '';
                     this.formData.ni_pelapor = userData.nim || userData.nik || '';
                     this.formData.nomor_telepon = userData.no_telp || '';
-                    
-                    // Set profession based on user role if available
+
                     if (userData.profesi) {
                         this.formData.profesi = userData.profesi;
                     } else if (userData.email) {
-                        // Determine profession based on email domain
                         if (userData.email.includes('@student')) {
                             this.formData.profesi = 'Mahasiswa';
                         } else if (userData.email.includes('@staff')) {
                             this.formData.profesi = 'Dosen';
                         }
                     }
-                    
                     console.log('User data loaded for current user');
                 } else {
                     console.warn('No user session found in cookies');
@@ -291,18 +296,15 @@ export default {
             try {
                 const response = await axios.get('http://pelaporan-d3ti.my.id/api/category');
                 this.categories = response.data;
-                
-                // Find the "Darurat dan Mendesak" category
+
                 const mendesakCategory = this.categories.find(cat => cat.nama === "Darurat dan Mendesak");
                 if (mendesakCategory) {
                     this.formData.category_id = mendesakCategory.category_id;
                 } else if (this.categories.length > 0) {
-                    // Fallback to the first category if "Darurat dan Mendesak" is not found
                     this.formData.category_id = this.categories[0].category_id;
                 }
             } catch (error) {
                 console.error('Error fetching categories:', error);
-                // If API fails, create a fallback category
                 this.categories = [{
                     category_id: 21,
                     nama: "Darurat dan Mendesak"
@@ -315,15 +317,15 @@ export default {
             if (!files || files.length === 0) {
                 return;
             }
-            
+
             if (!this.formData.image_path) {
                 this.formData.image_path = [];
             }
-            
+
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 this.formData.image_path.push(file);
-                
+
                 const reader = new FileReader();
                 reader.onload = e => {
                     this.imagePreviews.push(e.target.result);
@@ -353,7 +355,7 @@ export default {
                 this.errors.image_path = ['Lampiran foto harus diisi'];
                 isValid = false;
             }
-            
+
             if (!this.formData.lampiran_link) {
                 this.errors.lampiran_link = ['Lampiran link harus diisi'];
                 isValid = false;
@@ -361,6 +363,26 @@ export default {
                 this.errors.lampiran_link = ['Masukkan URL yang valid, contoh: https://www.example.com'];
                 isValid = false;
             }
+
+            this.formData.terlapor.forEach((terlapor, index) => {
+                if (terlapor.email && !this.isValidEmail(terlapor.email)) {
+                    if (!this.errors[`terlapor.${index}.email`]) {
+                        this.errors[`terlapor.${index}.email`] = [];
+                    }
+                    this.errors[`terlapor.${index}.email`].push('Email terlapor harus berupa alamat email yang valid.');
+                    isValid = false;
+                }
+            });
+
+            this.formData.saksi.forEach((saksi, index) => {
+                if (saksi.email && !this.isValidEmail(saksi.email)) {
+                    if (!this.errors[`saksi.${index}.email`]) {
+                        this.errors[`saksi.${index}.email`] = [];
+                    }
+                    this.errors[`saksi.${index}.email`].push('Email saksi harus berupa alamat email yang valid.');
+                    isValid = false;
+                }
+            });
 
             if (!this.formData.agreement) {
                 this.errors.agreement = ['Anda harus menyetujui pernyataan untuk melanjutkan'];
@@ -377,97 +399,77 @@ export default {
                 return false;
             }
         },
+        isValidEmail(email) {
+            const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            return re.test(String(email).toLowerCase());
+        },
+
         submitForm() {
-            // Validate form first
             if (!this.validateForm()) {
                 return;
             }
-            
-            // Set loading state
+
             this.loading = true;
             this.errors = {};
 
-            // Auto-fill essential fields with dummy data if not provided
             const formData = new FormData();
 
-            // Add user_id field - THIS IS THE NEW CODE
-            try {
-                const encryptedUserData = VueCookies.get("user_session");
-                if (encryptedUserData) {
-                    const userData = decryptData(encryptedUserData);
-                    formData.append('user_id', userData.id || userData.user_id || '1');
-                    console.log('Added user_id from session:', userData.id || userData.user_id || '1');
-                } else {
-                    // If no user data available, use a default ID
-                    formData.append('user_id', '1'); 
-                    console.log('No user session found, using default user_id: 1');
-                }
-            } catch (error) {
-                console.error('Error getting user ID:', error);
-                formData.append('user_id', '1'); // Fallback to a default ID
-            }
-
-            // 1. Required fields from error message
             formData.append('judul', this.formData.judul || 'Laporan Kejadian Mendesak');
-            formData.append('category_id', this.formData.category_id || '1'); // Use default category ID
+            formData.append('category_id', this.formData.category_id || '1');
             formData.append('deskripsi', this.formData.deskripsi || 'Laporan kejadian mendesak yang perlu segera ditangani');
             formData.append('tanggal_kejadian', this.formData.tanggal_kejadian || new Date().toISOString().split('.')[0].replace('T', ' '));
-            formData.append('profesi', this.formData.profesi || 'Dosen'); // Default profession
-            formData.append('jenis_kelamin', this.formData.jenis_kelamin || 'laki-laki'); // Default gender
-            formData.append('umur_pelapor', this.formData.umur_pelapor || '20-40'); // Default age range
-            
-            // For lampiran_link
+            formData.append('profesi', this.formData.profesi || 'Dosen');
+            formData.append('jenis_kelamin', this.formData.jenis_kelamin || 'laki-laki');
+            formData.append('umur_pelapor', this.formData.umur_pelapor || '20-40');
+
             formData.append('lampiran_link', this.formData.lampiran_link);
-            
-            // 3. For image upload, if available
+
             if (this.formData.image_path && this.formData.image_path.length > 0) {
                 this.formData.image_path.forEach((file, index) => {
                     formData.append('image_path[]', file);
                 });
             }
-            
-            // 4. Handle terlapor with valid data
-            const terlapor = {
-                nama_lengkap: 'Nama Terlapor',
-                email: 'terlapor@example.com', // Valid email format
-                nomor_telepon: '081234567890',
-                status_warga: 'mahasiswa',
-                unit_kerja: 'Fakultas Teknik',
-                jenis_kelamin: 'laki-laki',
-                umur_terlapor: '20-40'
-            };
-            
-            // Add terlapor data
-            formData.append('terlapor[0][nama_lengkap]', terlapor.nama_lengkap);
-            formData.append('terlapor[0][email]', terlapor.email);
-            formData.append('terlapor[0][nomor_telepon]', terlapor.nomor_telepon);
-            formData.append('terlapor[0][status_warga]', terlapor.status_warga);
-            formData.append('terlapor[0][unit_kerja]', terlapor.unit_kerja);
-            formData.append('terlapor[0][jenis_kelamin]', terlapor.jenis_kelamin);
-            formData.append('terlapor[0][umur_terlapor]', terlapor.umur_terlapor);
 
-            // 5. Handle saksi with valid data
-            const saksi = {
-                nama_lengkap: 'Nama Saksi',
-                email: 'saksi@example.com', // Valid email format
-                nomor_telepon: '089876543210'
-            };
-            
-            // Add saksi data
-            formData.append('saksi[0][nama_lengkap]', saksi.nama_lengkap);
-            formData.append('saksi[0][email]', saksi.email);
-            formData.append('saksi[0][nomor_telepon]', saksi.nomor_telepon);
-            
-            // 6. Add bukti_pelanggaran from AddPK.vue
-            formData.append('bukti_pelanggaran[0]', 'foto_dokumentasi');
-            
-            // 7. Add agreement
+            if (this.formData.terlapor && this.formData.terlapor.length > 0) {
+                this.formData.terlapor.forEach((item, index) => {
+                    for (const key in item) {
+                        formData.append(`terlapor[${index}][${key}]`, item[key]);
+                    }
+                });
+            } else {
+                 formData.append('terlapor[0][nama_lengkap]', 'Nama Terlapor');
+                 formData.append('terlapor[0][email]', 'terlapor@example.com');
+                 formData.append('terlapor[0][nomor_telepon]', '081234567890');
+                 formData.append('terlapor[0][status_warga]', 'mahasiswa');
+                 formData.append('terlapor[0][unit_kerja]', 'Fakultas Teknik');
+                 formData.append('terlapor[0][jenis_kelamin]', 'laki-laki');
+                 formData.append('terlapor[0][umur_terlapor]', '20-40');
+            }
+
+            if (this.formData.saksi && this.formData.saksi.length > 0) {
+                this.formData.saksi.forEach((item, index) => {
+                    for (const key in item) {
+                        formData.append(`saksi[${index}][${key}]`, item[key]);
+                    }
+                });
+            } else {
+                formData.append('saksi[0][nama_lengkap]', 'Nama Saksi');
+                formData.append('saksi[0][email]', 'saksi@example.com');
+                formData.append('saksi[0][nomor_telepon]', '089876543210');
+            }
+
+            if (this.formData.bukti_pelanggaran && this.formData.bukti_pelanggaran.length > 0) {
+                this.formData.bukti_pelanggaran.forEach((item, index) => {
+                    formData.append(`bukti_pelanggaran[${index}]`, item);
+                });
+            } else {
+                formData.append('bukti_pelanggaran[0]', 'foto_dokumentasi');
+            }
+
             formData.append('agreement', '1');
 
-            // Log what we're sending
             console.log("Submitting form");
 
-            // Use XMLHttpRequest for upload
             this.uploadWithXHR(formData)
                 .then(response => {
                     this.loading = false;
@@ -484,70 +486,90 @@ export default {
                 .catch(error => {
                     this.loading = false;
                     console.error("Submission error:", error);
-                    
-                    // Parse and display errors if available
+
+                    let errorMessage = 'Terjadi kesalahan saat mengirim laporan.';
                     if (error.response) {
                         try {
                             const errorData = JSON.parse(error.response);
-                            this.errors = errorData;
+                            this.errors = errorData; // If Laravel sends validation errors
+                            errorMessage = errorData.message || errorMessage;
+                            if (errorData.error_details) { // Display specific SQL error if available
+                                errorMessage += `\nDetail: ${errorData.error_details}`;
+                            }
                         } catch (e) {
                             console.error("Error parsing server response:", e);
-                            Swal.fire({
-                                title: 'Error!',
-                                text: 'Terjadi kesalahan saat mengirim laporan',
-                                icon: 'error',
-                                confirmButtonText: 'OK'
-                            });
+                            errorMessage = 'Terjadi kesalahan saat mengirim laporan (Respons server tidak valid).';
                         }
+                    } else {
+                         errorMessage = 'Terjadi kesalahan jaringan atau server tidak merespons.';
                     }
+
+                     Swal.fire({
+                        title: 'Error!',
+                        text: errorMessage,
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
                 });
         },
-        
+
         uploadWithXHR(formData) {
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
-                
-                xhr.open('POST', '/api/laporan/add_laporan', true);
-                
-                // Get token from component data or from cookies
-                const authToken = this.token || this.$cookies.get('auth_token');
+
+                // Ensure this URL is correct and matches your backend API endpoint
+                xhr.open('POST', 'http://pelaporan-d3ti.my.id/api/laporan/add_laporan', true);
+
+                xhr.withCredentials = true;
+
+                if (this.csrfToken) {
+                    xhr.setRequestHeader('X-XSRF-TOKEN', this.csrfToken);
+                } else {
+                    console.warn('CSRF token is missing. Requests might fail due to CSRF protection.');
+                    // Consider throwing an error or showing a blocking message here
+                }
+
+                const authToken = this.token || VueCookies.get('auth_token');
                 if (authToken) {
                     xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+                } else {
+                    console.warn('Auth token is missing. User might not be authenticated.');
+                    // Depending on your app, you might want to force re-login here
                 }
-                
+
                 xhr.onload = function() {
                     if (this.status >= 200 && this.status < 300) {
                         try {
                             resolve(JSON.parse(xhr.response));
                         } catch (e) {
-                            resolve(xhr.response);
+                            resolve(xhr.response); // Resolve with raw text if not JSON
                         }
                     } else {
-                        console.error("Server error response:", xhr.response);
+                        // Pass the entire XHR response object in reject for detailed error handling
                         reject({
                             status: this.status,
                             statusText: xhr.statusText,
-                            response: xhr.response
+                            response: xhr.response // Pass raw response to caller for parsing
                         });
                     }
                 };
-                
+
                 xhr.onerror = function() {
                     console.error("XHR network error");
                     reject({
-                        status: this.status,
-                        statusText: xhr.statusText,
+                        status: 0, // Indicate network error
+                        statusText: 'Network Error',
                         response: 'Network error occurred'
                     });
                 };
-                
+
                 xhr.upload.onprogress = (e) => {
                     if (e.lengthComputable) {
                         const percentComplete = (e.loaded / e.total) * 100;
                         console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
                     }
                 };
-                
+
                 xhr.send(formData);
             });
         },

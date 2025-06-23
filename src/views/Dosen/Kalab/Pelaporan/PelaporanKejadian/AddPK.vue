@@ -709,7 +709,7 @@ export default {
       }
     },
     fetchCategories() {
-      axios.get('https://v3422040.mhs.d3tiuns.com/api/category')
+      axios.get('http://pelaporan-d3ti.my.id/api/category')
         .then(response => {
           this.categories = response.data;
         })
@@ -1017,7 +1017,7 @@ export default {
         const xhr = new XMLHttpRequest();
         
         // Make sure we're using the correct endpoint
-        xhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan/add_laporan', true);
+        xhr.open('POST', '/api/laporan/add_laporan', true);
         
         // Get token from component data or from cookies
         const authToken = this.token || this.$cookies.get('auth_token');
