@@ -498,7 +498,6 @@ const updateSidebar = async () => {
 
 const activeJabatan = computed(() => {
   const active = availableJabatan.value?.find((j) => j.is_active) || currentJabatan.value;
-  console.log("Active jabatan computed:", active?.name);
   return active;
 });
 
@@ -510,12 +509,7 @@ watch(
     const oldActive = oldAvailableJabatan?.find(j => j.is_active)?.name || oldJabatan?.name;
     const newActive = newAvailableJabatan?.find(j => j.is_active)?.name || newJabatan?.name;
     
-    console.log("Jabatan watcher triggered:");
-    console.log("Old active jabatan:", oldActive);
-    console.log("New active jabatan:", newActive);
-    
     if (oldActive !== newActive) {
-      console.log("Jabatan has changed, updating sidebar...");
       await updateSidebar();
     }
   },
@@ -527,7 +521,6 @@ const isDosenAsStaff = computed(() => {
   // Check if user has Dosen role and is currently in Petugas role
   const hasDosenRole = availableJabatan.value?.some(j => j.name === "Dosen");
   const isPetugas = activeJabatan.value?.name === "Petugas";
-  console.log("isDosenAsStaff check:", { hasDosenRole, isPetugas });
   return hasDosenRole && isPetugas;
 });
 
@@ -536,7 +529,6 @@ const isDosenAsKalab = computed(() => {
   // Check if user has Dosen role and is currently in Kalab role
   const hasDosenRole = availableJabatan.value?.some(j => j.name === "Dosen");
   const isKalab = activeJabatan.value?.name === "Kalab";
-  console.log("isDosenAsKalab check:", { hasDosenRole, isKalab });
   return hasDosenRole && isKalab;
 });
 
@@ -563,7 +555,6 @@ const isActiveRoute = (routeName) => {
 
 const handleSwitchJabatan = async () => {
   if (!selectedJabatan.value) {
-    console.log("[Sidebar] No jabatan selected, cannot switch");
     return;
   }
 
@@ -572,31 +563,20 @@ const handleSwitchJabatan = async () => {
   );
 
   if (!targetJabatan) {
-    console.log("[Sidebar] Target jabatan not found in available jabatan list");
     return;
   }
-
-  console.log("[Sidebar] Switching to jabatan:", {
-    id: targetJabatan.id,
-    name: targetJabatan.name
-  });
   
   // Call the service function
   const success = await switchJabatan(selectedJabatan.value);
   
   if (success) {
-    console.log("[Sidebar] Switch was successful");
-
     // CRITICAL FIX: Force a page reload to ensure clean state
-    console.log("[Sidebar] Redirecting to new role dashboard with full page reload");
     const targetRoute = `/${targetJabatan.name.toLowerCase()}/dashboard`;
     
     // Set a small timeout to allow the success toast to be seen
     setTimeout(() => {
       window.location.href = targetRoute;
     }, 500);
-  } else {
-    console.log("[Sidebar] Switch was NOT successful");
   }
 };
 
@@ -604,10 +584,8 @@ const handleSwitchJabatan = async () => {
 watch(
   () => activeJabatan.value,
   (newActive) => {
-    console.log("activeJabatan watch triggered:", newActive?.name);
     if (newActive) {
       selectedJabatan.value = newActive.id;
-      console.log("Selected jabatan updated to:", selectedJabatan.value);
     }
   },
   { immediate: true }
@@ -654,11 +632,6 @@ const hasAccess = (allowedRoles) => {
   const currentRole = activeJabatan.value?.name || getUserData()?.jabatan;
   const hasRole = allowedRoles.includes(currentRole);
   
-  console.log(`hasAccess check for ${allowedRoles.join(',')}:`, {
-    currentRole,
-    hasAccess: hasRole
-  });
-  
   if (!currentRole) return false;
   
   // Check if current role is in the allowed roles
@@ -670,8 +643,6 @@ const getDashboardRoute = () => {
   // Get current jabatan directly from state or cookies for latest value
   const userData = getUserData();
   const currentRole = activeJabatan.value?.name || userData?.jabatan || "Dosen";
-  
-  console.log("getDashboardRoute - currentRole:", currentRole);
 
   switch (currentRole) {
     case "Dosen":
@@ -692,31 +663,18 @@ const getRouteByJabatan = (routeName) => {
 
   const baseRoute = activeJabatan.value.name.toLowerCase();
   const fullRoute = `/${baseRoute}/${routeName}`;
-  console.log(`getRouteByJabatan('${routeName}'):`, fullRoute);
   return fullRoute;
 };
 
 onMounted(async () => {
-  console.log("Sidebar component mounted");
   window.addEventListener("resize", handleResize);
   handleResize();
   
-  // Log initial state 
-  console.log("Initial user data from cookies:", getUserData());
-  
   // Make sure user jabatan data is loaded during component mount
-  console.log("Fetching user jabatan data...");
   await getUserJabatan();
-  
-  console.log("After getUserJabatan:");
-  console.log("- currentJabatan:", currentJabatan.value);
-  console.log("- activeJabatan:", activeJabatan.value);
-  console.log("- availableJabatan:", availableJabatan.value);
-  console.log("- Current route:", route.path);
 });
 
 onUnmounted(() => {
-  console.log("Sidebar component unmounted");
   window.removeEventListener("resize", handleResize);
 });
 </script>
