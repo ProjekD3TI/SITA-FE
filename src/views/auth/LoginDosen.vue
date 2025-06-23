@@ -86,17 +86,7 @@
               autocomplete="current-password"
             />
           </div>
-
-          <!-- Forgot Password Link -->
-          <div class="flex justify-end">
-            <router-link
-              :to="{ name: 'ForgotPasswordDosen' }"
-              class="text-sm text-blue-600 hover:text-blue-500 transition"
-            >
-              Forgot password?
-            </router-link>
-          </div>
-
+          
           <!-- Submit Button -->
           <button
             type="submit"
@@ -130,19 +120,6 @@
             <span v-else>Login</span>
           </button>
         </form>
-
-        <!-- Register Link -->
-        <p class="mt-6 text-sm text-gray-600 text-center">
-          Don't have an account?
-          <a href="#" class="text-[#F78052] hover:text-[#e66d43] transition">
-            Register here
-          </a>
-        </p>
-
-        <!-- Current Time Display -->
-        <div class="mt-4 text-xs text-gray-500 text-center">
-          {{ currentDateTime }}
-        </div>
       </div>
     </div>
   </div>
