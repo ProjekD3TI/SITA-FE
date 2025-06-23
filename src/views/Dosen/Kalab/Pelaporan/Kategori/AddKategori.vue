@@ -195,7 +195,7 @@ export default {
       
       // Use XMLHttpRequest instead of axios
       const xhr = new XMLHttpRequest();
-      xhr.open('POST', 'http://pelaporan-d3ti.my.id/category/add_category');
+      xhr.open('POST', '/api/category/add_category', true);
       
       // Set request headers
       xhr.setRequestHeader('Authorization', `Bearer ${token}`);

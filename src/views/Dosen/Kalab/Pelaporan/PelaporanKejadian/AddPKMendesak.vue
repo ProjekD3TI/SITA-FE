@@ -289,7 +289,7 @@ export default {
         },
         async fetchCategories() {
             try {
-                const response = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
+                const response = await axios.get('http://pelaporan-d3ti.my.id/api/category');
                 this.categories = response.data;
                 
                 // Find the "Darurat dan Mendesak" category
@@ -389,6 +389,23 @@ export default {
 
             // Auto-fill essential fields with dummy data if not provided
             const formData = new FormData();
+
+            // Add user_id field - THIS IS THE NEW CODE
+            try {
+                const encryptedUserData = VueCookies.get("user_session");
+                if (encryptedUserData) {
+                    const userData = decryptData(encryptedUserData);
+                    formData.append('user_id', userData.id || userData.user_id || '1');
+                    console.log('Added user_id from session:', userData.id || userData.user_id || '1');
+                } else {
+                    // If no user data available, use a default ID
+                    formData.append('user_id', '1'); 
+                    console.log('No user session found, using default user_id: 1');
+                }
+            } catch (error) {
+                console.error('Error getting user ID:', error);
+                formData.append('user_id', '1'); // Fallback to a default ID
+            }
 
             // 1. Required fields from error message
             formData.append('judul', this.formData.judul || 'Laporan Kejadian Mendesak');
@@ -490,7 +507,7 @@ export default {
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
                 
-                xhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan/add_laporan', true);
+                xhr.open('POST', '/api/laporan/add_laporan', true);
                 
                 // Get token from component data or from cookies
                 const authToken = this.token || this.$cookies.get('auth_token');
