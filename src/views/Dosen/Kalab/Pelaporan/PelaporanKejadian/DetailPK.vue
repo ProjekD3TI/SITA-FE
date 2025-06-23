@@ -79,7 +79,12 @@
                             class="image-item"
                             @click="openLightbox(index)"
                         >
-                            <img :src="getImageUrl(image)" :alt="`Bukti Kejadian ${index + 1}`" class="evidence-image">
+                        <img 
+                            :src="getImageUrl(image)" 
+                            :alt="`Bukti Kejadian ${index + 1}`" 
+                            class="evidence-image"
+                            @error="handleLaporanImageError"
+                        />
                         </div>
                     </div>
                     <div class="image-caption">Klik foto untuk memperbesar</div>
@@ -728,8 +733,26 @@ const getImageUrl = (imagePath) => {
     // Define the base URL
     const baseUrl = 'http://pelaporan-d3ti.my.id';
     
-    // Primary URL - use this as default
+    // Primary URL format (same pattern as your category images)
     return `${baseUrl}/Backend-Port/backend/engine/public/storage/laporan/${cleanPath}`;
+};
+
+// Add this method to your Vue component methods
+const handleLaporanImageError = (event) => {
+    // If the image fails to load, try the alternative URL format
+    const img = event.target;
+    const currentSrc = img.src;
+    
+    if (currentSrc.includes('/Backend-Port/backend/engine/public/storage/')) {
+        // If the second format failed, try the first format
+        img.src = currentSrc.replace(
+            '/Backend-Port/backend/engine/public/storage/', 
+            '/public/storage/'
+        );
+    } else if (currentSrc.includes('/public/storage/')) {
+        // If the first format failed, show a placeholder
+        img.src = 'https://via.placeholder.com/150?text=No+Image';
+    }
 };
 
 // Lightbox methods for multiple images
