@@ -540,13 +540,32 @@ export default {
                 return cleanPath;
             }
             
-            // Define the base URL
-            const baseUrl = 'https://v3422040.mhs.d3tiuns.com';
+            // Define the base URL - using pelaporan-d3ti.my.id domain as requested
+            const baseUrl = 'http://pelaporan-d3ti.my.id';
             
-            // Primary URL - use this as default
+            // Primary URL format
             return `${baseUrl}/Backend-Port/backend/engine/public/storage/laporan/${cleanPath}`;
         },
-        
+
+        handleLaporanImageError(event) {
+            // If the image fails to load, try the alternative URL format
+            const img = event.target;
+            const currentSrc = img.src;
+            const path = img.dataset.path;
+            
+            if (currentSrc.includes('/Backend-Port/backend/engine/public/storage/')) {
+                // If the first format failed, try the second format
+                img.src = currentSrc.replace(
+                    '/Backend-Port/backend/engine/public/storage/', 
+                    '/public/storage/'
+                );
+            } else if (currentSrc.includes('/public/storage/')) {
+                // If the second format failed, show a placeholder
+                img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+            }
+        },
+
+        // Updated handleImageError with the pelaporan-d3ti domain
         handleImageError(event, index) {
             const img = event.target;
             const originalSrc = img.src;
@@ -557,33 +576,7 @@ export default {
                 return;
             }
             
-            const baseDomain = 'https://v3422040.mhs.d3tiuns.com';
-            let newUrl;
-            
-            if (!originalSrc.includes('fallback=')) {
-                newUrl = `${baseDomain}/public/storage/laporan/${path}?fallback=2`;
-            } else if (originalSrc.includes('fallback=2')) {
-                newUrl = `${baseDomain}/storage/laporan/${path}?fallback=3`;
-            } else if (originalSrc.includes('fallback=3')) {
-                newUrl = `${baseDomain}/storage/${path}?fallback=4`;
-            } else {
-                newUrl = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
-            }
-            
-            img.src = newUrl;
-        },
-
-        handleImageError(event) {
-            const img = event.target;
-            const originalSrc = img.src;
-            const path = img.dataset.path;
-            
-            if (originalSrc.includes('fallback=4')) {
-                img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
-                return;
-            }
-            
-            const baseDomain = 'https://v3422040.mhs.d3tiuns.com';
+            const baseDomain = 'http://pelaporan-d3ti.my.id';
             let newUrl;
             
             if (!originalSrc.includes('fallback=')) {
