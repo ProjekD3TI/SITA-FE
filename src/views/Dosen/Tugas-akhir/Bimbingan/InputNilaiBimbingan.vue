@@ -2,9 +2,9 @@
 import { ref, onMounted, watch, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
-// import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
+import QuillTextEditor from "@/components/Tugas-akhir/Forms/QuillTextEditor.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
@@ -302,7 +302,7 @@ const resetErrorMessage = () => {
           <InputText
             type="number"
             id="disiplin"
-            label="Disiplin (20%) *"
+            label="Disiplin (20%)"
             placeholder="Masukkan nilai kedisiplinan"
             v-model="disiplin"
             :class="{ 'border-red-500': formSubmitted && errors.disiplin }"
@@ -320,7 +320,7 @@ const resetErrorMessage = () => {
           <InputText
             type="number"
             id="komunikasi"
-            label="Komunikasi (20%) *"
+            label="Komunikasi (20%)"
             placeholder="Masukkan nilai komunikasi"
             v-model="komunikasi"
             :class="{ 'border-red-500': formSubmitted && errors.komunikasi }"
@@ -338,7 +338,7 @@ const resetErrorMessage = () => {
           <InputText
             type="number"
             id="pengetahuan"
-            label="Skill / Pengetahuan (45%) *"
+            label="Skill / Pengetahuan (45%)"
             placeholder="Masukkan nilai pengetahuan"
             v-model="pengetahuan"
             :class="{ 'border-red-500': formSubmitted && errors.pengetahuan }"
@@ -356,7 +356,7 @@ const resetErrorMessage = () => {
           <InputText
             type="number"
             id="tingkahLaku"
-            label="Tingkah Laku (15%) *"
+            label="Tingkah Laku (15%)"
             placeholder="Masukkan nilai tingkah laku"
             v-model="tingkahLaku"
             :class="{ 'border-red-500': formSubmitted && errors.tingkahLaku }"
@@ -386,12 +386,10 @@ const resetErrorMessage = () => {
 
         <!-- Catatan Akhir Bimbingan -->
         <div class="w-full mt-2">
-          <InputTextarea
+          <QuillTextEditor
             id="catatanAkhir"
             label="Catatan Akhir Bimbingan"
-            placeholder="Masukkan catatan untuk mahasiswa bimbingan"
             v-model="catatanAkhir"
-            rows="4"
           />
         </div>
       </div>

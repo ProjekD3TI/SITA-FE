@@ -6,8 +6,9 @@ import ProgressBarBAB from "@/components/Tugas-akhir/ProgressBarBAB.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Table from "@/components/Tugas-akhir/Table.vue";
 import StatusLabel from "@/components/Tugas-akhir/Label.vue";
-// import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
+import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
+import QuillTextReader from "@/components/Tugas-akhir/Forms/QuillTextReader.vue";
 import ModalVerifikasiBimbingan from "@/components/Tugas-akhir/Modals/ModalVerifikasiBimbingan.vue";
 import ModalDetailBimbingan from "@/components/Tugas-akhir/Modals/ModalDetailBimbingan.vue";
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
@@ -712,15 +713,6 @@ const handleActionClick = (item, action) => {
         />
       </div>
 
-      <div>
-        <InputTextarea
-          id="catatanAkhir"
-          label="Catatan Akhir Bimbingan"
-          :modelValue="bimbinganDetail.catatanAkhir"
-          disabled
-        ></InputTextarea>
-      </div>
-
       <div class="">
         <InputText
           type="number"
@@ -729,6 +721,14 @@ const handleActionClick = (item, action) => {
           :modelValue="bimbinganDetail.nilaiRataRata"
           class="font-semibold"
           disabled
+        />
+      </div>
+
+      <div>
+        <QuillTextReader
+          id="catatanAkhir"
+          label="Catatan Akhir Bimbingan"
+          :content="bimbinganDetail.catatanAkhir"
         />
       </div>
 

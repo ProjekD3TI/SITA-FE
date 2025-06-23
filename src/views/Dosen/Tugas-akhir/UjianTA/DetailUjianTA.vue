@@ -10,9 +10,9 @@ import JadwalUjian from "@/components/Tugas-akhir/JadwalUjian.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Tooltip from "@/components/Tugas-akhir/Tooltip.vue";
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
-// import InputNumber from "@/components/Tugas-akhir/Forms/InputNumber.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
+import QuillTextReader from "@/components/Tugas-akhir/Forms/QuillTextReader.vue";
 import Loading from "@/components/Loading.vue";
 import Label from "@/components/Tugas-akhir/Label.vue";
 
@@ -197,7 +197,7 @@ const catatanRevisi = computed(() => {
   );
 
   const revisiHTML = currentDosenPenguji?.nilai_ujian_ta?.revisi || "";
-  
+
   // Hilangkan semua tag HTML
   const stripHTMLTags = (html) => {
     return html ? html.replace(/<[^>]+>/g, "") : "";
@@ -594,15 +594,14 @@ onMounted(() => {
         disabled
       />
 
-      <div v-if="catatanRevisi">
+      <div>
         <h5 class="body3-bold lg:body1-bold text-primary">Catatan Revisi</h5>
-        <InputTextarea
+        <QuillTextReader
+          class="mt-4"
           id="catatanRevisi"
-          label=""
-          placeholder="Masukkan catatan revisi"
-          v-model="catatanRevisi"
-          disabled
-        ></InputTextarea>
+          label="Catatan Revisi"
+          :content="catatanRevisi || ''"
+        ></QuillTextReader>
       </div>
 
       <!-- Add Edit Nilai button -->
