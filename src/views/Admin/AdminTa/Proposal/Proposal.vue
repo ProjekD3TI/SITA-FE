@@ -56,8 +56,8 @@ watch(
 const toast = useToast();
 const searchQueryPengajuan = ref("");
 const searchQuerySeminar = ref("");
-const selectedStatusesPengajuan = ref([]);
-const selectedStatusesSeminar = ref([]);
+const selectedFiltersPengajuan = ref([]);
+const selectedFiltersSeminar = ref([]);
 
 const currentPagePendaftar = ref(1);
 const currentPageSeminar = ref(1);
@@ -83,15 +83,26 @@ function getFileName(filePath) {
 }
 
 const statuses = [
-  { value: "1", label: "Disetujui" },
-  { value: "0", label: "Menunggu" },
-  { value: "2", label: "Ditolak" },
+  { value: "ST_1", label: "Disetujui" },
+  { value: "ST_0", label: "Menunggu" },
+  { value: "ST_2", label: "Ditolak" },
 ];
 const isDinilai = [
-  { value: "sudah", label: "Sudah Dinilai" },
-  { value: "belum", label: "Belum Dinilai" },
+  { value: "ST_sudah", label: "Sudah Dinilai" },
+  { value: "ST_belum", label: "Belum Dinilai" },
 ];
-
+function getSeparatedFiltersProposal(values) {
+  const statusValues = values
+    .filter((v) => v.startsWith("ST_"))
+    .map((v) => v.replace("ST_", ""));
+  const tahunAjaranValues = values
+    .filter((v) => v.startsWith("TA_"))
+    .map((v) => v.replace("TA_", ""));
+  return {
+    statusStr: statusValues.join(","),
+    tahunAjaranStr: tahunAjaranValues.join(","),
+  };
+}
 // Helper untuk status
 const getStatusClass = (status) => {
   switch (status) {
@@ -139,7 +150,14 @@ const tabs = [
     count: seminarNotificationCount,
   },
 ];
-
+const tahun_ajarans = computed(() =>
+  Array.isArray(dataTabelPendaftarProposal.value?.tahun_ajaran_list)
+    ? dataTabelPendaftarProposal.value?.tahun_ajaran_list.map((item) => ({
+        value: `TA_${item.id}`,
+        label: item.tahun_ajaran,
+      }))
+    : []
+);
 const listPendaftarProposal = computed(() => {
   // Data dari API ada di dataTabelPendaftarProposal.value.data
   return Array.isArray(dataTabelPendaftarProposal.value?.data)
@@ -152,66 +170,56 @@ const listTabelSeminarProposal = computed(() => {
     ? dataTabelSeminarProposal.value?.data
     : [];
 });
-function getSelectedStatusValue(selectedStatuses) {
-  if (selectedStatuses.length > 0) {
-    return selectedStatuses.map(String).join(",");
-  }
-  return "";
-}
-function getSelectedKategoriLabel(selectedCategories) {
-  if (selectedCategories.length > 0) {
-    // Ambil semua label kategori yang dipilih
-    const selectedLabels = selectedCategories
-      .map((catId) => {
-        const cat = categories.value.find((c) => c.value === catId);
-        return cat ? cat.label : "";
-      })
-      .filter(Boolean);
-    return selectedLabels.join(",");
-  }
-  return "";
-}
+
 function onSearchPendaftar({ value }) {
   currentPagePendaftar.value = 1;
-  fetchPendaftarProposal(
-    1,
-    value,
-    getSelectedStatusValue(selectedStatusesPengajuan.value)
+  const { statusStr, tahunAjaranStr } = getSeparatedFiltersProposal(
+    selectedFiltersPengajuan.value
   );
+  fetchPendaftarProposal(1, value, statusStr, tahunAjaranStr);
 }
 function onSearchSeminar({ value }) {
-  // Reset ke halaman 1 setiap kali search berubah
   currentPageSeminar.value = 1;
-  fetchSeminarProposal(
-    1,
-    value,
-    getSelectedKategoriLabel(selectedStatusesSeminar.value)
+  const { statusStr, tahunAjaranStr } = getSeparatedFiltersProposal(
+    selectedFiltersSeminar.value
   );
+  fetchSeminarProposal(1, value, statusStr, tahunAjaranStr);
 }
 
 // Handler filter dan search
 function handleFilterPengajuan({ values }) {
-  selectedStatusesPengajuan.value = values;
+  selectedFiltersPengajuan.value = values;
   currentPagePendaftar.value = 1;
+  const { statusStr, tahunAjaranStr } = getSeparatedFiltersProposal(values);
   fetchPendaftarProposal(
     1,
     searchQueryPengajuan.value,
-    getSelectedStatusValue(values)
+    statusStr,
+    tahunAjaranStr
   );
 }
-// Handler filter kategori seminar
 function handleFilterSeminar({ values }) {
-  selectedStatusesSeminar.value = values;
+  selectedFiltersSeminar.value = values;
   currentPageSeminar.value = 1;
-  // Kirim ke parameter ke-3 (statusNilai)
-  fetchSeminarProposal(1, searchQuerySeminar.value, values[0] || "");
+  const { statusStr, tahunAjaranStr } = getSeparatedFiltersProposal(values);
+  fetchSeminarProposal(1, searchQuerySeminar.value, statusStr, tahunAjaranStr);
 }
 function handleExport() {
-  // Kirim parameter filter yang sedang aktif
-  exportToExcel(
-    searchQuerySeminar.value,
-    selectedStatusesSeminar.value[0] || ""
-  );
+  // Ambil filter yang sedang aktif
+  const tahunAjaranValues = selectedFiltersSeminar.value
+    .filter((v) => v.startsWith("TA_"))
+    .map((v) => v.replace("TA_", ""));
+  const statusNilaiValues = selectedFiltersSeminar.value
+    .filter((v) => v.startsWith("ST_"))
+    .map((v) => v.replace("ST_", ""));
+
+  // Format parameter tahun ajaran dan status
+  const tahunAjaranStr =
+    tahunAjaranValues.length > 0 ? tahunAjaranValues.join(",") : "";
+  const statusNilaiStr =
+    statusNilaiValues.length > 0 ? statusNilaiValues.join(",") : "";
+
+  exportToExcel(searchQuerySeminar.value, statusNilaiStr, tahunAjaranStr);
 }
 // Tab change reset
 const selectedTab = ref(1);
@@ -219,8 +227,8 @@ function handleTabChange(tabId) {
   selectedTab.value = tabId;
   searchQueryPengajuan.value = "";
   searchQuerySeminar.value = "";
-  selectedStatusesPengajuan.value = [];
-  selectedStatusesSeminar.value = [];
+  selectedFiltersPengajuan.value = [];
+  selectedFiltersSeminar.value = [];
 }
 
 // Row click
@@ -316,18 +324,26 @@ onMounted(() => {
   fetchSeminarProposal(currentPageSeminar.value);
 });
 
-watch(currentPageSeminar, (val) => {
-  fetchSeminarProposal(
-    val,
-    searchQuerySeminar.value,
-    selectedStatusesSeminar.value[0] || ""
-  );
-});
 watch(currentPagePendaftar, (val) => {
+  const { statusStr, tahunAjaranStr } = getSeparatedFiltersProposal(
+    selectedFiltersPengajuan.value
+  );
   fetchPendaftarProposal(
     val,
     searchQueryPengajuan.value,
-    getSelectedStatusValue(selectedStatusesPengajuan.value)
+    statusStr,
+    tahunAjaranStr
+  );
+});
+watch(currentPageSeminar, (val) => {
+  const { statusStr, tahunAjaranStr } = getSeparatedFiltersProposal(
+    selectedFiltersSeminar.value
+  );
+  fetchSeminarProposal(
+    val,
+    searchQuerySeminar.value,
+    statusStr,
+    tahunAjaranStr
   );
 });
 </script>
@@ -346,11 +362,13 @@ watch(currentPagePendaftar, (val) => {
           <ModalFilter
             class="items-stretch flex-grow h-full md:flex-none"
             title="Status"
+            title2="Tahun Ajaran"
             :items="statuses"
-            filterType="status"
+            :items2="tahun_ajarans"
+            filterType="filter"
             @apply="handleFilterPengajuan"
-            triggerText="Status"
-            :preselectedValues="selectedStatusesPengajuan"
+            triggerText="Filter"
+            :preselectedValues="selectedFiltersPengajuan"
           />
           <SearchBar
             class="order-last md:order-none sm:min-w-[367px] items-stretch"
@@ -374,6 +392,7 @@ watch(currentPagePendaftar, (val) => {
             'NIM',
             'Nama',
             'Judul Proposal',
+            'Tahun Ajaran',
             'Tanggal Pengajuan',
             'Status',
           ]"
@@ -401,6 +420,11 @@ watch(currentPagePendaftar, (val) => {
               class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.judul_proposal }}
+            </td>
+            <td
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
+            >
+              {{ item.tahun_ajaran?.tahun_ajaran }}
             </td>
             <td
               class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
@@ -433,11 +457,13 @@ watch(currentPagePendaftar, (val) => {
           <ModalFilter
             class="flex-grow sm:flex-none"
             title="Status"
+            title2="Tahun Ajaran"
             :items="isDinilai"
-            filterType="status"
+            :items2="tahun_ajarans"
+            filterType="filter"
             @apply="handleFilterSeminar"
-            triggerText="Status"
-            :preselectedValues="selectedStatusesSeminar"
+            triggerText="Filter"
+            :preselectedValues="selectedFiltersSeminar"
           />
           <Button
             variant="outlined-secondary"
@@ -464,6 +490,7 @@ watch(currentPagePendaftar, (val) => {
             'NIM',
             'Nama',
             'Judul Proposal',
+            'Tahun Ajaran',
             'Dosen Pembimbing',
             'Nilai',
           ]"
@@ -491,6 +518,11 @@ watch(currentPagePendaftar, (val) => {
               class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.judul_proposal }}
+            </td>
+            <td
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
+            >
+              {{ item.tahun_ajaran?.tahun_ajaran }}
             </td>
             <td
               class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"

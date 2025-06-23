@@ -529,7 +529,7 @@ async function handleSaveJabatan() {
         <div v-if="loadingJabatanDosen" class="py-8">
           <Loading />
         </div>
-        <ErrorMsg v-else-if="errorJabatanDosen" :message="errorJabatanDosen" />
+        <!-- <ErrorMsg v-else-if="errorJabatanDosen" :message="errorJabatanDosen" /> -->
         <div v-else class="flex flex-wrap justify-center gap-2">
           <DosenCard
             :showButton="true"

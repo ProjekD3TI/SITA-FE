@@ -66,14 +66,6 @@ const selectedJadwalItem = ref(null);
 const selectedTahunAjaranId = ref("");
 const selectedFiltersPenjadwalan = ref([]);
 
-const dataNaskahTA = ref({});
-const dataTranskrip = ref({});
-const dataKRS = ref({});
-const dataPersetujuanPembimbing = ref({});
-const dataSertifikatKompetensi = ref({});
-const dataSertifikatTOEIC = ref({});
-const dataBeritaAcaraSemhas = ref({});
-const dataMasaPerpanjanganStudi = ref({});
 const selectedPlottingItem = ref(null);
 
 const examiners = computed(() => {
@@ -95,7 +87,7 @@ const fileSertifikatKompetensi = ref(null);
 const fileSertifikatTOEIC = ref(null);
 const fileBeritaAcaraSemhas = ref(null);
 const fileMasaPerpanjanganStudi = ref(null);
-const catatan = ref("");
+
 const modalRef2 = ref(false);
 const tempValidasi = ref({
   naskah_ta_status_valid: null,
@@ -107,28 +99,6 @@ const tempValidasi = ref({
   masa_perpanjangan_studi_status_valid: null,
   file_transkrip_status_valid: null,
 });
-
-function getUjianStatus(berkas) {
-  // Kumpulkan semua status valid dari setiap berkas
-  const statusList = [
-    berkas?.naskah_ta_status_valid,
-    berkas?.file_transkrip_status_valid,
-    berkas?.krs_status_valid,
-    berkas?.persetujuan_pembimbing_status_valid,
-    berkas?.sertifikat_kompetensi_status_valid,
-    berkas?.toeic_status_valid,
-    berkas?.berita_acara_semhas_status_valid,
-    berkas?.masa_perpanjangan_studi_status_valid,
-  ].filter((s) => s !== undefined && s !== null);
-
-  if (statusList.length === 0) return "0"; // default menunggu jika tidak ada data
-
-  if (statusList.every((s) => s === 1)) return "1"; // Semua valid
-  if (statusList.some((s) => s === 2)) return "2"; // Ada yang ditolak
-  if (statusList.every((s) => s === 0)) return "0"; // Semua menunggu
-  // Jika campuran 0 dan 1, anggap menunggu
-  return "0";
-}
 
 // Ambil status_form.is_open dari dataTabelPendaftar
 const statusForm = ref(0);
@@ -712,19 +682,6 @@ watch(currentPageTabelPenjadwalan, (val) => {
     statusValues.join(","),
     tahunAjaranValues.length > 0 ? tahunAjaranValues[0] : ""
   );
-});
-const modalFileUjianTAVisible = ref(false);
-const modalFileUjianTAHeadText = ref("");
-const modalFileUjianTABodyText = ref("");
-const modalFileUjianTAFiles = ref({
-  naskah_ta: null,
-  transkrip: null,
-  krs: null,
-  persetujuan_pembimbing: null,
-  sertifikat_kompetensi: null,
-  toeic: null,
-  berita_acara_semhas: null,
-  masa_perpanjangan_studi: null,
 });
 </script>
 

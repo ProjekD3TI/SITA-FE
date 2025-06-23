@@ -15,7 +15,8 @@ export function useTabelPlottingPembimbing() {
   const fetchPlottingPembimbing = async (
     page = 1,
     search = "",
-    kategori = ""
+    kategori = "",
+    tahun_ajaran_id = ""
   ) => {
     loadingPlotting.value = true;
     try {
@@ -28,6 +29,7 @@ export function useTabelPlottingPembimbing() {
       const params = {};
       if (search) params.search = search;
       if (kategori) params.kategori = kategori;
+      if (tahun_ajaran_id) params.tahun_ajaran_id = tahun_ajaran_id;
 
       const response = await axios.get(`/api/admin_ta/plotting?page=${page}`, {
         headers,
@@ -77,7 +79,12 @@ export function useTabelBimbingan() {
   const dataBimbingan = ref(null);
   const paginationBimbingan = ref({});
 
-  const fetchBimbingan = async (page = 1, search = "", kategori = "") => {
+  const fetchBimbingan = async (
+    page = 1,
+    search = "",
+    kategori = "",
+    tahun_ajaran_id = ""
+  ) => {
     loadingBimbingan.value = true;
     try {
       const authToken = VueCookies.get("auth_token");
@@ -89,6 +96,7 @@ export function useTabelBimbingan() {
       const params = {};
       if (search) params.search = search;
       if (kategori) params.kategori = kategori;
+      if (tahun_ajaran_id) params.tahun_ajaran_id = tahun_ajaran_id;
 
       //simulasi jeda
       // await new Promise(resolve => setTimeout(resolve, 2000));

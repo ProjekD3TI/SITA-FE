@@ -13,7 +13,12 @@ export function useTabelPendaftarProposal() {
   const errorTabelPendaftarProposal = ref(null);
   const paginationTabelPendaftarProposal = ref({});
 
-  const fetchData = async (page = 1, search = "", status = "") => {
+  const fetchData = async (
+    page = 1,
+    search = "",
+    status = "",
+    tahun_ajaran_id = ""
+  ) => {
     loadingTabelPendaftarProposal.value = true;
     try {
       const auth_token = VueCookies.get("auth_token");
@@ -25,6 +30,7 @@ export function useTabelPendaftarProposal() {
       const params = {};
       if (search) params.search = search;
       if (status) params.status_proposal = status;
+      if (tahun_ajaran_id) params.tahun_ajaran_id = tahun_ajaran_id;
       const response = await axios.get(
         `/api/admin_ta/pendaftar-proposal?page=${page}`,
         {
@@ -297,7 +303,12 @@ export function useTabelSeminarProposal() {
   const errorTabelSeminarProposal = ref(null);
   const paginationTabelSeminarProposal = ref({});
 
-  const fetchData = async (page = 1, search = "", statusNilai = "") => {
+  const fetchData = async (
+    page = 1,
+    search = "",
+    statusNilai = "",
+    tahun_ajaran_id = ""
+  ) => {
     loadingTabelSeminarProposal.value = true;
     try {
       const auth_token = VueCookies.get("auth_token");
@@ -309,6 +320,7 @@ export function useTabelSeminarProposal() {
       const params = {};
       if (search) params.search = search;
       if (statusNilai) params.status_nilai = statusNilai;
+      if (tahun_ajaran_id) params.tahun_ajaran_id = tahun_ajaran_id;
       const response = await axios.get(
         `/api/admin_ta/seminar-proposal?page=${page}`,
         {
@@ -325,13 +337,18 @@ export function useTabelSeminarProposal() {
     }
   };
 
-  const exportToExcel = async (search = "", statusNilai = "") => {
+  const exportToExcel = async (
+    search = "",
+    statusNilai = "",
+    tahun_ajaran_id = ""
+  ) => {
     try {
       const auth_token = VueCookies.get("auth_token");
       const params = new URLSearchParams();
 
       if (search) params.append("search", search);
       if (statusNilai) params.append("status_nilai", statusNilai);
+      if (tahun_ajaran_id) params.append("tahun_ajaran_id", tahun_ajaran_id);
 
       const response = await axios.get(
         `/api/admin_ta/seminar-proposal/export/excel?${params.toString()}`,

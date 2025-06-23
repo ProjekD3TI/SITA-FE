@@ -36,14 +36,8 @@ const mahasiswaData = computed(() => {
   const data = Array.isArray(dataShowPlotting.value)
     ? dataShowPlotting.value[0]
     : dataShowPlotting.value;
-  if (
-    !data ||
-    !data.mahasiswa ||
-    !Array.isArray(data.mahasiswa) ||
-    data.mahasiswa.length === 0
-  )
-    return null;
-  return data.mahasiswa[0];
+  if (!data || !data.mahasiswa || data.mahasiswa.length === 0) return null;
+  return data.mahasiswa;
 });
 
 const dosen_list = computed(() => {

@@ -39,18 +39,16 @@ onMounted(() => {
 });
 
 watch(currentPage, (val) => {
-  fetchBimbingan(
-    val,
-    searchQueryBimbingan.value,
-    getSelectedKategoriLabel(selectedCategoriesBimbingan.value || [])
+  const { kategoriStr, tahunAjaranStr } = getSeparatedFiltersPlot(
+    selectedFiltersBimbingan.value
   );
+  fetchBimbingan(val, searchQueryBimbingan.value, kategoriStr, tahunAjaranStr);
 });
 watch(currentPagePlotting, (val) => {
-  fetchPlottingPembimbing(
-    val,
-    searchQuery.value,
-    getSelectedKategoriLabel(selectedCategoriesPlot.value || [])
+  const { kategoriStr, tahunAjaranStr } = getSeparatedFiltersPlot(
+    selectedFiltersPlot.value
   );
+  fetchPlottingPembimbing(val, searchQuery.value, kategoriStr, tahunAjaranStr);
 });
 // Komputed untuk data tabel plotting pembimbing
 const tabelPlottingPembimbing = computed(() => {
@@ -66,18 +64,25 @@ const tabelBimbingan = computed(() => {
 });
 const searchQuery = ref("");
 const searchQueryBimbingan = ref("");
-const selectedCategoriesPlot = ref([]); // Untuk tab 1
-const selectedCategoriesBimbingan = ref([]); // Untuk tab 2
+const selectedFiltersPlot = ref([]); // GABUNGAN: Untuk tab 1 (Kategori & Tahun Ajaran)
+const selectedFiltersBimbingan = ref([]); // Untuk tab 2
 
 const categories = computed(() =>
   Array.isArray(dataKategori.value)
     ? dataKategori.value.map((item) => ({
-        value: item.id,
+        value: `KAT_${item.id}`,
         label: item.nama_kategori,
       }))
     : []
 );
-
+const tahun_ajarans = computed(() =>
+  Array.isArray(dataPlotting.value?.tahun_ajaran_list)
+    ? dataPlotting.value?.tahun_ajaran_list.map((item) => ({
+        value: `TA_${item.id}`,
+        label: item.tahun_ajaran,
+      }))
+    : []
+);
 // Hitung jumlah mahasiswa yang belum ada dosen pembimbing
 const notificationCount = computed(() => {
   return dataPlotting.value?.notification || 0;
@@ -114,72 +119,62 @@ function handleTabChange(tabId) {
   selectedTab.value = tabId;
   searchQueryBimbingan.value = "";
   searchQuery.value = "";
-  selectedCategoriesBimbingan.value = [];
-  selectedCategoriesPlot.value = [];
+  selectedFiltersPlot.value = []; // Menggunakan ref yang baru
+  selectedFiltersBimbingan.value = []; // Menggunakan ref yang baru
 }
 
 function onSearchPlotting({ value }) {
-  // Reset ke halaman 1 setiap kali search berubah
-  currentPage.value = 1;
-  fetchPlottingPembimbing(
-    1,
-    value,
-    getSelectedKategoriLabel(selectedCategoriesPlot.value)
+  currentPagePlotting.value = 1;
+  const { kategoriStr, tahunAjaranStr } = getSeparatedFiltersPlot(
+    selectedFiltersPlot.value
   );
+  fetchPlottingPembimbing(1, value, kategoriStr, tahunAjaranStr);
 }
 function onSearchBimbingan({ value }) {
   // Reset ke halaman 1 setiap kali search berubah
   currentPage.value = 1;
-  fetchBimbingan(
-    1,
-    value,
-    getSelectedKategoriLabel(selectedCategoriesBimbingan.value)
+  const { kategoriStr, tahunAjaranStr } = getSeparatedFiltersPlot(
+    selectedFiltersBimbingan.value
   );
+  fetchBimbingan(1, value, kategoriStr, tahunAjaranStr);
 }
-function getSelectedKategoriLabel(selectedCategories) {
-  if (selectedCategories.length > 0) {
-    // Ambil semua label kategori yang dipilih
-    const selectedLabels = selectedCategories
-      .map((catId) => {
-        const cat = categories.value.find((c) => c.value === catId);
-        return cat ? cat.label : "";
-      })
-      .filter(Boolean);
-    return selectedLabels.join(",");
-  }
-  return "";
+
+function getSeparatedFiltersPlot(values) {
+  const kategoriValues = values
+    .filter((v) => v.startsWith("KAT_"))
+    .map((v) => v.replace("KAT_", ""));
+  const tahunAjaranValues = values
+    .filter((v) => v.startsWith("TA_"))
+    .map((v) => v.replace("TA_", ""));
+  return {
+    kategoriStr: kategoriValues.join(","),
+    tahunAjaranStr: tahunAjaranValues.join(","),
+  };
 }
 // Handler filter kategori masing-masing tab
 function handleFilterPlot({ values }) {
-  selectedCategoriesPlot.value = values;
+  selectedFiltersPlot.value = values;
   currentPagePlotting.value = 1;
-  const kategoriStr = getSelectedKategoriLabel(selectedCategoriesPlot.value);
-  fetchPlottingPembimbing(1, searchQuery.value, kategoriStr);
+  const { kategoriStr, tahunAjaranStr } = getSeparatedFiltersPlot(values);
+  fetchPlottingPembimbing(1, searchQuery.value, kategoriStr, tahunAjaranStr);
 }
 
 function handleFilterBimbingan({ values }) {
-  selectedCategoriesBimbingan.value = values;
+  selectedFiltersBimbingan.value = values;
   currentPage.value = 1;
-  const kategoriStr = getSelectedKategoriLabel(
-    selectedCategoriesBimbingan.value
-  );
-  fetchBimbingan(1, searchQueryBimbingan.value, kategoriStr);
+  const { kategoriStr, tahunAjaranStr } = getSeparatedFiltersPlot(values);
+  fetchBimbingan(1, searchQueryBimbingan.value, kategoriStr, tahunAjaranStr);
 }
 
 watch(
   () => router.currentRoute.value.query.refresh,
   () => {
     currentPagePlotting.value = 1;
-    fetchPlottingPembimbing(
-      1,
-      searchQuery.value,
-      getSelectedKategoriLabel(selectedCategoriesPlot.value)
+    const { kategoriStr, tahunAjaranStr } = getSeparatedFiltersPlot(
+      selectedFiltersPlot.value
     );
-    fetchBimbingan(
-      1,
-      searchQueryBimbingan.value,
-      getSelectedKategoriLabel(selectedCategoriesBimbingan.value)
-    );
+    fetchPlottingPembimbing(1, searchQuery.value, kategoriStr, tahunAjaranStr);
+    fetchBimbingan(1, searchQueryBimbingan.value, kategoriStr, tahunAjaranStr);
   }
 );
 </script>
@@ -202,11 +197,13 @@ watch(
         >
           <ModalFilter
             title="Kategori"
+            title2="Tahun Ajaran"
             :items="categories"
-            filterType="Kategori"
+            :items2="tahun_ajarans"
+            filterType="filter"
             @apply="handleFilterPlot"
-            triggerText="Kategori"
-            :preselectedValues="selectedCategoriesPlot"
+            triggerText="Filter"
+            :preselectedValues="selectedFiltersPlot"
           />
           <SearchBar
             v-model="searchQuery"
@@ -220,7 +217,13 @@ watch(
         <ErrorMsg v-else-if="errorPlotting" :message="error" />
         <Table
           v-else
-          :headers="['NIM', 'Nama', 'Kategori', 'Dosen Pembimbing']"
+          :headers="[
+            'NIM',
+            'Nama',
+            'Kategori',
+            'Tahun Ajaran',
+            'Dosen Pembimbing',
+          ]"
           :items="tabelPlottingPembimbing"
           :pagination="paginationPlotting"
           @rowClick="handleRowClickPlot"
@@ -252,6 +255,12 @@ watch(
               {{ item.kategori?.nama_kategori }}
             </td>
 
+            <td
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
+            >
+              {{ item.tahun_ajaran?.tahun_ajaran }}
+            </td>
+
             <!-- Kolom Nilai -->
             <td
               class="px-3 py-2 border-r border-white rounded-r-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
@@ -278,11 +287,13 @@ watch(
         >
           <ModalFilter
             title="Kategori"
+            title2="Tahun Ajaran"
             :items="categories"
-            filterType="Kategori"
+            :items2="tahun_ajarans"
+            filterType="filter"
             @apply="handleFilterBimbingan"
-            triggerText="Kategori"
-            :preselectedValues="selectedCategoriesBimbingan"
+            triggerText="Filter"
+            :preselectedValues="selectedFiltersBimbingan"
           />
           <SearchBar
             v-model="searchQueryBimbingan"
@@ -301,6 +312,7 @@ watch(
             'NIM',
             'Nama',
             'Kategori',
+            'Tahun Ajaran',
             'Dosen Pembimbing',
             'Pertemuan',
           ]"
@@ -333,6 +345,11 @@ watch(
               class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.kategori?.nama_kategori }}
+            </td>
+            <td
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
+            >
+              {{ item.tahun_ajaran?.tahun_ajaran }}
             </td>
 
             <!-- Kolom Nilai -->
