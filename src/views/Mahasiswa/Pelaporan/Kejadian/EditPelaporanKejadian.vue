@@ -446,7 +446,7 @@ export default {
     },
 
     fetchCategories() {
-      return axios.get('https://v3422040.mhs.d3tiuns.com/api/category')
+      return axios.get('http://pelaporan-d3ti.my.id/api/category')
         .then(response => {
           this.categories = response.data;
           this.categoriesLoaded = true;
@@ -473,7 +473,7 @@ export default {
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           }
           
-          axios.get(`https://v3422040.mhs.d3tiuns.com/api/laporan/${this.laporanId}`)
+          axios.get(`http://pelaporan-d3ti.my.id/api/laporan/${this.laporanId}`)
             .then(response => {
               const data = response.data;
               
@@ -647,7 +647,7 @@ export default {
         return cleanPath;
       }
       
-      return `https://v3422040.mhs.d3tiuns.com/Backend-Port/backend/engine/public/storage/laporan/${cleanPath}`;
+      return `http://pelaporan-d3ti.my.id/Backend-Port/backend/engine/public/storage/laporan/${cleanPath}`;
     },
     
     handleFileUpload(event) {
@@ -906,7 +906,7 @@ export default {
         
         // Create and configure XHR
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', `https://v3422040.mhs.d3tiuns.com/api/laporan/update/${this.laporanId}`);
+        xhr.open('POST', `/api/laporan/update/${this.laporanId}`);
         
         xhr.setRequestHeader('Authorization', `Bearer ${token}`);
         

@@ -372,8 +372,8 @@ export default {
                 };
                 
                 const [categoriesResponse, laporanResponse] = await Promise.all([
-                    axios.get('https://v3422040.mhs.d3tiuns.com/api/category', config),
-                    axios.get('https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan', config)
+                    axios.get('http://pelaporan-d3ti.my.id/api/category', config),
+                    axios.get('http://pelaporan-d3ti.my.id/api/laporan_kekerasan', config)
                 ]);
                 
                 categories.value = categoriesResponse.data.reduce((acc, category) => {

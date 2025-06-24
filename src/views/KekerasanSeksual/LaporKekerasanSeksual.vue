@@ -850,7 +850,7 @@ export default {
       const xhr = new XMLHttpRequest();
       
       // Configure request
-      xhr.open('GET', 'https://v3422040.mhs.d3tiuns.com/api/category', true);
+      xhr.open('GET', 'http://pelaporan-d3ti.my.id/api/category', true);
       xhr.setRequestHeader('Content-Type', 'application/json');
       xhr.setRequestHeader('Accept', 'application/json');
       
@@ -1086,7 +1086,7 @@ export default {
       const xhr = new XMLHttpRequest();
       
       // Configure request
-      xhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan', true);
+      xhr.open('POST', '/api/laporan_kekerasan/add_laporan', true);
       
       // Set timeout (30 seconds)
       xhr.timeout = 30000;
