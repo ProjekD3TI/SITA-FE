@@ -24,7 +24,7 @@
                 <div class="laporan-number">{{ laporan.nomor_laporan }}</div>
                 <div class="action-btn-container">
                     <button 
-                        v-if="laporan && laporan.status !== 'finished'" 
+                        v-if="canEditLaporan" 
                         class="edit-button"
                         @click="goToEditLaporan"
                         title="Lengkapi atau ubah data laporan">
@@ -994,6 +994,14 @@ export default {
             }
             
             return [];
+        },
+
+        canEditLaporan() {
+            // Log the current status to help debug
+            console.log('Report status:', this.laporan ? this.laporan.status : 'no report');
+            console.log('Can edit?:', this.laporan && this.laporan.status === 'verified');
+            
+            return this.laporan && this.laporan.status === 'verified';
         }
     }
 };
