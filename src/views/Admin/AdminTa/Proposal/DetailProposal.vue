@@ -10,6 +10,7 @@ import QuillTextReader from "@/components/Tugas-akhir/Forms/QuillTextReader.vue"
 import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
 import { useRoute, useRouter } from "vue-router";
+import { useToast } from "vue-toastification";
 import { useShowSeminarProposal } from "@/services/TugasAkhir/Admin/proposal.js";
 
 const {
@@ -22,6 +23,7 @@ const {
 
 const pdfBlobUrl = ref("");
 const loadingPdf = ref(false);
+const toast = useToast();
 
 const nilai_proposal = computed(() => {
   return dataSeminarProposal.value?.nilai_proposal || "Tidak ada catatan";
@@ -38,28 +40,35 @@ const nimMahasiswa = computed(() => {
 const judulProposal = computed(() => {
   return dataSeminarProposal.value?.judul_proposal || "Tidak diketahui";
 });
-// Panggil saat dataSeminarProposal berubah
+
 const route = useRoute();
 const router = useRouter();
+
 onMounted(() => {
   if (route.params.proposal_id) {
     fetchData(route.params.proposal_id);
   }
-
-  // Tambahkan watch pada route query untuk refresh data
-  watch(
-    () => route.query.refresh,
-    (newValue) => {
-      if (newValue && route.params.proposal_id) {
-        // console.log("Refreshing data after nilai update...");
-        fetchData(route.params.proposal_id);
-        // --- TAMBAHKAN BARIS INI ---
-        // Hapus query parameter dari URL setelah selesai refresh
-        router.replace({ path: route.path });
-      }
-    }
-  );
 });
+
+// Tambahkan watch untuk error
+watch(errorSeminarProposal, (error) => {
+  if (error) {
+    // toast.error("Terjadi kesalahan: " + error);
+    router.replace({ name: "ProposalforAdmin" });
+  }
+});
+
+// Tambahkan watch pada route query untuk refresh data
+watch(
+  () => route.query.refresh,
+  (newValue) => {
+    if (newValue && route.params.proposal_id) {
+      fetchData(route.params.proposal_id);
+      // Hapus query parameter dari URL setelah selesai refresh
+      router.replace({ path: route.path });
+    }
+  }
+);
 
 const showNilaiModal = ref(false);
 
@@ -100,7 +109,12 @@ async function loadPdfPreview() {
   loadingPdf.value = true;
   const url = berkasObj.value["Naskah Proposal Tugas Akhir"]?.download_url;
   if (url) {
-    pdfBlobUrl.value = await getSecureFileBlobUrl(url);
+    try {
+      pdfBlobUrl.value = await getSecureFileBlobUrl(url);
+    } catch (error) {
+      toast.error("Gagal memuat file PDF");
+      pdfBlobUrl.value = "";
+    }
   }
   loadingPdf.value = false;
 }

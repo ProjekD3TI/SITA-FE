@@ -121,7 +121,7 @@ const textColorClass = computed(() => {
 const sizeClass = computed(() => {
   switch (props.size) {
     case "sm":
-      return "body5-bold px-3 py-1";
+      return "body5 px-3 py-1";
     case "lg":
       return "body3-bold px-5 py-2";
     case "xl":

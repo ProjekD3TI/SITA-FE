@@ -36,6 +36,7 @@ const showAllDates = ref(false);
 const availableDates = ref([]);
 const availableRuang = ref([]);
 const availableSesi = ref([]);
+const hasRedirected = ref(false);
 
 // Tambahkan computed untuk available dates sebagai array string
 const availableDateStrings = computed(() =>
@@ -200,6 +201,14 @@ onMounted(() => {
     fetchShowPenjadwalan(route.params.tugas_akhir_id);
   }
 });
+// Tambahkan watcher untuk errorShowPenjadwalan
+watch(errorShowPenjadwalan, (error) => {
+  if (error && !hasRedirected.value) {
+    hasRedirected.value = true;
+    // toast.error("Terjadi kesalahan: " + error);
+    router.replace({ name: "UjianTAforAdmin" });
+  }
+});
 
 // Watch untuk perubahan selection
 watch(
@@ -301,7 +310,7 @@ watch(selectedTanggal, (newDate) => {
   </div>
 
   <div v-else-if="errorShowPenjadwalan" class="p-4">
-    <ErrorMsg :message="errorShowPenjadwalan" />
+    <ErrorMsg :msg="errorShowPenjadwalan" />
   </div>
   <div v-else>
     <Breadcrumb />

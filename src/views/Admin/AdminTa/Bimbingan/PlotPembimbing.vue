@@ -27,7 +27,22 @@ const {
 
 onMounted(() => {
   if (route.params.tugas_akhir_id) {
-    fetchData(route.params.tugas_akhir_id);
+    fetchData(route.params.tugas_akhir_id).catch(() => {
+      // Jika fetch gagal, kembali ke halaman bimbingan
+      toast.error("Gagal memuat data plotting pembimbing");
+      router.replace({ name: "BimbinganforAdmin" });
+    });
+  } else {
+    // Jika tidak ada ID, kembali ke halaman bimbingan
+    router.replace({ name: "BimbinganforAdmin" });
+  }
+});
+
+// Pantau error dan redirect jika terjadi error
+watch(errorShowPlotting, (error) => {
+  if (error) {
+    // toast.error("Terjadi kesalahan: " + error);
+    router.replace({ name: "BimbinganforAdmin" });
   }
 });
 

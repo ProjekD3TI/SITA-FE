@@ -1,11 +1,11 @@
 <template>
   <div class="relative flex-grow">
     <div
-      class="absolute top-2 sm:top-2.5 left-0 flex items-center pl-3 pointer-events-none"
+      class="absolute left-0 flex items-center pl-3 pointer-events-none top-2 sm:top-[9px]"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        class="w-5 h-5 sm:w-6 sm:h-6 text-placeholder"
+        class="w-4 h-4 sm:w-5 sm:h-5 text-placeholder"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -23,16 +23,16 @@
       :placeholder="placeholder"
       :value="modelValue"
       @input="handleInput"
-      class="w-full py-2 pl-10 pr-4 border border-placeholder input-rounded sm:py-2.5 body5 sm:body4"
+      class="w-full py-1.5 pl-8 sm:pl-10 pr-4 border border-placeholder input-rounded sm:py-2 body5 sm:body4"
     />
     <div
       v-if="showClearButton && modelValue"
-      class="absolute cursor-pointer top-3 right-3"
+      class="absolute cursor-pointer top-1.5 sm:top-2 right-3"
       @click="clearSearch"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        class="w-6 h-6 text-placeholder hover:text-secondary"
+        class="w-5 h-5 sm:w-6 sm:h-6 text-placeholder hover:text-secondary"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"

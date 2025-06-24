@@ -165,7 +165,7 @@ watch(currentPage, (val) => {
 });
 </script>
 <template>
-  <Breadcrumb />
+  <!-- <Breadcrumb /> -->
   <div class="p-4 bg-white card-rounded shadow-custom lg:p-6">
     <div class="flex items-center justify-between gap-2 mb-2 sm:mb-4 lg:gap-4">
       <ModalFilter
@@ -238,16 +238,16 @@ watch(currentPage, (val) => {
 
         <!-- Kolom Nilai -->
         <td
-          class="px-3 py-2 border-r border-white rounded-r-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
+          class="px-3 py-2 border-r border-white rounded-r-lg sm:py-2 sm:px-6 body5 sm:body4 text-blackText"
         >
           <StatusLabel
-            class="hidden w-fit lg:block"
+            class="hidden w-fit 2xl:block"
             :status="getStatusClass(item.status_aktif)"
             size="md"
             :label="getStatusLabel(item.status_aktif)"
           />
           <StatusLabel
-            class="block w-fit lg:hidden"
+            class="block w-fit 2xl:hidden"
             :status="getStatusClass(item.status_aktif)"
             size="sm"
             :label="getStatusLabel(item.status_aktif)"

@@ -25,6 +25,7 @@ const {
 
 const timerModalRef = ref(null);
 const catatan = ref("");
+const hasRedirected = ref(false);
 
 function getFileName(filePath) {
   return filePath ? decodeURIComponent(filePath.split("/").pop()) : "";
@@ -32,6 +33,15 @@ function getFileName(filePath) {
 onMounted(() => {
   if (route.params.tugas_akhir_id) {
     fetchShowPendaftar(route.params.tugas_akhir_id);
+  }
+});
+
+// Tambahkan watcher untuk errorShowPendaftar
+watch(errorShowPendaftar, (error) => {
+  if (error && !hasRedirected.value) {
+    hasRedirected.value = true;
+    // toast.error("Terjadi kesalahan: " + error);
+    router.replace({ name: "UjianTAforAdmin" });
   }
 });
 

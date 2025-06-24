@@ -9,7 +9,9 @@ import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
 import { ref, computed, reactive, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useToast } from "vue-toastification";
 import { useShowProposal } from "@/services/TugasAkhir/Admin/proposal.js";
+
 const {
   loadingProposal,
   errorProposal,
@@ -26,10 +28,25 @@ const router = useRouter();
 const modalRef = ref(false);
 const timerModalRef = ref(null);
 const route = useRoute();
+const toast = useToast();
 
 onMounted(() => {
   if (route.params.proposal_id) {
-    fetchData(route.params.proposal_id);
+    fetchData(route.params.proposal_id).catch((error) => {
+      // toast.error("Gagal memuat data pengajuan proposal");
+      router.replace({ name: "ProposalforAdmin" });
+    });
+  } else {
+    // Jika tidak ada ID, kembali ke halaman proposal
+    router.replace({ name: "ProposalforAdmin" });
+  }
+});
+
+// Tambahkan watch untuk error
+watch(errorProposal, (error) => {
+  if (error) {
+    // toast.error("Terjadi kesalahan: " + error);
+    router.replace({ name: "ProposalforAdmin" });
   }
 });
 
@@ -99,30 +116,34 @@ const handleValidasi = () => {
 };
 
 const handleSubmitValidasi = async () => {
-  // Ambil status radio dari ref
-  const naskahStatus = naskahRef.value.localValue;
-  const transkripStatus = transkripRef.value.localValue;
-  const statusValidBerkas = [Number(naskahStatus), Number(transkripStatus)];
+  try {
+    // Ambil status radio dari ref
+    const naskahStatus = naskahRef.value.localValue;
+    const transkripStatus = transkripRef.value.localValue;
+    const statusValidBerkas = [Number(naskahStatus), Number(transkripStatus)];
 
-  if (
-    ![1, 2].includes(Number(naskahStatus)) ||
-    ![1, 2].includes(Number(transkripStatus))
-  ) {
-    toast.error("Status validasi harus dipilih untuk kedua berkas.");
-    return;
+    if (
+      ![1, 2].includes(Number(naskahStatus)) ||
+      ![1, 2].includes(Number(transkripStatus))
+    ) {
+      toast.error("Status validasi harus dipilih untuk kedua berkas.");
+      return;
+    }
+    // Submit ke backend
+    await validateProposal(
+      dataProposal.value.proposal_id,
+      statusValidBerkas,
+      catatan.value
+    );
+
+    // Tutup modal
+    modalRef.value = false;
+
+    // Redirect ke halaman proposal
+    router.replace({ name: "ProposalforAdmin" });
+  } catch (error) {
+    toast.error("Gagal memvalidasi proposal: " + error.message);
   }
-  // Submit ke backend
-  await validateProposal(
-    dataProposal.value.proposal_id,
-    statusValidBerkas,
-    catatan.value
-  );
-
-  // Tutup modal
-  modalRef.value = false;
-
-  // Redirect ke halaman proposal
-  router.push({ name: "ProposalforAdmin" });
 };
 
 watch(

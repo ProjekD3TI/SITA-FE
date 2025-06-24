@@ -331,7 +331,64 @@ const modalTimerBodyText = computed(() => {
 onMounted(() => {
   fetchPendaftarProposal(currentPagePendaftar.value);
   fetchSeminarProposal(currentPageSeminar.value);
+  // Jika ada parameter 'error' dari hasil redirect
+  if (route.query.error) {
+    const errorMessage = route.query.message || "Terjadi kesalahan";
+    // toast.error(errorMessage);
+
+    // Hapus parameter error dari URL
+    const newQuery = { ...route.query };
+    delete newQuery.error;
+    delete newQuery.message;
+
+    router.replace({
+      name: route.name,
+      params: route.params,
+      query: newQuery,
+    });
+  }
 });
+
+// Tambahkan watch untuk membersihkan query refresh
+watch(
+  () => route.query.refresh,
+  (refreshValue) => {
+    if (refreshValue) {
+      // Ambil data baru berdasarkan tab aktif
+      if (selectedTab.value === 1) {
+        const { statusStr, tahunAjaranStr } = getSeparatedFiltersProposal(
+          selectedFiltersPengajuan.value
+        );
+        fetchPendaftarProposal(
+          currentPagePendaftar.value,
+          searchQueryPengajuan.value,
+          statusStr,
+          tahunAjaranStr
+        );
+      } else if (selectedTab.value === 2) {
+        const { statusStr, tahunAjaranStr } = getSeparatedFiltersProposal(
+          selectedFiltersSeminar.value
+        );
+        fetchSeminarProposal(
+          currentPageSeminar.value,
+          searchQuerySeminar.value,
+          statusStr,
+          tahunAjaranStr
+        );
+      }
+
+      // Hapus parameter 'refresh' dari URL tanpa memicu navigasi baru
+      const newQuery = { ...route.query };
+      delete newQuery.refresh;
+
+      router.replace({
+        name: route.name,
+        params: route.params,
+        query: newQuery,
+      });
+    }
+  }
+);
 
 watch(currentPagePendaftar, (val) => {
   const { statusStr, tahunAjaranStr } = getSeparatedFiltersProposal(
@@ -362,7 +419,7 @@ watch(currentPageSeminar, (val) => {
     v-else-if="$route.path.includes('detail-proposal')"
   ></router-view>
   <div v-else>
-    <Breadcrumb />
+    <!-- <Breadcrumb /> -->
     <TabDiv :tabs="tabs" :use-named-slots="true" @tab-changed="handleTabChange">
       <template #1>
         <div
@@ -401,8 +458,8 @@ watch(currentPageSeminar, (val) => {
             'NIM',
             'Nama',
             'Judul Proposal',
-            'Tahun Ajaran',
             'Tanggal Pengajuan',
+            'Tahun Ajaran',
             'Status',
           ]"
           :items="listPendaftarProposal"
@@ -433,24 +490,25 @@ watch(currentPageSeminar, (val) => {
             <td
               class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.tahun_ajaran?.tahun_ajaran }}
+              {{ item.tanggal_pengajuan }}
             </td>
             <td
               class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.tanggal_pengajuan }}
+              {{ item.tahun_ajaran?.tahun_ajaran }}
             </td>
+
             <td
-              class="px-3 py-2 border-r border-white rounded-r-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white rounded-r-lg sm:py-2 sm:px-6 body5 sm:body4 text-blackText"
             >
               <StatusLabel
-                class="hidden w-fit lg:block"
+                class="hidden w-fit 2xl:block"
                 :status="getStatusClass(item.status_proposal)"
                 size="md"
                 :label="getStatusLabel(item.status_proposal)"
               />
               <StatusLabel
-                class="block w-fit lg:hidden"
+                class="block w-fit 2xl:hidden"
                 :status="getStatusClass(item.status_proposal)"
                 size="sm"
                 :label="getStatusLabel(item.status_proposal)"

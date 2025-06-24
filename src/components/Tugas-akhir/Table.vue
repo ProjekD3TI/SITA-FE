@@ -9,7 +9,7 @@
             <!-- Checkbox Header -->
             <th
               v-if="showCheckbox"
-              class="w-10 text-center border-r rounded-l-lg accent-cyan-800"
+              class="w-10 pt-2 text-center border-r rounded-l-lg sm:pt-1.5 accent-cyan-800"
             >
               <input
                 type="checkbox"

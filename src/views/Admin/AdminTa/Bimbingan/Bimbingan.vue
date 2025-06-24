@@ -178,15 +178,59 @@ function handleFilterBimbingan({ values }) {
 
 watch(
   () => router.currentRoute.value.query.refresh,
-  () => {
-    currentPagePlotting.value = 1;
-    const { kategoriStr, tahunAjaranStr } = getSeparatedFiltersPlot(
-      selectedFiltersPlot.value
-    );
-    fetchPlottingPembimbing(1, searchQuery.value, kategoriStr, tahunAjaranStr);
-    fetchBimbingan(1, searchQueryBimbingan.value, kategoriStr, tahunAjaranStr);
+  (refreshValue) => {
+    if (refreshValue) {
+      // Ambil data baru
+      currentPagePlotting.value = 1;
+      const { kategoriStr, tahunAjaranStr } = getSeparatedFiltersPlot(
+        selectedFiltersPlot.value
+      );
+      fetchPlottingPembimbing(
+        1,
+        searchQuery.value,
+        kategoriStr,
+        tahunAjaranStr
+      );
+      fetchBimbingan(
+        1,
+        searchQueryBimbingan.value,
+        kategoriStr,
+        tahunAjaranStr
+      );
+
+      // Hapus parameter 'refresh' dari URL tanpa memicu navigasi baru
+      const newQuery = { ...router.currentRoute.value.query };
+      delete newQuery.refresh;
+
+      router.replace({
+        name: router.currentRoute.value.name,
+        params: router.currentRoute.value.params,
+        query: newQuery,
+      });
+    }
   }
 );
+
+// Handler untuk kesalahan sub-routes yang redirect kembali ke halaman ini
+onMounted(() => {
+  // Jika ada parameter 'error' dari hasil redirect
+  if (router.currentRoute.value.query.error) {
+    const errorMessage =
+      router.currentRoute.value.query.message || "Terjadi kesalahan";
+    toast.error(errorMessage);
+
+    // Hapus parameter error dari URL
+    const newQuery = { ...router.currentRoute.value.query };
+    delete newQuery.error;
+    delete newQuery.message;
+
+    router.replace({
+      name: router.currentRoute.value.name,
+      params: router.currentRoute.value.params,
+      query: newQuery,
+    });
+  }
+});
 </script>
 <template>
   <router-view v-if="$route.path.includes('plot-pembimbing')"></router-view>
@@ -194,7 +238,7 @@ watch(
     v-else-if="$route.path.includes('detail-bimbingan')"
   ></router-view>
   <div v-else>
-    <Breadcrumb />
+    <!-- <Breadcrumb /> -->
     <TabDiv
       :tabs="tabs"
       :use-named-slots="true"

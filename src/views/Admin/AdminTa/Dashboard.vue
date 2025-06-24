@@ -139,7 +139,7 @@ watch(data, (val) => {
     <ErrorMsg :message="error" />
   </div>
   <div v-else>
-    <Breadcrumb />
+    <!-- <Breadcrumb /> -->
     <!-- Status card & Summary Cards -->
     <div class="grid grid-cols-1 gap-2 sm:gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <!-- Summary Cards -->

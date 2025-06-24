@@ -3,6 +3,7 @@ import { ref, computed, onMounted, nextTick, watch } from "vue";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputDropdown from "@/components/Tugas-akhir/Forms/InputDropdown.vue";
+import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import UserData from "@/components/Tugas-akhir/UserData.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import StatusLabel from "@/components/Tugas-akhir/Label.vue";
@@ -533,13 +534,18 @@ watch(
           :modelValue="dataNilaiBimbingan?.rerata_bimbingan"
           :disabled="true"
         />
+        <InputTextarea
+          id="catatan-nilai"
+          class="flex-grow mt-4"
+          label="Catatan"
+          :modelValue="dataNilaiBimbingan?.catatan_akhir_bimbingan"
+          :disabled="true"
+        />
       </DefaultModal>
       <ModalDetailBimbingan
         ref="modalDetailRef"
         v-if="showBimbinganModal && selectedBimbingan"
-        :bimbinganKe="
-          paginationBimbingan?.total - selectedBimbingan.rowNumber + 1
-        "
+        :bimbinganKe="selectedBimbingan.bimbingan_ke"
         :tanggalBimbingan="selectedBimbingan.tanggal_bimbingan"
         :bab="selectedBimbingan.bab"
         :catatan="selectedBimbingan.catatan"

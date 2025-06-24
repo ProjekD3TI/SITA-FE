@@ -28,10 +28,20 @@ const {
 const selectedKetuaPenguji = ref("");
 const selectedPenguji = ref("");
 const selectedSekretarisPenguji = ref("");
+const hasRedirected = ref(false);
 
 onMounted(() => {
   if (route.params.tugas_akhir_id) {
     fetchShowPlottingPenguji(route.params.tugas_akhir_id);
+  }
+});
+
+// Tambahkan watcher untuk errorShowPlottingPenguji
+watch(errorShowPlottingPenguji, (error) => {
+  if (error && !hasRedirected.value) {
+    hasRedirected.value = true;
+    // toast.error("Terjadi kesalahan: " + error);
+    router.replace({ name: "UjianTAforAdmin" });
   }
 });
 

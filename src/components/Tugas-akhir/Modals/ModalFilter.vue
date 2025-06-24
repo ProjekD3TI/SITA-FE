@@ -3,7 +3,7 @@
     <!-- Tombol untuk mobile -->
     <ButtonPrimary
       size="sm"
-      class="w-full py-2 font-normal sm:hidden"
+      class="w-full py-1.5 font-normal sm:hidden"
       ref="triggerMobileRef"
       v-if="showTrigger"
       @click="toggleModal"
@@ -23,7 +23,7 @@
     <!-- Tombol untuk desktop -->
     <ButtonPrimary
       size="md"
-      class="hidden w-full font-normal sm:py-2.5 sm:flex"
+      class="hidden w-full font-normal sm:py-2 sm:flex"
       ref="triggerDesktopRef"
       v-if="showTrigger"
       @click="toggleModal"

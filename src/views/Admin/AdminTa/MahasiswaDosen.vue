@@ -103,8 +103,8 @@ const selectedStatusesDosen = ref([]);
 const tableHeadersMahasiswa = [
   "Nama Lengkap",
   "NIM",
-  "Angkatan",
   "Email",
+  "Angkatan",
   "Status",
 ];
 const tableHeadersDosen = ["Nama Lengkap", "NIK", "Email", "Status"];
@@ -372,7 +372,7 @@ async function handleSaveJabatan() {
 </script>
 
 <template>
-  <Breadcrumb />
+  <!-- <Breadcrumb /> -->
 
   <TabDiv
     :tabs="tabs"
@@ -424,28 +424,29 @@ async function handleSaveJabatan() {
         "
       >
         <template #row="{ item }">
-          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
+          <td class="px-3 py-2 sm:py-2.5 sm:px-6 body5 sm:body4 text-blackText">
             {{ item.name }}
           </td>
-          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
+          <td class="px-3 py-2 sm:py-2.5 sm:px-6 body5 sm:body4 text-blackText">
             {{ item.nim }}
           </td>
-          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
-            {{ item.angkatan }}
-          </td>
-          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
+          <td class="px-3 py-2 sm:py-2.5 sm:px-6 body5 sm:body4 text-blackText">
             {{ item.email }}
           </td>
-          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
+          <td class="px-3 py-2 sm:py-2.5 sm:px-6 body5 sm:body4 text-blackText">
+            {{ item.angkatan }}
+          </td>
+
+          <td class="px-3 py-2 sm:py-2 sm:px-6 body5 sm:body4 text-blackText">
             <StatusLabel
-              class="w-fit sm:hidden"
+              class="w-fit 2xl:hidden"
               :status="getStatusClass(item.akses_ta)"
               :label="getStatusLabel(item.akses_ta)"
               :customLabel="true"
               size="sm"
             />
             <StatusLabel
-              class="hidden w-fit sm:flex"
+              class="hidden w-fit 2xl:flex"
               :status="getStatusClass(item.akses_ta)"
               :label="getStatusLabel(item.akses_ta)"
               :customLabel="true"
@@ -493,25 +494,25 @@ async function handleSaveJabatan() {
         "
       >
         <template #row="{ item }">
-          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
+          <td class="px-3 py-2 sm:py-2.5 sm:px-6 body5 sm:body4 text-blackText">
             {{ item.name }}
           </td>
-          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
+          <td class="px-3 py-2 sm:py-2.5 sm:px-6 body5 sm:body4 text-blackText">
             {{ item.nik }}
           </td>
-          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
+          <td class="px-3 py-2 sm:py-2.5 sm:px-6 body5 sm:body4 text-blackText">
             {{ item.email }}
           </td>
-          <td class="px-3 py-2 sm:py-3 sm:px-6 body5 sm:body4 text-blackText">
+          <td class="px-3 py-2 sm:py-2 sm:px-6 body5 sm:body4 text-blackText">
             <StatusLabel
-              class="w-fit sm:hidden"
+              class="w-fit 2xl:hidden"
               :status="getStatusClass(item.akses_ta)"
               :label="getStatusLabel(item.akses_ta)"
               :customLabel="true"
               size="sm"
             />
             <StatusLabel
-              class="hidden w-fit sm:flex"
+              class="hidden w-fit 2xl:flex"
               :status="getStatusClass(item.akses_ta)"
               :label="getStatusLabel(item.akses_ta)"
               :customLabel="true"

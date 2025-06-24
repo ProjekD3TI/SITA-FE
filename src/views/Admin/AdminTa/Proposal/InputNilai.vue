@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
@@ -24,6 +24,7 @@ const toast = useToast();
 const nilaiInput = ref("");
 const catatanInput = ref("");
 const isSubmitting = ref(false);
+const hasRedirected = ref(false);
 
 const route = useRoute();
 const router = useRouter();
@@ -49,21 +50,29 @@ const isUpdateMode = computed(
 );
 
 onMounted(async () => {
-  if (route.params.proposal_id) {
-    try {
-      await fetchData(route.params.proposal_id);
-
-      // Isi form dengan nilai yang sudah ada jika mode update
-      if (isUpdateMode.value) {
-        nilaiInput.value = dataSeminarProposal.value.nilai_proposal;
-        catatanInput.value = dataSeminarProposal.value.catatan_proposal;
-      }
-    } catch (error) {
-      toast.error("Gagal memuat data proposal");
-      console.error("Error fetching proposal:", error);
+  if (!route.params.proposal_id) {
+    if (!hasRedirected.value) {
+      hasRedirected.value = true;
+      // Hindari menampilkan toast di sini, biarkan proposal.js yang menanganinya
+      router.replace({ name: "ProposalforAdmin" });
     }
-  } else {
-    toast.error("ID Proposal tidak ditemukan");
+    return;
+  }
+
+  try {
+    await fetchData(route.params.proposal_id);
+
+    // Isi form dengan nilai yang sudah ada jika mode update
+    if (isUpdateMode.value) {
+      nilaiInput.value = dataSeminarProposal.value.nilai_proposal;
+      catatanInput.value = dataSeminarProposal.value.catatan_proposal;
+    }
+  } catch (error) {
+    // Jangan tampilkan toast di sini - hindari duplikasi
+    if (!hasRedirected.value) {
+      hasRedirected.value = true;
+      router.replace({ name: "ProposalforAdmin" });
+    }
   }
 });
 
@@ -123,29 +132,8 @@ const submitNilai = async () => {
 // Fungsi update adalah sama dengan submit karena menggunakan endpoint yang sama
 // tapi dibuat terpisah untuk kejelasan kode
 const updateNilai = async () => {
-  if (!validateInput()) return;
-
-  isSubmitting.value = true;
-  try {
-    await inputNilaiProposal(
-      route.params.proposal_id,
-      nilaiInput.value,
-      catatanInput.value
-    );
-    toast.success("Nilai proposal berhasil diperbarui");
-
-    // Redirect ke halaman detail proposal dengan query refresh=true
-    router.push({
-      name: "DetailProposalForAdmin",
-      params: { proposal_id: route.params.proposal_id },
-      query: { refresh: Date.now().toString() }, // Tambahkan timestamp untuk memastikan refresh
-    });
-  } catch (error) {
-    toast.error("Gagal memperbarui nilai proposal");
-    console.error("Error updating nilai:", error);
-  } finally {
-    isSubmitting.value = false;
-  }
+  // Gunakan fungsi yang sama dengan submitNilai untuk konsistensi
+  submitNilai();
 };
 </script>
 
@@ -157,7 +145,7 @@ const updateNilai = async () => {
     <Loading />
   </div>
   <div v-else-if="errorSeminarProposal" class="p-4">
-    <ErrorMsg :message="errorSeminarProposal" />
+    <ErrorMsg :msg="errorSeminarProposal" />
   </div>
   <div v-else>
     <Breadcrumb />

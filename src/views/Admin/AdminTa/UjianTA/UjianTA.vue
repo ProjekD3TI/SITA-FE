@@ -731,7 +731,7 @@ watch(
   <router-view v-else-if="$route.path.includes('penjadwalan')"></router-view>
 
   <div v-else>
-    <Breadcrumb />
+    <!-- <Breadcrumb /> -->
 
     <TabDiv
       :tabs="tabs"
@@ -809,10 +809,10 @@ watch(
               {{ item.dosen_pembimbing }}
             </td>
             <td
-              class="px-3 py-2 border-r border-white rounded-r-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white rounded-r-lg sm:py-2 sm:px-6 body5 sm:body4 text-blackText"
             >
               <StatusLabel
-                class="hidden w-fit lg:block"
+                class="hidden w-fit 2xl:block"
                 :status="
                   getStatusClass(
                     Array.isArray(item.dosen_penguji) &&
@@ -832,7 +832,7 @@ watch(
                 "
               />
               <StatusLabel
-                class="block w-fit lg:hidden"
+                class="block w-fit 2xl:hidden"
                 :status="
                   getStatusClass(
                     Array.isArray(item.dosen_penguji) &&
@@ -932,16 +932,16 @@ watch(
               {{ item.dosen_pembimbing?.name }}
             </td>
             <td
-              class="px-3 py-2 border-r border-white rounded-r-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white rounded-r-lg sm:py-2 sm:px-6 body5 sm:body4 text-blackText"
             >
               <StatusLabel
-                class="hidden w-fit lg:block"
+                class="hidden w-fit 2xl:block"
                 :status="getStatusClass(item.status_valid)"
                 size="md"
                 :label="getStatusLabelPendaftar(item.status_valid)"
               />
               <StatusLabel
-                class="block w-fit lg:hidden"
+                class="block w-fit 2xl:hidden"
                 :status="getStatusClass(item.status_valid)"
                 size="sm"
                 :label="getStatusLabelPendaftar(item.status_valid)"
@@ -990,8 +990,8 @@ watch(
             'NIM',
             'Nama',
             'Judul Tugas Akhir',
-            'Tahun Ajaran',
             'Tanggal',
+            'Tahun Ajaran',
             'Nilai Akhir',
             'Status',
           ]"
@@ -1024,12 +1024,12 @@ watch(
             <td
               class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.ujian_ta?.tahun_ajaran || "-" }}
+              {{ item.ujian_ta?.tanggal_ujian || "-" }}
             </td>
             <td
               class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
-              {{ item.ujian_ta?.tanggal_ujian || "-" }}
+              {{ item.ujian_ta?.tahun_ajaran || "-" }}
             </td>
             <td
               class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
@@ -1037,17 +1037,17 @@ watch(
               {{ item.nilai_akhir || "-" }}
             </td>
             <td
-              class="px-3 py-2 border-r border-white rounded-r-lg sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
+              class="px-3 py-2 border-r border-white rounded-r-lg sm:py-2 sm:px-6 body5 sm:body4 text-blackText"
             >
               <div>
                 <StatusLabel
-                  class="hidden w-fit lg:block"
+                  class="hidden w-fit 2xl:block"
                   :status="getStatusClassBeritaAcara(item.status_kategori)"
                   size="md"
                   :label="getStatusLabelBeritaAcara(item.status_kategori)"
                 />
                 <StatusLabel
-                  class="block w-fit lg:hidden"
+                  class="block w-fit xl:hidden"
                   :status="getStatusClassBeritaAcara(item.status_kategori)"
                   size="sm"
                   :label="getStatusLabelBeritaAcara(item.status_kategori)"

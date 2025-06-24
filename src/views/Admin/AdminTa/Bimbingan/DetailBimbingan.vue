@@ -8,12 +8,18 @@ import StatusLabel from "@/components/Tugas-akhir/Label.vue";
 import UserData from "@/components/Tugas-akhir/UserData.vue";
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
+import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Tooltip from "@/components/Tugas-akhir/Tooltip.vue";
 import ModalDetailBimbingan from "@/components/Tugas-akhir/Modals/ModalDetailBimbingan.vue";
 import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
+import { useToast } from "vue-toastification";
 import { useShowBimbingan } from "@/services/TugasAkhir/Admin/bimbingan.js";
+
+const route = useRoute();
+const router = useRouter();
+const toast = useToast();
 const {
   dataShowBimbingan,
   fetchData,
@@ -22,17 +28,31 @@ const {
   paginationShowBimbingan,
 } = useShowBimbingan();
 
-const route = useRoute();
 const currentPageNum = ref(1);
 
 // Fungsi untuk fetch data dengan parameter yang benar
 const loadData = () => {
   if (route.params.tugas_akhir_id) {
-    fetchData(route.params.tugas_akhir_id, currentPageNum.value);
+    fetchData(route.params.tugas_akhir_id, currentPageNum.value).catch(() => {
+      // Jika fetch gagal, kembali ke halaman bimbingan
+      toast.error("Gagal memuat data bimbingan");
+      router.replace({ name: "BimbinganforAdmin" });
+    });
+  } else {
+    // Jika tidak ada ID, kembali ke halaman bimbingan
+    router.replace({ name: "BimbinganforAdmin" });
   }
 };
 
 onMounted(loadData);
+
+// Pantau error dan redirect jika terjadi error
+watch(errorShowBimbingan, (error) => {
+  if (error) {
+    // toast.error("Terjadi kesalahan: " + error);
+    router.replace({ name: "BimbinganforAdmin" });
+  }
+});
 
 // Watch hanya untuk perubahan halaman setelah mounted
 watch(currentPageNum, (newPage, oldPage) => {
@@ -94,7 +114,6 @@ function getStatusLabel(status) {
 const highestChapter = computed(() => {
   return dataShowBimbingan.value?.bab_tertinggi || 0;
 });
-const totalBimbingan = computed(() => listBimbingan.value.length);
 const buttonClasses = computed(() => {
   return dinilai.value ? "opacity-100" : "opacity-50";
 });
@@ -327,14 +346,19 @@ const numberedBimbingan = computed(() => {
       :modelValue="dataShowBimbingan?.nilai_bimbingan?.rerata_bimbingan"
       :disabled="true"
     />
+    <InputTextarea
+      id="catatan"
+      class="mt-4"
+      label="Catatan Dosen Pembimbing"
+      :modelValue="dataShowBimbingan?.nilai_bimbingan?.catatan"
+      :disabled="true"
+    />
   </DefaultModal>
 
   <ModalDetailBimbingan
     ref="modalDetailRef"
     v-if="showBimbinganModal && selectedBimbingan"
-    :bimbinganKe="
-      paginationShowBimbingan?.total - selectedBimbingan.rowNumber + 1
-    "
+    :bimbinganKe="selectedBimbingan.bimbingan_ke"
     :tanggalBimbingan="selectedBimbingan.tanggal_bimbingan"
     :bab="selectedBimbingan.bab"
     :catatan="selectedBimbingan.catatan"
