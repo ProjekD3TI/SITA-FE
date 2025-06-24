@@ -103,24 +103,29 @@
           </div>
           
           <div class="form-group">
-            <label for="image_path">Lampiran Foto</label>
-            <div class="custom-file-upload">
-              <input 
-                type="file" 
-                id="image_path" 
-                @change="handleFileUpload" 
-                multiple 
-                accept="image/*"
-              >
-              <small>Anda dapat memilih beberapa file gambar sekaligus.</small>
-            </div>
-            
-            <div v-if="imagePreviews.length > 0" class="image-previews">
-              <div v-for="(preview, index) in imagePreviews" :key="index" class="image-preview-container">
-                <img :src="preview" alt="Preview" class="image-preview">
-                <button type="button" class="remove-image" @click="removeImage(index)">&times;</button>
+              <label for="image_path">Lampiran Foto</label>
+              <div class="custom-file-upload">
+                  <input 
+                      type="file" 
+                      id="image_path" 
+                      @change="handleFileUpload" 
+                      multiple 
+                      accept="image/*"
+                  >
+                  <small>Anda dapat memilih beberapa file gambar sekaligus.</small>
               </div>
-            </div>
+              
+              <div v-if="imagePreviews.length > 0" class="image-previews">
+                  <div v-for="(preview, index) in imagePreviews" :key="index" class="image-preview-container">
+                      <img 
+                          :src="preview" 
+                          alt="Preview" 
+                          class="image-preview"
+                          @error="handleLaporanImageError"
+                      >
+                      <button type="button" class="remove-image" @click="removeImage(index)">&times;</button>
+                  </div>
+              </div>
           </div>
           
           <!-- Terlapor Section -->
@@ -668,6 +673,23 @@ export default {
         };
         reader.readAsDataURL(file);
       }
+    },
+
+    handleLaporanImageError(event) {
+        // If the image fails to load, try the alternative URL format
+        const img = event.target;
+        const currentSrc = img.src;
+        
+        if (currentSrc.includes('/Backend-Port/backend/engine/public/storage/')) {
+            // If the first format failed, try the second format
+            img.src = currentSrc.replace(
+                '/Backend-Port/backend/engine/public/storage/', 
+                '/public/storage/'
+            );
+        } else if (currentSrc.includes('/public/storage/')) {
+            // If the second format failed, show a placeholder
+            img.src = 'https://via.placeholder.com/150?text=No+Image';
+        }
     },
     
     removeImage(index) {
