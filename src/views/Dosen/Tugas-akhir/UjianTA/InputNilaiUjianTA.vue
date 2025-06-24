@@ -4,10 +4,8 @@ import { useRoute, useRouter } from "vue-router";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import QuillTextEditor from "@/components/Tugas-akhir/Forms/QuillTextEditor.vue";
-import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import Loading from "@/components/Loading.vue";
-// Updated import - using the combined function only
 import { useUjianTAForDosen } from "@/services/TugasAkhir/Dosen/ujianTA.js";
 import { useToast } from "vue-toastification";
 
@@ -23,6 +21,8 @@ const {
   detailUjian,
   loadingDetail,
   fetchDetailUjian,
+  isRetakeExam,
+  checkUjianRevisionStatus,
 } = useUjianTAForDosen();
 
 // Data mahasiswa dari params dan detail ujian
@@ -89,9 +89,11 @@ const isSecretary = computed(() => {
 
 // Computed property untuk mengontrol status disabled pada textarea catatan revisi
 const isCatatanRevisiDisabled = computed(() => {
-  return (
-    statusKelulusan.value === "1" // Lulus tanpa revisi
-  );
+  return statusKelulusan.value === "1" || statusKelulusan.value === "4";
+});
+
+const isNilaiUjianTADisabled = computed(() => {
+  return statusKelulusan.value === "3" || statusKelulusan.value === "4";
 });
 
 // Validate all required fields
@@ -114,65 +116,71 @@ const validateForm = () => {
     isValid = false;
   }
 
-  // Check nilai fields - use explicit checks for empty string
-  if (
-    tataLaporan.value === "" ||
-    tataLaporan.value === null ||
-    tataLaporan.value === undefined ||
-    isNaN(parseFloat(tataLaporan.value)) ||
-    parseFloat(tataLaporan.value) < 0 ||
-    parseFloat(tataLaporan.value) > 100
-  ) {
-    errors.value.tataLaporan = true;
-    isValid = false;
-  }
+  // Check nilai fields - only validate if not disabled
+  if (!isNilaiUjianTADisabled.value) {
+    // Validate tata laporan
+    if (
+      tataLaporan.value === "" ||
+      tataLaporan.value === null ||
+      tataLaporan.value === undefined ||
+      isNaN(parseFloat(tataLaporan.value)) ||
+      parseFloat(tataLaporan.value) < 0 ||
+      parseFloat(tataLaporan.value) > 100
+    ) {
+      errors.value.tataLaporan = true;
+      isValid = false;
+    }
 
-  if (
-    kemampuanTeknis.value === "" ||
-    kemampuanTeknis.value === null ||
-    kemampuanTeknis.value === undefined ||
-    isNaN(parseFloat(kemampuanTeknis.value)) ||
-    parseFloat(kemampuanTeknis.value) < 0 ||
-    parseFloat(kemampuanTeknis.value) > 100
-  ) {
-    errors.value.kemampuanTeknis = true;
-    isValid = false;
-  }
+    // Validate kemampuan teknis
+    if (
+      kemampuanTeknis.value === "" ||
+      kemampuanTeknis.value === null ||
+      kemampuanTeknis.value === undefined ||
+      isNaN(parseFloat(kemampuanTeknis.value)) ||
+      parseFloat(kemampuanTeknis.value) < 0 ||
+      parseFloat(kemampuanTeknis.value) > 100
+    ) {
+      errors.value.kemampuanTeknis = true;
+      isValid = false;
+    }
 
-  if (
-    hasilProduk.value === "" ||
-    hasilProduk.value === null ||
-    hasilProduk.value === undefined ||
-    isNaN(parseFloat(hasilProduk.value)) ||
-    parseFloat(hasilProduk.value) < 0 ||
-    parseFloat(hasilProduk.value) > 100
-  ) {
-    errors.value.hasilProduk = true;
-    isValid = false;
-  }
+    // Validate hasil produk
+    if (
+      hasilProduk.value === "" ||
+      hasilProduk.value === null ||
+      hasilProduk.value === undefined ||
+      isNaN(parseFloat(hasilProduk.value)) ||
+      parseFloat(hasilProduk.value) < 0 ||
+      parseFloat(hasilProduk.value) > 100
+    ) {
+      errors.value.hasilProduk = true;
+      isValid = false;
+    }
 
-  if (
-    presentasi.value === "" ||
-    presentasi.value === null ||
-    presentasi.value === undefined ||
-    isNaN(parseFloat(presentasi.value)) ||
-    parseFloat(presentasi.value) < 0 ||
-    parseFloat(presentasi.value) > 100
-  ) {
-    errors.value.presentasi = true;
-    isValid = false;
+    // Validate presentasi
+    if (
+      presentasi.value === "" ||
+      presentasi.value === null ||
+      presentasi.value === undefined ||
+      isNaN(parseFloat(presentasi.value)) ||
+      parseFloat(presentasi.value) < 0 ||
+      parseFloat(presentasi.value) > 100
+    ) {
+      errors.value.presentasi = true;
+      isValid = false;
+    }
   }
 
   // Only validate catatan revisi if it's enabled and required
-  if (
-    !isCatatanRevisiDisabled.value &&
-    statusKelulusan.value === "2" && // Lulus dengan revisi
-    (catatanRevisi.value === "" ||
+  if (!isCatatanRevisiDisabled.value) {
+    if (
+      catatanRevisi.value === "" ||
       catatanRevisi.value === null ||
-      catatanRevisi.value === undefined)
-  ) {
-    errors.value.catatanRevisi = true;
-    isValid = false;
+      catatanRevisi.value === undefined
+    ) {
+      errors.value.catatanRevisi = true;
+      isValid = false;
+    }
   }
 
   return isValid;
@@ -183,7 +191,6 @@ const loadData = async () => {
   const ujianTaId = route.params.ujian_ta_id;
   if (ujianTaId) {
     await fetchDetailUjian(ujianTaId);
-
     if (detailUjian.value) {
       studentInfo.value = {
         nim: detailUjian.value?.mahasiswa?.nim || "",
@@ -289,7 +296,20 @@ watch(error, (newError) => {
     toast.error(newError);
   }
 });
-
+// Add this watcher after your other watch statements
+watch(statusKelulusan, (newValue) => {
+  if (newValue === "3") {
+    tataLaporan.value = "0";
+    kemampuanTeknis.value = "0";
+    hasilProduk.value = "0";
+    presentasi.value = "0";
+  } else if (newValue === "4") {
+    tataLaporan.value = "50";
+    kemampuanTeknis.value = "50";
+    hasilProduk.value = "50";
+    presentasi.value = "50";
+  }
+});
 // Load data when component is mounted
 onMounted(() => {
   loadData();
@@ -388,7 +408,11 @@ onMounted(() => {
               >
             </div>
 
-            <div class="flex items-center mb-3 sm:mb-0 sm:flex-1">
+            <!-- Hide the "Belum lulus perlu diuji lagi" option if it's a retake exam -->
+            <div
+              v-if="!isRetakeExam"
+              class="flex items-center mb-3 sm:mb-0 sm:flex-1"
+            >
               <div class="relative inline-flex items-center">
                 <input
                   type="radio"
@@ -414,6 +438,34 @@ onMounted(() => {
               <label for="belumLulus" class="ml-2 text-gray-700 body3-bold"
                 >Belum lulus perlu diuji lagi</label
               >
+            </div>
+            <!-- Show a disabled version if it's a retake (with tooltip explaining why) -->
+            <div
+              v-else
+              class="flex items-center mb-3 sm:mb-0 sm:flex-1 opacity-50"
+            >
+              <div class="relative inline-flex items-center">
+                <input
+                  type="radio"
+                  id="belumLulus"
+                  name="statusKelulusan"
+                  value="3"
+                  disabled
+                  class="w-7 h-7 cursor-not-allowed appearance-none border-2 border-gray-300 rounded-full"
+                />
+              </div>
+              <div class="flex flex-col ml-2">
+                <label
+                  for="belumLulus"
+                  class="text-gray-500 cursor-not-allowed body3-bold"
+                  title="Opsi tidak tersedia untuk ujian ulang"
+                >
+                  Belum lulus perlu diuji lagi
+                </label>
+                <span class="text-xs text-black"
+                  >(tidak tersedia untuk ujian ulang)</span
+                >
+              </div>
             </div>
 
             <div class="flex items-center sm:flex-1">
@@ -452,9 +504,10 @@ onMounted(() => {
           </p>
         </div>
 
-        <div class="my-5">
+        <div class="my-5" :class="{ 'opacity-50': isNilaiUjianTADisabled }">
           <p class="heading5 text-[#00A2EA] font-semibold mb-5">
-            Nilai Ujian <span class="text-red-500">*</span>
+            Nilai Ujian
+            <span v-if="!isNilaiUjianTADisabled" class="text-red-500">*</span>
           </p>
           <div class="flex flex-wrap gap-4">
             <div class="w-full sm:w-[calc(50%-0.5rem)]">
@@ -467,7 +520,8 @@ onMounted(() => {
                 :class="{
                   'border-red-500': formSubmitted && errors.tataLaporan,
                 }"
-                required
+                :disabled="isNilaiUjianTADisabled"
+                :required="!isNilaiUjianTADisabled"
               />
               <p
                 v-if="formSubmitted && errors.tataLaporan"
@@ -487,7 +541,8 @@ onMounted(() => {
                 :class="{
                   'border-red-500': formSubmitted && errors.kemampuanTeknis,
                 }"
-                required
+                :disabled="isNilaiUjianTADisabled"
+                :required="!isNilaiUjianTADisabled"
               />
               <p
                 v-if="formSubmitted && errors.kemampuanTeknis"
@@ -507,7 +562,8 @@ onMounted(() => {
                 :class="{
                   'border-red-500': formSubmitted && errors.hasilProduk,
                 }"
-                required
+                :disabled="isNilaiUjianTADisabled"
+                :required="!isNilaiUjianTADisabled"
               />
               <p
                 v-if="formSubmitted && errors.hasilProduk"
@@ -527,7 +583,8 @@ onMounted(() => {
                 :class="{
                   'border-red-500': formSubmitted && errors.presentasi,
                 }"
-                required
+                :disabled="isNilaiUjianTADisabled"
+                :required="!isNilaiUjianTADisabled"
               />
               <p
                 v-if="formSubmitted && errors.presentasi"
@@ -555,22 +612,14 @@ onMounted(() => {
         <div class="my-5" :class="{ 'opacity-50': isCatatanRevisiDisabled }">
           <p class="heading5 text-[#00A2EA] font-semibold mb-5">
             Catatan Revisi
-            <span
-              v-if="
-                !isCatatanRevisiDisabled &&
-                (statusKelulusan === '2' ||
-                  statusKelulusan === '3' ||
-                  statusKelulusan === '4')
-              "
-              class="text-red-500"
-              >*</span
-            >
+            <span v-if="!isCatatanRevisiDisabled" class="text-red-500">*</span>
           </p>
           <QuillTextEditor
             id="catatanRevisi"
             label="Catatan Revisi"
             v-model="catatanRevisi"
             :disabled="isCatatanRevisiDisabled"
+            :required="!isCatatanRevisiDisabled"
           />
 
           <p

@@ -605,7 +605,7 @@ onMounted(() => {
       </div>
 
       <!-- Add Edit Nilai button -->
-      <div class="flex justify-end mt-6">
+      <!-- <div class="flex justify-end mt-6">
         <Button
           @click="goToEditNilai"
           variant="secondary"
@@ -614,7 +614,7 @@ onMounted(() => {
         >
           Edit Nilai
         </Button>
-      </div>
+      </div> -->
     </div>
   </DefaultModal>
 </template>

@@ -4,11 +4,8 @@ import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 import VueCookies from "vue-cookies";
 
-/**
- * Composable untuk mengelola data ujian tugas akhir untuk dosen
- */
-
 const dataBerkasTA = ref(null);
+const isRetakeExam = ref(false);
 
 export const fileNaskahTA = computed(() => {
   console.log("Computing fileNaskahTA for Dosen:", dataBerkasTA.value);
@@ -139,7 +136,40 @@ export function useUjianTAForDosen() {
     fetchUjianTA(1, searchQuery.value, status);
   };
 
-  // Fetch detail of a specific UjianTA
+  const checkUjianRevisionStatus = async (ujianTaId) => {
+    if (!ujianTaId) return;
+
+    try {
+      const token = VueCookies.get("auth_token");
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      };
+
+      const response = await axios.get(
+        `/api/dosen/tugas-akhir/check-ujian-revision-status/${ujianTaId}`,
+        { headers }
+      );
+
+      if (response.data.status === "success") {
+        isRetakeExam.value = response.data.data.is_retake;
+        console.log(
+          "Revision status check:",
+          isRetakeExam.value
+            ? "This is a retake exam"
+            : "This is a first-time exam"
+        );
+        return response.data.data;
+      }
+      return null;
+    } catch (err) {
+      console.error("Error checking ujian revision status:", err);
+      handleError(err, error);
+      return null;
+    }
+  };
+
+  // Fetch detail of a specific UjianTA with revision status check
   const fetchDetailUjian = async (ujianTaId) => {
     if (!ujianTaId) {
       errorDetail.value = "ID Ujian TA tidak valid";
@@ -157,16 +187,23 @@ export function useUjianTAForDosen() {
       };
 
       const timestamp = new Date().getTime();
-      const response = await axios.get(
-        `/api/dosen/tugas-akhir/detail-ujian-ta/${ujianTaId}?_t=${timestamp}`,
-        { headers }
-      );
+      const [detailResponse, revisionStatusResponse] = await Promise.all([
+        axios.get(
+          `/api/dosen/tugas-akhir/detail-ujian-ta/${ujianTaId}?_t=${timestamp}`,
+          { headers }
+        ),
+        // Also fetch the revision status in parallel
+        checkUjianRevisionStatus(ujianTaId),
+      ]);
 
-      if (response.data.status === "success" && response.data.data) {
-        detailUjian.value = response.data.data;
+      if (
+        detailResponse.data.status === "success" &&
+        detailResponse.data.data
+      ) {
+        detailUjian.value = detailResponse.data.data;
       } else {
         errorDetail.value =
-          response.data.message || "Gagal memuat detail ujian";
+          detailResponse.data.message || "Gagal memuat detail ujian";
         detailUjian.value = null;
         toast.error(errorDetail.value);
       }
@@ -282,5 +319,8 @@ export function useUjianTAForDosen() {
     errorNilai,
     success,
     submitNilaiDanStatus,
+
+    isRetakeExam,
+    checkUjianRevisionStatus,
   };
 }
