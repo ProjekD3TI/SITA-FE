@@ -699,7 +699,7 @@ export default {
       );
     },
     apiBaseUrl() {
-      return 'https://v3422040.mhs.d3tiuns.com/api';
+      return 'http://pelaporan-d3ti.my.id/api';
     }
   },
   created() {

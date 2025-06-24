@@ -518,7 +518,7 @@ export default {
                 const xhr = new XMLHttpRequest();
 
                 // Ensure this URL is correct and matches your backend API endpoint
-                xhr.open('POST', 'http://pelaporan-d3ti.my.id/api/laporan/add_laporan', true);
+                xhr.open('POST', '/api/laporan/add_laporan', true);
 
                 xhr.withCredentials = true;
 

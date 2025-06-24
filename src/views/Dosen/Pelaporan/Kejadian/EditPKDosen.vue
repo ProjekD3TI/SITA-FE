@@ -88,7 +88,13 @@
                 
                 <div v-if="imagePreviews.length > 0" class="image-previews">
                     <div v-for="(preview, index) in imagePreviews" :key="index" class="image-preview-container">
-                        <img :src="preview" alt="Preview" class="image-preview">
+                      <img 
+                        :src="getImageUrl(preview)" 
+                        alt="Preview" 
+                        class="image-preview" 
+                        @error="handleLaporanImageError"
+                        :data-path="preview"
+                      >
                         <button type="button" class="remove-image" @click="removeImage(index)">&times;</button>
                     </div>
                 </div>
@@ -589,44 +595,61 @@ export default {
     },
     
     getImageUrl(imagePath) {
-      if (!imagePath) return '';
-      
-      // Clean the path by removing any quotes if present
-      const cleanPath = typeof imagePath === 'string' ? imagePath.replace(/['"]/g, '') : imagePath;
-      
-      // Check if it's already a full URL
-      if (typeof cleanPath === 'string' && cleanPath.startsWith('http')) {
-        return cleanPath;
-      }
-      
-      // Define the base URL
-      const baseUrl = 'https://v3422040.mhs.d3tiuns.com';
-      
-      // Return the full URL
-      return `${baseUrl}/Backend-Port/backend/engine/public/storage/laporan/${cleanPath}`;
-    },
-    
-    handleFileUpload(event) {
-      const files = event.target.files;
-      if (!files || files.length === 0) return;
-      
-      // Initialize image_path array if it doesn't exist
-      if (!this.formData.image_path) {
-        this.formData.image_path = [];
-      }
-      
-      // Add new files to formData.image_path
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        this.formData.image_path.push(file);
+        if (!imagePath) return '';
         
-        // Create preview for the file
-        const reader = new FileReader();
-        reader.onload = e => {
-          this.imagePreviews.push(e.target.result);
-        };
-        reader.readAsDataURL(file);
-      }
+        // Clean the path by removing any quotes if present
+        const cleanPath = typeof imagePath === 'string' ? imagePath.replace(/['"]/g, '') : imagePath;
+        
+        // Check if it's already a full URL
+        if (typeof cleanPath === 'string' && cleanPath.startsWith('http')) {
+            return cleanPath;
+        }
+        
+        // Define the base URL
+        const baseUrl = 'http://pelaporan-d3ti.my.id';
+        
+        // Primary URL format (same pattern as your category images)
+        return `${baseUrl}/Backend-Port/backend/engine/public/storage/laporan/${cleanPath}`;
+    },
+
+    handleLaporanImageError(event) {
+        // If the image fails to load, try the alternative URL format
+        const img = event.target;
+        const currentSrc = img.src;
+        
+        if (currentSrc.includes('/Backend-Port/backend/engine/public/storage/')) {
+            // If the second format failed, try the first format
+            img.src = currentSrc.replace(
+                '/Backend-Port/backend/engine/public/storage/', 
+                '/public/storage/'
+            );
+        } else if (currentSrc.includes('/public/storage/')) {
+            // If the first format failed, show a placeholder
+            img.src = 'https://via.placeholder.com/150?text=No+Image';
+        }
+    },
+
+    handleFileUpload(event) {
+        const files = event.target.files;
+        if (!files || files.length === 0) return;
+        
+        // Initialize image_path array if it doesn't exist
+        if (!this.formData.image_path) {
+            this.formData.image_path = [];
+        }
+        
+        // Add new files to formData.image_path
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            this.formData.image_path.push(file);
+            
+            // Create preview for the file
+            const reader = new FileReader();
+            reader.onload = e => {
+                this.imagePreviews.push(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
     },
     
     removeImage(index) {

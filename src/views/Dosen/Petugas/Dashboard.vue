@@ -138,7 +138,7 @@ import VueCookies from "vue-cookies";
 import axios from "axios";
 import Chart from "chart.js/auto";
 
-const API_URL = "https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan";
+const API_URL = "http://pelaporan-d3ti.my.id/api/laporan_kekerasan";
 const API_TIMEOUT = 10000; // 10 detik timeout
 
 const userData = ref(null);

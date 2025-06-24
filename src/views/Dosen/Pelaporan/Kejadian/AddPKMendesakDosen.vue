@@ -459,7 +459,7 @@ export default {
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
                 
-                xhr.open('POST', 'http://pelaporan-d3ti.my.id/api/laporan/add_laporan', true);
+                xhr.open('POST', '/api/laporan/add_laporan', true);
                 
                 // Get token from cookies
                 const authToken = VueCookies.get('auth_token');

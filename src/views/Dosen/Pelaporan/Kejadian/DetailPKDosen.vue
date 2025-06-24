@@ -624,7 +624,7 @@ export default {
                 return;
             }
             
-            const baseDomain = 'https://v3422040.mhs.d3tiuns.com';
+            const baseDomain = 'http://pelaporan-d3ti.my.id';
             let newUrl;
             
             if (!originalSrc.includes('fallback=')) {
