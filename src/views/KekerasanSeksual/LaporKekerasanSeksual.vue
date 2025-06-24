@@ -813,6 +813,7 @@ export default {
             this.recaptchaVerified = true;
             this.recaptchaError = null;
             console.log('reCAPTCHA verification successful');
+            console.log('reCAPTCHA token:', response);
           },
           'expired-callback': () => {
             this.recaptchaResponse = null;
