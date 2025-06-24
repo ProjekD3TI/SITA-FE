@@ -36,7 +36,7 @@
               <div class="actions-status-wrapper">
                 <div class="action-btn-container">
                   <button 
-                    v-if="laporan && laporan.status !== 'finished'" 
+                    v-if="laporan && laporan.status === 'verified'" 
                     class="edit-button blue-btn"
                     @click="goToEditLaporan"
                     title="Lengkapi atau ubah data laporan">
@@ -377,7 +377,10 @@ export default {
     hasWitnesses() {
       return this.laporan && this.laporan.saksi && 
              Array.isArray(this.laporan.saksi) && this.laporan.saksi.length > 0;
-    }
+    },
+    canEditLaporan() {
+      return this.laporan && this.laporan.status === 'verified';
+    },
   },
   methods: {
     checkAuth() {
@@ -391,6 +394,21 @@ export default {
     
     goToEditLaporan() {
       if (!this.checkAuth()) return;
+      
+      // Add check for verified status
+      if (this.laporan && this.laporan.status !== 'verified') {
+        Swal.fire({
+          icon: 'error',
+          title: 'Tidak Dapat Mengedit',
+          text: 'Laporan hanya dapat diedit ketika berstatus Diproses (Verified)',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        });
+        return;
+      }
+      
       this.$router.push({ name: 'EditPelaporanKejadian', params: { id: this.laporanId } });
     },
 
