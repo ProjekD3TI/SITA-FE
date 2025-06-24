@@ -691,74 +691,82 @@ export default {
       return [];
     },
 
-    // Updated getImageUrlForPath method
     getImageUrlForPath(path) {
         if (!path) return '';
         
-        // Check if path is already a full URL
-        if (path.startsWith('http')) {
-          return path;
+        // Clean the path by removing any quotes if present
+        const cleanPath = typeof path === 'string' ? path.replace(/['"]/g, '') : path;
+        
+        // Check if it's already a full URL
+        if (typeof cleanPath === 'string' && cleanPath.startsWith('http')) {
+            return cleanPath;
         }
         
-        // Clean up the path (remove quotes)
-        const cleanPath = path.replace(/['"]/g, '');
+        // Define the base URL (assuming baseUrl is properly defined in your component)
+        const baseUrl = this.baseUrl || 'http://pelaporan-d3ti.my.id';
         
-        // Construct the correct URL - make sure to use the exact format from the console logs
-        return `${this.baseUrl}/public/storage/laporankekerasan/${cleanPath}`;
+        // Primary URL format for laporankekerasan
+        return `${baseUrl}/Backend-Port/backend/engine/public/storage/laporankekerasan/${cleanPath}`;
     },
 
     handleImageError(event, index) {
-      const img = event.target;
-      const originalSrc = img.src;
-      const path = this.imagePaths[index];
-      
-      if (originalSrc.includes('fallback=4')) {
-        img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
-        return;
-      }
-      
-      const baseDomain = this.baseUrl;
-      let newUrl;
-      
-      if (!originalSrc.includes('fallback=')) {
-        // Try Backend-Port path first
-        newUrl = `${baseDomain}/Backend-Port/backend/engine/public/storage/laporankekerasan/${path}?fallback=2`;
-      } else if (originalSrc.includes('fallback=2')) {
-        newUrl = `${baseDomain}/api/storage/laporankekerasan/${path}?fallback=3`;
-      } else if (originalSrc.includes('fallback=3')) {
-        newUrl = `${baseDomain}/storage/laporankekerasan/${path}?fallback=4`;
-      } else {
-        newUrl = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
-      }
-      
-      img.src = newUrl;
+        // If the image fails to load, try the alternative URL format
+        const img = event.target;
+        const currentSrc = img.src;
+        const path = this.imagePaths[index];
+        
+        if (currentSrc.includes('fallback=4')) {
+            img.src = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+            return;
+        }
+        
+        const baseDomain = this.baseUrl || 'http://pelaporan-d3ti.my.id';
+        let newUrl;
+        
+        if (!currentSrc.includes('fallback=')) {
+            // First try with Backend-Port path
+            newUrl = `${baseDomain}/Backend-Port/backend/engine/public/storage/laporankekerasan/${path}?fallback=2`;
+        } else if (currentSrc.includes('fallback=2')) {
+            // Second attempt - try with /public/storage/ path
+            newUrl = `${baseDomain}/public/storage/laporankekerasan/${path}?fallback=3`;
+        } else if (currentSrc.includes('fallback=3')) {
+            // Third attempt
+            newUrl = `${baseDomain}/storage/laporankekerasan/${path}?fallback=4`;
+        } else {
+            newUrl = 'https://via.placeholder.com/150?text=Tidak+Ditemukan';
+        }
+        
+        img.src = newUrl;
     },
-    
+
     // Handle errors for fullscreen image
     handleFullImageError(event) {
-      const img = event.target;
-      const originalSrc = img.src;
-      const path = this.imagePaths[this.currentImageIndex];
-      
-      if (originalSrc.includes('fallback=4')) {
-        img.src = 'https://via.placeholder.com/800x600?text=Gambar+Tidak+Tersedia';
-        return;
-      }
-      
-      const baseDomain = this.baseUrl;
-      let newUrl;
-      
-      if (!originalSrc.includes('fallback=')) {
-        newUrl = `${baseDomain}/Backend-Port/backend/engine/public/storage/laporankekerasan/${path}?fallback=2`;
-      } else if (originalSrc.includes('fallback=2')) {
-        newUrl = `${baseDomain}/api/storage/laporankekerasan/${path}?fallback=3`;
-      } else if (originalSrc.includes('fallback=3')) {
-        newUrl = `${baseDomain}/storage/laporankekerasan/${path}?fallback=4`;
-      } else {
-        newUrl = 'https://via.placeholder.com/800x600?text=Gambar+Tidak+Tersedia';
-      }
-      
-      img.src = newUrl;
+        const img = event.target;
+        const originalSrc = img.src;
+        const path = this.imagePaths[this.currentImageIndex];
+        
+        if (originalSrc.includes('fallback=4')) {
+            img.src = 'https://via.placeholder.com/800x600?text=Gambar+Tidak+Tersedia';
+            return;
+        }
+        
+        const baseDomain = this.baseUrl || 'http://pelaporan-d3ti.my.id';
+        let newUrl;
+        
+        if (!originalSrc.includes('fallback=')) {
+            // First try with Backend-Port path
+            newUrl = `${baseDomain}/Backend-Port/backend/engine/public/storage/laporankekerasan/${path}?fallback=2`;
+        } else if (originalSrc.includes('fallback=2')) {
+            // Second attempt - try with /public/storage/ path
+            newUrl = `${baseDomain}/public/storage/laporankekerasan/${path}?fallback=3`;
+        } else if (originalSrc.includes('fallback=3')) {
+            // Third attempt
+            newUrl = `${baseDomain}/storage/laporankekerasan/${path}?fallback=4`;
+        } else {
+            newUrl = 'https://via.placeholder.com/800x600?text=Gambar+Tidak+Tersedia';
+        }
+        
+        img.src = newUrl;
     },
     
     // Updated openFullImage method

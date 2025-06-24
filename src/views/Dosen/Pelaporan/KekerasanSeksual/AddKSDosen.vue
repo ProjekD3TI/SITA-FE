@@ -925,7 +925,7 @@ export default {
     },
     
     fetchCategories() {
-      axios.get('https://v3422040.mhs.d3tiuns.com/api/category', {
+      axios.get('http://pelaporan-d3ti.my.id/api/category', {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -1514,7 +1514,7 @@ export default {
       };
       
       // Open connection
-      xhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan', true);
+      xhr.open('POST', 'api/laporan_kekerasan/add_laporan', true);
       
       // Add retry capability for better stability
       let retryCount = 0;
@@ -1532,7 +1532,7 @@ export default {
             const newXhr = new XMLHttpRequest();
             // Copy all the event handlers and configuration
             Object.assign(newXhr, xhr);
-            newXhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan', true);
+            newXhr.open('POST', 'api/laporan_kekerasan/add_laporan', true);
             newXhr.send(formData);
           }, 1000 * Math.pow(2, retryCount));
           
