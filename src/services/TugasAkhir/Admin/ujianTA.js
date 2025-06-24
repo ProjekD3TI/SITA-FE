@@ -16,7 +16,8 @@ export function useTabelPlottingPenguji() {
   const fetchTabelPlottingPenguji = async (
     page = 1,
     search = "",
-    status = ""
+    status = "",
+    tahunAjaranId = ""
   ) => {
     loadingTabelPlottingPenguji.value = true;
     try {
@@ -29,6 +30,7 @@ export function useTabelPlottingPenguji() {
       const params = {};
       if (search) params.search = search;
       if (status) params.status = status;
+      if (tahunAjaranId) params.tahun_ajaran_id = tahunAjaranId; // Tambah parameter tahun ajaran
       const response = await axios.get(
         `/api/admin_ta/plotting-penguji?page=${page}`,
         { headers, params }
@@ -196,7 +198,12 @@ export function useTabelPendaftar() {
   const loadingTabelPendaftar = ref(false);
   const errorTabelPendaftar = ref(null);
 
-  const fetchTabelPendaftar = async (page = 1, search = "", status = "") => {
+  const fetchTabelPendaftar = async (
+    page = 1,
+    search = "",
+    status = "",
+    tahunAjaranId = ""
+  ) => {
     loadingTabelPendaftar.value = true;
     try {
       const auth_token = VueCookies.get("auth_token");
@@ -208,6 +215,7 @@ export function useTabelPendaftar() {
       const params = {};
       if (search) params.search = search;
       if (status) params.status = status;
+      if (tahunAjaranId) params.tahun_ajaran_id = tahunAjaranId; // Tambah parameter tahun ajaran
       const response = await axios.get(
         `/api/admin_ta/pendaftar-ujian?page=${page}`,
         { headers, params }

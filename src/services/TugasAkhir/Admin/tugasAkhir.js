@@ -13,7 +13,12 @@ export function useTabelTugasAkhir() {
   const errorTabelTugasAkhir = ref(null);
   const paginationTabelTugasAkhir = ref({});
 
-  const fetchTabelTugasAkhir = async (page = 1, search = "", status = "") => {
+  const fetchTabelTugasAkhir = async (
+    page = 1,
+    search = "",
+    status = "",
+    tahunAjaranId = ""
+  ) => {
     loadingTabelTugasAkhir.value = true;
     try {
       const auth_token = VueCookies.get("auth_token");
@@ -25,6 +30,7 @@ export function useTabelTugasAkhir() {
       const params = {};
       if (search) params.search = search;
       if (status) params.status_aktif = status;
+      if (tahunAjaranId) params.tahun_ajaran_id = tahunAjaranId;
       const response = await axios.get(
         `/api/admin_ta/tugas-akhir?page=${page}`,
         {

@@ -240,22 +240,41 @@ const tabs = [
 const searchQueryTab1 = ref("");
 const searchQueryTab2 = ref("");
 const searchQueryTab3 = ref("");
-const selectedStatusesPlotting = ref([]);
-const selectedStatusesPendaftar = ref([]);
+const selectedFiltersPlotting = ref([]);
+const selectedFiltersPendaftar = ref([]);
 
 function handleFilterPlotting({ values }) {
-  selectedStatusesPlotting.value = values;
+  selectedFiltersPlotting.value = values;
+  // Pisahkan values berdasarkan type
+  const statusValues = values.filter((v) =>
+    plottingStatuses.some((s) => s.value === v)
+  );
+  const tahunAjaranValues = values.filter((v) =>
+    tahunAjaranOptions.value.some((t) => t.id === v)
+  );
   currentPageTabelPlottingPenguji.value = 1;
   fetchTabelPlottingPenguji(
     1,
     searchQueryTab1.value,
-    getSelectedStatusValue(values)
+    statusValues.join(","),
+    tahunAjaranValues.join(",") // Diubah untuk mengirim semua ID
   );
 }
 function handleFilterPendaftar({ values }) {
-  selectedStatusesPendaftar.value = values;
+  selectedFiltersPendaftar.value = values;
+  const statusValues = values.filter((v) =>
+    pendaftarStatuses.some((s) => s.value === v)
+  );
+  const tahunAjaranValues = values.filter((v) =>
+    tahunAjaranOptions.value.some((t) => t.id === v)
+  );
   currentPageTabelPendaftar.value = 1;
-  fetchTabelPendaftar(1, searchQueryTab2.value, getSelectedStatusValue(values));
+  fetchTabelPendaftar(
+    1,
+    searchQueryTab2.value,
+    statusValues.join(","),
+    tahunAjaranValues.join(",") // Diubah untuk mengirim semua ID
+  );
 }
 function handleFilterPenjadwalan({ values }) {
   selectedFiltersPenjadwalan.value = values;
@@ -273,24 +292,38 @@ function handleFilterPenjadwalan({ values }) {
     1,
     searchQueryTab3.value,
     statusValues.join(","),
-    tahunAjaranValues.length > 0 ? tahunAjaranValues[0] : ""
+    tahunAjaranValues.join(",")
   );
 }
 
 function onSearchPlotting({ value }) {
+  const statusValues = selectedFiltersPlotting.value.filter((v) =>
+    plottingStatuses.some((s) => s.value === v)
+  );
+  const tahunAjaranValues = selectedFiltersPlotting.value.filter((v) =>
+    tahunAjaranOptions.value.some((t) => t.id === v)
+  );
   currentPageTabelPlottingPenguji.value = 1;
   fetchTabelPlottingPenguji(
     1,
     value,
-    getSelectedStatusValue(selectedStatusesPlotting.value)
+    statusValues.join(","),
+    tahunAjaranValues.join(",") // Diubah untuk mengirim semua ID
   );
 }
 function onSearchPendaftar({ value }) {
+  const statusValues = selectedFiltersPendaftar.value.filter((v) =>
+    pendaftarStatuses.some((s) => s.value === v)
+  );
+  const tahunAjaranValues = selectedFiltersPendaftar.value.filter((v) =>
+    tahunAjaranOptions.value.some((t) => t.id === v)
+  );
   currentPageTabelPendaftar.value = 1;
   fetchTabelPendaftar(
     1,
     value,
-    getSelectedStatusValue(selectedStatusesPendaftar.value)
+    statusValues.join(","),
+    tahunAjaranValues.join(",") // Diubah untuk mengirim semua ID
   );
 }
 function onSearchPenjadwalan({ value }) {
@@ -306,7 +339,7 @@ function onSearchPenjadwalan({ value }) {
     1,
     value,
     statusValues.join(","),
-    tahunAjaranValues.length > 0 ? tahunAjaranValues[0] : ""
+    tahunAjaranValues.join(",")
   );
 }
 
@@ -317,16 +350,21 @@ function handleTabChange(tabId) {
   searchQueryTab1.value = "";
   searchQueryTab2.value = "";
   searchQueryTab3.value = "";
-  selectedStatusesPlotting.value = [];
-  selectedStatusesPendaftar.value = [];
+  selectedFiltersPlotting.value = [];
+  selectedFiltersPendaftar.value = [];
   selectedFiltersPenjadwalan.value = []; // Reset filter gabungan
-}
 
-function getSelectedStatusValue(selectedStatuses) {
-  if (selectedStatuses.length > 0) {
-    return selectedStatuses.map(String).join(",");
+  currentPageTabelPlottingPenguji.value = 1;
+  currentPageTabelPendaftar.value = 1;
+  currentPageTabelPenjadwalan.value = 1;
+
+  if (tabId === "tab1") {
+    fetchTabelPlottingPenguji(1, "", "", ""); // Ambil data tab 1 tanpa filter
+  } else if (tabId === "tab2") {
+    fetchTabelPendaftar(1, "", "", ""); // Ambil data tab 2 tanpa filter
+  } else if (tabId === "tab3") {
+    fetchTabelPenjadwalan(1, "", "", ""); // Ambil data tab 2 tanpa filter
   }
-  return "";
 }
 
 const getStatusClass = (status) => {
@@ -585,7 +623,7 @@ function handleExport() {
   exportToExcel(
     searchQueryTab3.value,
     statusValues.join(","),
-    tahunAjaranValues.length > 0 ? tahunAjaranValues[0] : ""
+    tahunAjaranValues.join(",")
   );
 }
 // Jika batal
@@ -609,25 +647,40 @@ onMounted(() => {
   fetchTabelPenjadwalan(currentPageTabelPenjadwalan.value);
 });
 watch(currentPageTabelPlottingPenguji, (val) => {
+  const statusValues = selectedFiltersPlotting.value.filter((v) =>
+    plottingStatuses.some((s) => s.value === v)
+  );
+  const tahunAjaranValues = selectedFiltersPlotting.value.filter((v) =>
+    tahunAjaranOptions.value.some((t) => t.id === v)
+  );
   fetchTabelPlottingPenguji(
     val,
     searchQueryTab1.value,
-    getSelectedStatusValue(selectedStatusesPlotting.value)
+    statusValues.join(","),
+    tahunAjaranValues.join(",") // Diubah untuk mengirim semua ID
   );
 });
 watch(currentPageTabelPendaftar, (val) => {
   fetchTabelPendaftar(
     val,
     searchQueryTab2.value,
-    getSelectedStatusValue(selectedStatusesPendaftar.value)
+    statusValues.join(","),
+    tahunAjaranValues.length > 0 ? tahunAjaranValues[0] : ""
   );
 });
 watch(currentPageTabelPenjadwalan, (val) => {
+  const statusValues = selectedFiltersPenjadwalan.value.filter((v) =>
+    penjadwalanStatuses.some((s) => s.value === v)
+  );
+  const tahunAjaranValues = selectedFiltersPenjadwalan.value.filter((v) =>
+    tahunAjaranOptions.value.some((t) => t.id === v)
+  );
+
   fetchTabelPenjadwalan(
     val,
     searchQueryTab3.value,
-    getSelectedStatusValue(selectedFiltersPenjadwalan.value),
-    selectedTahunAjaranId.value
+    statusValues.join(","),
+    tahunAjaranValues.length > 0 ? tahunAjaranValues[0] : ""
   );
 });
 watch(
@@ -668,21 +721,6 @@ watch(
     });
   }
 );
-watch(currentPageTabelPenjadwalan, (val) => {
-  const statusValues = selectedFiltersPenjadwalan.value.filter((v) =>
-    penjadwalanStatuses.some((s) => s.value === v)
-  );
-  const tahunAjaranValues = selectedFiltersPenjadwalan.value.filter((v) =>
-    tahunAjaranOptions.value.some((t) => t.id === v)
-  );
-
-  fetchTabelPenjadwalan(
-    val,
-    searchQueryTab3.value,
-    statusValues.join(","),
-    tahunAjaranValues.length > 0 ? tahunAjaranValues[0] : ""
-  );
-});
 </script>
 
 <template>
@@ -707,11 +745,13 @@ watch(currentPageTabelPenjadwalan, (val) => {
         >
           <ModalFilter
             title="Status"
+            title2="Tahun Ajaran"
             :items="plottingStatuses"
-            filterType="status"
+            :items2="penjadwalanTahunAjaran"
+            filterType="filter"
             @apply="handleFilterPlotting"
-            triggerText="Status"
-            :preselectedValues="selectedStatusesPlotting"
+            triggerText="Filter"
+            :preselectedValues="selectedFiltersPlotting"
           />
           <SearchBar
             v-model="searchQueryTab1"
@@ -729,6 +769,7 @@ watch(currentPageTabelPenjadwalan, (val) => {
             'NIM',
             'Nama',
             'Judul Proposal',
+            'Tahun Ajaran',
             'Dosen Pembimbing',
             'Status',
           ]"
@@ -756,6 +797,11 @@ watch(currentPageTabelPenjadwalan, (val) => {
               class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.proposal?.judul_proposal }}
+            </td>
+            <td
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
+            >
+              {{ item.tahun_ajaran?.tahun_ajaran }}
             </td>
             <td
               class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
@@ -817,11 +863,13 @@ watch(currentPageTabelPenjadwalan, (val) => {
           <ModalFilter
             class="flex-grow md:flex-none"
             title="Status"
+            title2="Tahun Ajaran"
             :items="pendaftarStatuses"
-            filterType="status"
+            :items2="penjadwalanTahunAjaran"
+            filterType="filter"
             @apply="handleFilterPendaftar"
-            triggerText="Status"
-            :preselectedValues="selectedStatusesPendaftar"
+            triggerText="Filter"
+            :preselectedValues="selectedFiltersPendaftar"
           />
           <SearchBar
             class="order-last md:order-none sm:min-w-[367px]"
@@ -844,6 +892,7 @@ watch(currentPageTabelPenjadwalan, (val) => {
             'NIM',
             'Nama',
             'Judul Tugas Akhir',
+            'Tahun Ajaran',
             'Dosen Pembimbing',
             'Status',
           ]"
@@ -871,6 +920,11 @@ watch(currentPageTabelPenjadwalan, (val) => {
               class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
             >
               {{ item.judul_tugas_akhir }}
+            </td>
+            <td
+              class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
+            >
+              {{ item.tahun_ajaran?.tahun_ajaran }}
             </td>
             <td
               class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"

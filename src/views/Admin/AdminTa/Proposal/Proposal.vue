@@ -229,6 +229,15 @@ function handleTabChange(tabId) {
   searchQuerySeminar.value = "";
   selectedFiltersPengajuan.value = [];
   selectedFiltersSeminar.value = [];
+
+  currentPagePendaftar.value = 1;
+  currentPageSeminar.value = 1;
+
+  if (tabId === 1) {
+    fetchPendaftarProposal(1, "", "", "");
+  } else if (tabId === 2) {
+    fetchSeminarProposal(1, "", "", "");
+  }
 }
 
 // Row click

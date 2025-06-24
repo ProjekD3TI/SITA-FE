@@ -9,6 +9,7 @@ import { useRoute, useRouter } from "vue-router";
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import StatusLabel from "@/components/Tugas-akhir/Label.vue";
 import ModalTimer from "@/components/Tugas-akhir/Modals/ModalTimer.vue";
+
 const route = useRoute();
 const router = useRouter();
 const {
@@ -20,7 +21,7 @@ const {
   fetchTabelTugasAkhir,
 } = useTabelTugasAkhir();
 
-const selectedStatuses = ref([]);
+const selectedFilters = ref([]); // Menggantikan selectedStatuses
 const currentPage = ref(1);
 const searchQuery = ref("");
 const modalRef = ref(null);
@@ -30,6 +31,21 @@ const statuses = [
   { value: "1", label: "Aktif" },
   { value: "0", label: "Non-aktif" },
 ];
+
+// 1. Ambil opsi tahun ajaran dari data API
+const tahunAjaranOptions = computed(
+  () => dataTabelTugasAkhir.value?.tahun_ajaran_list || []
+);
+
+// 2. Format tahun ajaran untuk komponen ModalFilter
+const tahun_ajarans = computed(() =>
+  tahunAjaranOptions.value.map((t) => ({
+    value: t.id,
+    label: t.tahun_ajaran,
+    type: "tahun_ajaran",
+  }))
+);
+
 const getStatusClass = (status) => {
   switch (status) {
     case 1:
@@ -40,6 +56,7 @@ const getStatusClass = (status) => {
       return "inactive";
   }
 };
+
 const getStatusLabel = (status) => {
   switch (status) {
     case 1:
@@ -50,65 +67,100 @@ const getStatusLabel = (status) => {
       return "Tidak Diketahui";
   }
 };
+
 const listTugasAkhir = computed(() => {
-  // Data dari API ada di dataTabelTugasAkhir.value.data
   return Array.isArray(dataTabelTugasAkhir.value?.data)
     ? dataTabelTugasAkhir.value?.data
     : [];
 });
 
-function getSelectedStatusValue(selectedStatuses) {
-  if (selectedStatuses.length > 0) {
-    return selectedStatuses.map(String).join(",");
-  }
-  return "";
-}
+// 3. Perbarui handleFilter untuk memisahkan filter
 function handleFilter({ values }) {
-  selectedStatuses.value = values;
+  selectedFilters.value = values;
   currentPage.value = 1;
-  fetchTabelTugasAkhir(1, searchQuery.value, getSelectedStatusValue(values));
+
+  const statusValues = values.filter((v) =>
+    statuses.some((s) => s.value === v)
+  );
+  const tahunAjaranValues = values.filter((v) =>
+    tahunAjaranOptions.value.some((t) => t.id === v)
+  );
+
+  fetchTabelTugasAkhir(
+    1,
+    searchQuery.value,
+    statusValues.join(","),
+    tahunAjaranValues.join(",")
+  );
 }
 
+// 4. Perbarui onSearch untuk menyertakan semua filter
 function onSearch({ value }) {
+  searchQuery.value = value;
   currentPage.value = 1;
+
+  const statusValues = selectedFilters.value.filter((v) =>
+    statuses.some((s) => s.value === v)
+  );
+  const tahunAjaranValues = selectedFilters.value.filter((v) =>
+    tahunAjaranOptions.value.some((t) => t.id === v)
+  );
+
   fetchTabelTugasAkhir(
     1,
     value,
-    getSelectedStatusValue(selectedStatuses.value)
+    statusValues.join(","),
+    tahunAjaranValues.join(",")
   );
 }
+
 const handleRowClick = (item) => {
   selectedRow.value = item;
   modalRef.value.open();
 };
+
 const handleModalSubmit = async () => {
   if (!selectedRow.value) return;
   const newStatus = selectedRow.value.status_aktif === 1 ? 0 : 1;
   try {
     await updateStatusTugasAkhir(selectedRow.value.tugas_akhir_id, newStatus);
     selectedRow.value = null;
-    // Refresh data
+    // Refresh data dengan filter yang ada
+    const statusValues = selectedFilters.value.filter((v) =>
+      statuses.some((s) => s.value === v)
+    );
+    const tahunAjaranValues = selectedFilters.value.filter((v) =>
+      tahunAjaranOptions.value.some((t) => t.id === v)
+    );
     fetchTabelTugasAkhir(
       currentPage.value,
       searchQuery.value,
-      getSelectedStatusValue(selectedStatuses.value)
+      statusValues.join(","),
+      tahunAjaranValues.join(",")
     );
   } catch (e) {
     // Error handled in composable
   }
 };
+
 onMounted(() => {
-  fetchTabelTugasAkhir(
-    currentPage.value,
-    searchQuery.value,
-    getSelectedStatusValue(selectedStatuses.value)
-  );
+  fetchTabelTugasAkhir(currentPage.value, "", "");
 });
+
+// 5. Perbarui watch untuk menyertakan semua filter saat paginasi
 watch(currentPage, (val) => {
+  const statusValues = selectedFilters.value.filter((v) =>
+    statuses.some((s) => s.value === v)
+  );
+  const tahunAjaranValues = selectedFilters.value.filter((v) =>
+    tahunAjaranOptions.value.some((t) => t.id === v)
+  );
+
   fetchTabelTugasAkhir(
     val,
     searchQuery.value,
-    getSelectedStatusValue(selectedStatuses.value)
+    statusValues.join(","),
+    tahunAjaranValues.join(",")
   );
 });
 </script>
@@ -118,11 +170,13 @@ watch(currentPage, (val) => {
     <div class="flex items-center justify-between gap-2 mb-2 sm:mb-4 lg:gap-4">
       <ModalFilter
         title="Status"
+        title2="Tahun Ajaran"
         :items="statuses"
-        filterType="status"
+        :items2="tahun_ajarans"
+        filterType="filter"
         @apply="handleFilter"
-        triggerText="Status"
-        :preselectedValues="selectedStatuses"
+        triggerText="Filter"
+        :preselectedValues="selectedFilters"
       />
       <SearchBar v-model="searchQuery" @search="onSearch" />
     </div>
@@ -132,7 +186,14 @@ watch(currentPage, (val) => {
     <!-- <ErrorMsg v-else-if="errorTabelTugasAkhir" :message="error" /> -->
     <Table
       v-else
-      :headers="['NIM', 'Nama', 'Kategori', 'Judul TA', 'Status']"
+      :headers="[
+        'NIM',
+        'Nama',
+        'Kategori',
+        'Tahun Ajaran',
+        'Judul TA',
+        'Status',
+      ]"
       :items="listTugasAkhir"
       :pagination="paginationTabelTugasAkhir"
       @rowClick="handleRowClick"
@@ -162,6 +223,11 @@ watch(currentPage, (val) => {
           class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
         >
           {{ item.kategori?.name }}
+        </td>
+        <td
+          class="px-3 py-2 border-r border-white sm:py-3 sm:px-6 body5 sm:body4 text-blackText"
+        >
+          {{ item.tahun_ajaran?.tahun_ajaran }}
         </td>
 
         <td

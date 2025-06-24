@@ -121,6 +121,16 @@ function handleTabChange(tabId) {
   searchQuery.value = "";
   selectedFiltersPlot.value = []; // Menggunakan ref yang baru
   selectedFiltersBimbingan.value = []; // Menggunakan ref yang baru
+
+  currentPagePlotting.value = 1; // Reset halaman plotting
+  currentPage.value = 1; // Reset halaman bimbingan
+
+  // Panggil fetch yang sesuai untuk tab yang baru aktif dengan state yang sudah di-reset
+  if (tabId === 1) {
+    fetchPlottingPembimbing(1, "", ""); // Ambil data tab 1 tanpa filter
+  } else if (tabId === 2) {
+    fetchBimbingan(1, "", ""); // Ambil data tab 2 tanpa filter
+  }
 }
 
 function onSearchPlotting({ value }) {
