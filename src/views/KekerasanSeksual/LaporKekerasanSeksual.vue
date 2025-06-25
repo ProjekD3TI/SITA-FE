@@ -1087,7 +1087,7 @@ export default {
       const xhr = new XMLHttpRequest();
       
       // Configure request
-      xhr.open('POST', '/api/laporan_kekerasan/add_laporan', true);
+      xhr.open('POST', 'http://pelaporan-d3ti.my.id/api/laporan_kekerasan/add_laporan', true);
       
       // Set timeout (30 seconds)
       xhr.timeout = 30000;

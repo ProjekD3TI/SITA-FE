@@ -928,7 +928,7 @@ export default {
         
         // Create and configure XHR
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', `/api/laporan/update/${this.laporanId}`);
+        xhr.open('POST', `http://pelaporan-d3ti.my.id/api/laporan/update/${this.laporanId}`);
         
         xhr.setRequestHeader('Authorization', `Bearer ${token}`);
         
