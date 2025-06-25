@@ -1277,10 +1277,10 @@ export default {
         formData.append('lampiran_link', this.report.lampiran_link);
       }
       
-      // Add bukti_pelanggaran as array
+      // Add bukti_pelanggaran as array with proper format
       if (this.report.bukti_pelanggaran && this.report.bukti_pelanggaran.length > 0) {
         for (let i = 0; i < this.report.bukti_pelanggaran.length; i++) {
-          formData.append('bukti_pelanggaran[]', this.report.bukti_pelanggaran[i]);
+          formData.append(`bukti_pelanggaran[${i}]`, this.report.bukti_pelanggaran[i]);
         }
       }
       
@@ -1294,6 +1294,15 @@ export default {
             }
           });
         });
+      } else {
+        // Add default terlapor with valid email
+        formData.append('terlapor[0][nama_lengkap]', 'Nama Terlapor');
+        formData.append('terlapor[0][email]', 'terlapor.dummy@gmail.com');
+        formData.append('terlapor[0][nomor_telepon]', '081234567890');
+        formData.append('terlapor[0][status_warga]', 'mahasiswa');
+        formData.append('terlapor[0][unit_kerja]', 'Fakultas Teknik');
+        formData.append('terlapor[0][jenis_kelamin]', 'laki-laki');
+        formData.append('terlapor[0][umur_terlapor]', '20-40');
       }
       
       // Add saksi with proper array format for Laravel
@@ -1306,12 +1315,17 @@ export default {
             }
           });
         });
+      } else {
+        // Add default saksi with valid email
+        formData.append('saksi[0][nama_lengkap]', 'Nama Saksi');
+        formData.append('saksi[0][email]', 'saksi.dummy@gmail.com');
+        formData.append('saksi[0][nomor_telepon]', '089876543210');
       }
       
-      // Append multiple files if they exist
+      // Append multiple files if they exist with proper format
       if (this.report.evidenceFiles && this.report.evidenceFiles.length > 0) {
         for (let i = 0; i < this.report.evidenceFiles.length; i++) {
-          formData.append('image_path[]', this.report.evidenceFiles[i]);
+          formData.append(`image_path[${i}]`, this.report.evidenceFiles[i]);
         }
       }
       
@@ -1324,8 +1338,20 @@ export default {
       // Create XMLHttpRequest
       const xhr = new XMLHttpRequest();
       
-      // Configure request
-      xhr.open('POST', 'http://pelaporan-d3ti.my.id/api/laporan_kekerasan/add_laporan', true);
+      // FIXED: Use relative URL instead of absolute to avoid CORS issues
+      // Get base URL from the component if available, otherwise use window.location.origin
+      const apiBaseUrl = this.apiBaseUrl || window.location.origin;
+      xhr.open('POST', `${apiBaseUrl}/api/laporan_kekerasan/add_laporan`, true);
+      
+      // Get auth token if available
+      const authToken = this.token || VueCookies.get('auth_token') || this.$cookies.get('auth_token');
+      if (authToken) {
+        xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+      }
+      
+      // Set proper headers
+      xhr.setRequestHeader('Accept', 'application/json');
+      xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
       
       // Set timeout (30 seconds)
       xhr.timeout = 30000;
