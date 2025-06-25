@@ -1047,7 +1047,7 @@ watch(
                   :label="getStatusLabelBeritaAcara(item.status_kategori)"
                 />
                 <StatusLabel
-                  class="block w-fit xl:hidden"
+                  class="block w-fit 2xl:hidden"
                   :status="getStatusClassBeritaAcara(item.status_kategori)"
                   size="sm"
                   :label="getStatusLabelBeritaAcara(item.status_kategori)"
