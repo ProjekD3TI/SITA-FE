@@ -136,7 +136,7 @@ export function useUjianTAForDosen() {
     fetchUjianTA(1, searchQuery.value, status);
   };
 
-  const checkUjianRevisionStatus = async (ujianTaId) => {
+  const cekRevisiUjianTA = async (ujianTaId) => {
     if (!ujianTaId) return;
 
     try {
@@ -147,7 +147,7 @@ export function useUjianTAForDosen() {
       };
 
       const response = await axios.get(
-        `/api/dosen/tugas-akhir/check-ujian-revision-status/${ujianTaId}`,
+        `/api/dosen/tugas-akhir/cek-status-revisi-ujian-ta/${ujianTaId}`,
         { headers }
       );
 
@@ -187,13 +187,13 @@ export function useUjianTAForDosen() {
       };
 
       const timestamp = new Date().getTime();
-      const [detailResponse, revisionStatusResponse] = await Promise.all([
+      const [detailResponse, statusRevisiResponse] = await Promise.all([
         axios.get(
           `/api/dosen/tugas-akhir/detail-ujian-ta/${ujianTaId}?_t=${timestamp}`,
           { headers }
         ),
         // Also fetch the revision status in parallel
-        checkUjianRevisionStatus(ujianTaId),
+        cekRevisiUjianTA(ujianTaId),
       ]);
 
       if (
@@ -321,6 +321,6 @@ export function useUjianTAForDosen() {
     submitNilaiDanStatus,
 
     isRetakeExam,
-    checkUjianRevisionStatus,
+    cekRevisiUjianTA,
   };
 }

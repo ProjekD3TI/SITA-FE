@@ -22,7 +22,7 @@ const {
   loadingDetail,
   fetchDetailUjian,
   isRetakeExam,
-  checkUjianRevisionStatus,
+  cekStatusRevisiUjianTA,
 } = useUjianTAForDosen();
 
 // Data mahasiswa dari params dan detail ujian
