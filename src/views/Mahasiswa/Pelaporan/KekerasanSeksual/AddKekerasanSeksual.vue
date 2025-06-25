@@ -1535,6 +1535,9 @@ export default {
       return this.categories.filter(category => 
         category.nama && category.nama.startsWith('Kekerasan')
       );
+    },
+    apiBaseUrl() {
+      return 'http://pelaporan-d3ti.my.id/api';
     }
   }
 };
