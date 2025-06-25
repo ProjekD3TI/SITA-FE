@@ -11,7 +11,7 @@
 
         <!-- Form Section -->
         <div class="bg-white shadow rounded-lg p-6">
-          <form @submit.prevent="submitReport" class="space-y-6" name="reportForm" id="reportForm">
+          <form @submit.prevent="submitForm" class="space-y-6" name="reportForm" id="reportForm">
             <!-- Section 1: Detail Laporan -->
             <div class="border-b pb-6 mb-6">
               <h3 class="text-xl font-semibold mb-4 text-gray-700">Detail Laporan</h3>
@@ -20,34 +20,40 @@
                 <div>
                   <!-- Judul/Nama Laporan -->
                   <div class="mb-4">
-                    <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Judul Laporan <span class="text-red-500">*</span></label>
+                    <label for="judul" class="block text-sm font-medium text-gray-700 mb-1">Judul Laporan <span class="text-red-500">*</span></label>
                     <input
                       type="text"
-                      id="title"
-                      name="title"
-                      v-model="report.title"
+                      id="judul"
+                      name="judul"
+                      v-model="formData.judul"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
                       autocomplete="off"
                       required
                     />
+                    <div v-if="errors.judul" class="text-red-500 text-xs mt-1">
+                      {{ errors.judul[0] }}
+                    </div>
                   </div>
 
                   <!-- Kategori -->
                   <div class="mb-4">
-                    <label for="category" class="block text-sm font-medium text-gray-700 mb-2">Kategori <span class="text-red-500">*</span></label>
+                    <label for="category_id" class="block text-sm font-medium text-gray-700 mb-2">Kategori <span class="text-red-500">*</span></label>
                     <div class="relative">
                       <select 
-                        v-model="report.category" 
-                        id="category"
-                        name="category"
+                        v-model="formData.category_id" 
+                        id="category_id"
+                        name="category_id"
                         class="block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 text-sm"
                         required
                       >
                         <option value="" disabled>Pilih Kategori</option>
-                        <option v-for="category in filteredCategories" :key="category.category_id" :value="category.category_id">
+                        <option v-for="category in kekerasanCategories" :key="category.category_id" :value="category.category_id">
                           {{ category.nama }}
                         </option>
                       </select>
+                    </div>
+                    <div v-if="errors.category_id" class="text-red-500 text-xs mt-1">
+                      {{ errors.category_id[0] }}
                     </div>
                   </div>
 
@@ -101,12 +107,12 @@
                   
                   <!-- Link Lampiran -->
                   <div class="mb-4">
-                    <label for="link" class="block text-sm font-medium text-gray-700 mb-1">Link Lampiran Tambahan</label>
+                    <label for="lampiran_link" class="block text-sm font-medium text-gray-700 mb-1">Link Lampiran Tambahan</label>
                     <input
                       type="url"
-                      id="link"
-                      name="link"
-                      v-model="report.lampiran_link"
+                      id="lampiran_link"
+                      name="lampiran_link"
+                      v-model="formData.lampiran_link"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
                       placeholder="https://drive.google.com/file/..."
                     />
@@ -118,40 +124,46 @@
                 <div>
                   <!-- Deskripsi Laporan -->
                   <div class="mb-4">
-                    <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi <span class="text-red-500">*</span></label>
+                    <label for="deskripsi" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi <span class="text-red-500">*</span></label>
                     <textarea
-                      id="description"
-                      name="description"
-                      v-model="report.description"
+                      id="deskripsi"
+                      name="deskripsi"
+                      v-model="formData.deskripsi"
                       rows="5"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
                       placeholder="Berikan Deskripsi atau Kronologi Kejadian"
                       autocomplete="off"
                       required
                     ></textarea>
+                    <div v-if="errors.deskripsi" class="text-red-500 text-xs mt-1">
+                      {{ errors.deskripsi[0] }}
+                    </div>
                   </div>
 
                   <!-- Tanggal & Waktu Kejadian -->
                   <div class="mb-4">
-                    <label for="incidentDate" class="block text-sm font-medium text-gray-700 mb-1">Tanggal & Waktu Kejadian <span class="text-red-500">*</span></label>
+                    <label for="tanggal_kejadian" class="block text-sm font-medium text-gray-700 mb-1">Tanggal & Waktu Kejadian <span class="text-red-500">*</span></label>
                     <input
                       type="datetime-local"
-                      id="incidentDate"
-                      name="incidentDate"
-                      v-model="report.incidentDate"
+                      id="tanggal_kejadian"
+                      name="tanggal_kejadian"
+                      v-model="formData.tanggal_kejadian"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
                       required
                     />
+                    <div v-if="errors.tanggal_kejadian" class="text-red-500 text-xs mt-1">
+                      {{ errors.tanggal_kejadian[0] }}
+                    </div>
                   </div>
                   
                   <!-- Bukti Laporan (File Input) Multiple -->
                   <div class="mb-4">
-                    <label for="evidence" class="block text-sm font-medium text-gray-700 mb-1">Lampiran Foto <span class="text-red-500">*</span></label>
+                    <label for="image_path" class="block text-sm font-medium text-gray-700 mb-1">Lampiran Foto <span class="text-red-500">*</span></label>
                     <div class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center bg-gray-50 hover:bg-gray-100 transition cursor-pointer relative">
                       <input
                         type="file"
-                        id="evidence"
-                        name="evidence"
+                        id="image_path"
+                        name="image_path"
                         multiple
                         @change="handleFileUpload"
                         accept="image/*"
@@ -165,6 +177,9 @@
                         <p class="text-sm text-gray-600">Klik atau seret beberapa file foto</p>
                         <p class="text-xs text-gray-500">Format: JPG, PNG, GIF (Maks 5MB)</p>
                       </div>
+                    </div>
+                    <div v-if="errors.image_path" class="text-red-500 text-xs mt-1">
+                      {{ errors.image_path[0] }}
                     </div>
                     
                     <!-- Image Previews -->
@@ -198,12 +213,12 @@
                 <!-- Left Column -->
                 <div>
                   <div class="mb-4">
-                    <label for="reporterName" class="block text-sm font-medium text-gray-700 mb-1">Nama Pelapor</label>
+                    <label for="nama_pelapor" class="block text-sm font-medium text-gray-700 mb-1">Nama Pelapor</label>
                     <input
                       type="text"
-                      id="reporterName"
-                      name="reporterName"
-                      v-model="report.reporterName"
+                      id="nama_pelapor"
+                      name="nama_pelapor"
+                      v-model="formData.nama_pelapor"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 bg-gray-100"
                       autocomplete="name"
                       disabled
@@ -211,12 +226,12 @@
                   </div>
 
                   <div class="mb-4">
-                    <label for="nim" class="block text-sm font-medium text-gray-700 mb-1">NIM Pelapor</label>
+                    <label for="nim_pelapor" class="block text-sm font-medium text-gray-700 mb-1">NIM Pelapor</label>
                     <input
                       type="text"
-                      id="nim"
-                      name="nim"
-                      v-model="report.nim"
+                      id="nim_pelapor"
+                      name="nim_pelapor"
+                      v-model="formData.nim_pelapor"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 bg-gray-100"
                       autocomplete="off"
                       disabled
@@ -224,12 +239,12 @@
                   </div>
 
                   <div class="mb-4">
-                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Nomor HP Pelapor</label>
+                    <label for="nomor_telepon" class="block text-sm font-medium text-gray-700 mb-1">Nomor HP Pelapor</label>
                     <input
                       type="tel"
-                      id="phone"
-                      name="phone"
-                      v-model="report.phone"
+                      id="nomor_telepon"
+                      name="nomor_telepon"
+                      v-model="formData.nomor_telepon"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 bg-gray-100"
                       autocomplete="tel"
                       disabled
@@ -242,7 +257,7 @@
                     <select
                       id="profesi"
                       name="profesi"
-                      v-model="report.profesi"
+                      v-model="formData.profesi"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
                       required
                     >
@@ -252,6 +267,9 @@
                       <option value="Staff">Staff</option>
                       <option value="Lainnya">Lainnya</option>
                     </select>
+                    <div v-if="errors.profesi" class="text-red-500 text-xs mt-1">
+                      {{ errors.profesi[0] }}
+                    </div>
                   </div>
                 </div>
                 
@@ -266,7 +284,7 @@
                           type="radio"
                           id="gender_male"
                           name="jenis_kelamin"
-                          v-model="report.jenis_kelamin"
+                          v-model="formData.jenis_kelamin"
                           value="laki-laki"
                           class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
                           required
@@ -279,12 +297,15 @@
                           type="radio"
                           id="gender_female"
                           name="jenis_kelamin"
-                          v-model="report.jenis_kelamin"
+                          v-model="formData.jenis_kelamin"
                           value="perempuan"
                           class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
                         />
                         <label for="gender_female" class="ml-2 text-sm text-gray-700">Perempuan</label>
                       </div>
+                    </div>
+                    <div v-if="errors.jenis_kelamin" class="text-red-500 text-xs mt-1">
+                      {{ errors.jenis_kelamin[0] }}
                     </div>
                   </div>
                   
@@ -297,7 +318,7 @@
                           type="radio"
                           id="below20"
                           name="umur_pelapor"
-                          v-model="report.umur_pelapor"
+                          v-model="formData.umur_pelapor"
                           value="<20"
                           class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
                           required
@@ -309,7 +330,7 @@
                           type="radio"
                           id="20to40"
                           name="umur_pelapor"
-                          v-model="report.umur_pelapor"
+                          v-model="formData.umur_pelapor"
                           value="20-40"
                           class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
                         />
@@ -320,12 +341,15 @@
                           type="radio"
                           id="above40"
                           name="umur_pelapor"
-                          v-model="report.umur_pelapor"
+                          v-model="formData.umur_pelapor"
                           value="40<"
                           class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
                         />
                         <label for="above40" class="ml-2 text-sm text-gray-700">Lebih dari 40 tahun</label>
                       </div>
+                    </div>
+                    <div v-if="errors.umur_pelapor" class="text-red-500 text-xs mt-1">
+                      {{ errors.umur_pelapor[0] }}
                     </div>
                   </div>
                 </div>
@@ -336,7 +360,7 @@
             <div class="border-b pb-6 mb-6">
               <h3 class="text-xl font-semibold mb-4 text-gray-700">Informasi Terduga/Terlapor</h3>
               
-              <div v-for="(terduga, index) in report.terlapor" :key="index" class="mb-6 bg-gray-50 p-4 rounded-md border border-gray-200">
+              <div v-for="(terduga, index) in formData.terlapor" :key="index" class="mb-6 bg-gray-50 p-4 rounded-md border border-gray-200">
                 <h4 class="font-medium text-lg mb-3 text-gray-700">Terduga {{ index + 1 }}</h4>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -508,7 +532,7 @@
             <div class="border-b pb-6 mb-6">
               <h3 class="text-xl font-semibold mb-4 text-gray-700">Informasi Saksi</h3>
               
-              <div v-for="(saksi, index) in report.saksi" :key="index" class="mb-6 bg-gray-50 p-4 rounded-md border border-gray-200">
+              <div v-for="(saksi, index) in formData.saksi" :key="index" class="mb-6 bg-gray-50 p-4 rounded-md border border-gray-200">
                 <h4 class="font-medium text-lg mb-3 text-gray-700">Saksi {{ index + 1 }}</h4>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -592,7 +616,7 @@
                     type="checkbox"
                     id="agreement"
                     name="agreement"
-                    v-model="report.agreement"
+                    v-model="formData.agreement"
                     class="mt-1 mr-2 focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300 rounded"
                     required
                   />
@@ -601,22 +625,13 @@
                   </label>
                 </div>
                 
-                <div v-if="showAgreementWarning" class="text-red-500 text-xs mt-1 ml-6">
-                  Anda harus menyetujui pernyataan ini untuk melanjutkan
+                <div v-if="errors.agreement" class="text-red-500 text-xs mt-1 ml-6">
+                  {{ errors.agreement[0] }}
                 </div>
               </div>
             </div>
 
             <!-- reCAPTCHA v2 -->
-            <div class="mb-6">
-              <div class="flex flex-col items-center">
-                <div ref="recaptchaContainer"></div>
-                <div v-if="recaptchaError" class="text-red-500 text-xs mt-2">
-                  {{ recaptchaError }}
-                </div>
-              </div>
-            </div>
-
             <div class="mb-6">
               <div class="flex flex-col items-center">
                 <div ref="recaptchaContainer"></div>
@@ -629,6 +644,9 @@
                   >
                     Muat ulang reCAPTCHA
                   </button>
+                </div>
+                <div v-if="errors['g-recaptcha-response']" class="text-red-500 text-xs mt-2">
+                  {{ errors['g-recaptcha-response'][0] }}
                 </div>
               </div>
             </div>
@@ -649,13 +667,9 @@
                 id="submitButton"
                 name="submitButton"
                 class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                :disabled="isSubmitting || !report.agreement || !recaptchaVerified"
-                :class="{
-                  'opacity-75 cursor-not-allowed': !report.agreement || !recaptchaVerified,
-                  'hover:bg-red-700': report.agreement && recaptchaVerified
-                }"
+                :disabled="loading"
               >
-                <span v-if="isSubmitting">Mengirim...</span>
+                <span v-if="loading">Mengirim...</span>
                 <span v-else>Simpan Laporan</span>
               </button>
             </div>
@@ -667,10 +681,9 @@
 </template>
 
 <script>
-import axios from 'axios';
-import Swal from 'sweetalert2';
-import VueCookies from "vue-cookies";
 import { decryptData } from '../../../../services/encrypt';
+import VueCookies from "vue-cookies";
+import Swal from 'sweetalert2';
 import Header from '../components/Header.vue';
 import Sidebar from '../components/Sidebar.vue';
 
@@ -682,27 +695,27 @@ export default {
   },
   data() {
     return {
-      report: {
-        title: '',
-        category: '',
-        description: '',
-        reporterName: '',
-        nim: '',
-        phone: '',
-        incidentDate: '',
-        evidenceFiles: null,
+      formData: {
+        judul: '',
+        category_id: '',
+        deskripsi: '',
+        tanggal_kejadian: '',
+        image_path: null,
+        nama_pelapor: '',
+        nim_pelapor: '',
+        nomor_telepon: '',
         lampiran_link: '',
-        bukti_pelanggaran: [],
+        bukti_pelanggaran: [], // Array for bukti_pelanggaran
+        terlapor: [], // Array for terduga/terlapor
+        saksi: [], // Array for saksi
         agreement: false,
-        terlapor: [],
-        saksi: [],
-        // Tambahkan field baru
+        // Added fields for pelapor information
         profesi: '',
         jenis_kelamin: '',
         umur_pelapor: ''
       },
-      categories: [],
-      selectedBukti: [],
+      selectedFiles: [], // Array for tracking selected files
+      selectedBukti: [], // Array for selected bukti checkboxes
       buktiOptions: [
         'Bukti pemeriksaan medis',
         'Dokumen dan/atau rekaman',
@@ -732,14 +745,12 @@ export default {
       showLainnyaInput: false,
       buktiLainnya: '',
       showBuktiWarning: false,
-      showAgreementWarning: false,
-      isSubmitting: false,
+      categories: [],
+      errors: {},
+      loading: false,
       imagePreviews: [],
-      selectedFiles: [],
       currentUser: null,
-      formattedDateTime: null,
-      
-      // reCAPTCHA improved configuration
+      // reCAPTCHA v2 Configuration
       recaptchaSiteKey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // Test key
       recaptchaVerified: false,
       recaptchaResponse: null,
@@ -749,7 +760,17 @@ export default {
       maxRecaptchaAttempts: 3
     };
   },
-
+  computed: {
+    kekerasanCategories() {
+      // Filter for categories that start with "Kekerasan"
+      return this.categories.filter(category => 
+        category.nama && category.nama.startsWith('Kekerasan')
+      );
+    },
+    apiBaseUrl() {
+      return 'http://pelaporan-d3ti.my.id/api';
+    }
+  },
   created() {
     this.loadUserData();
     // Initialize with one empty object for terduga and saksi
@@ -758,178 +779,110 @@ export default {
     
     // Set the current date time in the required format
     const now = new Date();
-    this.formattedDateTime = now.toISOString().slice(0, 19).replace('T', ' ');
+    // Format as YYYY-MM-DD HH:MM:SS in UTC
+    const year = now.getUTCFullYear();
+    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(now.getUTCDate()).padStart(2, '0');
+    const hours = String(now.getUTCHours()).padStart(2, '0');
+    const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(now.getUTCSeconds()).padStart(2, '0');
+    
+    this.currentDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   },
-
-  beforeUnmount() {
-    // Properly cleanup reCAPTCHA
-    this.cleanupRecaptcha();
-  },
-
   mounted() {
     this.fetchCategories();
-    
-    // Improved reCAPTCHA initialization with retry mechanism
-    this.$nextTick(() => {
-      this.initRecaptcha();
-    });
+    this.loadRecaptchaScript();
   },
-
   methods: {
-    // Improved reCAPTCHA methods
-    initRecaptcha() {
-      // Clear any existing error messages
-      this.recaptchaError = null;
-      
-      // Check if the recaptcha container is available
-      if (!this.$refs.recaptchaContainer) {
-        console.log("reCAPTCHA container not found, retrying...");
-        setTimeout(() => this.initRecaptcha(), 500);
-        return;
-      }
-      
-      // Track attempt count to prevent infinite loops
-      this.recaptchaAttempts++;
-      if (this.recaptchaAttempts > this.maxRecaptchaAttempts) {
-        this.recaptchaError = "Gagal memuat reCAPTCHA setelah beberapa percobaan. Silakan muat ulang halaman.";
-        return;
-      }
-      
-      // Load reCAPTCHA script if not already loaded
+    // reCAPTCHA Methods
+    loadRecaptchaScript() {
       if (window.grecaptcha) {
         this.renderRecaptchaWidget();
-      } else {
-        this.loadRecaptchaScript()
-          .then(() => {
-            this.renderRecaptchaWidget();
-          })
-          .catch(error => {
-            console.error("Error loading reCAPTCHA script:", error);
-            this.recaptchaError = "Gagal memuat script reCAPTCHA. Silakan muat ulang halaman.";
-            
-            // Auto-retry after a delay
-            setTimeout(() => {
-              if (!window.grecaptcha) {
-                this.initRecaptcha();
-              }
-            }, 2000);
-          });
+        return;
       }
+
+      // Create script element
+      const script = document.createElement('script');
+      script.src = `https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit`;
+      script.async = true;
+      script.defer = true;
+
+      // Define callback when reCAPTCHA is loaded
+      window.onRecaptchaLoaded = () => {
+        this.renderRecaptchaWidget();
+      };
+
+      // Handle script loading errors
+      script.onerror = () => {
+        console.error('Failed to load reCAPTCHA script');
+        this.recaptchaError = 'Gagal memuat reCAPTCHA. Silakan muat ulang halaman.';
+      };
+
+      // Add script to document
+      document.head.appendChild(script);
     },
-    
-    loadRecaptchaScript() {
-      return new Promise((resolve, reject) => {
-        // If already loading, wait for it
-        if (window.onRecaptchaLoaded) {
-          const originalCallback = window.onRecaptchaLoaded;
-          window.onRecaptchaLoaded = () => {
-            originalCallback();
-            resolve(window.grecaptcha);
-          };
+
+    renderRecaptchaWidget() {
+      // Wait until the container is mounted
+      this.$nextTick(() => {
+        if (!this.$refs.recaptchaContainer) {
+          console.error('reCAPTCHA container not found');
+          setTimeout(() => this.renderRecaptchaWidget(), 500);
           return;
         }
 
-        // Define callback for when reCAPTCHA loads
-        window.onRecaptchaLoaded = () => {
-          resolve(window.grecaptcha);
-        };
-        
-        // Add the script to the page
-        const script = document.createElement('script');
-        script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit';
-        script.async = true;
-        script.defer = true;
-        
-        script.onerror = () => {
-          reject(new Error('Failed to load reCAPTCHA script'));
-        };
-        
-        document.head.appendChild(script);
+        try {
+          // Render reCAPTCHA widget
+          this.recaptchaWidget = window.grecaptcha.render(this.$refs.recaptchaContainer, {
+            'sitekey': this.recaptchaSiteKey,
+            'callback': (response) => {
+              this.recaptchaResponse = response;
+              this.recaptchaVerified = true;
+              this.recaptchaError = null;
+              console.log('reCAPTCHA verification successful');
+            },
+            'expired-callback': () => {
+              this.recaptchaResponse = null;
+              this.recaptchaVerified = false;
+              this.recaptchaError = 'Verifikasi reCAPTCHA telah kedaluwarsa. Silakan centang kembali.';
+            },
+            'error-callback': () => {
+              this.recaptchaResponse = null;
+              this.recaptchaVerified = false;
+              this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan coba lagi.';
+            }
+          });
+        } catch (error) {
+          console.error('Error rendering reCAPTCHA:', error);
+          
+          // If the widget is already rendered, just reset it
+          if (error.message && error.message.includes('already been rendered')) {
+            this.resetRecaptcha();
+          } else {
+            this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan muat ulang halaman.';
+          }
+        }
       });
     },
-    
-    renderRecaptchaWidget() {
-      // Ensure the container is empty before rendering
-      if (this.$refs.recaptchaContainer) {
-        this.$refs.recaptchaContainer.innerHTML = '';
-      }
-      
-      try {
-        // Render the reCAPTCHA widget
-        this.recaptchaWidget = window.grecaptcha.render(this.$refs.recaptchaContainer, {
-          'sitekey': this.recaptchaSiteKey,
-          'callback': (response) => {
-            this.recaptchaResponse = response;
-            this.recaptchaVerified = true;
-            this.recaptchaError = null;
-            console.log('reCAPTCHA verification successful');
-          },
-          'expired-callback': () => {
-            this.recaptchaResponse = null;
-            this.recaptchaVerified = false;
-            this.recaptchaError = 'Verifikasi reCAPTCHA telah kedaluwarsa. Silakan centang kembali.';
-            console.log('reCAPTCHA verification expired');
-          },
-          'error-callback': () => {
-            this.recaptchaResponse = null;
-            this.recaptchaVerified = false;
-            this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan coba lagi.';
-            console.error('reCAPTCHA error');
-            
-            // Auto-retry after a delay
-            setTimeout(() => {
-              this.resetRecaptcha();
-            }, 2000);
-          }
-        });
-      } catch (error) {
-        console.error('Error rendering reCAPTCHA:', error);
-        this.recaptchaError = 'Terjadi kesalahan saat memuat reCAPTCHA. Silakan muat ulang halaman.';
-        
-        // Handle the case where rendering fails, possibly due to reCAPTCHA being already rendered
-        // This commonly happens with the test key
-        if (error.message && error.message.includes('already been rendered')) {
-          this.cleanupRecaptcha();
-          setTimeout(() => {
-            this.initRecaptcha();
-          }, 500);
-        }
-      }
-    },
-    
+
     resetRecaptcha() {
       try {
         if (window.grecaptcha && this.recaptchaWidget !== null) {
           window.grecaptcha.reset(this.recaptchaWidget);
           this.recaptchaVerified = false;
           this.recaptchaResponse = null;
-          return true;
+        } else {
+          // If reset fails, re-initialize
+          this.recaptchaAttempts = 0; 
+          this.renderRecaptchaWidget();
         }
-        // If reset fails, re-initialize
-        this.cleanupRecaptcha();
-        this.initRecaptcha();
       } catch (error) {
         console.error('Error resetting reCAPTCHA:', error);
-        // If there's an error, try to re-initialize
-        this.cleanupRecaptcha();
-        this.initRecaptcha();
+        this.recaptchaAttempts = 0;
+        this.renderRecaptchaWidget();
       }
     },
-    
-    cleanupRecaptcha() {
-      // Reset state
-      this.recaptchaWidget = null;
-      this.recaptchaVerified = false;
-      this.recaptchaResponse = null;
-      this.recaptchaAttempts = 0;
-      
-      // Clear the container
-      if (this.$refs.recaptchaContainer) {
-        this.$refs.recaptchaContainer.innerHTML = '';
-      }
-    },
-    
-    // Get the most recent token directly from grecaptcha
+
     getRecaptchaResponse() {
       try {
         if (window.grecaptcha && this.recaptchaWidget !== null) {
@@ -941,103 +894,139 @@ export default {
         return this.recaptchaResponse;
       }
     },
-    
-    // Your existing methods (keep these unchanged)
+
+    // Data loading methods
     loadUserData() {
       try {
         const encryptedUserData = VueCookies.get("user_session");
         if (encryptedUserData) {
           const userData = decryptData(encryptedUserData);
-          this.report.reporterName = userData.name || '';
-          this.report.nim = userData.nim || userData.nik || '';
-          this.report.phone = userData.no_telp || '';
+          this.formData.nama_pelapor = userData.name || '';
+          this.formData.nim_pelapor = userData.nim || userData.nik || '';
+          this.formData.nomor_telepon = userData.no_telp || '';
           
-          // Auto-select profession based on email domain
-          if (userData.email && userData.email.includes('@student')) {
-            this.report.profesi = 'Mahasiswa';
-            console.log('Auto-selected profession: Mahasiswa based on student email');
+          // Check email domain to determine role
+          const email = userData.email || (userData.dosen ? userData.dosen.email : '');
+          
+          // If email exists and contains "@student", set role as "Mahasiswa"
+          if (email && email.includes('@student')) {
+            this.formData.profesi = 'Mahasiswa';
           }
           
           // Update current user display if available
           if (userData.username) {
             this.currentUser = userData.username;
           }
-          
-          console.log("User data loaded successfully");
         } else {
-          console.log("No user data found in cookies, using default data");
           this.setDefaultUserData();
         }
       } catch (error) {
-        console.error("Error loading user data:", error);
         this.setDefaultUserData();
       }
     },
     
     setDefaultUserData() {
       // Default user data if cookie is not available
-      this.report.reporterName = 'Miftahul';
-      this.report.nim = 'miftahul01';
-      this.report.phone = '';
+      this.formData.nama_pelapor = 'Miftahul';
+      this.formData.nim_pelapor = 'miftahul01';
+      this.formData.nomor_telepon = '';
     },
     
     fetchCategories() {
-      axios.get('http://pelaporan-d3ti.my.id/api/category', {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      })
-        .then(response => {
-          if (Array.isArray(response.data)) {
-            this.categories = response.data;
-          } else if (response.data && response.data.data) {
-            this.categories = response.data.data;
-          } else {
-            console.error('Unexpected API response structure:', response.data);
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', `${this.apiBaseUrl}/category`, true);
+      xhr.timeout = 10000; // 10 seconds
+      
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            if (Array.isArray(response)) {
+              this.categories = response;
+            } else if (response && response.data) {
+              this.categories = response.data;
+            } else {
+              console.error('Unexpected API response structure:', response);
+              this.categories = [];
+            }
+          } catch (error) {
+            console.error('Error parsing categories response:', error);
             this.categories = [];
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Gagal memuat kategori laporan.'
+            });
           }
-        })
-        .catch(error => {
-          console.error('Error fetching categories:', error);
+        } else {
+          console.error('Failed to fetch categories:', xhr.status, xhr.statusText);
           Swal.fire({
             icon: 'error',
             title: 'Error',
             text: 'Gagal memuat kategori laporan.'
           });
-        });
-    },
-    
-    handleFileUpload(event) {
-      // Store selected files
-      this.selectedFiles = Array.from(event.target.files);
-      this.report.evidenceFiles = event.target.files;
-      
-      // Check file size limitations (max 5MB per file)
-      let oversizedFiles = [];
-      for (let file of this.selectedFiles) {
-        if (file.size > 5 * 1024 * 1024) {
-          oversizedFiles.push(file.name);
         }
-      }
+      };
       
-      if (oversizedFiles.length > 0) {
+      xhr.onerror = () => {
+        console.error('Network error while fetching categories');
         Swal.fire({
           icon: 'error',
-          title: 'File Terlalu Besar',
-          text: `File berikut melebihi batas 5MB: ${oversizedFiles.join(', ')}`,
-          confirmButtonColor: '#3085d6',
+          title: 'Error',
+          text: 'Gagal memuat kategori laporan. Periksa koneksi internet Anda.'
         });
-        event.target.value = ''; // Clear the file input
-        this.selectedFiles = [];
-        this.report.evidenceFiles = null;
-        return;
+      };
+      
+      xhr.ontimeout = () => {
+        console.error('Timeout while fetching categories');
+        Swal.fire({
+          icon: 'error',
+          title: 'Timeout',
+          text: 'Permintaan kategori melebihi batas waktu. Silakan coba lagi.'
+        });
+      };
+      
+      xhr.send();
+    },
+    
+    // File handling methods
+    handleFileUpload(event) {
+      const selectedFiles = Array.from(event.target.files);
+      
+      // Validate the files
+      const { validFiles, invalidFiles } = this.validateFiles(selectedFiles);
+      
+      // Show warning for invalid files
+      if (invalidFiles.length > 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Beberapa file tidak valid',
+          html: `
+            <p>Beberapa file tidak dapat digunakan:</p>
+            <ul>
+              ${invalidFiles.map(name => `<li>${name}</li>`).join('')}
+            </ul>
+            <p>Pastikan semua file berformat JPEG, PNG, atau GIF dan ukuran tidak melebihi 5MB.</p>
+          `
+        });
       }
+      
+      // Store selected files for form submission
+      this.selectedFiles = validFiles;
+      
+      // Create a new FileList-like object from valid files
+      const dataTransfer = new DataTransfer();
+      validFiles.forEach(file => {
+        dataTransfer.items.add(file);
+      });
+      
+      // Update the formData.image_path for form submission
+      this.formData.image_path = dataTransfer.files;
       
       // Generate preview images
       this.imagePreviews = [];
-      for (let i = 0; i < event.target.files.length; i++) {
-        const file = event.target.files[i];
+      for (let i = 0; i < validFiles.length; i++) {
+        const file = validFiles[i];
         const reader = new FileReader();
         reader.onload = e => {
           this.imagePreviews.push(e.target.result);
@@ -1060,10 +1049,41 @@ export default {
       });
       
       // Update the input element's files and form data
-      this.report.evidenceFiles = dataTransfer.files;
-      document.getElementById('evidence').files = dataTransfer.files;
+      this.formData.image_path = dataTransfer.files;
+      document.getElementById('image_path').files = dataTransfer.files;
     },
     
+    validateFiles(files) {
+      const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      
+      let validFiles = [];
+      let invalidFiles = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        if (file.size > maxSizeInBytes) {
+          invalidFiles.push(`${file.name} (melebihi batas ukuran)`);
+        } else if (!allowedTypes.includes(file.type)) {
+          invalidFiles.push(`${file.name} (format tidak didukung)`);
+        } else {
+          validFiles.push(file);
+        }
+      }
+      
+      return {
+        validFiles,
+        invalidFiles
+      };
+    },
+    
+    // Navigation methods
+    goBack() {
+      this.$router.go(-1);
+    },
+    
+    // Form data handling methods
     updateBuktiPelanggaran() {
       // Start with selected standard options
       let buktiArray = [...this.selectedBukti];
@@ -1073,31 +1093,36 @@ export default {
         buktiArray.push('Lainnya: ' + this.buktiLainnya.trim());
       }
       
-      // Update the report data
-      this.report.bukti_pelanggaran = buktiArray;
+      // Update the formData
+      this.formData.bukti_pelanggaran = buktiArray;
+      
+      // Clear bukti warning if we have selected items
+      if (buktiArray.length > 0) {
+        this.showBuktiWarning = false;
+      }
     },
     
     addTerduga() {
-      this.report.terlapor.push({
+      this.formData.terlapor.push({
         nama_lengkap: '',
         email: '',
         nomor_telepon: '',
         status_warga: '',
         unit_kerja: '',
         jenis_kelamin: '',
-        umur_terlapor: ''
+        umur_terlapor:''
       });
     },
     
     removeTerduga(index) {
-      this.report.terlapor.splice(index, 1);
-      if (this.report.terlapor.length === 0) {
+      this.formData.terlapor.splice(index, 1);
+      if (this.formData.terlapor.length === 0) {
         this.addTerduga(); // Always keep at least one terduga field
       }
     },
     
     addSaksi() {
-      this.report.saksi.push({
+      this.formData.saksi.push({
         nama_lengkap: '',
         email: '',
         nomor_telepon: ''
@@ -1105,435 +1130,306 @@ export default {
     },
     
     removeSaksi(index) {
-      this.report.saksi.splice(index, 1);
-      if (this.report.saksi.length === 0) {
+      this.formData.saksi.splice(index, 1);
+      if (this.formData.saksi.length === 0) {
         this.addSaksi(); // Always keep at least one saksi field
       }
     },
     
-    goBack() {
-      this.$router.go(-1);
-    },
-
+    // Form validation and submission
     validateForm() {
       let isValid = true;
-      let errors = [];
+      this.errors = {};
       
-      // Check required fields
-      if (!this.report.title) {
-        errors.push('Judul Laporan wajib diisi');
+      // Basic validations
+      if (!this.formData.judul) {
+        this.errors.judul = ['Judul laporan harus diisi'];
         isValid = false;
       }
       
-      if (!this.report.category) {
-        errors.push('Kategori wajib dipilih');
+      if (!this.formData.category_id) {
+        this.errors.category_id = ['Kategori harus dipilih'];
         isValid = false;
       }
       
-      if (!this.report.description) {
-        errors.push('Deskripsi wajib diisi');
+      if (!this.formData.deskripsi) {
+        this.errors.deskripsi = ['Deskripsi harus diisi'];
         isValid = false;
       }
       
-      if (!this.report.incidentDate) {
-        errors.push('Tanggal & Waktu Kejadian wajib diisi');
+      if (!this.formData.tanggal_kejadian) {
+        this.errors.tanggal_kejadian = ['Tanggal kejadian harus diisi'];
         isValid = false;
       }
       
-      if (this.report.bukti_pelanggaran.length === 0) {
-        errors.push('Bukti Pelanggaran wajib dipilih minimal satu');
+      // Validate pelapor fields
+      if (!this.formData.profesi) {
+        this.errors.profesi = ['Profesi harus dipilih'];
         isValid = false;
       }
       
-      if (!this.report.profesi) {
-        errors.push('Profesi wajib dipilih');
+      if (!this.formData.jenis_kelamin) {
+        this.errors.jenis_kelamin = ['Jenis kelamin harus dipilih'];
         isValid = false;
       }
       
-      if (!this.report.jenis_kelamin) {
-        errors.push('Jenis Kelamin wajib dipilih');
+      if (!this.formData.umur_pelapor) {
+        this.errors.umur_pelapor = ['Rentang umur harus dipilih'];
         isValid = false;
       }
       
-      if (!this.report.umur_pelapor) {
-        errors.push('Rentang Umur wajib dipilih');
+      // Validate bukti_pelanggaran
+      if (this.formData.bukti_pelanggaran.length === 0) {
+        this.showBuktiWarning = true;
         isValid = false;
       }
       
-      // Check if evidence files exist
+      // Validate file uploads
       if (!this.selectedFiles || this.selectedFiles.length === 0) {
-        errors.push('Lampiran Foto wajib diupload');
+        this.errors.image_path = ['Lampiran foto harus diunggah'];
         isValid = false;
       }
       
-      // Check terlapor entries
-      let validTerlapor = false;
-      for (const terduga of this.report.terlapor) {
-        if (terduga.nama_lengkap && terduga.jenis_kelamin && 
-            terduga.status_warga && terduga.unit_kerja && 
-            terduga.umur_terlapor) {
-          validTerlapor = true;
-          break;
-        }
-      }
-      
-      if (!validTerlapor) {
-        errors.push('Data Terduga/Terlapor wajib diisi lengkap minimal untuk satu orang');
+      // Validate reCAPTCHA
+      const recaptchaResponse = this.getRecaptchaResponse();
+      if (!recaptchaResponse) {
+        this.errors['g-recaptcha-response'] = ['Harap centang reCAPTCHA'];
         isValid = false;
       }
       
-      // Check saksi entries
-      let validSaksi = false;
-      for (const saksi of this.report.saksi) {
-        if (saksi.nama_lengkap && saksi.email && saksi.nomor_telepon) {
-          validSaksi = true;
-          break;
-        }
-      }
-      
-      if (!validSaksi) {
-        errors.push('Data Saksi wajib diisi lengkap minimal untuk satu orang');
+      // Validate agreement
+      if (!this.formData.agreement) {
+        this.errors.agreement = ['Anda harus menyetujui pernyataan untuk melanjutkan'];
         isValid = false;
-      }
-      
-      if (!isValid) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Form Tidak Lengkap',
-          html: '<ul><li>' + errors.join('</li><li>') + '</li></ul>'
-        });
       }
       
       return isValid;
     },
     
-    // Improved form submission method
-    submitReport() {
-  // Reset warnings
-  this.showBuktiWarning = false;
-  this.showAgreementWarning = false;
-  this.recaptchaError = null;
-
-  if (!this.validateForm()) {
-    return;
-  }
-  
-  // Validate agreement
-  if (!this.report.agreement) {
-    this.showAgreementWarning = true;
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'Anda harus menyetujui pernyataan untuk melanjutkan'
-    });
-    return;
-  }
-  
-  // Get the latest reCAPTCHA response directly
-  const recaptchaResponseToken = this.getRecaptchaResponse();
-  
-  // Validate reCAPTCHA
-  if (!recaptchaResponseToken) {
-    this.recaptchaError = 'Harap centang kotak reCAPTCHA "Saya bukan robot"';
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'Harap centang kotak reCAPTCHA untuk melanjutkan'
-    });
-    return;
-  }
-  
-  // Update bukti_pelanggaran array before submission
-  this.updateBuktiPelanggaran();
-  
-  // Validate bukti_pelanggaran
-  if (this.report.bukti_pelanggaran.length === 0) {
-    this.showBuktiWarning = true;
-    return;
-  }
-  
-  // Create FormData object to handle file upload
-  const formData = new FormData();
-  formData.append('judul', this.report.title);
-  formData.append('category_id', this.report.category);
-  formData.append('deskripsi', this.report.description);
-  formData.append('tanggal_kejadian', this.report.incidentDate);
-  formData.append('nama_pelapor', this.report.reporterName);
-  formData.append('nim_pelapor', this.report.nim);
-  formData.append('nomor_telepon', this.report.phone);
-  formData.append('current_datetime', this.formattedDateTime);
-  formData.append('username', this.currentUser || 'miftahul01');
-  
-  // Use the most recent reCAPTCHA token
-  formData.append('g-recaptcha-response', recaptchaResponseToken);
-  
-  // Tambahkan field baru
-  formData.append('profesi', this.report.profesi);
-  formData.append('jenis_kelamin', this.report.jenis_kelamin);
-  formData.append('umur_pelapor', this.report.umur_pelapor);
-  
-  // Add lampiran_link
-  if (this.report.lampiran_link) {
-    formData.append('lampiran_link', this.report.lampiran_link);
-  }
-  
-  // Add bukti_pelanggaran as array with proper format
-  if (this.report.bukti_pelanggaran && this.report.bukti_pelanggaran.length > 0) {
-    this.report.bukti_pelanggaran.forEach((item, index) => {
-      formData.append(`bukti_pelanggaran[${index}]`, item);
-    });
-  }
-  
-  // Add terlapor with proper array format for Laravel
-  const terlaporFiltered = this.report.terlapor.filter(t => t.nama_lengkap.trim() !== '');
-  if (terlaporFiltered.length > 0) {
-    terlaporFiltered.forEach((item, index) => {
-      Object.keys(item).forEach(key => {
-        if (item[key]) { // Only append if value exists
-          formData.append(`terlapor[${index}][${key}]`, item[key]);
-        }
-      });
-    });
-  } else {
-    // Add default terlapor with valid email
-    formData.append('terlapor[0][nama_lengkap]', 'Nama Terlapor');
-    formData.append('terlapor[0][email]', 'terlapor.dummy@gmail.com');
-    formData.append('terlapor[0][nomor_telepon]', '081234567890');
-    formData.append('terlapor[0][status_warga]', 'mahasiswa');
-    formData.append('terlapor[0][unit_kerja]', 'Fakultas Teknik');
-    formData.append('terlapor[0][jenis_kelamin]', 'laki-laki');
-    formData.append('terlapor[0][umur_terlapor]', '20-40');
-  }
-  
-  // Add saksi with proper array format for Laravel
-  const saksiFiltered = this.report.saksi.filter(s => s.nama_lengkap.trim() !== '');
-  if (saksiFiltered.length > 0) {
-    saksiFiltered.forEach((item, index) => {
-      Object.keys(item).forEach(key => {
-        if (item[key]) { // Only append if value exists
-          formData.append(`saksi[${index}][${key}]`, item[key]);
-        }
-      });
-    });
-  } else {
-    // Add default saksi with valid email
-    formData.append('saksi[0][nama_lengkap]', 'Nama Saksi');
-    formData.append('saksi[0][email]', 'saksi.dummy@gmail.com');
-    formData.append('saksi[0][nomor_telepon]', '089876543210');
-  }
-  
-  // Append multiple files if they exist with proper format
-  if (this.report.evidenceFiles && this.report.evidenceFiles.length > 0) {
-    for (let i = 0; i < this.report.evidenceFiles.length; i++) {
-      formData.append(`image_path[${i}]`, this.report.evidenceFiles[i]);
-    }
-  }
-  
-  // Agreement field
-  formData.append('agreement', this.report.agreement ? 1 : 0);
-  
-  // Show loading state
-  this.isSubmitting = true;
-  
-  // Create XMLHttpRequest
-  const xhr = new XMLHttpRequest();
-  
-  // CRITICAL FIX: Use exactly the same endpoint configuration as AddKS.vue
-  xhr.open('POST', `${this.apiBaseUrl}/laporan_kekerasan/add_laporan`, true);
-  
-  console.log("Sending request to:", `${this.apiBaseUrl}/laporan_kekerasan/add_laporan`);
-  
-  // Set timeout (30 seconds)
-  xhr.timeout = 30000;
-  
-  // CRITICAL FIX: Use onreadystatechange instead of onload
-  xhr.onreadystatechange = () => {
-    if (xhr.readyState !== 4) return;
-    
-    this.isSubmitting = false;
-    
-    // Log raw response for debugging
-    console.log('XHR Response Status:', xhr.status);
-    console.log('XHR Response Headers:', xhr.getAllResponseHeaders());
-    console.log('XHR Response Text:', xhr.responseText);
-    
-    if (xhr.status >= 200 && xhr.status < 300) {
-      // Success response
-      // Check if the response is HTML (likely a redirect) 
-      if (xhr.responseText.trim().startsWith('<!DOCTYPE html>')) {
-        console.log('HTML response received - treat as success');
-        
-        // Reset reCAPTCHA if possible
-        if (typeof this.resetRecaptcha === 'function') {
-          this.resetRecaptcha();
-        }
-        
-        // Show success message
-        Swal.fire({
-          icon: 'success',
-          title: 'Sukses!',
-          text: 'Laporan berhasil dikirimkan.',
-          timer: 2000,
-          timerProgressBar: true,
-          showConfirmButton: false
-        }).then(() => {
-          this.$router.push('/pelaporan/kekerasan-seksual');
+    submitForm() {
+      // Update and validate bukti_pelanggaran
+      this.updateBuktiPelanggaran();
+      
+      if (!this.validateForm()) {
+        // Scroll to first error
+        this.$nextTick(() => {
+          const firstError = document.querySelector('.is-invalid') || 
+                             document.querySelector('.invalid-feedback.d-block');
+          if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
         });
-        
-        this.resetForm();
         return;
       }
       
-      // Try to parse response as JSON
-      let responseData;
-      try {
-        responseData = JSON.parse(xhr.responseText);
-        console.log('Parsed response data:', responseData);
-      } catch (e) {
-        console.log('Response is not JSON:', xhr.responseText);
+      this.loading = true;
+      
+      const formData = new FormData();
+      formData.append('judul', this.formData.judul);
+      formData.append('category_id', this.formData.category_id);
+      formData.append('deskripsi', this.formData.deskripsi);
+      formData.append('tanggal_kejadian', this.formData.tanggal_kejadian);
+      formData.append('nama_pelapor', this.formData.nama_pelapor);
+      formData.append('nim_pelapor', this.formData.nim_pelapor);
+      formData.append('nomor_telepon', this.formData.nomor_telepon);
+      formData.append('g-recaptcha-response', this.getRecaptchaResponse());
+      
+      // Add pelapor specific fields
+      formData.append('profesi', this.formData.profesi);
+      formData.append('jenis_kelamin', this.formData.jenis_kelamin);
+      formData.append('umur_pelapor', this.formData.umur_pelapor);
+      
+      // Add lampiran_link if exists
+      if (this.formData.lampiran_link) {
+        formData.append('lampiran_link', this.formData.lampiran_link);
       }
       
-      // Reset reCAPTCHA
-      if (typeof this.resetRecaptcha === 'function') {
-        this.resetRecaptcha();
+      // Add bukti_pelanggaran as array - EXACT match to AddKS.vue
+      if (this.formData.bukti_pelanggaran && this.formData.bukti_pelanggaran.length > 0) {
+        for (let i = 0; i < this.formData.bukti_pelanggaran.length; i++) {
+          formData.append('bukti_pelanggaran[]', this.formData.bukti_pelanggaran[i]);
+        }
       }
       
-      // Show success message
-      Swal.fire({
-        icon: 'success',
-        title: 'Sukses!',
-        text: 'Laporan berhasil dikirimkan.',
-        timer: 2000,
-        timerProgressBar: true,
-        showConfirmButton: false
-      }).then(() => {
-        this.$router.push('/pelaporan/kekerasan-seksual');
-      });
-      
-      this.resetForm();
-    } else {
-      // Error handling
-      console.error('Form submission error:', xhr.status, xhr.statusText);
-      
-      let errorMessage = 'Terjadi kesalahan pada server.';
-      
-      // Try to parse error response
-      try {
-        const errorResponse = JSON.parse(xhr.responseText);
-        console.log('Error response:', errorResponse);
-        
-        if (errorResponse.errors) {
-          this.errors = errorResponse.errors;
-        } else if (typeof errorResponse === 'object') {
-          // Handle flattened validation errors
-          this.errors = errorResponse;
-        }
-        
-        // Check for reCAPTCHA errors
-        if (this.errors && (
-            this.errors['g-recaptcha-response'] || 
-            (errorResponse.message && errorResponse.message.toLowerCase().includes('recaptcha'))
-        )) {
-          if (typeof this.resetRecaptcha === 'function') {
-            this.resetRecaptcha();
-          }
-        }
-        
-        if (errorResponse.message) {
-          errorMessage = errorResponse.message;
-        }
-        
-        // Format error message for display
-        const errorDetails = [];
-        if (this.errors) {
-          for (const field in this.errors) {
-            if (Array.isArray(this.errors[field])) {
-              errorDetails.push(this.errors[field].join(', '));
-            } else if (typeof this.errors[field] === 'string') {
-              errorDetails.push(this.errors[field]);
+      // Add terlapor with proper array format for Laravel
+      const terlaporFiltered = this.formData.terlapor.filter(t => t.nama_lengkap.trim() !== '');
+      if (terlaporFiltered.length > 0) {
+        terlaporFiltered.forEach((item, index) => {
+          Object.keys(item).forEach(key => {
+            if (item[key] !== null && item[key] !== undefined && item[key] !== '') {
+              formData.append(`terlapor[${index}][${key}]`, item[key]);
             }
-          }
-        }
-        
-        if (errorDetails.length > 0) {
-          errorMessage += '\n- ' + errorDetails.join('\n- ');
-        }
-      } catch (e) {
-        console.error('Error parsing error response:', e);
+          });
+        });
       }
       
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: errorMessage
-      });
-    }
-  };
-  
-  // Handle network errors
-  xhr.onerror = () => {
-    this.isSubmitting = false;
-    console.log('Network error occurred');
+      // Add saksi with proper array format for Laravel
+      const saksiFiltered = this.formData.saksi.filter(s => s.nama_lengkap.trim() !== '');
+      if (saksiFiltered.length > 0) {
+        saksiFiltered.forEach((item, index) => {
+          Object.keys(item).forEach(key => {
+            if (item[key] !== null && item[key] !== undefined && item[key] !== '') {
+              formData.append(`saksi[${index}][${key}]`, item[key]);
+            }
+          });
+        });
+      }
+      
+      // Append multiple files if they exist - EXACT match to AddKS.vue
+      if (this.selectedFiles && this.selectedFiles.length > 0) {
+        for (let i = 0; i < this.selectedFiles.length; i++) {
+          formData.append('image_path[]', this.selectedFiles[i]);
+        }
+      }
+      
+      // Agreement field
+      formData.append('agreement', this.formData.agreement ? 1 : 0);
+      
+      // Create XMLHttpRequest
+      const xhr = new XMLHttpRequest();
+      
+      // Configure request - EXACT match to AddKS.vue
+      xhr.open('POST', `${this.apiBaseUrl}/laporan_kekerasan/add_laporan`, true);
+      
+      // Set timeout (30 seconds)
+      xhr.timeout = 30000;
+      
+      // Handle completion - EXACT match to AddKS.vue
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState !== 4) return;
+        
+        this.loading = false;
+        
+        // Log raw response for debugging
+        console.log('XHR Response Status:', xhr.status);
+        console.log('XHR Response Headers:', xhr.getAllResponseHeaders());
+        
+        if (xhr.status >= 200 && xhr.status < 300) {
+          // Success response
+          let responseData;
+          try {
+            responseData = JSON.parse(xhr.responseText);
+            console.log('Parsed response data:', responseData);
+          } catch (e) {
+            console.log('Response is not JSON:', xhr.responseText);
+          }
+          
+          // Reset reCAPTCHA
+          this.resetRecaptcha();
+          
+          // Show success message
+          Swal.fire({
+            title: 'Berhasil!',
+            text: 'Laporan berhasil ditambahkan.',
+            icon: 'success',
+            timer: 2000,
+            timerProgressBar: true,
+            showConfirmButton: false
+          }).then(() => {
+            // Redirect to appropriate page for mahasiswa
+            this.$router.push('/pelaporan/kekerasan-seksual');
+          });
+          
+          this.resetForm();
+        } else {
+          // Error handling
+          console.error('Form submission error:', xhr.status, xhr.statusText);
+          
+          let errorMessage = 'Terjadi kesalahan pada server.';
+          
+          // Try to parse error response
+          try {
+            const errorResponse = JSON.parse(xhr.responseText);
+            console.log('Error response:', errorResponse);
+            
+            if (errorResponse.errors) {
+              this.errors = errorResponse.errors;
+            } else if (typeof errorResponse === 'object') {
+              // Handle flattened validation errors
+              this.errors = errorResponse;
+            }
+            
+            // Check for reCAPTCHA errors
+            if (this.errors['g-recaptcha-response'] || 
+                (errorResponse.message && errorResponse.message.toLowerCase().includes('recaptcha'))) {
+              this.resetRecaptcha();
+            }
+            
+            if (errorResponse.message) {
+              errorMessage = errorResponse.message;
+            }
+            
+            console.error('Validation errors:', this.errors);
+            
+            // Scroll to first error
+            this.$nextTick(() => {
+              const firstError = document.querySelector('.is-invalid') || 
+                                document.querySelector('.invalid-feedback.d-block');
+              if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            });
+          } catch (e) {
+            console.error('Error parsing error response:', e);
+          }
+          
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: errorMessage
+          });
+        }
+      };
+      
+      // Handle network errors
+      xhr.onerror = () => {
+        this.loading = false;
+        console.error('Network error occurred');
+        
+        Swal.fire({
+          icon: 'error',
+          title: 'Network Error',
+          text: 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.'
+        });
+      };
+      
+      // Handle timeouts
+      xhr.ontimeout = () => {
+        this.loading = false;
+        console.error('Request timed out');
+        
+        Swal.fire({
+          icon: 'error',
+          title: 'Timeout',
+          text: 'Permintaan melebihi batas waktu. Silakan coba lagi.'
+        });
+      };
+      
+      // Add upload progress tracking
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
+        }
+      };
+      
+      // Send the request
+      xhr.send(formData);
+    },
     
-    Swal.fire({
-      icon: 'error',
-      title: 'Network Error',
-      text: 'Server tidak merespon. Periksa koneksi internet Anda.'
-    });
-  };
-  
-  // Handle timeouts
-  xhr.ontimeout = () => {
-    this.isSubmitting = false;
-    console.log('Request timed out');
-    
-    Swal.fire({
-      icon: 'error',
-      title: 'Timeout Error',
-      text: 'Permintaan melebihi batas waktu. Silakan coba lagi.'
-    });
-  };
-  
-  // Add a progress indicator for larger files
-  xhr.upload.onprogress = (event) => {
-    if (event.lengthComputable && this.report.evidenceFiles && this.report.evidenceFiles.length > 0) {
-      const percentComplete = (event.loaded / event.total) * 100;
-      console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
-    }
-  };
-  
-  // Log when request starts
-  console.log('Starting XHR request to:', `${this.apiBaseUrl}/laporan_kekerasan/add_laporan`);
-  
-  // Send the request
-  try {
-    xhr.send(formData);
-  } catch (error) {
-    this.isSubmitting = false;
-    console.error('Error sending form:', error);
-    
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'Terjadi kesalahan saat mengirim form: ' + error.message
-    });
-  }
-},
-    
-    // Modified resetForm method with improved reCAPTCHA reset
     resetForm() {
-      this.report = {
-        title: '',
-        category: '',
-        description: '',
-        reporterName: this.report.reporterName,
-        nim: this.report.nim,
-        phone: this.report.phone,
-        incidentDate: '',
-        evidenceFiles: null,
+      // Reset form data
+      this.formData = {
+        judul: '',
+        category_id: '',
+        deskripsi: '',
+        tanggal_kejadian: '',
+        image_path: null,
+        nama_pelapor: this.formData.nama_pelapor,
+        nim_pelapor: this.formData.nim_pelapor,
+        nomor_telepon: this.formData.nomor_telepon,
         lampiran_link: '',
         bukti_pelanggaran: [],
-        agreement: false,
         terlapor: [{ 
           nama_lengkap: '',
           email: '',
@@ -1548,37 +1444,28 @@ export default {
           email: '',
           nomor_telepon: ''
         }],
-        // Reset field baru
+        agreement: false,
+        // Reset pelapor fields
         profesi: '',
         jenis_kelamin: '',
         umur_pelapor: ''
       };
       
+      // Reset other form state
       this.selectedFiles = [];
       this.selectedBukti = [];
       this.showLainnyaInput = false;
       this.buktiLainnya = '';
       this.showBuktiWarning = false;
-      this.showAgreementWarning = false;
+      this.errors = {};
       this.imagePreviews = [];
       
       // Reset file input
-      const fileInput = document.getElementById('evidence');
+      const fileInput = document.getElementById('image_path');
       if (fileInput) fileInput.value = '';
       
-      // Reset reCAPTCHA - using our improved reset method
+      // Reset reCAPTCHA
       this.resetRecaptcha();
-    }
-  },
-  
-  computed: {
-    filteredCategories() {
-      return this.categories.filter(category => 
-        category.nama && category.nama.startsWith('Kekerasan')
-      );
-    },
-    apiBaseUrl() {
-      return 'http://pelaporan-d3ti.my.id/api';
     }
   }
 };
