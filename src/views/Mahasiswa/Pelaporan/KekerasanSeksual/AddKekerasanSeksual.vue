@@ -1289,7 +1289,7 @@ export default {
       const xhr = new XMLHttpRequest();
       
       // Configure request - EXACT match to AddKS.vue
-      xhr.open('POST', `${this.apiBaseUrl}/laporan_kekerasan/add_laporan`, true);
+      xhr.open('POST', `/api/laporan_kekerasan/add_laporan`, true);
       
       // Set timeout (30 seconds)
       xhr.timeout = 30000;
