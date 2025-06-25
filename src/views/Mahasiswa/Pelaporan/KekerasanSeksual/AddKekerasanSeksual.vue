@@ -1209,275 +1209,316 @@ export default {
     
     // Improved form submission method
     submitReport() {
-      // Reset warnings
-      this.showBuktiWarning = false;
-      this.showAgreementWarning = false;
-      this.recaptchaError = null;
+  // Reset warnings
+  this.showBuktiWarning = false;
+  this.showAgreementWarning = false;
+  this.recaptchaError = null;
 
-      if (!this.validateForm()) {
-        return;
-      }
-      
-      // Validate agreement
-      if (!this.report.agreement) {
-        this.showAgreementWarning = true;
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Anda harus menyetujui pernyataan untuk melanjutkan'
-        });
-        return;
-      }
-      
-      // Get the latest reCAPTCHA response directly
-      const recaptchaResponseToken = this.getRecaptchaResponse();
-      
-      // Validate reCAPTCHA
-      if (!recaptchaResponseToken) {
-        this.recaptchaError = 'Harap centang kotak reCAPTCHA "Saya bukan robot"';
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Harap centang kotak reCAPTCHA untuk melanjutkan'
-        });
-        return;
-      }
-      
-      // Update bukti_pelanggaran array before submission
-      this.updateBuktiPelanggaran();
-      
-      // Validate bukti_pelanggaran
-      if (this.report.bukti_pelanggaran.length === 0) {
-        this.showBuktiWarning = true;
-        return;
-      }
-      
-      // Create FormData object to handle file upload
-      const formData = new FormData();
-      formData.append('judul', this.report.title);
-      formData.append('category_id', this.report.category);
-      formData.append('deskripsi', this.report.description);
-      formData.append('tanggal_kejadian', this.report.incidentDate);
-      formData.append('nama_pelapor', this.report.reporterName);
-      formData.append('nim_pelapor', this.report.nim);
-      formData.append('nomor_telepon', this.report.phone);
-      formData.append('current_datetime', this.formattedDateTime);
-      formData.append('username', this.currentUser || 'miftahul01');
-      
-      // Use the most recent reCAPTCHA token
-      formData.append('g-recaptcha-response', recaptchaResponseToken);
-      
-      // Tambahkan field baru
-      formData.append('profesi', this.report.profesi);
-      formData.append('jenis_kelamin', this.report.jenis_kelamin);
-      formData.append('umur_pelapor', this.report.umur_pelapor);
-      
-      // Add lampiran_link
-      if (this.report.lampiran_link) {
-        formData.append('lampiran_link', this.report.lampiran_link);
-      }
-      
-      // Add bukti_pelanggaran as array with proper format
-      if (this.report.bukti_pelanggaran && this.report.bukti_pelanggaran.length > 0) {
-        for (let i = 0; i < this.report.bukti_pelanggaran.length; i++) {
-          formData.append(`bukti_pelanggaran[${i}]`, this.report.bukti_pelanggaran[i]);
+  if (!this.validateForm()) {
+    return;
+  }
+  
+  // Validate agreement
+  if (!this.report.agreement) {
+    this.showAgreementWarning = true;
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Anda harus menyetujui pernyataan untuk melanjutkan'
+    });
+    return;
+  }
+  
+  // Get the latest reCAPTCHA response directly
+  const recaptchaResponseToken = this.getRecaptchaResponse();
+  
+  // Validate reCAPTCHA
+  if (!recaptchaResponseToken) {
+    this.recaptchaError = 'Harap centang kotak reCAPTCHA "Saya bukan robot"';
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Harap centang kotak reCAPTCHA untuk melanjutkan'
+    });
+    return;
+  }
+  
+  // Update bukti_pelanggaran array before submission
+  this.updateBuktiPelanggaran();
+  
+  // Validate bukti_pelanggaran
+  if (this.report.bukti_pelanggaran.length === 0) {
+    this.showBuktiWarning = true;
+    return;
+  }
+  
+  // Create FormData object to handle file upload
+  const formData = new FormData();
+  formData.append('judul', this.report.title);
+  formData.append('category_id', this.report.category);
+  formData.append('deskripsi', this.report.description);
+  formData.append('tanggal_kejadian', this.report.incidentDate);
+  formData.append('nama_pelapor', this.report.reporterName);
+  formData.append('nim_pelapor', this.report.nim);
+  formData.append('nomor_telepon', this.report.phone);
+  formData.append('current_datetime', this.formattedDateTime);
+  formData.append('username', this.currentUser || 'miftahul01');
+  
+  // Use the most recent reCAPTCHA token
+  formData.append('g-recaptcha-response', recaptchaResponseToken);
+  
+  // Tambahkan field baru
+  formData.append('profesi', this.report.profesi);
+  formData.append('jenis_kelamin', this.report.jenis_kelamin);
+  formData.append('umur_pelapor', this.report.umur_pelapor);
+  
+  // Add lampiran_link
+  if (this.report.lampiran_link) {
+    formData.append('lampiran_link', this.report.lampiran_link);
+  }
+  
+  // Add bukti_pelanggaran as array with proper format
+  if (this.report.bukti_pelanggaran && this.report.bukti_pelanggaran.length > 0) {
+    this.report.bukti_pelanggaran.forEach((item, index) => {
+      formData.append(`bukti_pelanggaran[${index}]`, item);
+    });
+  }
+  
+  // Add terlapor with proper array format for Laravel
+  const terlaporFiltered = this.report.terlapor.filter(t => t.nama_lengkap.trim() !== '');
+  if (terlaporFiltered.length > 0) {
+    terlaporFiltered.forEach((item, index) => {
+      Object.keys(item).forEach(key => {
+        if (item[key]) { // Only append if value exists
+          formData.append(`terlapor[${index}][${key}]`, item[key]);
         }
-      }
-      
-      // Add terlapor with proper array format for Laravel
-      const terlaporFiltered = this.report.terlapor.filter(t => t.nama_lengkap.trim() !== '');
-      if (terlaporFiltered.length > 0) {
-        terlaporFiltered.forEach((item, index) => {
-          Object.keys(item).forEach(key => {
-            if (item[key]) { // Only append if value exists
-              formData.append(`terlapor[${index}][${key}]`, item[key]);
-            }
-          });
-        });
-      } else {
-        // Add default terlapor with valid email
-        formData.append('terlapor[0][nama_lengkap]', 'Nama Terlapor');
-        formData.append('terlapor[0][email]', 'terlapor.dummy@gmail.com');
-        formData.append('terlapor[0][nomor_telepon]', '081234567890');
-        formData.append('terlapor[0][status_warga]', 'mahasiswa');
-        formData.append('terlapor[0][unit_kerja]', 'Fakultas Teknik');
-        formData.append('terlapor[0][jenis_kelamin]', 'laki-laki');
-        formData.append('terlapor[0][umur_terlapor]', '20-40');
-      }
-      
-      // Add saksi with proper array format for Laravel
-      const saksiFiltered = this.report.saksi.filter(s => s.nama_lengkap.trim() !== '');
-      if (saksiFiltered.length > 0) {
-        saksiFiltered.forEach((item, index) => {
-          Object.keys(item).forEach(key => {
-            if (item[key]) { // Only append if value exists
-              formData.append(`saksi[${index}][${key}]`, item[key]);
-            }
-          });
-        });
-      } else {
-        // Add default saksi with valid email
-        formData.append('saksi[0][nama_lengkap]', 'Nama Saksi');
-        formData.append('saksi[0][email]', 'saksi.dummy@gmail.com');
-        formData.append('saksi[0][nomor_telepon]', '089876543210');
-      }
-      
-      // Append multiple files if they exist with proper format
-      if (this.report.evidenceFiles && this.report.evidenceFiles.length > 0) {
-        for (let i = 0; i < this.report.evidenceFiles.length; i++) {
-          formData.append(`image_path[${i}]`, this.report.evidenceFiles[i]);
+      });
+    });
+  } else {
+    // Add default terlapor with valid email
+    formData.append('terlapor[0][nama_lengkap]', 'Nama Terlapor');
+    formData.append('terlapor[0][email]', 'terlapor.dummy@gmail.com');
+    formData.append('terlapor[0][nomor_telepon]', '081234567890');
+    formData.append('terlapor[0][status_warga]', 'mahasiswa');
+    formData.append('terlapor[0][unit_kerja]', 'Fakultas Teknik');
+    formData.append('terlapor[0][jenis_kelamin]', 'laki-laki');
+    formData.append('terlapor[0][umur_terlapor]', '20-40');
+  }
+  
+  // Add saksi with proper array format for Laravel
+  const saksiFiltered = this.report.saksi.filter(s => s.nama_lengkap.trim() !== '');
+  if (saksiFiltered.length > 0) {
+    saksiFiltered.forEach((item, index) => {
+      Object.keys(item).forEach(key => {
+        if (item[key]) { // Only append if value exists
+          formData.append(`saksi[${index}][${key}]`, item[key]);
         }
-      }
-      
-      // Agreement field
-      formData.append('agreement', this.report.agreement ? 1 : 0);
-      
-      // Show loading state
-      this.isSubmitting = true;
-      
-      // Create XMLHttpRequest
-      const xhr = new XMLHttpRequest();
-      
-      // FIXED: Use relative URL instead of absolute to avoid CORS issues
-      // Get base URL from the component if available, otherwise use window.location.origin
-      const apiBaseUrl = this.apiBaseUrl || window.location.origin;
-      xhr.open('POST', `${apiBaseUrl}/api/laporan_kekerasan/add_laporan`, true);
-      
-      // Get auth token if available
-      const authToken = this.token || VueCookies.get('auth_token') || this.$cookies.get('auth_token');
-      if (authToken) {
-        xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
-      }
-      
-      // Set proper headers
-      xhr.setRequestHeader('Accept', 'application/json');
-      xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-      
-      // Set timeout (30 seconds)
-      xhr.timeout = 30000;
-      
-      // Handle successful completion
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          // Success response
-          this.isSubmitting = false;
-          
-          // Parse response if needed
-          let responseData;
-          try {
-            responseData = JSON.parse(xhr.responseText);
-            console.log('Response data:', responseData);
-          } catch (e) {
-            console.log('Response is not JSON:', xhr.responseText);
-          }
-          
-          // Show success message
-          Swal.fire({
-            icon: 'success',
-            title: 'Sukses!',
-            text: 'Laporan berhasil dikirimkan.',
-            timer: 2000,
-            timerProgressBar: true,
-            showConfirmButton: false
-          }).then(() => {
-            this.$router.push('/pelaporan/kekerasan-seksual');
-          });
-          
-          this.resetForm();
-        } else {
-          // Error response
-          this.isSubmitting = false;
-          
-          let errorMessage = 'Terjadi kesalahan:';
-          
-          // Try to parse error response
-          try {
-            const errorResponse = JSON.parse(xhr.responseText);
-            console.log('Error response:', errorResponse);
-            
-            // Check if the error response has a detailed message
-            if (errorResponse && errorResponse.message) {
-              errorMessage += '\n- ' + errorResponse.message;
-            }
-            
-            // Check for validation errors
-            if (errorResponse && errorResponse.errors) {
-              const errors = errorResponse.errors;
-              Object.keys(errors).forEach(key => {
-                if (Array.isArray(errors[key])) {
-                  errorMessage += '\n- ' + errors[key].join(', ');
-                } else {
-                  errorMessage += '\n- ' + errors[key];
-                }
-              });
-            }
-          } catch (e) {
-            console.log('Error parsing response:', e);
-            errorMessage += '\n- ' + xhr.statusText;
-          }
-          
-          Swal.fire({
-            icon: 'error',
-            title: 'Form Submission Error',
-            text: errorMessage
-          });
-          
-          console.log('Status:', xhr.status);
-          console.log('Response:', xhr.responseText);
-        }
-      };
-      
-      // Handle network errors
-      xhr.onerror = () => {
-        this.isSubmitting = false;
-        console.log('Network error occurred');
+      });
+    });
+  } else {
+    // Add default saksi with valid email
+    formData.append('saksi[0][nama_lengkap]', 'Nama Saksi');
+    formData.append('saksi[0][email]', 'saksi.dummy@gmail.com');
+    formData.append('saksi[0][nomor_telepon]', '089876543210');
+  }
+  
+  // Append multiple files if they exist with proper format
+  if (this.report.evidenceFiles && this.report.evidenceFiles.length > 0) {
+    for (let i = 0; i < this.report.evidenceFiles.length; i++) {
+      formData.append(`image_path[${i}]`, this.report.evidenceFiles[i]);
+    }
+  }
+  
+  // Agreement field
+  formData.append('agreement', this.report.agreement ? 1 : 0);
+  
+  // Show loading state
+  this.isSubmitting = true;
+  
+  // Create XMLHttpRequest
+  const xhr = new XMLHttpRequest();
+  
+  // CRITICAL FIX: Use exactly the same endpoint configuration as AddKS.vue
+  xhr.open('POST', `${this.apiBaseUrl}/laporan_kekerasan/add_laporan`, true);
+  
+  console.log("Sending request to:", `${this.apiBaseUrl}/laporan_kekerasan/add_laporan`);
+  
+  // Set timeout (30 seconds)
+  xhr.timeout = 30000;
+  
+  // CRITICAL FIX: Use onreadystatechange instead of onload
+  xhr.onreadystatechange = () => {
+    if (xhr.readyState !== 4) return;
+    
+    this.isSubmitting = false;
+    
+    // Log raw response for debugging
+    console.log('XHR Response Status:', xhr.status);
+    console.log('XHR Response Headers:', xhr.getAllResponseHeaders());
+    console.log('XHR Response Text:', xhr.responseText);
+    
+    if (xhr.status >= 200 && xhr.status < 300) {
+      // Success response
+      // Check if the response is HTML (likely a redirect) 
+      if (xhr.responseText.trim().startsWith('<!DOCTYPE html>')) {
+        console.log('HTML response received - treat as success');
         
-        Swal.fire({
-          icon: 'error',
-          title: 'Network Error',
-          text: 'Server tidak merespon. Periksa koneksi internet Anda.'
-        });
-      };
-      
-      // Handle timeouts
-      xhr.ontimeout = () => {
-        this.isSubmitting = false;
-        console.log('Request timed out');
-        
-        Swal.fire({
-          icon: 'error',
-          title: 'Timeout Error',
-          text: 'Permintaan melebihi batas waktu. Silakan coba lagi.'
-        });
-      };
-      
-      // Add a progress indicator for larger files
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable && this.report.evidenceFiles && this.report.evidenceFiles.length > 0) {
-          const percentComplete = (event.loaded / event.total) * 100;
-          console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
-          
-          // You could update a progress bar here if you have one
+        // Reset reCAPTCHA if possible
+        if (typeof this.resetRecaptcha === 'function') {
+          this.resetRecaptcha();
         }
-      };
+        
+        // Show success message
+        Swal.fire({
+          icon: 'success',
+          title: 'Sukses!',
+          text: 'Laporan berhasil dikirimkan.',
+          timer: 2000,
+          timerProgressBar: true,
+          showConfirmButton: false
+        }).then(() => {
+          this.$router.push('/pelaporan/kekerasan-seksual');
+        });
+        
+        this.resetForm();
+        return;
+      }
       
-      // Log when request starts
-      console.log('Starting XHR request');
-      
-      // Send the request
+      // Try to parse response as JSON
+      let responseData;
       try {
-        xhr.send(formData);
-      } catch (error) {
-        this.isSubmitting = false;
-        console.error('Error sending form:', error);
-        
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Terjadi kesalahan saat mengirim form: ' + error.message
-        });
+        responseData = JSON.parse(xhr.responseText);
+        console.log('Parsed response data:', responseData);
+      } catch (e) {
+        console.log('Response is not JSON:', xhr.responseText);
       }
-    },
+      
+      // Reset reCAPTCHA
+      if (typeof this.resetRecaptcha === 'function') {
+        this.resetRecaptcha();
+      }
+      
+      // Show success message
+      Swal.fire({
+        icon: 'success',
+        title: 'Sukses!',
+        text: 'Laporan berhasil dikirimkan.',
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false
+      }).then(() => {
+        this.$router.push('/pelaporan/kekerasan-seksual');
+      });
+      
+      this.resetForm();
+    } else {
+      // Error handling
+      console.error('Form submission error:', xhr.status, xhr.statusText);
+      
+      let errorMessage = 'Terjadi kesalahan pada server.';
+      
+      // Try to parse error response
+      try {
+        const errorResponse = JSON.parse(xhr.responseText);
+        console.log('Error response:', errorResponse);
+        
+        if (errorResponse.errors) {
+          this.errors = errorResponse.errors;
+        } else if (typeof errorResponse === 'object') {
+          // Handle flattened validation errors
+          this.errors = errorResponse;
+        }
+        
+        // Check for reCAPTCHA errors
+        if (this.errors && (
+            this.errors['g-recaptcha-response'] || 
+            (errorResponse.message && errorResponse.message.toLowerCase().includes('recaptcha'))
+        )) {
+          if (typeof this.resetRecaptcha === 'function') {
+            this.resetRecaptcha();
+          }
+        }
+        
+        if (errorResponse.message) {
+          errorMessage = errorResponse.message;
+        }
+        
+        // Format error message for display
+        const errorDetails = [];
+        if (this.errors) {
+          for (const field in this.errors) {
+            if (Array.isArray(this.errors[field])) {
+              errorDetails.push(this.errors[field].join(', '));
+            } else if (typeof this.errors[field] === 'string') {
+              errorDetails.push(this.errors[field]);
+            }
+          }
+        }
+        
+        if (errorDetails.length > 0) {
+          errorMessage += '\n- ' + errorDetails.join('\n- ');
+        }
+      } catch (e) {
+        console.error('Error parsing error response:', e);
+      }
+      
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: errorMessage
+      });
+    }
+  };
+  
+  // Handle network errors
+  xhr.onerror = () => {
+    this.isSubmitting = false;
+    console.log('Network error occurred');
+    
+    Swal.fire({
+      icon: 'error',
+      title: 'Network Error',
+      text: 'Server tidak merespon. Periksa koneksi internet Anda.'
+    });
+  };
+  
+  // Handle timeouts
+  xhr.ontimeout = () => {
+    this.isSubmitting = false;
+    console.log('Request timed out');
+    
+    Swal.fire({
+      icon: 'error',
+      title: 'Timeout Error',
+      text: 'Permintaan melebihi batas waktu. Silakan coba lagi.'
+    });
+  };
+  
+  // Add a progress indicator for larger files
+  xhr.upload.onprogress = (event) => {
+    if (event.lengthComputable && this.report.evidenceFiles && this.report.evidenceFiles.length > 0) {
+      const percentComplete = (event.loaded / event.total) * 100;
+      console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
+    }
+  };
+  
+  // Log when request starts
+  console.log('Starting XHR request to:', `${this.apiBaseUrl}/laporan_kekerasan/add_laporan`);
+  
+  // Send the request
+  try {
+    xhr.send(formData);
+  } catch (error) {
+    this.isSubmitting = false;
+    console.error('Error sending form:', error);
+    
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Terjadi kesalahan saat mengirim form: ' + error.message
+    });
+  }
+},
     
     // Modified resetForm method with improved reCAPTCHA reset
     resetForm() {
