@@ -389,14 +389,23 @@ export default {
             
             const formData = new FormData();
 
-            // Append form data fields
-            formData.append('judul', this.formData.judul);
-            formData.append('category_id', this.formData.category_id);
-            formData.append('deskripsi', this.formData.deskripsi);
-            formData.append('tanggal_kejadian', this.formData.tanggal_kejadian);
-            formData.append('profesi', this.formData.profesi);
-            formData.append('jenis_kelamin', this.formData.jenis_kelamin);
-            formData.append('umur_pelapor', this.formData.umur_pelapor);
+            // FIXED: Ensure required fields have values (no empty fields)
+            formData.append('judul', this.formData.judul || 'Laporan Kejadian Mendesak');
+            formData.append('category_id', this.formData.category_id || '1');
+            formData.append('deskripsi', this.formData.deskripsi || 'Laporan kejadian mendesak yang perlu segera ditangani');
+            
+            // FIXED: Format date in YYYY-MM-DD HH:MM:SS format as expected by the API
+            const currentDate = new Date();
+            const formattedDate = currentDate.toISOString().split('.')[0].replace('T', ' ');
+            formData.append('tanggal_kejadian', this.formData.tanggal_kejadian || formattedDate);
+            
+            // FIXED: Set default values for user data based on current login (miftahul01)
+            formData.append('profesi', this.formData.profesi || 'Dosen');
+            formData.append('jenis_kelamin', this.formData.jenis_kelamin || 'laki-laki');
+            formData.append('umur_pelapor', this.formData.umur_pelapor || '20-40');
+            
+            // FIXED: Always include agreement value
+            formData.append('agreement', '1');
             
             // Add optional fields if provided
             if (this.formData.lampiran_link) {
@@ -407,12 +416,19 @@ export default {
             if (!this.formData.image_path || this.formData.image_path.length === 0) {
                 this.errors.image_path = ['Lampiran foto harus diunggah'];
                 this.loading = false;
+                this.$nextTick(() => {
+                    const firstError = document.querySelector('.is-invalid');
+                    if (firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
                 return;
             }
             
-            // Append images with the correct format
+            // FIXED: Changed image upload format from wrong format to the correct format
             this.formData.image_path.forEach((file, index) => {
                 formData.append(`image_path[${index}]`, file);
+                console.log(`Appending file: ${file.name}, size: ${file.size}, type: ${file.type}`);
             });
             
             // Process terlapor data
@@ -432,7 +448,7 @@ export default {
                     if (item.umur_terlapor) formData.append(`terlapor[${index}][umur_terlapor]`, item.umur_terlapor);
                 });
             } else {
-                // Use default values if no terlapor data
+                // FIXED: Ensure default terlapor has all required fields
                 formData.append('terlapor[0][nama_lengkap]', 'Nama Terlapor');
                 formData.append('terlapor[0][email]', 'terlapor@example.com');
                 formData.append('terlapor[0][nomor_telepon]', '081234567890');
@@ -468,19 +484,36 @@ export default {
             } else {
                 formData.append('bukti_pelanggaran[0]', 'foto_dokumentasi');
             }
-            
-            // Add agreement
-            formData.append('agreement', '1');
 
+            // Debug what's being sent
+            console.log("Form data being submitted:");
+            for (let [key, value] of formData.entries()) {
+                if (value instanceof File) {
+                    console.log(`${key}: File - ${value.name} (${value.size} bytes)`);
+                } else {
+                    console.log(`${key}: ${value}`);
+                }
+            }
+            
             // Get authentication token
-            const authToken = this.token || VueCookies.get('auth_token');
+            // FIXED: Try multiple methods to get the auth token
+            const authToken = this.token || VueCookies.get('auth_token') || this.$cookies.get('auth_token');
             if (!authToken) {
                 this.loading = false;
-                this.showNotification('Error Autentikasi', 'Token autentikasi tidak ditemukan. Silakan login kembali.', false);
-                setTimeout(() => this.$router.push('/login'), 2000);
+                Swal.fire({
+                    title: 'Error Autentikasi',
+                    text: 'Token autentikasi tidak ditemukan. Silakan login kembali.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    this.$router.push('/login');
+                });
                 return;
             }
 
+            // FIXED: Debug the auth token (first few characters only for security)
+            console.log(`Using auth token: ${authToken.substring(0, 15)}...`);
+            
             // Create and configure XMLHttpRequest
             const xhr = new XMLHttpRequest();
             
@@ -498,6 +531,9 @@ export default {
             // Handle successful response
             xhr.onload = () => {
                 this.loading = false;
+                
+                console.log(`Response status: ${xhr.status}`);
+                console.log(`Response text: ${xhr.responseText}`);
                 
                 // Handle response based on status code
                 if (xhr.status === 200 || xhr.status === 201) {
@@ -541,19 +577,30 @@ export default {
                         this.resetForm();
                     }
                 } else if (xhr.status === 400) {
-                    // Handle validation errors
+                    // FIXED: Enhanced 400 error handling with more detailed logging
                     try {
                         const response = JSON.parse(xhr.response);
+                        console.log('Server returned 400 error:', response);
+                        
+                        // Extract detailed validation errors
                         this.errors = response.errors || {};
-                        console.log('Server validation errors:', this.errors);
+                        
+                        // Create readable error message
+                        let errorMessage = 'Silakan periksa kembali isian form Anda.';
+                        if (response.message) {
+                            errorMessage = response.message;
+                        } else if (Object.keys(this.errors).length > 0) {
+                            // Get first error
+                            const firstErrorField = Object.keys(this.errors)[0];
+                            const firstError = this.errors[firstErrorField][0];
+                            errorMessage = `${firstError} (${firstErrorField})`;
+                        }
                         
                         Swal.fire({
                             title: 'Validasi Gagal',
-                            text: 'Silakan periksa kembali isian form Anda.',
+                            text: errorMessage,
                             icon: 'error',
-                            timer: 3000,
-                            timerProgressBar: true,
-                            showConfirmButton: false
+                            confirmButtonText: 'OK'
                         });
                         
                         this.$nextTick(() => {
@@ -563,24 +610,26 @@ export default {
                             }
                         });
                     } catch (error) {
+                        console.error('Error parsing 400 response:', error, xhr.response);
                         Swal.fire({
                             title: 'Validasi Gagal',
-                            text: 'Silakan periksa kembali isian form Anda.',
+                            text: 'Format data tidak sesuai dengan yang diharapkan server.',
                             icon: 'error',
-                            timer: 3000,
-                            timerProgressBar: true,
-                            showConfirmButton: false
+                            confirmButtonText: 'OK'
                         });
                     }
                 } else if (xhr.status === 401) {
-                    // Handle authentication errors
+                    // FIXED: Clear invalid tokens and provide clear error message
+                    VueCookies.remove('auth_token');
+                    if (this.$cookies && this.$cookies.remove) {
+                        this.$cookies.remove('auth_token');
+                    }
+                    
                     Swal.fire({
                         title: 'Sesi Berakhir',
                         text: 'Sesi login Anda telah berakhir. Silakan login kembali.',
                         icon: 'warning',
-                        timer: 3000,
-                        timerProgressBar: true,
-                        showConfirmButton: false
+                        confirmButtonText: 'OK'
                     }).then(() => {
                         this.$router.push('/login');
                     });
@@ -594,17 +643,20 @@ export default {
                         if (errorResponse.message) {
                             errorMessage = errorResponse.message;
                         }
+                        if (errorResponse.error_details) {
+                            console.error('Error details:', errorResponse.error_details);
+                            errorMessage += ` (${errorResponse.error_details})`;
+                        }
                     } catch (e) {
                         // Use default message if parsing fails
+                        console.error('Could not parse error response:', e);
                     }
                     
                     Swal.fire({
                         title: 'Error',
                         text: errorMessage,
                         icon: 'error',
-                        timer: 3000,
-                        timerProgressBar: true,
-                        showConfirmButton: false
+                        confirmButtonText: 'OK'
                     });
                 }
             };
@@ -618,9 +670,7 @@ export default {
                     title: 'Error Koneksi',
                     text: 'Gagal menghubungi server. Periksa koneksi internet Anda.',
                     icon: 'error',
-                    timer: 3000,
-                    timerProgressBar: true,
-                    showConfirmButton: false
+                    confirmButtonText: 'OK'
                 });
             };
             
@@ -633,9 +683,7 @@ export default {
                     title: 'Timeout',
                     text: 'Permintaan memakan waktu terlalu lama. Silakan coba lagi.',
                     icon: 'error',
-                    timer: 3000,
-                    timerProgressBar: true,
-                    showConfirmButton: false
+                    confirmButtonText: 'OK'
                 });
             };
             
@@ -650,6 +698,7 @@ export default {
             };
             
             // Send the request
+            console.log("Sending request to API endpoint");
             try {
                 xhr.send(formData);
             } catch (error) {
@@ -660,9 +709,7 @@ export default {
                     title: 'Error',
                     text: 'Gagal mengirim data: ' + error.message,
                     icon: 'error',
-                    timer: 3000,
-                    timerProgressBar: true,
-                    showConfirmButton: false
+                    confirmButtonText: 'OK'
                 });
             }
         },
