@@ -375,6 +375,12 @@ export default {
         submitForm() {
             // Validate form first
             if (!this.validateForm()) {
+                this.$nextTick(() => {
+                    const firstError = document.querySelector('.is-invalid');
+                    if (firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
                 return;
             }
 
@@ -391,117 +397,274 @@ export default {
             formData.append('profesi', this.formData.profesi);
             formData.append('jenis_kelamin', this.formData.jenis_kelamin);
             formData.append('umur_pelapor', this.formData.umur_pelapor);
-            formData.append('lampiran_link', this.formData.lampiran_link);
             
-            // Append images
-            if (this.formData.image_path && this.formData.image_path.length > 0) {
-                this.formData.image_path.forEach((file, index) => {
-                    formData.append('image_path[]', file);
-                });
+            // Add optional fields if provided
+            if (this.formData.lampiran_link) {
+                formData.append('lampiran_link', this.formData.lampiran_link);
             }
             
-            // Add terlapor data
-            formData.append('terlapor[0][nama_lengkap]', 'Nama Terlapor');
-            formData.append('terlapor[0][email]', 'terlapor@example.com');
-            formData.append('terlapor[0][nomor_telepon]', '081234567890');
-            formData.append('terlapor[0][status_warga]', 'mahasiswa');
-            formData.append('terlapor[0][unit_kerja]', 'Fakultas Teknik');
-            formData.append('terlapor[0][jenis_kelamin]', 'laki-laki');
-            formData.append('terlapor[0][umur_terlapor]', '20-40');
-
-            // Add saksi data
-            formData.append('saksi[0][nama_lengkap]', 'Nama Saksi');
-            formData.append('saksi[0][email]', 'saksi@example.com');
-            formData.append('saksi[0][nomor_telepon]', '089876543210');
+            // Process image uploads - ensure at least one image exists
+            if (!this.formData.image_path || this.formData.image_path.length === 0) {
+                this.errors.image_path = ['Lampiran foto harus diunggah'];
+                this.loading = false;
+                return;
+            }
             
-            // Add bukti_pelanggaran
-            formData.append('bukti_pelanggaran[0]', 'foto_dokumentasi');
+            // Append images with the correct format
+            this.formData.image_path.forEach((file, index) => {
+                formData.append(`image_path[${index}]`, file);
+            });
+            
+            // Process terlapor data
+            const validTerlapor = this.formData.terlapor ? this.formData.terlapor.filter(item => 
+                item.nama_lengkap || item.email || item.nomor_telepon || item.status_warga || 
+                item.unit_kerja || item.jenis_kelamin || item.umur_terlapor
+            ) : [];
+            
+            if (validTerlapor.length > 0) {
+                validTerlapor.forEach((item, index) => {
+                    if (item.nama_lengkap) formData.append(`terlapor[${index}][nama_lengkap]`, item.nama_lengkap);
+                    if (item.email) formData.append(`terlapor[${index}][email]`, item.email);
+                    if (item.nomor_telepon) formData.append(`terlapor[${index}][nomor_telepon]`, item.nomor_telepon);
+                    if (item.status_warga) formData.append(`terlapor[${index}][status_warga]`, item.status_warga);
+                    if (item.unit_kerja) formData.append(`terlapor[${index}][unit_kerja]`, item.unit_kerja);
+                    if (item.jenis_kelamin) formData.append(`terlapor[${index}][jenis_kelamin]`, item.jenis_kelamin);
+                    if (item.umur_terlapor) formData.append(`terlapor[${index}][umur_terlapor]`, item.umur_terlapor);
+                });
+            } else {
+                // Use default values if no terlapor data
+                formData.append('terlapor[0][nama_lengkap]', 'Nama Terlapor');
+                formData.append('terlapor[0][email]', 'terlapor@example.com');
+                formData.append('terlapor[0][nomor_telepon]', '081234567890');
+                formData.append('terlapor[0][status_warga]', 'mahasiswa');
+                formData.append('terlapor[0][unit_kerja]', 'Fakultas Teknik');
+                formData.append('terlapor[0][jenis_kelamin]', 'laki-laki');
+                formData.append('terlapor[0][umur_terlapor]', '20-40');
+            }
+
+            // Process saksi data
+            const validSaksi = this.formData.saksi ? this.formData.saksi.filter(item => 
+                item.nama_lengkap || item.email || item.nomor_telepon
+            ) : [];
+            
+            if (validSaksi.length > 0) {
+                validSaksi.forEach((item, index) => {
+                    if (item.nama_lengkap) formData.append(`saksi[${index}][nama_lengkap]`, item.nama_lengkap);
+                    if (item.email) formData.append(`saksi[${index}][email]`, item.email);
+                    if (item.nomor_telepon) formData.append(`saksi[${index}][nomor_telepon]`, item.nomor_telepon);
+                });
+            } else {
+                // Use default values if no saksi data
+                formData.append('saksi[0][nama_lengkap]', 'Nama Saksi');
+                formData.append('saksi[0][email]', 'saksi@example.com');
+                formData.append('saksi[0][nomor_telepon]', '089876543210');
+            }
+
+            // Process bukti_pelanggaran
+            if (this.formData.bukti_pelanggaran && this.formData.bukti_pelanggaran.length > 0) {
+                this.formData.bukti_pelanggaran.forEach((item, index) => {
+                    formData.append(`bukti_pelanggaran[${index}]`, item);
+                });
+            } else {
+                formData.append('bukti_pelanggaran[0]', 'foto_dokumentasi');
+            }
             
             // Add agreement
             formData.append('agreement', '1');
 
-            // Submit the form
-            this.uploadWithXHR(formData)
-                .then(response => {
-                    this.loading = false;
-                    Swal.fire({
-                        title: 'Berhasil!',
-                        text: 'Laporan kejadian mendesak berhasil dikirim',
-                        icon: 'success',
-                        confirmButtonText: 'OK'
-                    }).then(() => {
-                        this.$router.push('/dosen/dashboardpkdosen');
-                    });
-                })
-                .catch(error => {
-                    this.loading = false;
-                    console.error("Submission error:", error);
-                    
-                    // Parse and display errors if available
-                    if (error.response) {
-                        try {
-                            const errorData = JSON.parse(error.response);
-                            this.errors = errorData;
-                        } catch (e) {
-                            console.error("Error parsing server response:", e);
-                            Swal.fire({
-                                title: 'Error!',
-                                text: 'Terjadi kesalahan saat mengirim laporan',
-                                icon: 'error',
-                                confirmButtonText: 'OK'
-                            });
-                        }
+            // Get authentication token
+            const authToken = this.token || VueCookies.get('auth_token');
+            if (!authToken) {
+                this.loading = false;
+                this.showNotification('Error Autentikasi', 'Token autentikasi tidak ditemukan. Silakan login kembali.', false);
+                setTimeout(() => this.$router.push('/login'), 2000);
+                return;
+            }
+
+            // Create and configure XMLHttpRequest
+            const xhr = new XMLHttpRequest();
+            
+            // Use absolute URL to ensure correct endpoint
+            xhr.open('POST', 'http://pelaporan-d3ti.my.id/api/laporan/add_laporan', true);
+            
+            // Set headers
+            xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+            xhr.setRequestHeader('Accept', 'application/json');
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            
+            // Set timeout - 30 seconds
+            xhr.timeout = 30000;
+            
+            // Handle successful response
+            xhr.onload = () => {
+                this.loading = false;
+                
+                // Handle response based on status code
+                if (xhr.status === 200 || xhr.status === 201) {
+                    try {
+                        // Parse response
+                        const response = JSON.parse(xhr.response);
+                        console.log("Submission successful:", response);
+                        
+                        // Show success message
+                        Swal.fire({
+                            title: 'Sukses!',
+                            text: 'Laporan berhasil dikirim!',
+                            icon: 'success',
+                            timer: 2000,
+                            timerProgressBar: true,
+                            showConfirmButton: false
+                        }).then(() => {
+                            // Redirect to dashboard
+                            this.$router.push('/dosen/dashboardpkdosen');
+                        });
+                        
+                        // Reset the form
+                        this.resetForm();
+                        
+                    } catch (error) {
+                        // If JSON parse fails but status is success, still consider it a success
+                        console.warn('Server returned non-JSON response with success status:', xhr.response);
+                        
+                        Swal.fire({
+                            title: 'Sukses!',
+                            text: 'Laporan berhasil dikirim!',
+                            icon: 'success',
+                            timer: 2000,
+                            timerProgressBar: true,
+                            showConfirmButton: false
+                        }).then(() => {
+                            this.$router.push('/dosen/dashboardpkdosen');
+                        });
+                        
+                        // Reset the form
+                        this.resetForm();
                     }
-                });
-        },
-        
-        uploadWithXHR(formData) {
-            return new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                
-                xhr.open('POST', '/api/laporan/add_laporan', true);
-                
-                // Get token from cookies
-                const authToken = VueCookies.get('auth_token');
-                if (authToken) {
-                    xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
-                }
-                
-                xhr.onload = function() {
-                    if (this.status >= 200 && this.status < 300) {
-                        try {
-                            resolve(JSON.parse(xhr.response));
-                        } catch (e) {
-                            resolve(xhr.response);
-                        }
-                    } else {
-                        console.error("Server error response:", xhr.response);
-                        reject({
-                            status: this.status,
-                            statusText: xhr.statusText,
-                            response: xhr.response
+                } else if (xhr.status === 400) {
+                    // Handle validation errors
+                    try {
+                        const response = JSON.parse(xhr.response);
+                        this.errors = response.errors || {};
+                        console.log('Server validation errors:', this.errors);
+                        
+                        Swal.fire({
+                            title: 'Validasi Gagal',
+                            text: 'Silakan periksa kembali isian form Anda.',
+                            icon: 'error',
+                            timer: 3000,
+                            timerProgressBar: true,
+                            showConfirmButton: false
+                        });
+                        
+                        this.$nextTick(() => {
+                            const firstError = document.querySelector('.is-invalid');
+                            if (firstError) {
+                                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        });
+                    } catch (error) {
+                        Swal.fire({
+                            title: 'Validasi Gagal',
+                            text: 'Silakan periksa kembali isian form Anda.',
+                            icon: 'error',
+                            timer: 3000,
+                            timerProgressBar: true,
+                            showConfirmButton: false
                         });
                     }
-                };
-                
-                xhr.onerror = function() {
-                    console.error("XHR network error");
-                    reject({
-                        status: this.status,
-                        statusText: xhr.statusText,
-                        response: 'Network error occurred'
+                } else if (xhr.status === 401) {
+                    // Handle authentication errors
+                    Swal.fire({
+                        title: 'Sesi Berakhir',
+                        text: 'Sesi login Anda telah berakhir. Silakan login kembali.',
+                        icon: 'warning',
+                        timer: 3000,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    }).then(() => {
+                        this.$router.push('/login');
                     });
-                };
-                
-                xhr.upload.onprogress = (e) => {
-                    if (e.lengthComputable) {
-                        const percentComplete = (e.loaded / e.total) * 100;
-                        console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
+                } else {
+                    // Handle other server errors
+                    console.error(`Server error (${xhr.status}):`, xhr.response);
+                    let errorMessage = 'Terjadi kesalahan pada server. Silakan coba lagi nanti.';
+                    
+                    try {
+                        const errorResponse = JSON.parse(xhr.response);
+                        if (errorResponse.message) {
+                            errorMessage = errorResponse.message;
+                        }
+                    } catch (e) {
+                        // Use default message if parsing fails
                     }
-                };
+                    
+                    Swal.fire({
+                        title: 'Error',
+                        text: errorMessage,
+                        icon: 'error',
+                        timer: 3000,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    });
+                }
+            };
+            
+            // Handle network errors
+            xhr.onerror = () => {
+                this.loading = false;
+                console.error('Network error during request');
                 
+                Swal.fire({
+                    title: 'Error Koneksi',
+                    text: 'Gagal menghubungi server. Periksa koneksi internet Anda.',
+                    icon: 'error',
+                    timer: 3000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
+            };
+            
+            // Handle timeout
+            xhr.ontimeout = () => {
+                this.loading = false;
+                console.error('Request timed out');
+                
+                Swal.fire({
+                    title: 'Timeout',
+                    text: 'Permintaan memakan waktu terlalu lama. Silakan coba lagi.',
+                    icon: 'error',
+                    timer: 3000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
+            };
+            
+            // Track upload progress
+            xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const percentComplete = (event.loaded / event.total) * 100;
+                    console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
+                    // You can update a progress UI element here if you have one
+                    // this.uploadProgress = percentComplete;
+                }
+            };
+            
+            // Send the request
+            try {
                 xhr.send(formData);
-            });
+            } catch (error) {
+                this.loading = false;
+                console.error('Error sending request:', error);
+                
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Gagal mengirim data: ' + error.message,
+                    icon: 'error',
+                    timer: 3000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
+            }
         },
 
         goBack() {
@@ -516,7 +679,7 @@ export default {
         closeModal() {
             this.showModal = false;
             if (this.isSuccess) {
-                this.$router.push('/dosen/pelaporan/kejadian');
+                this.$router.push('/dosen/dashboardpkdosen');
             }
         }
     }

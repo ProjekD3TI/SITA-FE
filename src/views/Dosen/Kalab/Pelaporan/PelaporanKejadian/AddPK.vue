@@ -932,146 +932,235 @@ export default {
       // IMPORTANT: Do NOT add any saksi field if there are no valid entries
       
       // Fix the file handling in submitForm method
-    if (this.formData.image_path && this.formData.image_path.length > 0) {
-      // Try the format the server expects based on the error
-      // Option 1: Using standard array notation
-      this.formData.image_path.forEach((file, index) => {
-        formData.append('image_path[]', file);
-        console.log(`Appending image as array: image_path[]`, file.name, file.type, file.size);
-      });
-      
-      // Option 2: Also try this format which might be what the server expects
-      formData.append('image_path_count', this.formData.image_path.length.toString());
-    }
-
-    // Debug what is being sent
-    console.log("Submitting form data:");
-    for (let [key, value] of formData.entries()) {
-      if (value instanceof File) {
-        console.log(`${key}: File - ${value.name} (${value.size} bytes)`);
+      if (this.formData.image_path && this.formData.image_path.length > 0) {
+        // Format the server expects based on working components
+        this.formData.image_path.forEach((file, index) => {
+          formData.append(`image_path[${index}]`, file);
+          console.log(`Appending image: image_path[${index}]`, file.name, file.type, file.size);
+        });
       } else {
-        console.log(`${key}: ${value}`);
+        // If image validation is required
+        this.errors.image_path = ['Lampiran foto harus diunggah'];
+        this.loading = false;
+          
+        this.$nextTick(() => {
+          const fileUploadEl = document.querySelector('.file-upload');
+          if (fileUploadEl) {
+            fileUploadEl.scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+        return;
       }
-    }
 
-    // Use XMLHttpRequest instead of axios for better upload control
-    this.uploadWithXHR(formData)
-      .then(response => {
+      // Debug what is being sent
+      console.log("Submitting form data:");
+      for (let [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(`${key}: File - ${value.name} (${value.size} bytes)`);
+        } else {
+          console.log(`${key}: ${value}`);
+        }
+      }
+
+      // Create and configure XMLHttpRequest
+      const xhr = new XMLHttpRequest();
+      
+      // Use the absolute URL to ensure correct endpoint
+      xhr.open('POST', 'http://pelaporan-d3ti.my.id/api/laporan/add_laporan', true);
+      
+      // Get the auth token
+      const authToken = this.token || this.$cookies.get('auth_token') || VueCookies.get('auth_token');
+      if (!authToken) {
         this.loading = false;
         Swal.fire({
-          title: 'Berhasil!',
-          text: 'Laporan berhasil ditambahkan.',
-          icon: 'success',
-          timer: 2000,
-          timerProgressBar: true,
-          showConfirmButton: false
+          title: 'Error Autentikasi',
+          text: 'Token autentikasi tidak ditemukan. Silakan login kembali.',
+          icon: 'error',
+          confirmButtonText: 'OK'
         }).then(() => {
-          // Redirect or reset form as needed
-          this.$router.push('/pelaporan/kejadian');
+          this.$router.push('/login');
         });
-      })
-      .catch(error => {
+        return;
+      }
+      
+      // Set proper headers
+      xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+      xhr.setRequestHeader('Accept', 'application/json');
+      xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+      
+      // Set timeout
+      xhr.timeout = 30000; // 30 seconds
+      
+      xhr.onload = () => {
         this.loading = false;
-        console.error('Upload error:', error);
         
-        // Handle authentication errors
-        if (error.status === 401) {
+        // Handle response based on status code
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            // Parse response
+            const response = JSON.parse(xhr.response);
+            console.log("Submission successful:", response);
+            
+            // Show success message
+            Swal.fire({
+              title: 'Berhasil!',
+              text: 'Laporan berhasil ditambahkan.',
+              icon: 'success',
+              timer: 2000,
+              timerProgressBar: true,
+              showConfirmButton: false
+            }).then(() => {
+              // Use correct redirect path for kalab role
+              this.$router.push('/kalab/pelaporankejadiankalab');
+            });
+            
+            // Reset the form if needed
+            if (typeof this.resetForm === 'function') {
+              this.resetForm();
+            }
+            
+          } catch (error) {
+            // If JSON parse fails but status is success, still consider it a success
+            console.warn('Server returned non-JSON response with success status:', xhr.response);
+            
+            Swal.fire({
+              title: 'Berhasil!',
+              text: 'Laporan berhasil ditambahkan.',
+              icon: 'success',
+              timer: 2000,
+              timerProgressBar: true,
+              showConfirmButton: false
+            }).then(() => {
+              this.$router.push('/kalab/pelaporankejadiankalab');
+            });
+          }
+        } else if (xhr.status === 400) {
+          // Handle validation errors
+          try {
+            const response = JSON.parse(xhr.response);
+            this.errors = response.errors || {};
+            console.log('Server validation errors:', this.errors);
+            
+            Swal.fire({
+              title: 'Validasi Gagal',
+              text: 'Silakan periksa kembali isian form Anda.',
+              icon: 'error',
+              timer: 3000,
+              timerProgressBar: true,
+              showConfirmButton: false
+            });
+            
+            // Scroll to first error
+            this.$nextTick(() => {
+              const firstError = document.querySelector('.is-invalid');
+              if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            });
+          } catch (error) {
+            Swal.fire({
+              title: 'Validasi Gagal',
+              text: 'Silakan periksa kembali isian form Anda.',
+              icon: 'error',
+              timer: 3000,
+              timerProgressBar: true,
+              showConfirmButton: false
+            });
+          }
+        } else if (xhr.status === 401) {
+          // Handle authentication errors
           Swal.fire({
             title: 'Sesi Berakhir',
             text: 'Sesi login Anda telah berakhir. Silakan login kembali.',
-            icon: 'error',
-            confirmButtonText: 'OK'
+            icon: 'warning',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false
           }).then(() => {
-            this.$router.push('/mahasiswa/login');
+            this.$router.push('/login');
           });
         } else {
-          // Handle other errors
-          let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
-          if (error.response && typeof error.response === 'string') {
-            try {
-              const responseData = JSON.parse(error.response);
-              if (responseData.message) {
-                errorMessage = responseData.message;
-              } else if (responseData.error) {
-                errorMessage = responseData.error;
-              }
-            } catch (e) {
-              console.error('Error parsing response:', e);
+          // Handle other server errors
+          console.error(`Server error (${xhr.status}):`, xhr.response);
+          
+          let errorMessage = 'Terjadi kesalahan pada server. Silakan coba lagi nanti.';
+          try {
+            const errorResponse = JSON.parse(xhr.response);
+            if (errorResponse.message) {
+              errorMessage = errorResponse.message;
             }
+          } catch (e) {
+            // Use default message if parsing fails
           }
           
           Swal.fire({
             title: 'Error',
             text: errorMessage,
             icon: 'error',
-            confirmButtonText: 'OK'
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false
           });
         }
-      });
-    },
-
-    // Add this method to your component
-    // Updated uploadWithXHR method
-    uploadWithXHR(formData) {
-      return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
+      };
+      
+      // Handle network errors
+      xhr.onerror = () => {
+        this.loading = false;
+        console.error('Network error during request');
         
-        // Make sure we're using the correct endpoint
-        xhr.open('POST', '/api/laporan/add_laporan', true);
+        Swal.fire({
+          title: 'Error Koneksi',
+          text: 'Gagal menghubungi server. Periksa koneksi internet Anda.',
+          icon: 'error',
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false
+        });
+      };
+      
+      // Handle timeout
+      xhr.ontimeout = () => {
+        this.loading = false;
+        console.error('Request timed out');
         
-        // Get token from component data or from cookies
-        const authToken = this.token || this.$cookies.get('auth_token');
-        if (authToken) {
-          xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+        Swal.fire({
+          title: 'Timeout',
+          text: 'Permintaan memakan waktu terlalu lama. Silakan coba lagi.',
+          icon: 'error',
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false
+        });
+      };
+      
+      // Track upload progress
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
+          // You can update a progress UI element here if you have one
+          // this.uploadProgress = percentComplete;
         }
-        
-        // Don't set Content-Type header - let the browser set it with the proper boundary
-        // This is critical for multipart/form-data uploads
-        
-        xhr.onload = function() {
-          if (this.status >= 200 && this.status < 300) {
-            try {
-              resolve(JSON.parse(xhr.response));
-            } catch (e) {
-              resolve(xhr.response);
-            }
-          } else {
-            // More detailed error information
-            console.error("Server error response:", xhr.response);
-            reject({
-              status: this.status,
-              statusText: xhr.statusText,
-              response: xhr.response
-            });
-          }
-        };
-        
-        xhr.onerror = function() {
-          console.error("XHR network error");
-          reject({
-            status: this.status,
-            statusText: xhr.statusText,
-            response: 'Network error occurred'
-          });
-        };
-        
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            const percentComplete = (e.loaded / e.total) * 100;
-            console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
-          }
-        };
-        
-        // Before sending, log what we're about to send
-        console.log("Preparing to send form data with these files:");
-        if (this.formData.image_path) {
-          this.formData.image_path.forEach((file, i) => {
-            console.log(`File ${i}: ${file.name}, ${file.type}, ${file.size} bytes`);
-          });
-        }
-        
+      };
+      
+      // Send the request
+      console.log("Sending request to API");
+      try {
         xhr.send(formData);
-      });
+      } catch (error) {
+        this.loading = false;
+        console.error('Error sending request:', error);
+        
+        Swal.fire({
+          title: 'Error',
+          text: 'Gagal mengirim data: ' + error.message,
+          icon: 'error',
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false
+        });
+      }
     },
 
     resetForm() {
