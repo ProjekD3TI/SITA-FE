@@ -446,14 +446,23 @@ export function useTabelPenjadwalan() {
   const downloadLembarRevisi = async () => {
     try {
       const response = await axios.get("/api/admin_ta/template-lembar-revisi", {
-        responseType: "blob", // penting agar axios menganggap response sebagai file
+        responseType: "blob",
       });
+      // Ambil nama file dari header Content-Disposition jika ada
+      let filename = "template_lembar_revisi.pdf";
+      const disposition = response.headers["content-disposition"];
+      if (disposition && disposition.indexOf("filename=") !== -1) {
+        filename = disposition
+          .split("filename=")[1]
+          .replace(/['"]/g, "")
+          .trim();
+      }
       const url = window.URL.createObjectURL(
         new Blob([response.data], { type: "application/pdf" })
       );
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", "template_lembar_revisi.pdf");
+      link.setAttribute("download", filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -476,12 +485,21 @@ export function useTabelPenjadwalan() {
           },
         }
       );
+      // Ambil nama file dari header Content-Disposition jika ada
+      let filename = "berita_acara_ujian.pdf";
+      const disposition = response.headers["content-disposition"];
+      if (disposition && disposition.indexOf("filename=") !== -1) {
+        filename = disposition
+          .split("filename=")[1]
+          .replace(/['"]/g, "")
+          .trim();
+      }
       const url = window.URL.createObjectURL(
         new Blob([response.data], { type: "application/pdf" })
       );
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", "berita_acara_ujian.pdf");
+      link.setAttribute("download", filename); // <-- Nama file dinamis
       document.body.appendChild(link);
       link.click();
       link.remove();
