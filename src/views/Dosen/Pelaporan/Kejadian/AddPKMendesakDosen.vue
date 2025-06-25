@@ -183,7 +183,7 @@ export default {
                 terlapor: [
                     {
                         nama_lengkap: '-',
-                        email: '-',
+                        email: '',
                         nomor_telepon: '-',
                         status_warga: 'lainnya',
                         unit_kerja: 'Fakultas Teknik',
@@ -194,7 +194,7 @@ export default {
                 saksi: [
                     {
                         nama_lengkap: '-',
-                        email: '-',
+                        email: '',
                         nomor_telepon: '-'
                     }
                 ],
