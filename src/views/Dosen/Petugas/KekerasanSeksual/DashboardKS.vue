@@ -279,8 +279,8 @@ export default {
       dataToExport: [],
       currentUser: 'miftahul01',
       currentDateTime: '2025-05-22 13:45:15',
-      sortKey: '', // Column to sort by
-      sortOrder: 1 // 1 for ascending, -1 for descending
+      sortKey: 'created_at', // Column to sort by
+      sortOrder: -1 // 1 for ascending, -1 for descending
     };
   },
 
