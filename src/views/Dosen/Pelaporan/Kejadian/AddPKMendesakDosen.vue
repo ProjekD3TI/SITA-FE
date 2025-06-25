@@ -430,7 +430,7 @@ export default {
                         icon: 'success',
                         confirmButtonText: 'OK'
                     }).then(() => {
-                        this.$router.push('/dosen/pelaporan/kejadian');
+                        this.$router.push('/dosen/dashboardpkdosen');
                     });
                 })
                 .catch(error => {
