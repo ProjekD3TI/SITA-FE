@@ -32,7 +32,8 @@ import DashboardTAMhs from "../views/Mahasiswa/Tugas-akhir/Dashboard.vue";
 import BimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan/Bimbingan.vue";
 import TambahBimbinganforMhs from "../views/Mahasiswa/Tugas-akhir/Bimbingan/Tambah.vue";
 import ProposalforMhs from "../views/Mahasiswa/Tugas-akhir/Proposal.vue";
-import TugasAkhirforMhs from "../views/Mahasiswa/Tugas-akhir/UjianTA/UjianTA.vue";
+import BerkasUjianTAforMhs from "../views/Mahasiswa/Tugas-akhir/UjianTA/Berkas.vue";
+import UjianTAforMhs from "../views/Mahasiswa/Tugas-akhir/UjianTA/UjianTA.vue";
 import detailUjianTAforMhs from "../views/Mahasiswa/Tugas-akhir/UjianTA/Detail.vue";
 // Route Dosen TA
 import DashboardTADosen from "../views/Dosen/Tugas-akhir/Dashboard.vue";
@@ -211,11 +212,18 @@ const routes = [
           {
             path: "ujian-ta",
             name: "UjianTAMhs",
-            component: TugasAkhirforMhs,
+            component: UjianTAforMhs,
             meta: {
               breadcrumb: "Ujian",
             },
             children: [
+              {
+                path: "berkas",
+                component: BerkasUjianTAforMhs,
+                meta: {
+                  breadcrumb: "Berkas",
+                },
+              },
               {
                 path: "detail-ujian-ta",
                 component: detailUjianTAforMhs,
