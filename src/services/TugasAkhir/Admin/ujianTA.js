@@ -443,14 +443,26 @@ export function useTabelPenjadwalan() {
     }
   };
 
-  const downloadLembarRevisi = async () => {
+  const downloadLembarRevisi = async (ujianTaId) => {
     try {
-      const response = await axios.get("/api/admin_ta/template-lembar-revisi", {
-        responseType: "blob",
-      });
+      const authToken = VueCookies.get("auth_token");
+      const response = await axios.get(
+        `/api/admin_ta/cetak-lembar-revisi/${ujianTaId}`,
+        {
+          responseType: "blob",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            Accept: "application/pdf",
+          },
+        }
+      );
       // Ambil nama file dari header Content-Disposition jika ada
-      let filename = "template_lembar_revisi.pdf";
-      const disposition = response.headers["content-disposition"];
+      let filename = "lembar_revisi.pdf";
+      // Axios v1.x: headers.get()
+      const disposition = response.headers.get
+        ? response.headers.get("content-disposition")
+        : response.headers["content-disposition"];
+      console.log(disposition);
       if (disposition && disposition.indexOf("filename=") !== -1) {
         filename = disposition
           .split("filename=")[1]
@@ -462,13 +474,13 @@ export function useTabelPenjadwalan() {
       );
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", filename);
+      link.setAttribute("download", filename); // Nama file dinamis dari backend
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (e) {
-      toast.error("Gagal mendownload template lembar revisi");
+      toast.error("Gagal mendownload Lembar Revisi: " + e.message);
     }
   };
 
@@ -487,7 +499,9 @@ export function useTabelPenjadwalan() {
       );
       // Ambil nama file dari header Content-Disposition jika ada
       let filename = "berita_acara_ujian.pdf";
-      const disposition = response.headers["content-disposition"];
+      const disposition =
+        response.headers.get?.("content-disposition") ||
+        response.headers["content-disposition"];
       if (disposition && disposition.indexOf("filename=") !== -1) {
         filename = disposition
           .split("filename=")[1]
