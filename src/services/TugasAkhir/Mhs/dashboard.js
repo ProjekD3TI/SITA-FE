@@ -152,6 +152,10 @@ export function updateStatusCard() {
         statuses.ujianTA.value = STATUS.REJECTED;
         return;
       }
+      if (ujian.status_valid === 3) {
+        statuses.ujianTA.value = STATUS.REVISI;
+        return;
+      }
     } else if (dataDashboard.value?.has_dosen_penguji) {
       statuses.ujianTA.value = STATUS.PLOTTED;
       return;
@@ -194,6 +198,11 @@ export const statusProperties = {
     iconColor: "success",
     statusLabel: "Terplotting",
     statusType: "success",
+  },
+  [STATUS.REVISI]: {
+    iconColor: "warning",
+    statusLabel: "Revisi",
+    statusType: "warning",
   },
 };
 

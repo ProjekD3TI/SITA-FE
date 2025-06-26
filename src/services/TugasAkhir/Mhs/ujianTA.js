@@ -28,7 +28,12 @@ export function useTugasAkhir() {
         Accept: "application/json",
       };
 
-      const response = await axios.get("/api/mahasiswa/ujian-ta", { headers });
+      const response = await axios.get(
+        "/api/mahasiswa/tugas-akhr/ujian-ta/daftar",
+        {
+          headers,
+        }
+      );
       dataTugasAkhir.value = response.data.data;
     } catch (err) {
       handleError(err);
@@ -128,9 +133,13 @@ export function useTugasAkhir() {
           file_perpanjangan_masa_studi
         );
 
-      await axios.post(`/api/mahasiswa/tugas-akhir/${id}/update`, formData, {
-        headers,
-      });
+      await axios.post(
+        `/api/mahasiswa/tugas-akhir/daftar/${id}/update`,
+        formData,
+        {
+          headers,
+        }
+      );
       toast.success("Pengajuan Ujian TA berhasil diupdate!");
       return true;
     } catch (err) {
@@ -186,9 +195,12 @@ export function useBerkasTA() {
         Accept: "application/json",
       };
 
-      const response = await axios.get("/api/mahasiswa/berkas/ujian-ta", {
-        headers,
-      });
+      const response = await axios.get(
+        "/api/mahasiswa/tugas-akhir/ujian-ta/berkas",
+        {
+          headers,
+        }
+      );
       dataBerkasTA.value = response.data.data;
       // await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (err) {
