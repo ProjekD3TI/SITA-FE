@@ -11,8 +11,61 @@ export const dataNilaiUjianTA = ref(null);
 const dataJadwalUjianTA = ref(null);
 
 // --- API SIMULASI ---
-
 export function useTugasAkhir() {
+  let abortController = null;
+  const router = useRouter();
+  const toast = useToast();
+  const loadingTugasAkhir = ref(false);
+  const errorTugasAkhir = ref(null);
+  const fetchData = async () => {
+    loadingTugasAkhir.value = true;
+    try {
+      const authToken = VueCookies.get("auth_token");
+      const headers = {
+        Authorization: `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+
+      const response = await axios.get("/api/mahasiswa/tugas-akhir/ujian-ta", {
+        headers,
+      });
+      dataTugasAkhir.value = response.data.data;
+    } catch (err) {
+      handleError(err);
+    } finally {
+      loadingTugasAkhir.value = false;
+    }
+  };
+
+  const handleError = (err) => {
+    if (err.response?.status === 401) {
+      toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
+      router.push("/mahasiswa/login");
+    } else {
+      errorTugasAkhir.value =
+        err.response?.data?.message || "Terjadi kesalahan";
+      toast.error(errorTugasAkhir.value);
+    }
+  };
+
+  onMounted(() => {
+    fetchData();
+  });
+
+  onUnmounted(() => {
+    if (abortController) abortController.abort();
+  });
+
+  return {
+    loadingTugasAkhir,
+    errorTugasAkhir,
+    dataTugasAkhir,
+    fetchData,
+  };
+}
+
+export function useDaftarTugasAkhir() {
   let abortController = null;
   const router = useRouter();
   const toast = useToast();
@@ -202,7 +255,6 @@ export function useBerkasTA() {
         }
       );
       dataBerkasTA.value = response.data.data;
-      // await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (err) {
       handleError(err);
     } finally {
@@ -233,6 +285,60 @@ export function useBerkasTA() {
     errorBerkasTA,
     dataBerkasTA,
     fetchDataBerkas,
+  };
+}
+
+export function useDetailTugasAkhir() {
+  let abortController = null;
+  const router = useRouter();
+  const toast = useToast();
+  const loadingDetailTA = ref(false);
+  const errorDetailTA = ref(null);
+  const fetchData = async (id) => {
+    loadingDetailTA.value = true;
+    try {
+      const authToken = VueCookies.get("auth_token");
+      const headers = {
+        Authorization: `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+
+      const response = await axios.get(
+        `/api/mahasiswa/tugas-akhir/tugas-akhir/${id}`,
+        { headers }
+      );
+      dataTugasAkhir.value = response.data.data;
+    } catch (err) {
+      handleError(err);
+    } finally {
+      loadingDetailTA.value = false;
+    }
+  };
+
+  const handleError = (err) => {
+    if (err.response?.status === 401) {
+      toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
+      router.push("/mahasiswa/login");
+    } else {
+      errorDetailTA.value = err.response?.data?.message || "Terjadi kesalahan";
+      toast.error(errorDetailTA.value);
+    }
+  };
+
+  onMounted(() => {
+    // fetchData(id); // id should be passed from the component
+  });
+
+  onUnmounted(() => {
+    if (abortController) abortController.abort();
+  });
+
+  return {
+    loadingDetailTA,
+    errorDetailTA,
+    dataTugasAkhir,
+    fetchData,
   };
 }
 

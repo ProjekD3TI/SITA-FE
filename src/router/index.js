@@ -218,14 +218,14 @@ const routes = [
             },
             children: [
               {
-                path: "berkas",
+                path: "berkas/:tugas_akhir_id",
                 component: BerkasUjianTAforMhs,
                 meta: {
                   breadcrumb: "Berkas",
                 },
               },
               {
-                path: "detail-ujian-ta",
+                path: "detail-ujian-ta/:ujian_ta_id",
                 component: detailUjianTAforMhs,
                 meta: {
                   breadcrumb: "Detail",

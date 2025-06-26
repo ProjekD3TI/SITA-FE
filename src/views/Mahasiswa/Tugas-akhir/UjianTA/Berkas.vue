@@ -12,7 +12,7 @@ import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 import JadwalUjian from "@/components/Tugas-akhir/JadwalUjian.vue";
 import {
-  useTugasAkhir,
+  useDaftarTugasAkhir,
   useBerkasTA,
   useJadwalUjianTA,
   dosenPembimbing,
@@ -63,7 +63,7 @@ const {
   updateUjianTA,
   fetchData,
   dataTugasAkhir,
-} = useTugasAkhir();
+} = useDaftarTugasAkhir();
 const { loadingBerkasTA, errorBerkasTA, fetchDataBerkas } = useBerkasTA();
 const { loadingJadwalUjianTA, errorJadwalUjianTA, dataJadwalUjianTA } =
   useJadwalUjianTA();
