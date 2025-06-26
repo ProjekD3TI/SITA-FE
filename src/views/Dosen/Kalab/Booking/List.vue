@@ -75,8 +75,8 @@
 
             <div class="text-sm text-gray-600">
                 {{ pagination.total > 0 ? (pagination.current_page - 1) * pagination.per_page + 1 : 0 }}-{{
-                Math.min(pagination.current_page * pagination.per_page, pagination.total)
-                }} of {{ pagination.total }}
+    Math.min(pagination.current_page * pagination.per_page, pagination.total)
+}} of {{ pagination.total }}
             </div>
 
             <div class="flex items-center space-x-2">
@@ -137,14 +137,22 @@
                         <label class="text-sm font-medium text-gray-600">Keterangan</label>
                         <p class="text-gray-900">{{ selectedBooking.keterangan }}</p>
                     </div>
-<div v-if="selectedBooking.file">
-    <label class="text-sm font-medium text-gray-600">File</label>
-    <p>
-        <a :href="getFileUrl(selectedBooking.file)" target="_blank" class="text-blue-600 underline">
-            {{ selectedBooking.file }}
-        </a>
-    </p>
-</div>
+                    <div v-if="selectedBooking.keterangan">
+                        <label class="text-sm font-medium text-gray-600">File</label>
+                        <div class="mt-2">
+                            <!-- Gambar preview -->
+                            <img :src="getFileUrl(selectedBooking.files)" alt="Gambar Booking"
+                                class="max-w-xs border rounded shadow mb-2" />
+
+                            <!-- Link untuk buka file -->
+                            <p>
+                                <a :href="getFileUrl(selectedBooking.files)" target="_blank"
+                                    class="text-blue-600 underline">
+                                    Lihat file
+                                </a>
+                            </p>
+                        </div>
+                    </div>
 
                     <div v-if="selectedBooking.approved_by">
                         <label class="text-sm font-medium text-gray-600">Disetujui oleh</label>
@@ -320,6 +328,11 @@ const getTimeRange = (booking) => {
     return `Sesi ${booking.start_session} - ${booking.end_session}`;
 };
 
+const getFileUrl = (filename) => {
+    if (!filename) return "#";
+    return `${import.meta.env.VITE_API_BASE_URL}/storage/booking/${filename}`;
+};
+
 const viewDetail = (booking) => {
     selectedBooking.value = booking;
     showDetailModal.value = true;
@@ -415,4 +428,3 @@ onMounted(() => {
     fetchBookingList();
 });
 </script>
-  

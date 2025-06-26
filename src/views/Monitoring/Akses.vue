@@ -3,108 +3,187 @@
         <div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-6">
             <h1 class="text-4xl font-bold text-center text-indigo-700 mb-8">Log Akses Ruang</h1>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <select v-model="selectedRuang"
+            <!-- Filter Section -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <select v-model="selectedRuangId"
                     class="w-full px-4 py-3 rounded-xl border border-indigo-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option disabled value="">Pilih Ruang</option>
-                    <option v-for="(ruang, index) in ruangList" :key="index" :value="ruang">{{ ruang }}</option>
+                    <option value="">— Pilih Ruang —</option>
+                    <option v-for="ruang in ruangs" :key="ruang.id_ruang" :value="ruang.id_ruang">
+                        {{ ruang.nama_ruang }}
+                    </option>
                 </select>
 
-                <input v-model="filters.rfid" placeholder="Cari berdasarkan Nama..."
+                <input v-model="filters.nama" placeholder="Cari berdasarkan Nama..." :disabled="!selectedRuangId"
                     class="w-full px-4 py-3 rounded-xl border border-indigo-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
 
-                <select v-model="filters.status"
+                <select v-model="filters.status" :disabled="!selectedRuangId"
                     class="w-full px-4 py-3 rounded-xl border border-indigo-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <option value="">Semua Status</option>
                     <option value="allowed">Diizinkan</option>
                     <option value="denied">Ditolak</option>
                 </select>
+
+                <select v-model="perPage" :disabled="!selectedRuangId"
+                    class="w-full px-4 py-3 rounded-xl border border-indigo-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option :value="5">5 / halaman</option>
+                    <option :value="10">10 / halaman</option>
+                    <option :value="20">20 / halaman</option>
+                </select>
             </div>
 
-            <div v-if="filteredLogs.length > 0" class="overflow-x-auto">
-                <h2 class="text-2xl font-semibold text-indigo-600 mb-4">Log Akses - {{ selectedRuang }}</h2>
+            <!-- Loading & Error -->
+            <div v-if="error" class="text-red-500 text-center mb-4">{{ error }}</div>
+            <div v-if="loading" class="text-center mb-4">Memuat data...</div>
+
+            <!-- Pesan pilih ruang -->
+            <div v-if="!selectedRuangId && !loading" class="text-center text-gray-500 mt-12 text-lg font-semibold">
+                Silakan pilih ruang terlebih dahulu untuk melihat log akses.
+            </div>
+
+            <!-- Table -->
+            <div v-if="selectedRuangId && filteredLogs.length > 0 && !loading" class="overflow-x-auto">
+                <h2 class="text-2xl font-semibold text-indigo-600 mb-4">
+                    Log Akses – {{ ruangNamaById(selectedRuangId) }}
+                </h2>
+
                 <table class="w-full table-auto border-collapse">
                     <thead>
                         <tr class="bg-indigo-100 text-indigo-700">
-                            <th class="px-4 py-2 text-left">#</th>
+                            <th class="px-4 py-2 text-left">Np</th>
                             <th class="px-4 py-2 text-left">Nama</th>
                             <th class="px-4 py-2 text-left">Waktu Akses</th>
                             <th class="px-4 py-2 text-left">Status</th>
+                            <th class="px-4 py-2 text-left">Alasan</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(log, i) in filteredLogs" :key="i" class="hover:bg-indigo-50 border-b">
-                            <td class="px-4 py-2">{{ i + 1 }}</td>
-                            <td class="px-4 py-2">{{ log.nama }}</td>
+                        <tr v-for="(log, index) in pageData" :key="index" class="hover:bg-indigo-50 border-b">
+                            <td class="px-4 py-2">{{ startIndex + index + 1 }}</td>
+                            <td class="px-4 py-2">{{ log.nama || 'Tidak dikenal' }}</td>
                             <td class="px-4 py-2">{{ log.access_time }}</td>
                             <td class="px-4 py-2">
-                                <span :class="log.status === 'allowed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                    + ' px-3 py-1 rounded-full text-sm font-semibold'">
+                                <span :class="log.status === 'allowed'
+                                    ? 'bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold'
+                                    : 'bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-semibold'">
                                     {{ log.status === 'allowed' ? 'Diizinkan' : 'Ditolak' }}
                                 </span>
                             </td>
+                            <td class="px-4 py-2">{{ log.reason || '-' }}</td>
                         </tr>
                     </tbody>
                 </table>
+
+                <!-- Pagination -->
+                <div class="mt-4 flex justify-center space-x-2">
+                    <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1"
+                        class="px-3 py-1 bg-indigo-200 rounded disabled:opacity-50">Prev</button>
+
+                    <button v-for="page in totalPages" :key="page" @click="changePage(page)" :class="page === currentPage
+                        ? 'bg-indigo-500 text-white'
+                        : 'bg-indigo-100 text-indigo-700'" class="px-3 py-1 rounded">
+                        {{ page }}
+                    </button>
+
+                    <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages"
+                        class="px-3 py-1 bg-indigo-200 rounded disabled:opacity-50">Next</button>
+                </div>
             </div>
 
-            <div v-else class="text-center text-gray-500 mt-12">
-                <p class="text-lg">Silakan pilih ruang untuk melihat log akses.</p>
+            <!-- No Data -->
+            <div v-else-if="selectedRuangId && filteredLogs.length === 0 && !loading"
+                class="text-center text-gray-500 mt-12">
+                <p class="text-lg">Tidak ada data log untuk filter yang dipilih.</p>
             </div>
         </div>
     </div>
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
     data() {
         return {
-            selectedRuang: '',
+            selectedRuangId: '',
             filters: {
-                rfid: '',
+                nama: '',
                 status: ''
             },
-            logs: [
-                {
-                    nama: 'Naufal',
-                    nama_ruang: 'Ruang RPL',
-                    access_time: '2025-06-01 08:03:00',
-                    status: 'allowed'
-                },
-                {
-                    nama: 'Naufal',
-                    nama_ruang: 'Ruang RPL',
-                    access_time: '2025-06-01 09:00:00',
-                    status: 'denied'
-                },
-                {
-                    nama: 'Dosen',
-                    nama_ruang: 'MR',
-                    access_time: '2025-06-01 12:45:00',
-                    status: 'allowed'
-                },
-                {
-                    nama: 'Krishna',
-                    nama_ruang: 'MR',
-                    access_time: '2025-06-01 13:00:00',
-                    status: 'allowed'
-                }
-            ]
+            logs: [],
+            ruangs: [],
+            currentPage: 1,
+            perPage: 10,
+            loading: false,
+            error: ''
         };
     },
     computed: {
-        ruangList() {
-            return [...new Set(this.logs.map(log => log.nama_ruang))];
-        },
         filteredLogs() {
+            if (!this.selectedRuangId) return [];
+
+            const fk = this.filters.nama.trim().toLowerCase();
+            const fs = this.filters.status;
+
             return this.logs.filter(log => {
+                const nama = (log.nama || '').toLowerCase();
+                const ruangMatch = Number(log.id_ruang) === Number(this.selectedRuangId);
+
                 return (
-                    log.nama_ruang === this.selectedRuang &&
-                    (!this.filters.rfid || log.nama.toLowerCase().includes(this.filters.rfid.toLowerCase())) &&
-                    (!this.filters.status || log.status === this.filters.status)
+                    ruangMatch &&
+                    (!fk || nama.includes(fk)) &&
+                    (!fs || log.status === fs)
                 );
             });
+        },
+        totalPages() {
+            return Math.ceil(this.filteredLogs.length / this.perPage) || 1;
+        },
+        startIndex() {
+            return (this.currentPage - 1) * this.perPage;
+        },
+        pageData() {
+            return this.filteredLogs.slice(this.startIndex, this.startIndex + this.perPage);
         }
+    },
+    methods: {
+        changePage(page) {
+            if (page < 1 || page > this.totalPages) return;
+            this.currentPage = page;
+        },
+        ruangNamaById(id) {
+            const ruang = this.ruangs.find(r => Number(r.id_ruang) === Number(id));
+            return ruang ? ruang.nama_ruang : '';
+        },
+        async fetchData() {
+            this.loading = true;
+            this.error = '';
+            try {
+                const [logRes, ruangRes] = await Promise.all([
+                    axios.get('http://localhost:8000/api/access/log'),
+                    axios.get('http://localhost:8000/api/ruang')
+                ]);
+                this.logs = logRes.data;
+                this.ruangs = ruangRes.data.data;
+            } catch (err) {
+                this.error = 'Gagal ambil data: ' + err.message;
+            } finally {
+                this.loading = false;
+            }
+        }
+    },
+    watch: {
+        selectedRuangId() {
+            this.currentPage = 1;
+        },
+        filters: {
+            handler() {
+                this.currentPage = 1;
+            },
+            deep: true
+        }
+    },
+    mounted() {
+        this.fetchData();
     }
 };
 </script>
@@ -114,3 +193,4 @@ body {
     font-family: 'Inter', sans-serif;
 }
 </style>
+  

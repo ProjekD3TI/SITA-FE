@@ -171,7 +171,7 @@ const fetchRfidTag = async () => {
             router.push("/login-admin");
         } else if (error.response?.status === 404) {
             toast.error("RFID tag tidak ditemukan");
-            router.push("/admin-pengelola/rfid-tag");
+            router.push("/admin-pengelola/RFID");
         } else {
             toast.error("Gagal memuat data RFID tag");
         }
@@ -206,7 +206,7 @@ const handleSubmit = async () => {
 
         toast.success(response.data.message || "RFID tag berhasil diupdate");
         setTimeout(() => {
-            router.push(`/admin-pengelola/rfid-tag/`);
+            router.push(`/admin-pengelola/RFID`);
         }, 500);
     } catch (error) {
         if (error.response?.status === 400 || error.response?.status === 422) {
