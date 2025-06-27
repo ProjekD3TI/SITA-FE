@@ -282,11 +282,7 @@ const formattedAccordionItems = computed(() => {
       ta.status_valid === 2 || // Ditolak
       (ta.status_valid === 1 && ta.status_kelulusan !== 4 && !hasActiveExam); // Diterima, bukan tidak lulus, dan tanpa ujian aktif
 
-    const showDetailButton =
-      ta.status_valid === 1 &&
-      hasActiveExam &&
-      ta.status_kelulusan !== 1 &&
-      ta.status_kelulusan !== 2;
+    const showDetailButton = ta.status_valid === 1 && hasActiveExam;
 
     // Tambahkan kondisi untuk menampilkan history button jika ada ujian non-aktif
     const showHistoryButton =
@@ -308,7 +304,9 @@ const formattedAccordionItems = computed(() => {
       tahunAjaran: ta.tahun_ajaran?.tahun_ajaran || "-",
       showHistoryButton,
       showDaftarButton:
-        ta.status_valid === null || ta.status_valid === undefined,
+        ta.status_valid === null ||
+        ta.status_valid === undefined ||
+        ta.status_valid === 3,
       showBerkasButton,
       showDetailButton,
       // Status utama
