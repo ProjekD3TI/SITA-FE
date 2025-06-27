@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed, reactive, watch } from "vue";
+import { ref, computed, reactive, watch, onMounted, watchEffect } from "vue";
+import { useRoute, useRouter } from "vue-router"; // Import useRoute
 import Button from "@/components/Tugas-akhir/Button.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
@@ -15,12 +16,6 @@ import {
   useDaftarTugasAkhir,
   useBerkasTA,
   useJadwalUjianTA,
-  dosenPembimbing,
-  kategoriTA,
-  tahunAjaranTA,
-  statusValid,
-  totalBimbingan,
-  judulTugasAkhir,
   naskahTA,
   transkripNilai,
   krs,
@@ -45,29 +40,30 @@ import {
   statusBerkasSertifikatTOEIC,
   statusBerkasBeritaAcaraSeminarHasil,
   statusBerkasSuratPerpanjanganMasaStudi,
-  jadwalUjianTA,
-  daftarPenguji,
   catatanPerbaikan,
 } from "@/services/TugasAkhir/Mhs/ujianTA.js";
 import { getUserData } from "@/services/authMahasiswa";
 import { useToast } from "vue-toastification";
 
+const route = useRoute(); // Inisialisasi route
 const userData = getUserData();
 const username = userData?.name || userData?.email?.split("@")[0] || "User";
 const nim = userData?.nim || "";
 
 const {
-  loadingTugasAkhir,
-  errorTugasAkhir,
+  loadingDaftarTugasAkhir,
+  errorDaftarTugasAkhir,
   submitUjianTA,
   updateUjianTA,
   fetchData,
-  dataTugasAkhir,
+  dataDaftarTugasAkhir,
 } = useDaftarTugasAkhir();
-const { loadingBerkasTA, errorBerkasTA, fetchDataBerkas } = useBerkasTA();
+const { loadingBerkasTA, errorBerkasTA, fetchDataBerkas, dataBerkasTA } =
+  useBerkasTA();
 const { loadingJadwalUjianTA, errorJadwalUjianTA, dataJadwalUjianTA } =
   useJadwalUjianTA();
 const toast = useToast();
+const router = useRouter(); // Inisialisasi router
 
 const terjadwal = computed(
   () =>
@@ -99,7 +95,7 @@ const filePerpanjanganMasaStudi = ref(null);
 
 // Computed Properties
 const minimalBimbingan = computed(() => {
-  return totalBimbingan.value >= 9;
+  return (dataDaftarTugasAkhir?.value?.bimbingan?.total_bimbingan ?? 0) >= 9;
 });
 
 const wajibUploadPerpanjanganMasaStudi = computed(() => {
@@ -121,7 +117,8 @@ const formConfig = computed(() => {
 
   // Cek apakah semua status dan judul masih null (belum pernah submit)
   const semuaNull =
-    statusList.every((s) => s === null) && !judulTugasAkhir.value;
+    statusList.every((s) => s === null) &&
+    !dataDaftarTugasAkhir.value?.tugas_akhir?.judul_tugas_akhir;
 
   let isDisabled = false;
   let status = STATUS.NULL;
@@ -157,15 +154,20 @@ const formConfig = computed(() => {
 const userDataConfig = computed(() => {
   const config = {
     headText: "Dosen Pembimbing",
-    bodyText: dosenPembimbing.value,
+    bodyText:
+      dataDaftarTugasAkhir.value?.tugas_akhir?.dosen_pembimbing?.nama ?? "-",
     headText2: "Kategori TA",
-    bodyText2: kategoriTA.value,
-    tahunAjaran: tahunAjaranTA.value,
-    showStatus: statusValid.value !== null && statusValid.value !== undefined,
+    bodyText2: dataDaftarTugasAkhir.value?.tugas_akhir?.kategori?.nama ?? "-",
+    tahunAjaran: dataDaftarTugasAkhir.value?.tugas_akhir?.tahun_ajaran?.nama
+      ? dataDaftarTugasAkhir.value?.tugas_akhir?.tahun_ajaran.nama
+      : "-",
+    showStatus:
+      dataDaftarTugasAkhir.value?.tugas_akhir?.status_valid !== null &&
+      dataDaftarTugasAkhir.value?.tugas_akhir?.status_valid !== undefined,
   };
 
   if (config.showStatus) {
-    switch (statusValid.value) {
+    switch (dataDaftarTugasAkhir.value?.tugas_akhir?.status_valid) {
       case STATUS.REVISI:
         config.status = "warning-outline";
         config.statusLabel = "Revisi";
@@ -197,8 +199,8 @@ function isFileDisabled(status) {
 // Modular computed untuk setiap file
 const dangerNaskah = computed(
   () =>
-    statusBerkasNaskahTA.value === STATUS.REJECTED ||
-    (statusBerkasNaskahTA.value === STATUS.REVISI && !fileNaskah.value)
+    [STATUS.REJECTED, STATUS.REVISI].includes(statusBerkasNaskahTA.value) &&
+    !fileNaskah.value
 );
 const dangerKRS = computed(
   () => statusBerkasKRS.value === STATUS.REJECTED && !fileKRSLocal.value
@@ -287,8 +289,9 @@ const handleSubmit = async () => {
   };
   const success = await submitUjianTA(payload);
   if (success) {
-    fetchData();
-    fetchDataBerkas();
+    const tugasAkhirId = dataDaftarTugasAkhir.value?.tugas_akhir?.id;
+    fetchData(tugasAkhirId);
+    fetchDataBerkas(tugasAkhirId);
     // toast.success('Pengajuan Ujian TA berhasil dikirim!');
   } else {
     toast.error("Gagal mengirim pengajuan Ujian TA.");
@@ -296,7 +299,7 @@ const handleSubmit = async () => {
 };
 
 const handleUpdate = async () => {
-  const id = dataTugasAkhir.value?.tugas_akhir?.id;
+  const id = dataDaftarTugasAkhir.value?.tugas_akhir?.id;
   if (!id) {
     toast.error("ID Tugas Akhir tidak ditemukan!");
     return;
@@ -361,8 +364,9 @@ const handleUpdate = async () => {
   };
   const success = await updateUjianTA(payload);
   if (success) {
-    fetchData();
-    fetchDataBerkas();
+    const tugasAkhirId = dataDaftarTugasAkhir.value?.tugas_akhir?.id;
+    fetchData(tugasAkhirId);
+    fetchDataBerkas(tugasAkhirId);
     // toast.success('Pengajuan Ujian TA berhasil diupdate!');
   } else {
     toast.error("Gagal mengupdate pengajuan Ujian TA.");
@@ -370,7 +374,7 @@ const handleUpdate = async () => {
 };
 
 watch(
-  () => judulTugasAkhir.value,
+  () => dataDaftarTugasAkhir.value?.tugas_akhir?.judul_tugas_akhir,
   (val) => {
     // Selalu update judulTA jika belum pernah diubah user
     if (!judulTA.value) {
@@ -379,13 +383,29 @@ watch(
   },
   { immediate: true }
 );
+
+// Gunakan onMounted untuk mengambil data berkas saat komponen dimuat
+onMounted(() => {
+  const tugasAkhirId = route.params.tugas_akhir_id;
+  if (tugasAkhirId) {
+    fetchDataBerkas(tugasAkhirId).then(() => {});
+    fetchData(tugasAkhirId);
+  }
+});
+const hasRedirected = ref(false);
+
+watch(errorBerkasTA, (error) => {
+  if (error && !hasRedirected.value) {
+    hasRedirected.value = true;
+    // toast.error("Terjadi kesalahan: " + error);
+    router.replace({ name: "UjianTAMhs" });
+  }
+});
 </script>
 
 <template>
-  <router-view v-if="$route.path.includes('detail-ujian-ta')"></router-view>
-
   <div
-    v-else-if="loadingTugasAkhir || loadingBerkasTA || loadingJadwalUjianTA"
+    v-if="loadingDaftarTugasAkhir || loadingBerkasTA"
     class="flex items-center justify-center min-h-[80dvh]"
   >
     <Loading />
@@ -402,7 +422,10 @@ watch(
     <div>
       <!-- Not Enough Bimbingan State -->
       <div
-        v-if="!minimalBimbingan"
+        v-if="
+          !minimalBimbingan &&
+          dataDaftarTugasAkhir?.tugas_akhir?.status_aktif == 1
+        "
         class="h-[80vh] flex flex-col justify-center items-center gap-4"
       >
         <h1
@@ -430,7 +453,7 @@ watch(
         </router-link>
       </div>
       <div
-        v-if="dataTugasAkhir?.tugas_akhir?.has_dosen_penguji == false"
+        v-if="dataDaftarTugasAkhir?.tugas_akhir?.has_dosen_penguji == false"
         class="h-[80vh] flex flex-col justify-center items-center gap-4"
       >
         <h1
@@ -443,8 +466,8 @@ watch(
 
       <div
         v-else-if="
-          dataTugasAkhir?.status_form?.is_open == false &&
-          dataTugasAkhir?.tugas_akhir?.status_valid == null
+          dataDaftarTugasAkhir?.status_form?.is_open == false &&
+          dataDaftarTugasAkhir?.tugas_akhir?.status_valid == null
         "
         class="h-[80vh] flex flex-col justify-center items-center gap-4"
       >
@@ -457,9 +480,8 @@ watch(
       </div>
 
       <!-- Main Content when minimal bimbingan is met -->
-      <template v-else-if="dataTugasAkhir">
+      <template v-else-if="dataDaftarTugasAkhir">
         <Breadcrumb />
-
         <div class="p-4 bg-white card-rounded shadow-custom lg:p-8">
           <!-- User Data Section -->
           <div class="pb-6 mx-auto max-w-screen-2xl">
@@ -515,12 +537,15 @@ watch(
                     />
                   </svg>
                   <p
-                    v-if="statusBerkasNaskahTA.value === STATUS.REJECTED"
+                    v-if="statusBerkasNaskahTA === STATUS.REJECTED"
                     class="body5 sm:text-[13px] text-danger"
                   >
                     Berkas ditolak
                   </p>
-                  <p v-else class="body5 sm:text-[13px] text-danger">
+                  <p
+                    v-else-if="statusBerkasNaskahTA === STATUS.REVISI"
+                    class="body5 sm:text-[13px] text-danger"
+                  >
                     Berkas perlu direvisi
                   </p>
                 </div>
@@ -794,13 +819,20 @@ watch(
               <!-- Action Buttons - show for accepted application -->
               <template
                 v-if="
-                  statusValid === STATUS.ACCEPTED ||
-                  statusValid === STATUS.REVISI
+                  (dataDaftarTugasAkhir.value?.tugas_akhir?.status_valid ===
+                    STATUS.ACCEPTED ||
+                    dataDaftarTugasAkhir.value?.tugas_akhir?.status_valid ===
+                      STATUS.REVISI) &&
+                  dataDaftarTugasAkhir?.tugas_akhir?.status_aktif == 1
                 "
               >
                 <!-- Schedule tooltip and button -->
                 <Tooltip
-                  v-if="!terjadwal && statusValid !== STATUS.REVISI"
+                  v-if="
+                    !terjadwal &&
+                    dataDaftarTugasAkhir.value?.tugas_akhir?.status_valid !==
+                      STATUS.REVISI
+                  "
                   text="Menunggu Dijadwalkan"
                   size="md"
                   position="left"
@@ -822,7 +854,10 @@ watch(
                 </Tooltip>
 
                 <Button
-                  v-if="statusValid !== STATUS.REVISI"
+                  v-if="
+                    dataDaftarTugasAkhir.value?.tugas_akhir?.status_valid !==
+                    STATUS.REVISI
+                  "
                   @click="showModal"
                   type="button"
                   variant="success"
@@ -890,16 +925,6 @@ watch(
               </template>
             </div>
           </form>
-
-          <!-- Schedule Modal -->
-          <DefaultModal
-            v-if="modalRef"
-            @close="modalRef = false"
-            headText="Jadwal Ujian Tugas Akhir"
-            :bodyText="`${username} | ${nim} | ${judulTugasAkhir}`"
-          >
-            <JadwalUjian :examiners="daftarPenguji" :jadwal="jadwalUjianTA" />
-          </DefaultModal>
         </div>
       </template>
     </div>

@@ -5,8 +5,9 @@ import { useToast } from "vue-toastification";
 import VueCookies from "vue-cookies";
 
 // --- STATE GLOBAL ---
-export const dataTugasAkhir = ref(null);
-const dataBerkasTA = ref(null);
+export const dataTugasAkhir = ref(null); // Untuk daftar di UjianTA.vue
+export const dataDetailTA = ref(null); // <-- STATE BARU UNTUK DETAIL
+export const dataBerkasTA = ref(null);
 export const dataNilaiUjianTA = ref(null);
 const dataJadwalUjianTA = ref(null);
 
@@ -69,10 +70,13 @@ export function useDaftarTugasAkhir() {
   let abortController = null;
   const router = useRouter();
   const toast = useToast();
-  const loadingTugasAkhir = ref(false);
-  const errorTugasAkhir = ref(null);
-  const fetchData = async () => {
-    loadingTugasAkhir.value = true;
+  const loadingDaftarTugasAkhir = ref(false);
+  const errorDaftarTugasAkhir = ref(null);
+  const dataDaftarTugasAkhir = ref([]); // Untuk daftar tugas akhir
+
+  // Tambahkan parameter tugas_akhir_id untuk fetch data
+  const fetchData = async (tugas_akhir_id) => {
+    loadingDaftarTugasAkhir.value = true;
     try {
       const authToken = VueCookies.get("auth_token");
       const headers = {
@@ -81,17 +85,15 @@ export function useDaftarTugasAkhir() {
         Accept: "application/json",
       };
 
-      const response = await axios.get(
-        "/api/mahasiswa/tugas-akhr/ujian-ta/daftar",
-        {
-          headers,
-        }
-      );
-      dataTugasAkhir.value = response.data.data;
+      // Gunakan parameter ID jika tersedia
+      const endpoint = `/api/mahasiswa/tugas-akhir/ujian-ta/daftar/${tugas_akhir_id}`;
+
+      const response = await axios.get(endpoint, { headers });
+      dataDaftarTugasAkhir.value = response.data.data;
     } catch (err) {
       handleError(err);
     } finally {
-      loadingTugasAkhir.value = false;
+      loadingDaftarTugasAkhir.value = false;
     }
   };
 
@@ -106,8 +108,8 @@ export function useDaftarTugasAkhir() {
     file_berita_acara,
     file_perpanjangan_masa_studi,
   }) => {
-    loadingTugasAkhir.value = true;
-    errorTugasAkhir.value = null;
+    loadingDaftarTugasAkhir.value = true;
+    errorDaftarTugasAkhir.value = null;
     try {
       const authToken = VueCookies.get("auth_token");
       const headers = {
@@ -142,7 +144,7 @@ export function useDaftarTugasAkhir() {
       handleError(err, router, toast);
       return false;
     } finally {
-      loadingTugasAkhir.value = false;
+      loadingDaftarTugasAkhir.value = false;
     }
   };
 
@@ -159,8 +161,8 @@ export function useDaftarTugasAkhir() {
     file_berita_acara,
     file_perpanjangan_masa_studi,
   }) => {
-    loadingTugasAkhir.value = true;
-    errorTugasAkhir.value = null;
+    loadingDaftarTugasAkhir.value = true;
+    errorDaftarTugasAkhir.value = null;
     try {
       const authToken = VueCookies.get("auth_token");
       const headers = {
@@ -199,7 +201,7 @@ export function useDaftarTugasAkhir() {
       handleError(err);
       return false;
     } finally {
-      loadingTugasAkhir.value = false;
+      loadingDaftarTugasAkhir.value = false;
     }
   };
 
@@ -208,14 +210,14 @@ export function useDaftarTugasAkhir() {
       toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
       router.push("/mahasiswa/login");
     } else {
-      errorTugasAkhir.value =
+      errorDaftarTugasAkhir.value =
         err.response?.data?.message || "Terjadi kesalahan";
-      toast.error(errorTugasAkhir.value);
+      toast.error(errorDaftarTugasAkhir.value);
     }
   };
 
   onMounted(() => {
-    fetchData();
+    // fetchData();
   });
 
   onUnmounted(() => {
@@ -223,12 +225,46 @@ export function useDaftarTugasAkhir() {
   });
 
   return {
-    loadingTugasAkhir,
-    errorTugasAkhir,
-    dataTugasAkhir,
+    loadingDaftarTugasAkhir,
+    errorDaftarTugasAkhir,
+    dataDaftarTugasAkhir,
     fetchData,
     submitUjianTA,
     updateUjianTA,
+  };
+}
+
+// COMPOSABLE BARU UNTUK DETAIL TUGAS AKHIR
+export function useDetailTugasAkhir() {
+  const loadingDetailTA = ref(false);
+  const errorDetailTA = ref(null);
+
+  const fetchDetail = async (id) => {
+    loadingDetailTA.value = true;
+    errorDetailTA.value = null;
+    dataDetailTA.value = null; // Selalu bersihkan data lama
+    try {
+      const authToken = VueCookies.get("auth_token");
+      const headers = { Authorization: `Bearer ${authToken}` };
+      const response = await axios.get(
+        `/api/mahasiswa/tugas-akhir/ujian-ta/${id}`, // Endpoint detail
+        { headers }
+      );
+      // Isi state detail yang baru, bukan state daftar
+      dataDetailTA.value = response.data.data;
+    } catch (err) {
+      errorDetailTA.value =
+        err.response?.data?.message || "Gagal mengambil detail TA";
+    } finally {
+      loadingDetailTA.value = false;
+    }
+  };
+
+  return {
+    loadingDetailTA,
+    errorDetailTA,
+    fetchDetail,
+    dataDetailTA, // Kembalikan state detail
   };
 }
 
@@ -238,8 +274,16 @@ export function useBerkasTA() {
   const toast = useToast();
   const loadingBerkasTA = ref(false);
   const errorBerkasTA = ref(null);
-  const fetchDataBerkas = async () => {
+
+  // Modifikasi fetchDataBerkas untuk menerima 'id'
+  const fetchDataBerkas = async (id) => {
+    if (!id) {
+      errorBerkasTA.value = "ID Tugas Akhir diperlukan untuk mengambil berkas.";
+      toast.error(errorBerkasTA.value);
+      return;
+    }
     loadingBerkasTA.value = true;
+    errorBerkasTA.value = null; // Reset error sebelum fetch
     try {
       const authToken = VueCookies.get("auth_token");
       const headers = {
@@ -248,8 +292,9 @@ export function useBerkasTA() {
         Accept: "application/json",
       };
 
+      // Gunakan endpoint baru dengan ID dinamis
       const response = await axios.get(
-        "/api/mahasiswa/tugas-akhir/ujian-ta/berkas",
+        `/api/mahasiswa/tugas-akhir/ujian-ta/berkas/${id}`,
         {
           headers,
         }
@@ -267,14 +312,20 @@ export function useBerkasTA() {
       toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
       router.push("/mahasiswa/login");
     } else {
-      errorBerkasTA.value = err.response?.data?.message || "Terjadi kesalahan";
+      errorBerkasTA.value =
+        err.response?.data?.message ||
+        "Terjadi kesalahan saat mengambil berkas";
       toast.error(errorBerkasTA.value);
     }
   };
 
+  // Hapus onMounted karena ID tidak tersedia saat composable pertama kali dibuat.
+  // Pemanggilan fetchDataBerkas akan dilakukan dari komponen yang memiliki ID.
+  /*
   onMounted(() => {
-    fetchDataBerkas();
+    fetchDataBerkas(); 
   });
+  */
 
   onUnmounted(() => {
     if (abortController) abortController.abort();
@@ -285,60 +336,6 @@ export function useBerkasTA() {
     errorBerkasTA,
     dataBerkasTA,
     fetchDataBerkas,
-  };
-}
-
-export function useDetailTugasAkhir() {
-  let abortController = null;
-  const router = useRouter();
-  const toast = useToast();
-  const loadingDetailTA = ref(false);
-  const errorDetailTA = ref(null);
-  const fetchData = async (id) => {
-    loadingDetailTA.value = true;
-    try {
-      const authToken = VueCookies.get("auth_token");
-      const headers = {
-        Authorization: `Bearer ${authToken}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      };
-
-      const response = await axios.get(
-        `/api/mahasiswa/tugas-akhir/tugas-akhir/${id}`,
-        { headers }
-      );
-      dataTugasAkhir.value = response.data.data;
-    } catch (err) {
-      handleError(err);
-    } finally {
-      loadingDetailTA.value = false;
-    }
-  };
-
-  const handleError = (err) => {
-    if (err.response?.status === 401) {
-      toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
-      router.push("/mahasiswa/login");
-    } else {
-      errorDetailTA.value = err.response?.data?.message || "Terjadi kesalahan";
-      toast.error(errorDetailTA.value);
-    }
-  };
-
-  onMounted(() => {
-    // fetchData(id); // id should be passed from the component
-  });
-
-  onUnmounted(() => {
-    if (abortController) abortController.abort();
-  });
-
-  return {
-    loadingDetailTA,
-    errorDetailTA,
-    dataTugasAkhir,
-    fetchData,
   };
 }
 

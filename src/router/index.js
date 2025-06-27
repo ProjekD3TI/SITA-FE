@@ -220,13 +220,15 @@ const routes = [
               {
                 path: "berkas/:tugas_akhir_id",
                 component: BerkasUjianTAforMhs,
+                name: "BerkasTAMhs",
                 meta: {
                   breadcrumb: "Berkas",
                 },
               },
               {
-                path: "detail-ujian-ta/:ujian_ta_id",
+                path: "detail-ujian-ta/:tugas_akhir_id",
                 component: detailUjianTAforMhs,
+                name: "DetailUjianTAMhs",
                 meta: {
                   breadcrumb: "Detail",
                 },

@@ -38,7 +38,7 @@ defineProps({
 .reader-frame {
   border: 1px solid #9a9a9a;
   border-radius: 0.75rem;
-  min-height: 150px; /* Samakan tinggi minimal dengan editor */
+  min-height: 50px; /* Samakan tinggi minimal dengan editor */
 }
 
 /* 5. Sesuaikan style .ql-editor agar memiliki padding di dalam bingkai */

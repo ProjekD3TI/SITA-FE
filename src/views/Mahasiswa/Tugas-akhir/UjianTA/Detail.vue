@@ -11,95 +11,66 @@ import Loading from "@/components/Loading.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
 import StatusLabel from "@/components/Tugas-akhir/Label.vue";
 import {
-  useTugasAkhir,
-  useJadwalUjianTA,
-  useNilaiUjianTA,
-  dosenPembimbing,
-  kategoriTA,
-  tahunAjaranTA,
-  judulTugasAkhir,
-  daftarPenguji,
-  jadwalUjianTA,
-  kualitas_tata_laporan,
-  kemampuan_teknis,
-  kualitas_produk,
-  presentasi,
-  rerata_ujian,
-  dataTugasAkhir,
-  catatanRevisiTerisi,
-  dataNilaiUjianTA,
-  rataRataNilaiUjianTA,
-  catatanRevisi,
-  fileNaskahTA,
+  useDetailTugasAkhir,
   getFileBlobUrl,
-  statusKelulusan,
 } from "@/services/TugasAkhir/Mhs/ujianTA.js";
 import { getUserData } from "@/services/authMahasiswa";
 import QuillTextEditor from "@/components/Tugas-akhir/Forms/QuillTextEditor.vue";
-
+import { useRoute, useRouter } from "vue-router";
 const userData = getUserData();
 const username = userData?.name || userData?.email?.split("@")[0] || "User";
 const nim = userData?.nim || "";
+const route = useRoute();
+const router = useRouter();
+const { loadingDetailTA, errorDetailTA, fetchDetail, dataDetailTA } =
+  useDetailTugasAkhir();
 
-const { loadingTugasAkhir, errorTugasAkhir } = useTugasAkhir();
-const { loadingJadwalUjianTA, errorJadwalUjianTA, dataJadwalUjianTA } =
-  useJadwalUjianTA();
-const { loadingNilaiUjianTA, errorNilaiUjianTA } = useNilaiUjianTA();
-
-const dinilai = computed(() => {
-  const penguji = dataNilaiUjianTA.value?.ujian_ta?.dosen_penguji || [];
-  const pengujiSudahNilai = penguji.filter(
-    (dosen) =>
-      dosen.nilai_ujian_ta &&
-      [
-        "kualitas_tata_laporan",
-        "kemampuan_teknis",
-        "kualitas_produk",
-        "presentasi",
-      ].every(
-        (key) =>
-          dosen.nilai_ujian_ta[key] !== null &&
-          dosen.nilai_ujian_ta[key] !== undefined
-      )
-  );
-  return pengujiSudahNilai.length >= 3;
-});
-const showNilaiModal = ref(false);
-
-const pdfBlobUrl = ref(null);
-const loadingPdf = ref(false);
-const errorPdf = ref(null);
-
-// Methods
-const openNilaiModal = () => {
-  showNilaiModal.value = true;
-};
-
-const closeNilaiModal = () => {
-  showNilaiModal.value = false;
-};
-
-async function loadPdfPreview() {
-  loadingPdf.value = true;
-  errorPdf.value = null;
-  try {
-    if (fileNaskahTA.value) {
-      pdfBlobUrl.value = await getFileBlobUrl(fileNaskahTA.value);
-    }
-  } catch (err) {
-    errorPdf.value = "Gagal memuat file PDF";
-  } finally {
-    loadingPdf.value = false;
-  }
-}
-
-// Muat ulang jika fileNaskahTA berubah
-watchEffect(() => {
-  if (fileNaskahTA.value) {
-    loadPdfPreview();
+onMounted(() => {
+  // Pastikan fetchDetail dipanggil dengan ID yang sesuai (misal dari route)
+  if (route.params.tugas_akhir_id) {
+    fetchDetail(route.params.tugas_akhir_id);
   }
 });
+// --- Computed Properties dari dataDetailTA ---
+const judulTugasAkhir = computed(
+  () => dataDetailTA.value?.judul_tugas_akhir || "-"
+);
+const kategoriTA = computed(
+  () => dataDetailTA.value?.kategori?.nama_kategori || "-"
+);
+const dosenPembimbing = computed(
+  () => dataDetailTA.value?.dosen_pembimbing?.name || "-"
+);
+const tahunAjaranTA = computed(
+  () => dataDetailTA.value?.tahun_ajaran?.tahun_ajaran || "-"
+);
 
+// Jadwal Ujian Terbaru
+const jadwalUjianTerbaru = computed(
+  () => dataDetailTA.value?.jadwal_ujian_terbaru || null
+);
+const jadwalUjianTA = computed(() => {
+  if (!jadwalUjianTerbaru.value) return {};
+  return {
+    date: jadwalUjianTerbaru.value.tanggal_ujian,
+    time:
+      jadwalUjianTerbaru.value.sesi?.waktu_mulai +
+      " - " +
+      jadwalUjianTerbaru.value.sesi?.waktu_selesai,
+    room: jadwalUjianTerbaru.value.ruang?.nama_ruang,
+  };
+});
+const daftarPenguji = computed(() =>
+  (jadwalUjianTerbaru.value?.dosen_penguji || []).map((dosen) => ({
+    ...dosen,
+    role: dosen.jabatan_penguji, // mapping agar JadwalUjian.vue bisa akses .role
+  }))
+);
+
+// Status Kelulusan
+const statusKelulusan = computed(
+  () => jadwalUjianTerbaru.value?.status_kelulusan ?? null
+);
 const getStatusClass = (status) => {
   switch (status) {
     case 1:
@@ -129,31 +100,112 @@ const getStatusLabel = (status) => {
   }
 };
 
-// Computed properties
-const buttonClasses = computed(() => {
-  return dinilai.value ? "opacity-100" : "opacity-50";
+// Nilai Ujian
+const penguji = computed(() => jadwalUjianTerbaru.value?.dosen_penguji || []);
+const dinilai = computed(() => {
+  const pengujiSudahNilai = penguji.value.filter(
+    (dosen) =>
+      dosen.nilai_ujian_ta &&
+      [
+        "kualitas_tata_laporan",
+        "kemampuan_teknis",
+        "kualitas_produk",
+        "presentasi",
+      ].every(
+        (key) =>
+          dosen.nilai_ujian_ta[key] !== null &&
+          dosen.nilai_ujian_ta[key] !== undefined
+      )
+  );
+  return pengujiSudahNilai.length >= 3;
 });
-watchEffect(() => {
-  // console.log("dataNilaiUjianTA", dataNilaiUjianTA.value);
-  // console.log("rataRataNilaiUjianTA", rataRataNilaiUjianTA.value);
-});
-</script>
 
+// Ambil nilai rata-rata dari penguji pertama (atau hitung rata-rata manual jika perlu)
+const rerata_ujian = computed(() => {
+  if (!penguji.value.length) return 0;
+  // Ambil rerata dari penguji pertama (semua penguji nilainya sama di contoh Anda)
+  return penguji.value[0]?.nilai_ujian_ta?.rerata_ujian_ta ?? 0;
+});
+const kualitas_tata_laporan = computed(
+  () => penguji.value[0]?.nilai_ujian_ta?.kualitas_tata_laporan ?? 0
+);
+const kemampuan_teknis = computed(
+  () => penguji.value[0]?.nilai_ujian_ta?.kemampuan_teknis ?? 0
+);
+const kualitas_produk = computed(
+  () => penguji.value[0]?.nilai_ujian_ta?.kualitas_produk ?? 0
+);
+const presentasi = computed(
+  () => penguji.value[0]?.nilai_ujian_ta?.presentasi ?? 0
+);
+
+// Catatan Revisi
+const catatanRevisi = computed(() =>
+  penguji.value
+    .map((dosen) => ({
+      nama: dosen.name,
+      revisi: dosen.nilai_ujian_ta?.revisi,
+    }))
+    .filter((item) => item.revisi)
+);
+const catatanRevisiTerisi = computed(() =>
+  catatanRevisi.value.filter((item) => item.revisi)
+);
+
+// PDF Preview (dummy, sesuaikan jika ada file di dataDetailTA)
+const fileNaskahTA = computed(() => {
+  return (
+    dataDetailTA.value?.berkas?.find(
+      (b) => b.nama_berkas === "Naskah Tugas Akhir"
+    )?.download_url || null
+  );
+});
+const pdfBlobUrl = ref(null);
+const loadingPdf = ref(false);
+const errorPdf = ref(null);
+
+async function loadPdfPreview() {
+  loadingPdf.value = true;
+  errorPdf.value = null;
+  try {
+    if (fileNaskahTA.value) {
+      pdfBlobUrl.value = await getFileBlobUrl(fileNaskahTA.value);
+    }
+  } catch (err) {
+    errorPdf.value = "Gagal memuat file PDF";
+  } finally {
+    loadingPdf.value = false;
+  }
+}
+watchEffect(() => {
+  if (fileNaskahTA.value) {
+    loadPdfPreview();
+  }
+});
+
+// Modal
+const showNilaiModal = ref(false);
+const openNilaiModal = () => {
+  showNilaiModal.value = true;
+};
+const closeNilaiModal = () => {
+  showNilaiModal.value = false;
+};
+
+const buttonClasses = computed(() =>
+  dinilai.value ? "opacity-100" : "opacity-50"
+);
+</script>
 <template>
   <div
-    v-if="loadingTugasAkhir || loadingNilaiUjianTA || loadingJadwalUjianTA"
+    v-if="loadingDetailTA"
     class="flex items-center justify-center min-h-[80dvh]"
   >
     <Loading />
   </div>
 
-  <div
-    v-else-if="errorTugasAkhir || errorNilaiUjianTA || errorJadwalUjianTA"
-    class="p-4"
-  >
-    <ErrorMsg
-      :msg="errorTugasAkhir || errorNilaiUjianTA || errorJadwalUjianTA"
-    />
+  <div v-else-if="errorDetailTA" class="p-4">
+    <ErrorMsg :msg="errorDetailTA" />
   </div>
 
   <div v-else>
@@ -161,7 +213,7 @@ watchEffect(() => {
 
     <!-- Jadwal Section -->
     <div
-      v-if="dataJadwalUjianTA?.ujian_ta?.id"
+      v-if="dataDetailTA?.jadwal_ujian_terbaru?.ujian_ta_id"
       class="p-6 mb-4 bg-white card-rounded lg:p-8 shadow-custom sm:mb-6"
     >
       <div class="mx-auto max-w-screen-2xl">
@@ -204,22 +256,30 @@ watchEffect(() => {
             <div class="flex flex-col gap-2">
               <div>
                 <h5 class="body4-bold sm:body2-bold">Judul Tugas Akhir</h5>
-                <p class="body4 sm:body2 text-primary">{{ judulTugasAkhir }}</p>
+                <p class="body4 sm:body2 text-primary">
+                  {{ judulTugasAkhir || "-" }}
+                </p>
               </div>
 
               <div>
                 <h5 class="body4-bold sm:body2-bold">Kategori</h5>
-                <p class="body4 sm:body2 text-primary">{{ kategoriTA }}</p>
+                <p class="body4 sm:body2 text-primary">
+                  {{ kategoriTA || "-" }}
+                </p>
               </div>
 
               <div>
                 <h5 class="body4-bold sm:body2-bold">Dosen Pembimbing</h5>
-                <p class="body4 sm:body2 text-primary">{{ dosenPembimbing }}</p>
+                <p class="body4 sm:body2 text-primary">
+                  {{ dosenPembimbing || "-" }}
+                </p>
               </div>
 
               <div>
                 <h5 class="body4-bold sm:body2-bold">Tahun Ajaran</h5>
-                <p class="body4 sm:body2 text-secondary">{{ tahunAjaranTA }}</p>
+                <p class="body4 sm:body2 text-secondary">
+                  {{ tahunAjaranTA || "-" }}
+                </p>
               </div>
             </div>
 

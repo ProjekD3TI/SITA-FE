@@ -52,16 +52,16 @@
               <span class="body5 sm:body4-bold text-blackText">Status</span>
               <div class="mt-1">
                 <Label
-                  :status="getMappedStatus(item.status1 || status)"
-                  :label="item.statusLabel1 || statusLabel || ''"
-                  :customLabel="!!(item.statusLabel1 || statusLabel)"
+                  :status="getMappedStatus(item.statusUtama || status)"
+                  :label="item.statusLabelUtama || statusLabel || ''"
+                  :customLabel="!!(item.statusLabelUtama || statusLabel)"
                   class="hidden w-fit h-fit lg:block"
                   size="md"
                 />
                 <Label
-                  :status="getMappedStatus(item.status1 || status)"
-                  :label="item.statusLabel1 || statusLabel || ''"
-                  :customLabel="!!(item.statusLabel1 || statusLabel)"
+                  :status="getMappedStatus(item.statusUtama || status)"
+                  :label="item.statusLabelUtama || statusLabel || ''"
+                  :customLabel="!!(item.statusLabelUtama || statusLabel)"
                   class="block w-fit h-fit lg:hidden"
                   size="sm"
                 />
@@ -86,7 +86,7 @@
             v-if="shouldShowButton(item.showDaftarButton, showDaftarButton)"
             variant="primary"
             size="md"
-            @click="$emit('daftar', item)"
+            @click="$emit('daftar', item.id)"
             >Daftar</Button
           >
 
@@ -95,17 +95,18 @@
             v-if="shouldShowButton(item.showBerkasButton, showBerkasButton)"
             variant="primary"
             size="md"
-            @click="$emit('berkas', item)"
+            @click="$emit('berkas', item.id)"
             >Berkas</Button
           >
 
           <!-- Berkas button - conditionally rendered -->
+          <!-- Tombol detail di panel utama -->
           <Button
             v-if="shouldShowButton(item.showDetailButton, showDetailButton)"
             variant="outlined-primary"
             size="md"
             right-icon-path="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-            @click="$emit('detail', item)"
+            @click="$emit('detail', item, item.jumlahUjian === 1 ? 1 : 0)"
             >Detail</Button
           >
         </div>
@@ -122,6 +123,65 @@
       >
         <div v-show="isItemOpen(index)" class="border-t border-gray-200">
           <div class="p-6 pt-4 text-gray-600">
+            <!-- Item 2 (if it exists) -->
+            <div v-if="item.date2" class="pb-4 mb-4 border-b border-gray-200">
+              <div class="flex items-center mb-2">
+                <p class="body4-bold sm:body2-bold text-primary">
+                  {{ item.title2 || "Ujian 2" }}
+                </p>
+              </div>
+              <div class="grid items-center grid-cols-1 gap-4 sm:grid-cols-5">
+                <div>
+                  <p class="body4-bold sm:body4-bold text-blackText">
+                    Hari & Tanggal
+                  </p>
+                  <p class="body4 sm:body3 text-primary">
+                    {{ item.date2 }}
+                  </p>
+                </div>
+                <div>
+                  <p class="body4-bold sm:body4-bold text-blackText">Ruang</p>
+                  <p class="body4 sm:body3 text-primary">
+                    {{ item.room2 || room }}
+                  </p>
+                </div>
+                <div>
+                  <p class="body4-bold sm:body4-bold text-blackText">Sesi</p>
+                  <p class="body4 sm:body3 text-primary">
+                    {{ item.time2 || time }}
+                  </p>
+                </div>
+                <!-- Status (jika ada) -->
+                <div
+                  v-if="item.showStatus || showStatus"
+                  class="flex flex-col justify-center"
+                >
+                  <p
+                    class="text-center body4-bold sm:body4-bold text-blackText"
+                  >
+                    Status
+                  </p>
+                  <Label
+                    :status="getMappedStatus(item.status2 || status)"
+                    :label="item.statusLabel2 || statusLabel || ''"
+                    :customLabel="!!(item.statusLabel2 || statusLabel)"
+                    size="md"
+                    class="self-center w-fit"
+                  />
+                </div>
+                <!-- Button Detail -->
+                <div class="flex justify-end mt-4">
+                  <Button
+                    class="self-center h-fit"
+                    variant="outlined-primary"
+                    right-icon-path="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                    size="md"
+                    @click="$emit('detail', item, 0)"
+                    >Detail</Button
+                  >
+                </div>
+              </div>
+            </div>
             <!-- Item 1 -->
             <div class="">
               <div class="flex items-center mb-2">
@@ -176,66 +236,6 @@
                     right-icon-path="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
                     size="md"
                     @click="$emit('detail', item, 1)"
-                    >Detail</Button
-                  >
-                </div>
-              </div>
-            </div>
-
-            <!-- Item 2 (if it exists) -->
-            <div v-if="item.date2" class="pt-4 mt-4 border-t border-gray-200">
-              <div class="flex items-center mb-2">
-                <p class="body4-bold sm:body2-bold text-primary">
-                  {{ item.title2 || "Ujian 2" }}
-                </p>
-              </div>
-              <div class="grid items-center grid-cols-1 gap-4 sm:grid-cols-5">
-                <div>
-                  <p class="body4-bold sm:body4-bold text-blackText">
-                    Hari & Tanggal
-                  </p>
-                  <p class="body4 sm:body3 text-primary">
-                    {{ item.date2 }}
-                  </p>
-                </div>
-                <div>
-                  <p class="body4-bold sm:body4-bold text-blackText">Ruang</p>
-                  <p class="body4 sm:body3 text-primary">
-                    {{ item.room2 || room }}
-                  </p>
-                </div>
-                <div>
-                  <p class="body4-bold sm:body4-bold text-blackText">Sesi</p>
-                  <p class="body4 sm:body3 text-primary">
-                    {{ item.time2 || time }}
-                  </p>
-                </div>
-                <!-- Status (jika ada) -->
-                <div
-                  v-if="item.showStatus || showStatus"
-                  class="flex flex-col justify-center"
-                >
-                  <p
-                    class="text-center body4-bold sm:body4-bold text-blackText"
-                  >
-                    Status
-                  </p>
-                  <Label
-                    :status="getMappedStatus(item.status2 || status)"
-                    :label="item.statusLabel2 || statusLabel || ''"
-                    :customLabel="!!(item.statusLabel2 || statusLabel)"
-                    size="md"
-                    class="self-center w-fit"
-                  />
-                </div>
-                <!-- Button Detail -->
-                <div class="flex justify-end mt-4">
-                  <Button
-                    class="self-center h-fit"
-                    variant="outlined-primary"
-                    right-icon-path="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                    size="md"
-                    @click="$emit('detail', item, 2)"
                     >Detail</Button
                   >
                 </div>
