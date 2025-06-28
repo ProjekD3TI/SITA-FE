@@ -97,7 +97,10 @@ const filePerpanjanganMasaStudi = ref(null);
 
 // Computed Properties
 const minimalBimbingan = computed(() => {
-  return (dataDaftarTugasAkhir?.value?.bimbingan?.total_bimbingan ?? 0) >= 9;
+  return (
+    (dataDaftarTugasAkhir?.value?.bimbingan?.total_bimbingan ?? 0) >= 9 &&
+    (dataDaftarTugasAkhir?.value?.bimbingan?.bab_tertinggi ?? 0) >= 5
+  );
 });
 
 const wajibUploadPerpanjanganMasaStudi = computed(() => {
@@ -295,8 +298,7 @@ const handleSubmit = async () => {
     const tugasAkhirId = dataDaftarTugasAkhir.value?.tugas_akhir?.id;
     fetchData(tugasAkhirId);
     fetchDataBerkas(tugasAkhirId);
-    fetchDataTugasAkhir();
-    router.back();
+    await fetchDataTugasAkhir();
     // toast.success('Pengajuan Ujian TA berhasil dikirim!');
   } else {
     toast.error("Gagal mengirim pengajuan Ujian TA.");
@@ -372,8 +374,7 @@ const handleUpdate = async () => {
     const tugasAkhirId = dataDaftarTugasAkhir.value?.tugas_akhir?.id;
     fetchData(tugasAkhirId);
     fetchDataBerkas(tugasAkhirId);
-    fetchDataTugasAkhir();
-    router.back();
+    await fetchDataTugasAkhir();
 
     // toast.success('Pengajuan Ujian TA berhasil diupdate!');
   } else {
@@ -439,9 +440,9 @@ watch(errorBerkasTA, (error) => {
         <h1
           class="text-center heading5 sm:heading4 lg:heading3 text-placeholder"
         >
-          Minimal bimbingan anda belum terpenuhi.
+          Selesaikan bimbingan anda terlebih dahulu.
         </h1>
-        <router-link to="bimbingan">
+        <router-link to="/mahasiswa/tugas-akhir/bimbingan">
           <Button
             class="hidden sm:flex"
             variant="primary"
@@ -461,7 +462,9 @@ watch(errorBerkasTA, (error) => {
         </router-link>
       </div>
       <div
-        v-if="dataDaftarTugasAkhir?.tugas_akhir?.has_dosen_penguji == false"
+        v-else-if="
+          dataDaftarTugasAkhir?.tugas_akhir?.has_dosen_penguji == false
+        "
         class="h-[80vh] flex flex-col justify-center items-center gap-4"
       >
         <h1

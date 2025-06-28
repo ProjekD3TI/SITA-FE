@@ -14,11 +14,11 @@
     <div v-else-if="errorTugasAkhir">{{ errorTugasAkhir }}</div>
 
     <div
-      v-else-if="!minimalBimbingan"
+      v-else-if="!minimalBimbingan && !adaTugasAkhirNonAktif"
       class="h-[80vh] flex flex-col justify-center items-center gap-4"
     >
       <h1 class="text-center heading5 sm:heading4 lg:heading3 text-placeholder">
-        Minimal bimbingan anda belum terpenuhi.
+        Selesaikan bimbingan anda terlebih dahulu.
       </h1>
       <router-link to="bimbingan">
         <Button
@@ -121,10 +121,19 @@ const minimalBimbingan = computed(() => {
   if (Array.isArray(dataTugasAkhir.value) && dataTugasAkhir.value.length > 0) {
     // Periksa semua tugas akhir, jika ada salah satu yang memenuhi syarat
     return dataTugasAkhir.value.some(
-      (ta) => (ta?.bimbingan?.total_bimbingan ?? 0) >= 9
+      (ta) =>
+        (ta?.bimbingan?.total_bimbingan ?? 0) >= 9 &&
+        (ta?.bimbingan?.bab_tertinggi ?? 0) === 5
     );
   }
   // Jika bukan array atau array kosong
+  return false;
+});
+
+const adaTugasAkhirNonAktif = computed(() => {
+  if (Array.isArray(dataTugasAkhir.value) && dataTugasAkhir.value.length > 0) {
+    return dataTugasAkhir.value.some((ta) => ta.status_aktif === 0);
+  }
   return false;
 });
 
