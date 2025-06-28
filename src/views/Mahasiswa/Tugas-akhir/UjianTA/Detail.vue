@@ -31,6 +31,12 @@ onMounted(() => {
     fetchDetail(route.params.tugas_akhir_id);
   }
 });
+watchEffect(() => {
+  if (errorDetailTA.value) {
+    // Redirect ke halaman utama ujian-ta
+    router.replace({ name: "UjianTAMhs" });
+  }
+});
 // --- Computed Properties dari dataDetailTA ---
 const judulTugasAkhir = computed(
   () => dataDetailTA.value?.judul_tugas_akhir || "-"

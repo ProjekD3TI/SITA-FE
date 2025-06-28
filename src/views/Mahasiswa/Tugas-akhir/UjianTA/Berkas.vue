@@ -13,6 +13,7 @@ import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 import JadwalUjian from "@/components/Tugas-akhir/JadwalUjian.vue";
 import {
+  useTugasAkhir,
   useDaftarTugasAkhir,
   useBerkasTA,
   useJadwalUjianTA,
@@ -62,6 +63,7 @@ const { loadingBerkasTA, errorBerkasTA, fetchDataBerkas, dataBerkasTA } =
   useBerkasTA();
 const { loadingJadwalUjianTA, errorJadwalUjianTA, dataJadwalUjianTA } =
   useJadwalUjianTA();
+const { fetchData: fetchDataTugasAkhir } = useTugasAkhir();
 const toast = useToast();
 const router = useRouter(); // Inisialisasi router
 
@@ -143,6 +145,7 @@ const formConfig = computed(() => {
   return {
     isDisabled,
     wrapperClass: isDisabled ? "opacity-50" : "",
+    showBackButton: status === STATUS.ACCEPTED || status === STATUS.WAITING,
     showSubmitButton: status === STATUS.NULL,
     showSubmitAgainButton:
       status === STATUS.REJECTED || status === STATUS.REVISI,
@@ -292,6 +295,8 @@ const handleSubmit = async () => {
     const tugasAkhirId = dataDaftarTugasAkhir.value?.tugas_akhir?.id;
     fetchData(tugasAkhirId);
     fetchDataBerkas(tugasAkhirId);
+    fetchDataTugasAkhir();
+    router.back();
     // toast.success('Pengajuan Ujian TA berhasil dikirim!');
   } else {
     toast.error("Gagal mengirim pengajuan Ujian TA.");
@@ -367,6 +372,9 @@ const handleUpdate = async () => {
     const tugasAkhirId = dataDaftarTugasAkhir.value?.tugas_akhir?.id;
     fetchData(tugasAkhirId);
     fetchDataBerkas(tugasAkhirId);
+    fetchDataTugasAkhir();
+    router.back();
+
     // toast.success('Pengajuan Ujian TA berhasil diupdate!');
   } else {
     toast.error("Gagal mengupdate pengajuan Ujian TA.");
@@ -794,6 +802,28 @@ watch(errorBerkasTA, (error) => {
 
             <!-- Action Buttons -->
             <div class="flex items-center self-end gap-2 sm:gap-4">
+              <div v-if="formConfig.showBackButton">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  type="button"
+                  class="self-end hidden w-fit sm:flex"
+                  @click="$router.back()"
+                  left-icon-path="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"
+                >
+                  Kembali</Button
+                >
+                <Button
+                  variant="secondary"
+                  size="md"
+                  type="button"
+                  class="self-end w-fit sm:hidden"
+                  @click="$router.back()"
+                  left-icon-path="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"
+                >
+                  Kembali</Button
+                >
+              </div>
               <!-- Submit Button - show for new or rejected application -->
               <template v-if="formConfig.showSubmitButton">
                 <Button

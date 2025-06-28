@@ -198,23 +198,23 @@ export function useDaftarTugasAkhir() {
       toast.success("Pengajuan Ujian TA berhasil diupdate!");
       return true;
     } catch (err) {
-      handleError(err);
+      // handleError(err);
       return false;
     } finally {
       loadingDaftarTugasAkhir.value = false;
     }
   };
 
-  const handleError = (err) => {
-    if (err.response?.status === 401) {
-      toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
-      router.push("/mahasiswa/login");
-    } else {
-      errorDaftarTugasAkhir.value =
-        err.response?.data?.message || "Terjadi kesalahan";
-      toast.error(errorDaftarTugasAkhir.value);
-    }
-  };
+  // const handleError = (err) => {
+  //   if (err.response?.status === 401) {
+  //     toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
+  //     router.push("/mahasiswa/login");
+  //   } else {
+  //     errorDaftarTugasAkhir.value =
+  //       err.response?.data?.message || "Terjadi kesalahan";
+  //     toast.error(errorDaftarTugasAkhir.value);
+  //   }
+  // };
 
   onMounted(() => {
     // fetchData();
@@ -238,6 +238,8 @@ export function useDaftarTugasAkhir() {
 export function useDetailTugasAkhir() {
   const loadingDetailTA = ref(false);
   const errorDetailTA = ref(null);
+  const router = useRouter();
+  const toast = useToast();
 
   const fetchDetail = async (id) => {
     loadingDetailTA.value = true;
@@ -255,8 +257,20 @@ export function useDetailTugasAkhir() {
     } catch (err) {
       errorDetailTA.value =
         err.response?.data?.message || "Gagal mengambil detail TA";
+      handleError(err);
     } finally {
       loadingDetailTA.value = false;
+    }
+  };
+  const handleError = (err) => {
+    if (err.response?.status === 401) {
+      toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
+      router.push("/mahasiswa/login");
+    } else {
+      errorDetailTA.value =
+        err.response?.data?.message ||
+        "Terjadi kesalahan saat mengambil detail TA";
+      toast.error(errorDetailTA.value);
     }
   };
 
