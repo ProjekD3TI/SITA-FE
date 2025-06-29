@@ -535,12 +535,19 @@ watch(
           :modelValue="dataNilaiBimbingan?.rerata_bimbingan"
           :disabled="true"
         />
-        <QuillTextReader
-          id="catatan-nilai"
-          class="flex-grow mt-4"
-          label="Catatan"
-          :content="dataNilaiBimbingan?.catatan_akhir_bimbingan"
-        />
+        <div
+          v-if="
+            dataNilaiBimbingan?.catatan_akhir_bimbingan &&
+            dataNilaiBimbingan?.catatan_akhir_bimbingan.trim().length > 0
+          "
+        >
+          <QuillTextReader
+            id="catatan-nilai"
+            class="flex-grow mt-4"
+            label="Catatan"
+            :content="dataNilaiBimbingan?.catatan_akhir_bimbingan"
+          />
+        </div>
       </DefaultModal>
       <ModalDetailBimbingan
         ref="modalDetailRef"

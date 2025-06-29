@@ -9,6 +9,7 @@ import UserData from "@/components/Tugas-akhir/UserData.vue";
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
+import QuillTextReader from "@/components/Tugas-akhir/Forms/QuillTextReader.vue";
 import Tooltip from "@/components/Tugas-akhir/Tooltip.vue";
 import ModalDetailBimbingan from "@/components/Tugas-akhir/Modals/ModalDetailBimbingan.vue";
 import Loading from "@/components/Loading.vue";
@@ -346,13 +347,19 @@ const numberedBimbingan = computed(() => {
       :modelValue="dataShowBimbingan?.nilai_bimbingan?.rerata_bimbingan"
       :disabled="true"
     />
-    <InputTextarea
-      id="catatan"
-      class="mt-4"
-      label="Catatan Dosen Pembimbing"
-      :modelValue="dataShowBimbingan?.nilai_bimbingan?.catatan"
-      :disabled="true"
-    />
+    <div
+      v-if="
+        dataShowBimbingan?.nilai_bimbingan?.catatan &&
+        dataShowBimbingan?.nilai_bimbingan?.catatan.trim().length > 0
+      "
+    >
+      <QuillTextReader
+        id="catatan"
+        class="mt-4"
+        label="Catatan Dosen Pembimbing"
+        :content="dataShowBimbingan?.nilai_bimbingan?.catatan || ''"
+      />
+    </div>
   </DefaultModal>
 
   <ModalDetailBimbingan

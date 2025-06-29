@@ -724,7 +724,12 @@ const handleActionClick = (item, action) => {
         />
       </div>
 
-      <div>
+      <div
+        v-if="
+          bimbinganDetail.catatanAkhir &&
+          bimbinganDetail.catatanAkhir.trim().length > 0
+        "
+      >
         <QuillTextReader
           id="catatanAkhir"
           label="Catatan Akhir Bimbingan"
