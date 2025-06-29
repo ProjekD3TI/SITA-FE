@@ -168,10 +168,10 @@ const statusKelulusanLabel = computed(() => {
     case 1:
       return { status: "success", label: "Lulus tanpa revisi" };
     case 2:
-      return { status: "warning", label: "Lulus dengan revisi" };
+      return { status: "success", label: "Lulus dengan revisi" };
     case 3:
       return {
-        status: "danger-outline",
+        status: "warning",
         label: "Belum lulus perlu diuji lagi",
       };
     case 4:
@@ -546,7 +546,6 @@ onMounted(() => {
             type="number"
             id="tataLaporan"
             label="Kualitas Tata Laporan Tugas Akhir (15%)"
-            placeholder="85"
             v-model="tataLaporan"
             disabled
           />
@@ -557,7 +556,6 @@ onMounted(() => {
             type="number"
             id="kemampuanTeknis"
             label="Kemampuan Teknis (35%)"
-            placeholder="90"
             v-model="kemampuanTeknis"
             disabled
           />
@@ -568,7 +566,6 @@ onMounted(() => {
             type="number"
             id="hasilProduk"
             label="Kualitas Produk yang Dihasilkan (25%)"
-            placeholder="88"
             v-model="hasilProduk"
             disabled
           />
@@ -579,7 +576,6 @@ onMounted(() => {
             type="number"
             id="presentasi"
             label="Presentasi dan Question Handling (25%)"
-            placeholder="92"
             v-model="presentasi"
             disabled
           />
@@ -589,12 +585,11 @@ onMounted(() => {
         type="number"
         id="nilaiAkhir"
         label="Nilai Akhir"
-        placeholder="85"
         v-model="totalNilai"
         disabled
       />
 
-      <div>
+      <div v-if="catatanRevisi && catatanRevisi.trim().length > 0">
         <h5 class="body3-bold lg:body1-bold text-primary">Catatan Revisi</h5>
         <QuillTextReader
           class="mt-4"

@@ -4,6 +4,7 @@ import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputDropdown from "@/components/Tugas-akhir/Forms/InputDropdown.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
+import QuillTextReader from "@/components/Tugas-akhir/Forms/QuillTextReader.vue";
 import UserData from "@/components/Tugas-akhir/UserData.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
 import StatusLabel from "@/components/Tugas-akhir/Label.vue";
@@ -534,12 +535,11 @@ watch(
           :modelValue="dataNilaiBimbingan?.rerata_bimbingan"
           :disabled="true"
         />
-        <InputTextarea
+        <QuillTextReader
           id="catatan-nilai"
           class="flex-grow mt-4"
           label="Catatan"
-          :modelValue="dataNilaiBimbingan?.catatan_akhir_bimbingan"
-          :disabled="true"
+          :content="dataNilaiBimbingan?.catatan_akhir_bimbingan"
         />
       </DefaultModal>
       <ModalDetailBimbingan
