@@ -20,7 +20,9 @@
                             {{ ruang.nama_ruang }}
                         </option>
                     </select>
-                    <p v-if="errors.id_ruang" class="text-sm text-red-500">{{ errors.id_ruang[0] }}</p>
+                    <p v-if="errors.id_ruang" class="text-sm text-red-500">
+                        {{ errors.id_ruang[0] }}
+                    </p>
                 </div>
 
                 <div class="space-y-2">
@@ -35,7 +37,9 @@
                             {{ kelas.name }}
                         </option>
                     </select>
-                    <p v-if="errors.id_class" class="text-sm text-red-500">{{ errors.id_class[0] }}</p>
+                    <p v-if="errors.id_class" class="text-sm text-red-500">
+                        {{ errors.id_class[0] }}
+                    </p>
                 </div>
             </div>
 
@@ -47,7 +51,9 @@
                 <input v-model="formData.pemakaian" type="text"
                     class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     placeholder="Masukkan tujuan pemakaian" />
-                <p v-if="errors.pemakaian" class="text-sm text-red-500">{{ errors.pemakaian[0] }}</p>
+                <p v-if="errors.pemakaian" class="text-sm text-red-500">
+                    {{ errors.pemakaian[0] }}
+                </p>
             </div>
 
             <div class="space-y-2">
@@ -55,10 +61,16 @@
                     class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Penanggung Jawab
                 </label>
-                <input v-model="formData.penanggung_jawab" type="text"
-                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Masukkan nama penanggung jawab" />
-                <p v-if="errors.penanggung_jawab" class="text-sm text-red-500">{{ errors.penanggung_jawab[0] }}</p>
+                <select v-model="formData.penanggung_jawab"
+                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                    <option value="">Pilih Penanggung Jawab</option>
+                    <option v-for="dosen in dosenList" :key="dosen.id" :value="dosen.id">
+                        {{ dosen.name }}
+                    </option>
+                </select>
+                <p v-if="errors.penanggung_jawab" class="text-sm text-red-500">
+                    {{ errors.penanggung_jawab[0] }}
+                </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -69,7 +81,9 @@
                     </label>
                     <input v-model="formData.start_date" type="date"
                         class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
-                    <p v-if="errors.start_date" class="text-sm text-red-500">{{ errors.start_date[0] }}</p>
+                    <p v-if="errors.start_date" class="text-sm text-red-500">
+                        {{ errors.start_date[0] }}
+                    </p>
                 </div>
 
                 <div class="space-y-2">
@@ -79,7 +93,9 @@
                     </label>
                     <input v-model="formData.end_date" type="date"
                         class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
-                    <p v-if="errors.end_date" class="text-sm text-red-500">{{ errors.end_date[0] }}</p>
+                    <p v-if="errors.end_date" class="text-sm text-red-500">
+                        {{ errors.end_date[0] }}
+                    </p>
                 </div>
             </div>
 
@@ -126,15 +142,17 @@
                                 class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
                                 <option value="">Pilih Sesi</option>
                                 <option v-for="sesi in sessionList" :key="sesi.id" :value="sesi.id">
-                                    {{ sesi.name_session }} ({{ formatTime(sesi.start_time) }} - {{
-                                    formatTime(sesi.end_time) }})
+                                    {{ sesi.name_session }} ({{ formatTime(sesi.start_time) }} -
+                                    {{ formatTime(sesi.end_time) }})
                                 </option>
                             </select>
                         </div>
                     </div>
                 </div>
 
-                <p v-if="errors.sessions" class="text-sm text-red-500">{{ errors.sessions[0] }}</p>
+                <p v-if="errors.sessions" class="text-sm text-red-500">
+                    {{ errors.sessions[0] }}
+                </p>
             </div>
 
             <div class="flex space-x-2">
@@ -162,9 +180,11 @@ import VueCookies from "vue-cookies";
 const router = useRouter();
 const route = useRoute();
 const toast = useToast();
-const loading = ref(false);
+
+const loading = ref(true);
 const isSubmitting = ref(false);
 const ruangList = ref([]);
+const dosenList = ref([]);
 const kelasList = ref([]);
 const sessionList = ref([]);
 
@@ -175,163 +195,125 @@ const formData = reactive({
     penanggung_jawab: "",
     start_date: "",
     end_date: "",
-    sessions: []
+    sessions: [],
 });
 
 const errors = reactive({});
 
-const setupAxios = () => {
+function setupAxios() {
     const token = VueCookies.get("auth_token");
     if (token) {
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     }
-};
+}
 
-const fetchScheduleDetail = async () => {
+async function fetchRuang() {
+    try {
+        const res = await axios.get("/api/admin_pengelola/ruang");
+        ruangList.value = res.data.data || [];
+    } catch {
+        toast.error("Gagal memuat data ruang");
+    }
+}
+
+async function fetchKelas() {
+    try {
+        const res = await axios.get("/api/admin_pengelola/classes");
+        kelasList.value = res.data.data || [];
+    } catch {
+        toast.error("Gagal memuat data kelas");
+    }
+}
+
+async function fetchDosen() {
+    try {
+        const res = await axios.get("/api/admin_pengelola/dosen");
+        dosenList.value = res.data.data || [];
+    } catch {
+        toast.error("Gagal memuat data dosen");
+    }
+}
+
+async function fetchSessions() {
+    try {
+        const res = await axios.get("/api/admin_pengelola/session");
+        sessionList.value = res.data.data || [];
+    } catch {
+        toast.error("Gagal memuat data sesi");
+    }
+}
+
+async function fetchScheduleDetail() {
     try {
         loading.value = true;
-        setupAxios();
-
-        const response = await axios.get(
-            `/api/admin_pengelola/fixed_schedule/${route.params.id}`
-        );
-
-        if (response.data && response.data.data) {
-            const data = response.data.data;
-
-            // Populate form data
-            formData.id_ruang = data.id_ruang;
-            formData.pemakaian = data.pemakaian;
-            formData.id_class = data.id_class;
-            formData.penanggung_jawab = data.penanggung_jawab;
-            formData.start_date = data.start_date;
-            formData.end_date = data.end_date;
-
-            // Populate sessions
-            if (data.sessions && data.sessions.length > 0) {
-                formData.sessions = data.sessions.map(session => ({
-                    day_of_week: session.day_of_week,
-                    id_session: session.id_session
-                }));
-            }
-        } else {
-            toast.error("Data jadwal tetap tidak ditemukan");
-            router.push("/admin-pengelola/fixed-schedule");
-        }
-    } catch (error) {
-        console.error("Error fetching schedule detail:", error);
-        if (error.response?.status === 404) {
-            toast.error("Jadwal tetap tidak ditemukan");
-            router.push("/admin-pengelola/fixed-schedule");
-        } else if (error.response?.status === 401) {
-            toast.error("Sesi anda telah berakhir. Silakan login kembali.");
-            router.push("/login-admin");
-        } else {
-            toast.error(error.response?.data?.message || "Gagal memuat detail jadwal tetap");
-        }
+        const res = await axios.get(`/api/admin_pengelola/fixed_schedule/${route.params.id}`);
+        const d = res.data.data;
+        formData.id_ruang = d.id_ruang;
+        formData.pemakaian = d.pemakaian;
+        formData.id_class = d.id_class;
+        formData.penanggung_jawab = d.penanggung_jawab;
+        formData.start_date = d.start_date;
+        formData.end_date = d.end_date;
+        formData.sessions = d.sessions.map(s => ({
+            day_of_week: s.day_of_week,
+            id_session: s.id_session,
+        }));
+    } catch (e) {
+        toast.error(e.response?.status === 404 ? "Jadwal tidak ditemukan" : "Gagal muat data");
+        router.push("/admin-pengelola/jadwal");
     } finally {
         loading.value = false;
     }
-};
+}
 
-const fetchRuang = async () => {
-    try {
-        setupAxios();
-        const response = await axios.get("/api/admin_pengelola/ruang");
-        if (response.data && response.data.data) {
-            ruangList.value = response.data.data;
-        }
-    } catch (error) {
-        console.error("Error fetching ruang:", error);
-        toast.error("Gagal memuat data ruang");
-    }
-};
+function addSession() {
+    formData.sessions.push({ day_of_week: "", id_session: "" });
+}
+function removeSession(i) {
+    formData.sessions.splice(i, 1);
+}
+function formatTime(t) {
+    return t?.slice(0, 5) ?? "";
+}
 
-const fetchKelas = async () => {
-    try {
-        setupAxios();
-        const response = await axios.get("/api/admin_pengelola/classes");
-        if (response.data && response.data.data) {
-            kelasList.value = response.data.data;
-        }
-    } catch (error) {
-        console.error("Error fetching kelas:", error);
-        toast.error("Gagal memuat data kelas");
-    }
-};
-
-const fetchSessions = async () => {
-    try {
-        setupAxios();
-        const response = await axios.get("/api/admin_pengelola/session");
-        if (response.data && response.data.data) {
-            sessionList.value = response.data.data;
-        }
-    } catch (error) {
-        console.error("Error fetching sessions:", error);
-        toast.error("Gagal memuat data sesi");
-    }
-};
-
-const formatTime = (time) => {
-    if (!time) return "";
-    return time.substring(0, 5);
-};
-
-const addSession = () => {
-    formData.sessions.push({
-        day_of_week: "",
-        id_session: ""
-    });
-};
-
-const removeSession = (index) => {
-    formData.sessions.splice(index, 1);
-};
-
-const handleSubmit = async () => {
+async function handleSubmit() {
     try {
         isSubmitting.value = true;
-        setupAxios();
-
-        Object.keys(errors).forEach((key) => delete errors[key]);
-
-        const response = await axios.put(
+        Object.keys(errors).forEach(k => delete errors[k]);
+        const res = await axios.put(
             `/api/admin_pengelola/fixed_schedule/update/${route.params.id}`,
             formData
         );
-
-        toast.success(response.data.message || "Jadwal tetap berhasil diperbarui");
+        toast.success(res.data.message || "Jadwal berhasil diperbarui");
         router.push("/admin-pengelola/jadwal");
-    } catch (error) {
-        if (error.response?.status === 400 || error.response?.status === 422) {
-            if (error.response.data.errors) {
-                Object.assign(errors, error.response.data.errors);
-                if (error.response.data.message) {
-                    toast.error(error.response.data.message);
-                }
-            } else if (typeof error.response.data === "object") {
-                Object.assign(errors, error.response.data);
+    } catch (e) {
+        const st = e.response?.status, d = e.response?.data;
+        if ([400, 422].includes(st)) {
+            if (d.errors) {
+                Object.assign(errors, d.errors);
+                toast.error(d.message);
+            } else if (typeof d === "object") {
+                Object.assign(errors, d);
             } else {
-                toast.error(error.response.data.message || "Validasi gagal");
+                toast.error("Terjadi error validasi");
             }
-        } else if (error.response?.status === 401) {
-            toast.error("Sesi anda telah berakhir. Silakan login kembali.");
+        } else if (st === 401) {
+            toast.error("Sesi habis, silakan login kembali");
             router.push("/login-admin");
-        } else {
-            toast.error(error.response?.data?.message || "Gagal memperbarui jadwal tetap");
-        }
+        } else toast.error(d?.message || "Gagal update jadwal");
     } finally {
         isSubmitting.value = false;
     }
-};
+}
 
 onMounted(async () => {
+    setupAxios();
     await Promise.all([
         fetchRuang(),
         fetchKelas(),
+        fetchDosen(),
         fetchSessions(),
-        fetchScheduleDetail()
+        fetchScheduleDetail(),
     ]);
 });
 </script>

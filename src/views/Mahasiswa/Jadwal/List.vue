@@ -42,12 +42,15 @@
                 <template #item-jam="item">
                     <div class="space-y-2">
                         <div v-for="(sessionGroup, index) in item.sessions" :key="index" class="py-1">
-                            <span class="text-sm">
-                                {{ sessionGroup.jam_mulai }} - {{ sessionGroup.jam_selesai }}
-                            </span>
+                            <div v-for="(sesi, idx) in sessionGroup.all_sessions" :key="idx">
+                                <span class="text-sm">
+                                    {{ sesi.start_time }} - {{ sesi.end_time }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </template>
+
 
                 <template #item-ruang="item">
                     <span class="text-sm">

@@ -92,7 +92,7 @@
         </div>
 
         <div class="mt-2" v-if="hasAccess(['Dosen', 'Petugas'])">
-          <button
+          <!-- <button
             class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
             @click="handleDropdownClick(1)">
             <div class="flex items-center">
@@ -103,7 +103,7 @@
                 dropdownStates[1] ? 'fa-chevron-up' : 'fa-chevron-down',
                 { hidden: isCollapsed && !isMobile },
               ]"></i>
-          </button>
+          </button> -->
 
           <div v-if="dropdownStates[1]" class="pl-4 mt-1 space-y-1">
             <router-link :to="getRouteByJabatan('bhp')"
@@ -119,6 +119,40 @@
           </div>
         </div>
 
+        <div class="mt-2">
+          <button
+            class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+            @click="handleDropdownClick(2)">
+            <div class="flex items-center">
+              <i class="fas fa-building text-xl"></i>
+              <span class="ml-3" :class="{ hidden: isCollapsed && !isMobile }">Ruangan</span>
+            </div>
+            <i class="fas" :class="[
+              dropdownStates[2] ? 'fa-chevron-up' : 'fa-chevron-down',
+              { hidden: isCollapsed && !isMobile },
+            ]"></i>
+          </button>
+
+          <div v-if="dropdownStates[2]" class="pl-4 mt-1 space-y-1">
+            <router-link to="/dosen/booking-dosen"
+              class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+              @click.native="closeSidebar">
+              <span>Informasi Booking</span>
+            </router-link>
+
+            <router-link to="/dosen/jadwal-dosen"
+              class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+              @click.native="closeSidebar">
+              <span>Informasi Jadwal</span>
+            </router-link>
+            <router-link to="/dosen/pinjam"
+              class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+              @click.native="closeSidebar">
+              <span>Pinjam Ruang</span>
+            </router-link>
+          </div>
+        </div>
+
         <div class="mt-2" v-if="hasAccess(['Kalab', 'Petugas'])">
           <button
             class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
@@ -128,27 +162,27 @@
               <span class="ml-3" :class="{ hidden: isCollapsed && !isMobile }">Ruangan</span>
             </div>
             <i class="fas" :class="[
-                dropdownStates[2] ? 'fa-chevron-up' : 'fa-chevron-down',
-                { hidden: isCollapsed && !isMobile },
-              ]"></i>
+              dropdownStates[2] ? 'fa-chevron-up' : 'fa-chevron-down',
+              { hidden: isCollapsed && !isMobile },
+            ]"></i>
           </button>
 
           <div v-if="dropdownStates[2]" class="pl-4 mt-1 space-y-1">
-            <router-link :to="getRouteByJabatan('ruang')"
+            <!-- <router-link :to="getRouteByJabatan('ruang')"
               class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
               @click.native="closeSidebar">
               <span>Informasi Ruang</span>
-            </router-link>
+            </router-link> -->
             <router-link :to="getRouteByJabatan('list-peminjaman')"
               class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
               @click.native="closeSidebar">
-              <span>Pinjam</span>
+              <span>List Peminjaman</span>
             </router-link>
-            <router-link :to="getRouteByJabatan('kembalikanruang')"
+            <!-- <router-link :to="getRouteByJabatan('kembalikanruang')"
               class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
               @click.native="closeSidebar">
               <span>Kembalikan</span>
-            </router-link>
+            </router-link> -->
           </div>
         </div>
 

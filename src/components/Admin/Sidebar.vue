@@ -167,16 +167,17 @@
             </button>
 
             <div v-if="dropdownStates.ruang" class="pl-4 mt-1 space-y-1" :class="{ hidden: isCollapsed && !isMobile }">
-              <router-link :to="getRouteByRole('lantai')"
-                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-                @click="closeSidebar">
-                <span> Lantai</span>
-              </router-link>
               <router-link :to="getRouteByRole('gedung')"
                 class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
                 @click="closeSidebar">
                 <span> Gedung</span>
               </router-link>
+              <router-link :to="getRouteByRole('lantai')"
+                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                @click="closeSidebar">
+                <span> Lantai</span>
+              </router-link>
+
               <router-link :to="getRouteByRole('ruang')"
                 class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
                 @click="closeSidebar">
@@ -249,7 +250,7 @@
               <router-link :to="getRouteByRole('semester')"
                 class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
                 @click="closeSidebar">
-                <span>Semester</span>
+                <span>Mahasiswa</span>
               </router-link>
             </div>
           </div>

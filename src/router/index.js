@@ -117,6 +117,11 @@ const routes = [
         name: "DashboardMahasiswa",
         component: () => import("../views/Mahasiswa/Landing.vue"),
       },
+      // {
+      //   path: "landing",
+      //   name: "Landing",
+      //   component: () => import("../views/Mahasiswa/Dashboard.vue"),
+      // },
       {
         path: "profile",
         name: "ProfileMahasiswa",
@@ -390,7 +395,25 @@ const routes = [
           import("../views/Admin/AdminPengelola/Jadwal/JadwalTetap/Detail.vue"),
       },
 
-      // RUANG
+      // CRUD gedung lantai
+      {
+        path: "gedung-lantai",
+        name: "ListGedungLantai",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/LantaiGedung/List.vue"),
+      },
+      {
+        path: "lantaigedung/create",
+        name: "CreateLantaiGedung",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/LantaiGedung/Create.vue"),
+      },
+      {
+        path: "lantaigedung/edit/:id",
+        name: "EditLantaiGedung",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/LantaiGedung/Edit.vue"),
+      },
       // CRUD Lantai
       {
         path: "lantai",

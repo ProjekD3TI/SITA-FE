@@ -1,6 +1,6 @@
 <template>
     <div class="p-6 max-w-5xl mx-auto overflow-hidden">
-        <h2 class="text-2xl font-bold mb-6">Daftar Semester</h2>
+        <h2 class="text-2xl font-bold mb-6">Daftar Mahasiswa</h2>
 
         <div class="grid grid-cols-1 gap-4 mb-4">
             <div class="flex gap-2">
@@ -17,8 +17,8 @@
             <div class="flex flex-wrap justify-end gap-2">
                 <button @click="goToCreate()"
                     class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center gap-2">
-                    <i class="fas fa-plus"></i>
-                    Tambah Semester
+                    <!-- <i class="fas fa-plus"></i> -->
+                    Tambah Mahasiswa
                 </button>
             </div>
         </div>

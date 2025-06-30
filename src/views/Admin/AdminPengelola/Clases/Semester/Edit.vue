@@ -1,6 +1,6 @@
 <template>
     <div class="p-6 max-w-2xl mx-auto">
-        <h2 class="text-2xl font-bold mb-6">Edit Semester</h2>
+        <h2 class="text-2xl font-bold mb-6">Edit Mahasiswa</h2>
 
         <div v-if="loading" class="flex justify-center items-center h-64">
             <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>

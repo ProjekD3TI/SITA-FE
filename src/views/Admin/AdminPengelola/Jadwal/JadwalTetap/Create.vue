@@ -16,7 +16,9 @@
                             {{ ruang.nama_ruang }}
                         </option>
                     </select>
-                    <p v-if="errors.id_ruang" class="text-sm text-red-500">{{ errors.id_ruang[0] }}</p>
+                    <p v-if="errors.id_ruang" class="text-sm text-red-500">
+                        {{ errors.id_ruang[0] }}
+                    </p>
                 </div>
 
                 <div class="space-y-2">
@@ -31,7 +33,9 @@
                             {{ kelas.name }}
                         </option>
                     </select>
-                    <p v-if="errors.id_class" class="text-sm text-red-500">{{ errors.id_class[0] }}</p>
+                    <p v-if="errors.id_class" class="text-sm text-red-500">
+                        {{ errors.id_class[0] }}
+                    </p>
                 </div>
             </div>
 
@@ -43,7 +47,9 @@
                 <input v-model="formData.pemakaian" type="text"
                     class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     placeholder="Masukkan tujuan pemakaian" />
-                <p v-if="errors.pemakaian" class="text-sm text-red-500">{{ errors.pemakaian[0] }}</p>
+                <p v-if="errors.pemakaian" class="text-sm text-red-500">
+                    {{ errors.pemakaian[0] }}
+                </p>
             </div>
 
             <div class="space-y-2">
@@ -51,10 +57,16 @@
                     class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Penanggung Jawab
                 </label>
-                <input v-model="formData.penanggung_jawab" type="text"
-                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Masukkan nama penanggung jawab" />
-                <p v-if="errors.penanggung_jawab" class="text-sm text-red-500">{{ errors.penanggung_jawab[0] }}</p>
+                <select v-model="formData.penanggung_jawab"
+                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                    <option value="">Pilih Penanggung Jawab</option>
+                    <option v-for="dosen in dosenList" :key="dosen.id" :value="dosen.id">
+                        {{ dosen.name }}
+                    </option>
+                </select>
+                <p v-if="errors.penanggung_jawab" class="text-sm text-red-500">
+                    {{ errors.penanggung_jawab[0] }}
+                </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -65,7 +77,9 @@
                     </label>
                     <input v-model="formData.start_date" type="date"
                         class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
-                    <p v-if="errors.start_date" class="text-sm text-red-500">{{ errors.start_date[0] }}</p>
+                    <p v-if="errors.start_date" class="text-sm text-red-500">
+                        {{ errors.start_date[0] }}
+                    </p>
                 </div>
 
                 <div class="space-y-2">
@@ -75,7 +89,9 @@
                     </label>
                     <input v-model="formData.end_date" type="date"
                         class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
-                    <p v-if="errors.end_date" class="text-sm text-red-500">{{ errors.end_date[0] }}</p>
+                    <p v-if="errors.end_date" class="text-sm text-red-500">
+                        {{ errors.end_date[0] }}
+                    </p>
                 </div>
             </div>
 
@@ -122,15 +138,17 @@
                                 class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
                                 <option value="">Pilih Sesi</option>
                                 <option v-for="sesi in sessionList" :key="sesi.id" :value="sesi.id">
-                                    {{ sesi.name_session }} ({{ formatTime(sesi.start_time) }} - {{
-                                    formatTime(sesi.end_time) }})
+                                    {{ sesi.name_session }} ({{ formatTime(sesi.start_time) }} -
+                                    {{ formatTime(sesi.end_time) }})
                                 </option>
                             </select>
                         </div>
                     </div>
                 </div>
 
-                <p v-if="errors.sessions" class="text-sm text-red-500">{{ errors.sessions[0] }}</p>
+                <p v-if="errors.sessions" class="text-sm text-red-500">
+                    {{ errors.sessions[0] }}
+                </p>
             </div>
 
             <div class="flex space-x-2">
@@ -159,6 +177,7 @@ const router = useRouter();
 const toast = useToast();
 const isSubmitting = ref(false);
 const ruangList = ref([]);
+const dosenList = ref([]);
 const kelasList = ref([]);
 const sessionList = ref([]);
 
@@ -169,7 +188,7 @@ const formData = reactive({
     penanggung_jawab: "",
     start_date: "",
     end_date: "",
-    sessions: []
+    sessions: [],
 });
 
 const errors = reactive({});
@@ -207,6 +226,19 @@ const fetchKelas = async () => {
     }
 };
 
+const fetchDosen = async () => {
+    try {
+        setupAxios();
+        const response = await axios.get("/api/admin_pengelola/dosen");
+        if (response.data && response.data.data) {
+            dosenList.value = response.data.data;
+        }
+    } catch (error) {
+        console.error("Error fetching kelas:", error);
+        toast.error("Gagal memuat data dosen");
+    }
+};
+
 const fetchSessions = async () => {
     try {
         setupAxios();
@@ -228,7 +260,7 @@ const formatTime = (time) => {
 const addSession = () => {
     formData.sessions.push({
         day_of_week: "",
-        id_session: ""
+        id_session: "",
     });
 };
 
@@ -266,7 +298,9 @@ const handleSubmit = async () => {
             toast.error("Sesi anda telah berakhir. Silakan login kembali.");
             router.push("/login-admin");
         } else {
-            toast.error(error.response?.data?.message || "Gagal menambahkan jadwal tetap");
+            toast.error(
+                error.response?.data?.message || "Gagal menambahkan jadwal tetap"
+            );
         }
     } finally {
         isSubmitting.value = false;
@@ -275,6 +309,7 @@ const handleSubmit = async () => {
 
 onMounted(() => {
     fetchRuang();
+    fetchDosen();
     fetchKelas();
     fetchSessions();
 });

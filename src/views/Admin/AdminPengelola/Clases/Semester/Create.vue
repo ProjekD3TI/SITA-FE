@@ -1,6 +1,6 @@
 <template>
     <div class="p-6 max-w-2xl mx-auto">
-        <h2 class="text-2xl font-bold mb-6">Tambah Semester</h2>
+        <h2 class="text-2xl font-bold mb-6">Tambah Mahasiswa</h2>
 
         <form @submit.prevent="handleSubmit" class="space-y-4">
             <div class="space-y-2">

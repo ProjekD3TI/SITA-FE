@@ -29,7 +29,7 @@
           <span class="ml-3" :class="{ hidden: isCollapsed && !isMobile }">Dashboard</span>
         </router-link>
 
-        <div class="mt-2">
+        <!-- <div class="mt-2">
           <button
             class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
             @click="handleDropdownClick(0)">
@@ -88,7 +88,7 @@
               <span>Pakai</span>
             </router-link>
           </div>
-        </div>
+        </div> -->
 
         <div class="mt-2">
           <button
