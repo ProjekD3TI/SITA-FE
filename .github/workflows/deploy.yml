@@ -22,7 +22,7 @@ jobs:
       - name: 🔐 Generate and write .env
         run: |
           echo "VITE_ENCRYPTION_KEY=$(openssl rand --hex 32)" > .env
-          echo "VITE_API_BASE_URL=https://portal-d3ti-uns.indonesiacentral.cloudapp.azure.com/api" >> .env
+          echo "VITE_API_BASE_URL=https://v3423085.mhs.d3tiuns.com/api/" >> .env
           cat .env
 
       - name: 🛠️ Build Vue project
