@@ -236,8 +236,10 @@ export default {
       showTanggapanModal: false,
       tanggapanText: '',
       currentUser: localStorage.getItem('userName') || 'miftahul01',
-      apiBaseUrl: 'http://pelaporan-d3ti.my.id/api',
-      baseUrl: 'http://pelaporan-d3ti.my.id',
+      // apiBaseUrl: 'http://pelaporan-d3ti.my.id/api',
+      apiBaseUrl: 'https://v3422040.mhs.d3tiuns.com/api',
+      //baseUrl: 'http://pelaporan-d3ti.my.id',
+      baseUrl: 'https://v3422040.mhs.d3tiuns.com',
       
       // New properties for better image handling
       imagePaths: [],

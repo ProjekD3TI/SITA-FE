@@ -925,7 +925,8 @@ export default {
     },
     
     fetchCategories() {
-      axios.get('http://pelaporan-d3ti.my.id/api/category', {
+      // axios.get('http://pelaporan-d3ti.my.id/api/category', {
+      axios.get('https://v3422040.mhs.d3tiuns.com/api/category', {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -1572,7 +1573,8 @@ export default {
       };
       
       // FIXED: Use absolute URL for the API endpoint
-      xhr.open('POST', 'http://pelaporan-d3ti.my.id/api/laporan_kekerasan/add_laporan', true);
+      // xhr.open('POST', 'http://pelaporan-d3ti.my.id/api/laporan_kekerasan/add_laporan', true);
+      xhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan', true);
       
       // FIXED: Add proper authorization header
       xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
@@ -1599,7 +1601,8 @@ export default {
             newXhr.ontimeout = xhr.ontimeout;
             newXhr.onerror = xhr.onerror;
             
-            newXhr.open('POST', 'http://pelaporan-d3ti.my.id/api/laporan_kekerasan/add_laporan', true);
+            // newXhr.open('POST', 'http://pelaporan-d3ti.my.id/api/laporan_kekerasan/add_laporan', true);
+            newXhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan', true);
             newXhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
             newXhr.setRequestHeader('Accept', 'application/json');
             newXhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');

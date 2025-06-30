@@ -590,7 +590,8 @@ export default {
                 this.setupAuth();
                 
                 // Fetch categories
-                const categoriesResponse = await axios.get('http://pelaporan-d3ti.my.id/api/category');
+                // const categoriesResponse = await axios.get('http://pelaporan-d3ti.my.id/api/category');
+                const categoriesResponse = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
                 
                 // Store categories
                 this.categories = categoriesResponse.data.reduce((acc, category) => {
@@ -602,7 +603,8 @@ export default {
                 this.jenisKejadianList = categoriesResponse.data.map(category => category.nama);
                 
                 // Fetch reports
-                const laporanResponse = await axios.get('http://pelaporan-d3ti.my.id/api/laporan');
+                // const laporanResponse = await axios.get('http://pelaporan-d3ti.my.id/api/laporan');
+                const laporanResponse = await axios.get('https://v3422040.mhs.d3tiuns.com/api/laporan');
                 
                 // Store all reports initially
                 this.laporan = laporanResponse.data;

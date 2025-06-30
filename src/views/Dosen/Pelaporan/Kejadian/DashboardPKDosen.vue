@@ -449,7 +449,8 @@ export default {
       
       try {
         // Fetch categories first
-        const categoriesResponse = await axios.get('http://pelaporan-d3ti.my.id/api/category');
+        // const categoriesResponse = await axios.get('http://pelaporan-d3ti.my.id/api/category');
+        const categoriesResponse = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
         
         // Transform categories array to an object with id as key for easy lookup
         this.categories = categoriesResponse.data.reduce((acc, category) => {
@@ -470,7 +471,8 @@ export default {
         }
         
         // Then fetch all laporan data
-        const laporanResponse = await axios.get('http://pelaporan-d3ti.my.id/api/laporan');
+        // const laporanResponse = await axios.get('http://pelaporan-d3ti.my.id/api/laporan');
+        const laporanResponse = await axios.get('https://v3422040.mhs.d3tiuns.com/api/laporan');
         
         // Filter laporan for the current user only
         if (userData && userData.name) {

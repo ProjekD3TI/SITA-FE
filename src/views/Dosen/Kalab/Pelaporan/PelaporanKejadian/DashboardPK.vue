@@ -580,7 +580,8 @@ const fetchData = async () => {
     }
     
     // Fetch categories first
-    const categoriesResponse = await axios.get('http://pelaporan-d3ti.my.id/api/category');
+    // const categoriesResponse = await axios.get('http://pelaporan-d3ti.my.id/api/category');
+    const categoriesResponse = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
     // Transform categories array to an object with id as key for easy lookup
     categories.value = categoriesResponse.data.reduce((acc, category) => {
       acc[category.category_id] = category.nama;
@@ -588,7 +589,8 @@ const fetchData = async () => {
     }, {});
     
     // Then fetch laporan data
-    const laporanResponse = await axios.get('http://pelaporan-d3ti.my.id/api/laporan');
+    // const laporanResponse = await axios.get('http://pelaporan-d3ti.my.id/api/laporan');
+    const laporanResponse = await axios.get('https://v3422040.mhs.d3tiuns.com/api/laporan');
     laporan.value = laporanResponse.data;
   } catch (error) {
     console.error('Error fetching data:', error);

@@ -135,7 +135,8 @@ const fetchLaporan = async () => {
     console.log('Filtering laporan for dosen:', dosenName);
     
     // Ambil data laporan umum
-    const responseLaporan = await axios.get("http://pelaporan-d3ti.my.id/api/laporan");
+    // const responseLaporan = await axios.get("http://pelaporan-d3ti.my.id/api/laporan");
+    const responseLaporan = await axios.get("https://v3422040.mhs.d3tiuns.com/api/laporan");
     console.log('Response Laporan:', responseLaporan.data);
     
     if (responseLaporan.data && Array.isArray(responseLaporan.data)) {
@@ -185,7 +186,8 @@ const fetchLaporan = async () => {
     }
     
     // Ambil data laporan kekerasan
-    const responseLaporanKekerasan = await axios.get("http://pelaporan-d3ti.my.id/api/laporan_kekerasan");
+    // const responseLaporanKekerasan = await axios.get("http://pelaporan-d3ti.my.id/api/laporan_kekerasan");
+    const responseLaporanKekerasan = await axios.get("https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan");
     console.log('Response Laporan Kekerasan:', responseLaporanKekerasan.data);
     
     if (responseLaporanKekerasan.data && Array.isArray(responseLaporanKekerasan.data)) {

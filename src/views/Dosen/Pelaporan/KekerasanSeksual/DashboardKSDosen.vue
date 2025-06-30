@@ -439,8 +439,10 @@ export default {
       this.loading = true;
       try {
         const [categoriesResponse, laporanResponse] = await Promise.all([
-          axios.get('http://pelaporan-d3ti.my.id/api/category'),
-          axios.get('http://pelaporan-d3ti.my.id/api/laporan_kekerasan')
+          // axios.get('http://pelaporan-d3ti.my.id/api/category'),
+          axios.get('https://v3422040.mhs.d3tiuns.com/api/category'),
+          // axios.get('http://pelaporan-d3ti.my.id/api/laporan_kekerasan')
+          axios.get('https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan')
         ]);
         
         this.categories = categoriesResponse.data.reduce((acc, category) => {

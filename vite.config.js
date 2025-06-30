@@ -6,7 +6,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://pelaporan-d3ti.my.id',
+        // target: 'http://pelaporan-d3ti.my.id',
+        target: 'https://v3422040.mhs.d3tiuns.com',
         changeOrigin: true,
         secure: false
       }

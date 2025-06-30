@@ -711,7 +711,8 @@ computed: {
     );
   },
   apiBaseUrl() {
-    return 'http://pelaporan-d3ti.my.id/api';
+    // return 'http://pelaporan-d3ti.my.id/api';
+    return 'https://v3422040.mhs.d3tiuns.com/api';
   }
 },
 created() {

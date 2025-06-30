@@ -366,7 +366,8 @@ const handleResize = () => {
 
 const fetchCategories = async () => {
   try {
-    const response = await axios.get("http://pelaporan-d3ti.my.id/api/category", {
+    // const response = await axios.get("http://pelaporan-d3ti.my.id/api/category", {
+    const response = await axios.get("https://v3422040.mhs.d3tiuns.com/api/category", {
       timeout: 5000
     });
     
@@ -387,7 +388,8 @@ const fetchLaporan = async () => {
   isLoading.value = true;
   
   try {
-    const response = await axios.get("http://pelaporan-d3ti.my.id/api/laporan", {
+    // const response = await axios.get("http://pelaporan-d3ti.my.id/api/laporan", {
+    const response = await axios.get("https://v3422040.mhs.d3tiuns.com/api/laporan", {
       timeout: 5000 // 5 detik timeout
     });
     

@@ -238,7 +238,8 @@ export default {
     methods: {
         async fetchCsrfCookie() {
             try {
-                await axios.get('http://pelaporan-d3ti.my.id/sanctum/csrf-cookie', { withCredentials: true });
+                // await axios.get('http://pelaporan-d3ti.my.id/sanctum/csrf-cookie', { withCredentials: true });
+                await axios.get('https://v3422040.mhs.d3tiuns.com/api/sanctum/csrf-cookie', { withCredentials: true });
                 this.csrfToken = VueCookies.get('XSRF-TOKEN');
                 console.log('CSRF Cookie fetched:', this.csrfToken ? 'Success' : 'Failed');
             } catch (error) {
@@ -294,7 +295,8 @@ export default {
         },
         async fetchCategories() {
             try {
-                const response = await axios.get('http://pelaporan-d3ti.my.id/api/category');
+                // const response = await axios.get('http://pelaporan-d3ti.my.id/api/category');
+                const response = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
                 this.categories = response.data;
 
                 const mendesakCategory = this.categories.find(cat => cat.nama === "Darurat dan Mendesak");
@@ -497,7 +499,8 @@ export default {
             const xhr = new XMLHttpRequest();
             
             // Use the absolute URL to ensure correct endpoint
-            xhr.open('POST', 'http://pelaporan-d3ti.my.id/api/laporan/add_laporan', true);
+            // xhr.open('POST', 'http://pelaporan-d3ti.my.id/api/laporan/add_laporan', true);
+            xhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan/add_laporan', true);
             
             // Get the auth token
             const authToken = this.token || VueCookies.get('auth_token');

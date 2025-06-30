@@ -96,7 +96,8 @@ export default {
       newImage: null,
       newImageSelected: false,
       imagePreview: null,
-      apiBaseUrl: 'http://pelaporan-d3ti.my.id',
+      // apiBaseUrl: 'http://pelaporan-d3ti.my.id',
+      apiBaseUrl: 'https://v3422040.mhs.d3tiuns.com',
       imageUrls: [
         // Primary URL format
         '/Backend-Port/backend/engine/public/storage/category/',

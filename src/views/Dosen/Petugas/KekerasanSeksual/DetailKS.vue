@@ -234,8 +234,10 @@ export default {
       showFullImage: false,
       showTanggapanModal: false,
       tanggapanText: '',
-      apiBaseUrl: 'http://pelaporan-d3ti.my.id/api',
-      baseUrl: 'http://pelaporan-d3ti.my.id',
+      // apiBaseUrl: 'http://pelaporan-d3ti.my.id/api',
+      apiBaseUrl: 'https://v3422040.mhs.d3tiuns.com/api',
+      // baseUrl: 'http://pelaporan-d3ti.my.id',
+      baseUrl: 'https://v3422040.mhs.d3tiuns.com',
       authToken: null,
       imagePaths: [],
       currentImageIndex: 0,
@@ -703,7 +705,8 @@ export default {
         }
         
         // Define the base URL (assuming baseUrl is properly defined in your component)
-        const baseUrl = this.baseUrl || 'http://pelaporan-d3ti.my.id';
+        // const baseUrl = this.baseUrl || 'http://pelaporan-d3ti.my.id';
+        const baseUrl = this.baseUrl || 'https://v3422040.mhs.d3tiuns.com';
         
         // Primary URL format for laporankekerasan
         return `${baseUrl}/Backend-Port/backend/engine/public/storage/laporankekerasan/${cleanPath}`;
@@ -720,7 +723,8 @@ export default {
             return;
         }
         
-        const baseDomain = this.baseUrl || 'http://pelaporan-d3ti.my.id';
+        // const baseDomain = this.baseUrl || 'http://pelaporan-d3ti.my.id';
+        const baseDomain = this.baseUrl || 'https://v3422040.mhs.d3tiuns.com';
         let newUrl;
         
         if (!currentSrc.includes('fallback=')) {
@@ -750,7 +754,8 @@ export default {
             return;
         }
         
-        const baseDomain = this.baseUrl || 'http://pelaporan-d3ti.my.id';
+        // const baseDomain = this.baseUrl || 'http://pelaporan-d3ti.my.id';
+        const baseDomain = this.baseUrl || 'https://v3422040.mhs.d3tiuns.com';
         let newUrl;
         
         if (!originalSrc.includes('fallback=')) {

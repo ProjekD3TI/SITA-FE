@@ -193,7 +193,8 @@ export default {
       loading: false,
       currentPage: 1,
       itemsPerPage: 10,
-      apiBaseUrl: 'http://pelaporan-d3ti.my.id',
+      // apiBaseUrl: 'http://pelaporan-d3ti.my.id',
+      apiBaseUrl: 'https://v3422040.mhs.d3tiuns.com',
     };
   },
   computed: {
@@ -333,7 +334,8 @@ export default {
           formData.append('_method', 'DELETE');
           
           // Make the request - using POST with _method=DELETE for better compatibility
-          fetch(`http://pelaporan-d3ti.my.id/api/category/${categoryId}`, {
+          // fetch(`http://pelaporan-d3ti.my.id/api/category/${categoryId}`, {
+          fetch(`https://v3422040.mhs.d3tiuns.com/api/category/${categoryId}`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,

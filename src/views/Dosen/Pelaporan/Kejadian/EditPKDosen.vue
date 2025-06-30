@@ -388,7 +388,8 @@ export default {
     },
 
     fetchCategories() {
-      return axios.get('http://pelaporan-d3ti.my.id/api/category')
+      // return axios.get('http://pelaporan-d3ti.my.id/api/category')
+      return axios.get('https://v3422040.mhs.d3tiuns.com/api/category')
         .then(response => {
           this.categories = response.data;
           this.categoriesLoaded = true;
@@ -418,7 +419,8 @@ export default {
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           }
           
-          axios.get(`http://pelaporan-d3ti.my.id/api/laporan/${this.laporanId}`)
+          // axios.get(`http://pelaporan-d3ti.my.id/api/laporan/${this.laporanId}`)
+          axios.get(`https://v3422040.mhs.d3tiuns.com/api/laporan/${this.laporanId}`)
             .then(response => {
               const data = response.data;
               console.log('Received laporan data:', data);
@@ -606,8 +608,9 @@ export default {
         }
         
         // Define the base URL
-        const baseUrl = 'http://pelaporan-d3ti.my.id';
-        
+        // const baseUrl = 'http://pelaporan-d3ti.my.id';
+        const baseUrl = 'https://v3422040.mhs.d3tiuns.com';
+
         // Primary URL format (same pattern as your category images)
         return `${baseUrl}/Backend-Port/backend/engine/public/storage/laporan/${cleanPath}`;
     },
@@ -909,7 +912,8 @@ export default {
         
         // Create and configure XHR
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', `http://pelaporan-d3ti.my.id/api/laporan/update/${this.laporanId}`);
+        // xhr.open('POST', `http://pelaporan-d3ti.my.id/api/laporan/update/${this.laporanId}`);
+        xhr.open('POST', `https://v3422040.mhs.d3tiuns.com/api/laporan/update/${this.laporanId}`);
         
         // Set Authorization header with proper Bearer token
         xhr.setRequestHeader('Authorization', `Bearer ${token}`);

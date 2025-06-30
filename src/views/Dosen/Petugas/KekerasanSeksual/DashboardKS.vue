@@ -259,7 +259,8 @@ export default {
   data() {
     return {
       d3tiLogoSrc: d3tiLogo,
-      apiBaseUrl: 'http://pelaporan-d3ti.my.id/api',
+      // apiBaseUrl: 'http://pelaporan-d3ti.my.id/api',
+      apiBaseUrl: 'https://v3422040.mhs.d3tiuns.com/api',
       laporan: [],
       categories: {},
       loading: false,

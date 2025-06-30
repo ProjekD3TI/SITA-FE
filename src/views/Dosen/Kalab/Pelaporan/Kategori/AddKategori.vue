@@ -276,7 +276,8 @@ export default {
       };
       
       // Send the request
-      console.log('Sending request to:', 'http://pelaporan-d3ti.my.id/category/add_category');
+      // console.log('Sending request to:', 'http://pelaporan-d3ti.my.id/api/category/add_category');
+      console.log('Sending request to:', 'https://pelaporan-d3ti-svuns.my.id/api/category/add_category');
       console.log('With token:', token ? `${token.substring(0, 10)}...${token.substring(token.length - 10)}` : 'No token');
       xhr.send(formData);
     }

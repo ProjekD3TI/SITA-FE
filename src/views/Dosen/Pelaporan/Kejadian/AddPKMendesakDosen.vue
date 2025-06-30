@@ -284,7 +284,8 @@ export default {
         },
         async fetchCategories() {
             try {
-                const response = await axios.get('http://pelaporan-d3ti.my.id/api/category');
+                // const response = await axios.get('http://pelaporan-d3ti.my.id/api/category');
+                const response = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
                 this.categories = response.data;
                 
                 // Find the "Darurat dan Mendesak" category
@@ -518,7 +519,8 @@ export default {
             const xhr = new XMLHttpRequest();
             
             // Use absolute URL to ensure correct endpoint
-            xhr.open('POST', 'http://pelaporan-d3ti.my.id/api/laporan/add_laporan', true);
+            // xhr.open('POST', 'http://pelaporan-d3ti.my.id/api/laporan/add_laporan', true);
+            xhr.open('POST', 'https://v3422040.mhs.d3tiuns.com/api/laporan/add_laporan', true);
             
             // Set headers
             xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
