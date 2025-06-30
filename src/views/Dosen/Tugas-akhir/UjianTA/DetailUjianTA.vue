@@ -3,12 +3,14 @@ import { ref, computed, onMounted, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 import router from "@/router";
 import { useToast } from "vue-toastification";
+import axios from "axios";
+import VueCookies from "vue-cookies";
 
 // Components
 import Breadcrumb from "@/components/Tugas-akhir/Breadcrumb.vue";
 import JadwalUjian from "@/components/Tugas-akhir/JadwalUjian.vue";
 import Button from "@/components/Tugas-akhir/Button.vue";
-import Tooltip from "@/components/Tugas-akhir/Tooltip.vue";
+import Slider from "@/components/Tugas-akhir/Slider.vue";
 import DefaultModal from "@/components/Tugas-akhir/Modals/DefaultModal.vue";
 import InputText from "@/components/Tugas-akhir/Forms/InputText.vue";
 import InputTextarea from "@/components/Tugas-akhir/Forms/InputTextarea.vue";
@@ -206,6 +208,10 @@ const catatanRevisi = computed(() => {
   return stripHTMLTags(revisiHTML);
 });
 
+const editNilaiEnabled = computed(() => {
+  return detailUjian.value?.edit_nilai === true;
+});
+
 // Computed for modal body text
 const modalBodyText = computed(() => {
   return `${tugasAkhirDetails.value.nama} | ${tugasAkhirDetails.value.nim} | ${tugasAkhirDetails.value.judul}`;
@@ -288,6 +294,38 @@ async function loadPdfPreview() {
     errorPdf.value = "Gagal memuat file PDF";
   } finally {
     loadingPdf.value = false;
+  }
+}
+
+async function handleSliderChange(val) {
+  if (!isSecretary.value) {
+    toast.error("Hanya sekretaris yang dapat mengubah pengaturan ini.");
+    return;
+  }
+
+  try {
+    const token = VueCookies.get("auth_token");
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    };
+
+    await axios.put(
+      `/api/dosen/tugas-akhir/detail-ujian-ta/${detailUjian.value.ujian_ta_id}/edit-nilai`,
+      { edit_nilai: val },
+      { headers }
+    );
+
+    // Update local state after successful API call
+    detailUjian.value.edit_nilai = val;
+
+    const message = val
+      ? "Dosen penguji kini dapat mengedit nilai ujian TA"
+      : "Dosen penguji tidak dapat mengedit nilai ujian TA";
+    toast.success(message);
+  } catch (err) {
+    console.error("Error updating edit_nilai:", err);
+    toast.error(err.response?.data?.message || "Gagal mengubah pengaturan");
   }
 }
 
@@ -448,6 +486,15 @@ onMounted(() => {
 
             <!-- Action Buttons - Modified to use route params -->
             <div class="flex flex-col gap-4">
+              <div v-if="isSecretary" class="mt-4">
+                <h5 class="body1-bold">Izin Edit Nilai</h5>
+                <div class="flex items-center gap-2">
+                  <Slider
+                    :modelValue="detailUjian?.edit_nilai"
+                    @update:modelValue="handleSliderChange"
+                  />
+                </div>
+              </div>
               <div class="flex items-center self-end gap-4">
                 <!-- If nilai exists, show Lihat Nilai button -->
                 <Button
@@ -600,16 +647,22 @@ onMounted(() => {
       </div>
 
       <!-- Add Edit Nilai button -->
-      <!-- <div class="flex justify-end mt-6">
+      <div class="flex justify-end mt-2">
         <Button
           @click="goToEditNilai"
           variant="secondary"
-          size="md"
+          size="lg"
           class="w-fit"
+          :disabled="!editNilaiEnabled && !isSecretary"
+          :title="
+            !editNilaiEnabled && !isSecretary
+              ? 'Pengubahan nilai tidak diizinkan. Hubungi sekretaris.'
+              : ''
+          "
         >
           Edit Nilai
         </Button>
-      </div> -->
+      </div>
     </div>
   </DefaultModal>
 </template>
