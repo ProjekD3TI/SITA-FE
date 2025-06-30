@@ -200,12 +200,7 @@ const catatanRevisi = computed(() => {
 
   const revisiHTML = currentDosenPenguji?.nilai_ujian_ta?.revisi || "";
 
-  // Hilangkan semua tag HTML
-  const stripHTMLTags = (html) => {
-    return html ? html.replace(/<[^>]+>/g, "") : "";
-  };
-
-  return stripHTMLTags(revisiHTML);
+  return revisiHTML;
 });
 
 const editNilaiEnabled = computed(() => {
