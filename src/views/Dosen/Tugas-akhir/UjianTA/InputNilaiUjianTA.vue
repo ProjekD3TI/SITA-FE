@@ -92,7 +92,7 @@ const isCatatanRevisiDisabled = computed(() => {
   return (
     statusKelulusan.value === "1" ||
     statusKelulusan.value === "4" ||
-    statusKelulusan.value === undefined
+    (isEdit.value && detailUjian.value?.status_kelulusan === "1")
   );
 });
 
@@ -213,10 +213,8 @@ const loadData = async () => {
       };
 
       // Initialize status kelulusan for secretary regardless of edit mode
-      if (isSecretary.value) {
-        statusKelulusan.value =
-          detailUjian.value?.status_kelulusan?.toString() || "";
-      }
+      statusKelulusan.value =
+        detailUjian.value?.status_kelulusan?.toString() || "";
     }
 
     // Check if we're in edit mode - this query parameter is necessary
