@@ -204,7 +204,7 @@ const catatanRevisi = computed(() => {
 });
 
 const editNilaiEnabled = computed(() => {
-  return detailUjian.value?.edit_nilai === true;
+  return detailUjian.value?.edit_nilai === 1;
 });
 
 // Computed for modal body text
@@ -482,7 +482,7 @@ onMounted(() => {
             <!-- Action Buttons - Modified to use route params -->
             <div class="flex flex-col gap-4">
               <div v-if="isSecretary" class="mt-4">
-                <h5 class="body1-bold">Izin Edit Nilai</h5>
+                <h5 class="body1-bold">Edit Nilai</h5>
                 <div class="flex items-center gap-2">
                   <Slider
                     :modelValue="detailUjian?.edit_nilai"
@@ -648,9 +648,9 @@ onMounted(() => {
           variant="secondary"
           size="lg"
           class="w-fit"
-          :disabled="!editNilaiEnabled && !isSecretary"
+          :disabled="!editNilaiEnabled"
           :title="
-            !editNilaiEnabled && !isSecretary
+            !editNilaiEnabled
               ? 'Pengubahan nilai tidak diizinkan. Hubungi sekretaris.'
               : ''
           "

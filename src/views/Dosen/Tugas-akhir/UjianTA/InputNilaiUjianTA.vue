@@ -89,11 +89,24 @@ const isSecretary = computed(() => {
 
 // Computed property untuk mengontrol status disabled pada textarea catatan revisi
 const isCatatanRevisiDisabled = computed(() => {
-  return statusKelulusan.value === "1" || statusKelulusan.value === "4";
+  return (
+    statusKelulusan.value === "1" ||
+    statusKelulusan.value === "4" ||
+    statusKelulusan.value === undefined
+  );
 });
 
 const isNilaiUjianTADisabled = computed(() => {
   return statusKelulusan.value === "3" || statusKelulusan.value === "4";
+});
+
+const isStatusKelulusanDisabled = computed(() => {
+  // Disable if we're in edit mode and there's already a status kelulusan set
+  return (
+    isEdit.value &&
+    detailUjian.value?.status_kelulusan !== null &&
+    detailUjian.value?.status_kelulusan !== undefined
+  );
 });
 
 // Validate all required fields
@@ -343,11 +356,27 @@ onMounted(() => {
       <!-- Form Section -->
       <div>
         <!-- Status Kelulusan (only visible to secretary) -->
-        <div v-if="isSecretary" class="my-5">
+        <div
+          v-if="isStatusKelulusanDisabled && isSecretary"
+          class="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md"
+        >
+          <p class="text-yellow-700 text-sm">
+            Status kelulusan sudah ditentukan dan tidak dapat diubah lagi.
+          </p>
+        </div>
+        <div
+          v-if="isSecretary"
+          class="my-5"
+          :class="{ 'opacity-50': isStatusKelulusanDisabled }"
+        >
           <p class="heading5 text-[#00A2EA] font-semibold mb-3">
             Status Kelulusan <span class="text-red-500">*</span>
           </p>
+
+          <!-- Add an info message when status is disabled -->
+
           <div class="flex flex-col w-full sm:flex-row sm:justify-between">
+            <!-- Lulus Tanpa Revisi -->
             <div class="flex items-center mb-3 sm:mb-0 sm:flex-1">
               <div class="relative inline-flex items-center">
                 <input
@@ -356,7 +385,8 @@ onMounted(() => {
                   name="statusKelulusan"
                   value="1"
                   v-model="statusKelulusan"
-                  class="w-7 h-7 cursor-pointer appearance-none border-2 border-gray-300 rounded-full checked:border-[#00B69B] checked:bg-[#00B69B] focus:outline-none"
+                  :disabled="isStatusKelulusanDisabled"
+                  class="w-7 h-7 cursor-pointer appearance-none border-2 border-gray-300 rounded-full checked:border-[#00B69B] checked:bg-[#00B69B] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <svg
                   v-if="statusKelulusan === '1'"
@@ -374,10 +404,12 @@ onMounted(() => {
               <label
                 for="lulusTanpaRevisi"
                 class="ml-2 text-gray-700 body3-bold"
+                :class="{ 'opacity-50': isStatusKelulusanDisabled }"
                 >Lulus tanpa revisi</label
               >
             </div>
 
+            <!-- Lulus Dengan Revisi -->
             <div class="flex items-center mb-3 sm:mb-0 sm:flex-1">
               <div class="relative inline-flex items-center">
                 <input
@@ -386,7 +418,8 @@ onMounted(() => {
                   name="statusKelulusan"
                   value="2"
                   v-model="statusKelulusan"
-                  class="w-7 h-7 cursor-pointer appearance-none border-2 border-gray-300 rounded-full checked:border-[#00B69B] checked:bg-[#00B69B] focus:outline-none"
+                  :disabled="isStatusKelulusanDisabled"
+                  class="w-7 h-7 cursor-pointer appearance-none border-2 border-gray-300 rounded-full checked:border-[#00B69B] checked:bg-[#00B69B] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <svg
                   v-if="statusKelulusan === '2'"
@@ -404,6 +437,7 @@ onMounted(() => {
               <label
                 for="lulusDenganRevisi"
                 class="ml-2 text-gray-700 body3-bold"
+                :class="{ 'opacity-50': isStatusKelulusanDisabled }"
                 >Lulus dengan revisi</label
               >
             </div>
@@ -420,7 +454,8 @@ onMounted(() => {
                   name="statusKelulusan"
                   value="3"
                   v-model="statusKelulusan"
-                  class="w-7 h-7 cursor-pointer appearance-none border-2 border-gray-300 rounded-full checked:border-[#00B69B] checked:bg-[#00B69B] focus:outline-none"
+                  :disabled="isStatusKelulusanDisabled"
+                  class="w-7 h-7 cursor-pointer appearance-none border-2 border-gray-300 rounded-full checked:border-[#00B69B] checked:bg-[#00B69B] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <svg
                   v-if="statusKelulusan === '3'"
@@ -435,7 +470,10 @@ onMounted(() => {
                   ></path>
                 </svg>
               </div>
-              <label for="belumLulus" class="ml-2 text-gray-700 body3-bold"
+              <label
+                for="belumLulus"
+                class="ml-2 text-gray-700 body3-bold"
+                :class="{ 'opacity-50': isStatusKelulusanDisabled }"
                 >Belum lulus perlu diuji lagi</label
               >
             </div>
@@ -468,6 +506,7 @@ onMounted(() => {
               </div>
             </div>
 
+            <!-- Tidak Lulus -->
             <div class="flex items-center sm:flex-1">
               <div class="relative inline-flex items-center">
                 <input
@@ -476,7 +515,8 @@ onMounted(() => {
                   name="statusKelulusan"
                   value="4"
                   v-model="statusKelulusan"
-                  class="w-7 h-7 cursor-pointer appearance-none border-2 border-gray-300 rounded-full checked:border-[#00B69B] checked:bg-[#00B69B] focus:outline-none"
+                  :disabled="isStatusKelulusanDisabled"
+                  class="w-7 h-7 cursor-pointer appearance-none border-2 border-gray-300 rounded-full checked:border-[#00B69B] checked:bg-[#00B69B] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <svg
                   v-if="statusKelulusan === '4'"
@@ -491,7 +531,10 @@ onMounted(() => {
                   ></path>
                 </svg>
               </div>
-              <label for="tidakLulus" class="ml-2 text-gray-700 body3-bold"
+              <label
+                for="tidakLulus"
+                class="ml-2 text-gray-700 body3-bold"
+                :class="{ 'opacity-50': isStatusKelulusanDisabled }"
                 >Tidak lulus</label
               >
             </div>
@@ -665,6 +708,16 @@ input[type="radio"]:hover {
 input[type="radio"]:focus {
   border-color: #00b69b;
   box-shadow: 0 0 0 2px rgba(0, 182, 155, 0.2);
+}
+
+input[type="radio"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+input[type="radio"]:disabled + label {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 /* Add smooth transition for opacity changes */
