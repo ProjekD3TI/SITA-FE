@@ -94,6 +94,14 @@ const hasGiven = computed(() => {
   return !!currentDosenPenguji?.nilai_ujian_ta;
 });
 
+const isEditNilaiSliderDisabled = computed(() => {
+  if (!detailUjian.value) return false;
+
+  const statusKelulusan = detailUjian.value.status_kelulusan;
+  // Disable if status is 3 (Belum lulus perlu diuji lagi) or 4 (Tidak lulus)
+  return statusKelulusan === 3 || statusKelulusan === 4;
+});
+
 // Computed for examiners list
 const examiners = computed(() => {
   if (!detailUjian.value?.dosen_penguji) return [];
@@ -298,13 +306,14 @@ async function handleSliderChange(val) {
     return;
   }
 
-  try {
-    const token = VueCookies.get("auth_token");
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-    };
+  // Prevent enabling edit_nilai when status kelulusan is 3 or 4
+  if (isEditNilaiSliderDisabled.value && val === 1) {
+    toast.error("Tidak dapat mengaktifkan edit nilai karena status kelulusan.");
+    return;
+  }
 
+  try {
+    // Rest of your existing function
     await axios.put(
       `/api/dosen/tugas-akhir/detail-ujian-ta/${detailUjian.value.ujian_ta_id}/edit-nilai`,
       { edit_nilai: val },
@@ -314,13 +323,14 @@ async function handleSliderChange(val) {
     // Update local state after successful API call
     detailUjian.value.edit_nilai = val;
 
-    const message = val
-      ? "Dosen penguji kini dapat mengedit nilai ujian TA"
-      : "Dosen penguji tidak dapat mengedit nilai ujian TA";
-    toast.success(message);
+    if (val === 1) {
+      toast.success("Edit nilai diaktifkan.");
+    } else {
+      toast.info("Edit nilai dinonaktifkan.");
+    }
   } catch (err) {
     console.error("Error updating edit_nilai:", err);
-    toast.error(err.response?.data?.message || "Gagal mengubah pengaturan");
+    toast.error("Gagal mengubah pengaturan edit nilai.");
   }
 }
 
@@ -370,6 +380,40 @@ watchEffect(() => {
   if (fileNaskahTA.value) {
     console.log("fileNaskahTA changed, loading preview");
     loadPdfPreview();
+  }
+});
+
+watchEffect(async () => {
+  if (
+    detailUjian.value &&
+    (detailUjian.value.status_kelulusan === 3 ||
+      detailUjian.value.status_kelulusan === 4)
+  ) {
+    // Check if edit_nilai is currently 1 (enabled)
+    if (detailUjian.value.edit_nilai === 1) {
+      try {
+        // Update in the API
+        await axios.put(
+          `/api/dosen/tugas-akhir/detail-ujian-ta/${detailUjian.value.ujian_ta_id}/edit-nilai`,
+          { edit_nilai: 0 },
+          {
+            headers: {
+              "X-CSRF-TOKEN": VueCookies.get("csrfToken"),
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        // Update local state
+        detailUjian.value.edit_nilai = 0;
+
+        toast.info(
+          `Edit nilai otomatis dinonaktifkan karena status kelulusan "${statusKelulusanLabel.value.label}"`
+        );
+      } catch (err) {
+        console.error("Error setting edit_nilai to 0:", err);
+      }
+    }
   }
 });
 
@@ -483,11 +527,21 @@ onMounted(() => {
             <div class="flex flex-col gap-4">
               <div v-if="isSecretary" class="mt-4">
                 <h5 class="body1-bold">Edit Nilai</h5>
-                <div class="flex items-center gap-2">
+                <div class="flex flex-col gap-2">
                   <Slider
                     :modelValue="detailUjian?.edit_nilai"
                     @update:modelValue="handleSliderChange"
+                    :disabled="isEditNilaiSliderDisabled"
                   />
+                  <!-- Explanatory text when disabled -->
+                  <span
+                    v-if="isEditNilaiSliderDisabled"
+                    class="text-sm text-red-500"
+                  >
+                    Tidak dapat diubah karena status kelulusan adalah "{{
+                      statusKelulusanLabel.label
+                    }}"
+                  </span>
                 </div>
               </div>
               <div class="flex items-center self-end gap-4">
