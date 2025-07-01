@@ -438,6 +438,21 @@ const handleActionClick = (item, action) => {
 
   event.stopPropagation();
 };
+
+const canEditNilai = computed(() => {
+  if (!bimbinganList.value) {
+    return false;
+  }
+  const statusAktif = parseInt(bimbinganList.value.status_aktif);
+  const statusKelulusan = parseInt(bimbinganList.value.status_kelulusan);
+  
+ if (statusAktif === 0 || statusKelulusan === 4) {
+ return false;
+  }
+  
+  return true;
+});
+
 </script>
 
 <template>
@@ -736,9 +751,15 @@ const handleActionClick = (item, action) => {
           :content="bimbinganDetail.catatanAkhir"
         />
       </div>
-
+      
+        <!-- Tombol Edit Nilai - hanya tampil jika bisa edit -->
       <div class="flex justify-end mt-6">
-        <Button variant="secondary" size="lg" @click="editNilai">
+        <Button 
+          v-if="canEditNilai"
+          variant="secondary" 
+          size="lg" 
+          @click="editNilai"
+        >
           Edit Nilai
         </Button>
       </div>
