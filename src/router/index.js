@@ -1,121 +1,95 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHistory } from 'vue-router';
 
-import { getUserData } from "../services/authDosen";
-import VueCookies from "vue-cookies";
-import { useToast } from "vue-toastification";
-import UserLayout from "../layout/UserLayout.vue";
-import DosenLayout from "../layout/DosenLayout.vue";
-import AdminLayout from "../layout/AdminLayout.vue";
+import { getUserData } from '../services/authDosen';
+import VueCookies from 'vue-cookies';
+import { useToast } from 'vue-toastification';
+import UserLayout from '../layout/UserLayout.vue';
+import DosenLayout from '../layout/DosenLayout.vue';
+import AdminLayout from '../layout/AdminLayout.vue';
 
 //define a routes
 const routes = [
   {
-    path: "/",
-    name: "Landing",
-    component: () => import("../views/Landing/Landing.vue"),
+    path: '/',
+    name: 'Landing',
+    component: () => import('../views/Landing/Landing.vue'),
   },
   {
-    path: "/mahasiswa/forgot-password",
-    name: "ForgotPasswordMahasiswa",
-    component: () =>
-      import(
-        /* webpackChunkName: "login" */ "../views/auth/Mahasiswa/ForgotPassword.vue"
-      ),
+    path: '/mahasiswa/forgot-password',
+    name: 'ForgotPasswordMahasiswa',
+    component: () => import(/* webpackChunkName: "login" */ '../views/auth/Mahasiswa/ForgotPassword.vue'),
   },
   {
-    path: "/akses-ruang",
-    name: "AksesRuang",
-    component: () => import("../views/Monitoring/Akses.vue"),
+    path: '/akses-ruang',
+    name: 'AksesRuang',
+    component: () => import('../views/Monitoring/Akses.vue'),
   },
   {
-    path: "/mahasiswa/reset-password/:token",
-    name: "ResetPasswordMahasiswa",
-    component: () =>
-      import(
-        /* webpackChunkName: "login" */ "../views/auth/Mahasiswa/ResetPassword.vue"
-      ),
+    path: '/mahasiswa/reset-password/:token',
+    name: 'ResetPasswordMahasiswa',
+    component: () => import(/* webpackChunkName: "login" */ '../views/auth/Mahasiswa/ResetPassword.vue'),
   },
   {
-    path: "/dosen/forgot-password",
-    name: "ForgotPasswordDosen",
-    component: () =>
-      import(
-        /* webpackChunkName: "login" */ "../views/auth/Dosen/ForgotPassword.vue"
-      ),
+    path: '/dosen/forgot-password',
+    name: 'ForgotPasswordDosen',
+    component: () => import(/* webpackChunkName: "login" */ '../views/auth/Dosen/ForgotPassword.vue'),
   },
   {
-    path: "/dosen/reset-password/:token",
-    name: "ResetPasswordDosen",
-    component: () =>
-      import(
-        /* webpackChunkName: "login" */ "../views/auth/Dosen/ResetPassword.vue"
-      ),
+    path: '/dosen/reset-password/:token',
+    name: 'ResetPasswordDosen',
+    component: () => import(/* webpackChunkName: "login" */ '../views/auth/Dosen/ResetPassword.vue'),
   },
   {
-    path: "/admin/forgot-password",
-    name: "ForgotPasswordAdmin",
-    component: () =>
-      import(
-        /* webpackChunkName: "login" */ "../views/auth/Admin/ForgotPassword.vue"
-      ),
+    path: '/admin/forgot-password',
+    name: 'ForgotPasswordAdmin',
+    component: () => import(/* webpackChunkName: "login" */ '../views/auth/Admin/ForgotPassword.vue'),
   },
   {
-    path: "/admin/reset-password/:token",
-    name: "ResetPasswordAdmin",
-    component: () =>
-      import(
-        /* webpackChunkName: "login" */ "../views/auth/Admin/ResetPassword.vue"
-      ),
+    path: '/admin/reset-password/:token',
+    name: 'ResetPasswordAdmin',
+    component: () => import(/* webpackChunkName: "login" */ '../views/auth/Admin/ResetPassword.vue'),
   },
   {
-    path: "/mahasiswa/login",
-    name: "loginmhs",
-    component: () =>
-      import(/* webpackChunkName: "login" */ "../views/auth/LoginMhs.vue"),
+    path: '/mahasiswa/login',
+    name: 'loginmhs',
+    component: () => import(/* webpackChunkName: "login" */ '../views/auth/LoginMhs.vue'),
   },
   {
-    path: "/dosen/login",
-    name: "logindosen",
-    component: () =>
-      import(/* webpackChunkName: "login" */ "../views/auth/LoginDosen.vue"),
+    path: '/dosen/login',
+    name: 'logindosen',
+    component: () => import(/* webpackChunkName: "login" */ '../views/auth/LoginDosen.vue'),
   },
   {
-    path: "/login-admin",
-    name: "LoginAdmin",
-    component: () =>
-      import(/* webpackChunkName: "login" */ "../views/auth/LoginAdmin.vue"),
+    path: '/login-admin',
+    name: 'LoginAdmin',
+    component: () => import(/* webpackChunkName: "login" */ '../views/auth/LoginAdmin.vue'),
   },
   {
-    path: "/register",
-    name: "register",
-    component: () =>
-      import(/* webpackChunkName: "login" */ "../views/auth/Register.vue"),
+    path: '/register',
+    name: 'register',
+    component: () => import(/* webpackChunkName: "login" */ '../views/auth/Register.vue'),
   },
   {
-    path: "/404",
-    name: "404",
-    component: () =>
-      import(/* webpackChunkName: "login" */ "../views/404/404.vue"),
+    path: '/404',
+    name: '404',
+    component: () => import(/* webpackChunkName: "login" */ '../views/404/404.vue'),
   },
   {
-    path: "/laporks",
-    name: "laporks",
-    component: () =>
-      import(
-        /* webpackChunkName: "login" */ "../views/Pelaporan/LaporKekerasanSeksual.vue"
-      ),
+    path: '/laporks',
+    name: 'laporks',
+    component: () => import(/* webpackChunkName: "login" */ '../views/Pelaporan/LaporKekerasanSeksual.vue'),
   },
 
   // Mahasiswa
   {
-    path: "/mahasiswa",
+    path: '/mahasiswa',
     component: UserLayout,
-    meta: { requiresAuth: true, userType: "mahasiswa" },
+    meta: { requiresAuth: true, userType: 'mahasiswa' },
     children: [
       {
-        path: "dashboard",
-        name: "DashboardMahasiswa",
-        component: () => import("../views/Mahasiswa/Landing.vue"),
+        path: 'dashboard',
+        name: 'DashboardMahasiswa',
+        component: () => import('../views/Mahasiswa/Landing.vue'),
       },
       // {
       //   path: "landing",
@@ -123,24 +97,24 @@ const routes = [
       //   component: () => import("../views/Mahasiswa/Dashboard.vue"),
       // },
       {
-        path: "profile",
-        name: "ProfileMahasiswa",
-        component: () => import("../views/Mahasiswa/Profile.vue"),
+        path: 'profile',
+        name: 'ProfileMahasiswa',
+        component: () => import('../views/Mahasiswa/Profile.vue'),
       },
       {
-        path: "pinjam",
-        name: "PinjamRuangMahasiswa",
-        component: () => import("../views/Mahasiswa/Booking/Create.vue"),
+        path: 'pinjam',
+        name: 'PinjamRuangMahasiswa',
+        component: () => import('../views/Mahasiswa/Booking/Create.vue'),
       },
       {
-        path: "booking-mahasiswa",
-        name: "ListBookingMahasiswa",
-        component: () => import("../views/Mahasiswa/Booking/Booking.vue"),
+        path: 'booking-mahasiswa',
+        name: 'ListBookingMahasiswa',
+        component: () => import('../views/Mahasiswa/Booking/Booking.vue'),
       },
       {
-        path: "jadwal-mahasiswa",
-        name: "JadwalMahasiswa",
-        component: () => import("../views/Mahasiswa/Jadwal/List.vue")
+        path: 'jadwal-mahasiswa',
+        name: 'JadwalMahasiswa',
+        component: () => import('../views/Mahasiswa/Jadwal/List.vue'),
       },
       // route mahasiswa yg laenya
     ],
@@ -148,14 +122,29 @@ const routes = [
 
   //Dosen
   {
-    path: "/dosen",
+    path: '/dosen',
     component: DosenLayout,
-    meta: { requiresAuth: true, userType: "dosen" },
+    meta: { requiresAuth: true, userType: 'dosen' },
     children: [
       {
-        path: "profile",
-        name: "ProfileDosen",
-        component: () => import("../views/Dosen/Profile.vue"),
+        path: 'profile',
+        name: 'ProfileDosen',
+        component: () => import('../views/Dosen/Profile.vue'),
+      },
+      {
+        path: 'booking-dosen',
+        name: 'ListBookingDosen',
+        component: () => import('../views/Dosen/Booking/Booking.vue'),
+      },
+      {
+        path: 'jadwal-dosen',
+        name: 'JadwalDosen',
+        component: () => import('../views/Dosen/Jadwal/List.vue'),
+      },
+      {
+        path: 'pinjam',
+        name: 'PinjamRuangDosen',
+        component: () => import('../views/Dosen/Booking/Create.vue'),
       },
       // route yg laen
     ],
@@ -163,14 +152,14 @@ const routes = [
 
   // jabatan dosen
   {
-    path: "/dosen",
+    path: '/dosen',
     component: DosenLayout,
-    meta: { requiresAuth: true, userType: "dosen", requiredJabatan: "Dosen" },
+    meta: { requiresAuth: true, userType: 'dosen', requiredJabatan: 'Dosen' },
     children: [
       {
-        path: "dashboard",
-        name: "DashboardDosen",
-        component: () => import("../views/Dosen/Landing.vue"),
+        path: 'dashboard',
+        name: 'DashboardDosen',
+        component: () => import('../views/Dosen/Landing.vue'),
       },
       // route yg laen
     ],
@@ -178,36 +167,35 @@ const routes = [
 
   // jabatan kalab
   {
-    path: "/kalab",
+    path: '/kalab',
     component: DosenLayout,
-    meta: { requiresAuth: true, userType: "dosen", requiredJabatan: "Kalab" },
+    meta: { requiresAuth: true, userType: 'dosen', requiredJabatan: 'Kalab' },
     children: [
       {
-        path: "dashboard",
-        name: "DashboardKalab",
-        component: () => import("../views/Dosen/Kalab/Landing.vue"),
+        path: 'dashboard',
+        name: 'DashboardKalab',
+        component: () => import('../views/Dosen/Kalab/Landing.vue'),
       },
       // route yg laen
 
       {
-        path: "list-peminjaman",
-        name: "ListPeminjamanKalab",
-        component: () => import("../views/Dosen/Kalab/Booking/List.vue"),
+        path: 'list-peminjaman',
+        name: 'ListPeminjamanKalab',
+        component: () => import('../views/Dosen/Kalab/Booking/List.vue'),
       },
-
     ],
   },
 
   // jabatan kaprodi
   {
-    path: "/kaprodi",
+    path: '/kaprodi',
     component: DosenLayout,
-    meta: { requiresAuth: true, userType: "dosen", requiredJabatan: "Kaprodi" },
+    meta: { requiresAuth: true, userType: 'dosen', requiredJabatan: 'Kaprodi' },
     children: [
       {
-        path: "dashboard",
-        name: "DashboardKaprodi",
-        component: () => import("../views/Dosen/Kaprodi/Dashboard.vue"),
+        path: 'dashboard',
+        name: 'DashboardKaprodi',
+        component: () => import('../views/Dosen/Kaprodi/Dashboard.vue'),
       },
       // route yg laen
     ],
@@ -215,14 +203,14 @@ const routes = [
 
   // jabatan petugas
   {
-    path: "/petugas",
+    path: '/petugas',
     component: DosenLayout,
-    meta: { requiresAuth: true, userType: "dosen", requiredJabatan: "Petugas" },
+    meta: { requiresAuth: true, userType: 'dosen', requiredJabatan: 'Petugas' },
     children: [
       {
-        path: "dashboard",
-        name: "DashboardPetugas",
-        component: () => import("../views/Dosen/Petugas/Dashboard.vue"),
+        path: 'dashboard',
+        name: 'DashboardPetugas',
+        component: () => import('../views/Dosen/Petugas/Dashboard.vue'),
       },
       // route yg laen
     ],
@@ -230,14 +218,14 @@ const routes = [
 
   //Admin
   {
-    path: "/admin",
+    path: '/admin',
     component: AdminLayout,
-    meta: { requiresAuth: true, userType: "admin" },
+    meta: { requiresAuth: true, userType: 'admin' },
     children: [
       {
-        path: "dashboard",
-        name: "DashboardAdmin",
-        component: () => import("../views/Admin/Dashboard.vue"),
+        path: 'dashboard',
+        name: 'DashboardAdmin',
+        component: () => import('../views/Admin/Dashboard.vue'),
       },
       // route yg laen
     ],
@@ -245,14 +233,14 @@ const routes = [
 
   // superadmin
   {
-    path: "/superadmin",
+    path: '/superadmin',
     component: AdminLayout,
-    meta: { requiresAuth: true, userType: "admin", requiredRole: "superadmin" },
+    meta: { requiresAuth: true, userType: 'admin', requiredRole: 'superadmin' },
     children: [
       {
-        path: "dashboard",
-        name: "DashboardSuperadmin",
-        component: () => import("../views/Admin/Superadmin/Dashboard.vue"),
+        path: 'dashboard',
+        name: 'DashboardSuperadmin',
+        component: () => import('../views/Admin/Superadmin/Dashboard.vue'),
       },
       // route yg laen
     ],
@@ -260,14 +248,14 @@ const routes = [
 
   // admin ta
   {
-    path: "/admin-ta",
+    path: '/admin-ta',
     component: AdminLayout,
-    meta: { requiresAuth: true, userType: "admin", requiredRole: "admin_ta" },
+    meta: { requiresAuth: true, userType: 'admin', requiredRole: 'admin_ta' },
     children: [
       {
-        path: "dashboard",
-        name: "DashboardAdminTa",
-        component: () => import("../views/Admin/AdminTa/Dashboard.vue"),
+        path: 'dashboard',
+        name: 'DashboardAdminTa',
+        component: () => import('../views/Admin/AdminTa/Dashboard.vue'),
       },
       // route yg laen
     ],
@@ -275,212 +263,180 @@ const routes = [
 
   // admin pengelola
   {
-    path: "/admin-pengelola",
+    path: '/admin-pengelola',
     component: AdminLayout,
     meta: {
       requiresAuth: true,
-      userType: "admin",
-      requiredRole: "admin_pengelola",
+      userType: 'admin',
+      requiredRole: 'admin_pengelola',
     },
     children: [
       {
-        path: "dashboard",
-        name: "DashboardAdminPengelola",
-        component: () => import("../views/Admin/AdminPengelola/Landing.vue"),
+        path: 'dashboard',
+        name: 'DashboardAdminPengelola',
+        component: () => import('../views/Admin/AdminPengelola/Landing.vue'),
       },
 
       // Kelola
       // Kelas
       {
-        path: "kelas",
-        name: "ListKelas",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Clases/Kelas/List.vue"),
+        path: 'kelas',
+        name: 'ListKelas',
+        component: () => import('../views/Admin/AdminPengelola/Clases/Kelas/List.vue'),
       },
       {
-        path: "kelas/create",
-        name: "CreateKelas",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Clases/Kelas/Create.vue"),
+        path: 'kelas/create',
+        name: 'CreateKelas',
+        component: () => import('../views/Admin/AdminPengelola/Clases/Kelas/Create.vue'),
       },
       {
-        path: "kelas/edit/:id",
-        name: "EditKelas",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Clases/Kelas/Edit.vue"),
+        path: 'kelas/edit/:id',
+        name: 'EditKelas',
+        component: () => import('../views/Admin/AdminPengelola/Clases/Kelas/Edit.vue'),
       },
       //semester
       {
-        path: "semester",
-        name: "ListSemester",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Clases/Semester/List.vue"),
+        path: 'semester',
+        name: 'ListSemester',
+        component: () => import('../views/Admin/AdminPengelola/Clases/Semester/List.vue'),
       },
       {
-        path: "semester/create",
-        name: "CreateSemester",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Clases/Semester/Create.vue"),
+        path: 'semester/create',
+        name: 'CreateSemester',
+        component: () => import('../views/Admin/AdminPengelola/Clases/Semester/Create.vue'),
       },
       {
-        path: "semester/update/:id",
-        name: "EditSemester",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Clases/Semester/Edit.vue"),
+        path: 'semester/update/:id',
+        name: 'EditSemester',
+        component: () => import('../views/Admin/AdminPengelola/Clases/Semester/Edit.vue'),
       },
       //RFID
       {
-        path: "rfid",
-        name: "ListRfid",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Rfid/List.vue"),
+        path: 'rfid',
+        name: 'ListRfid',
+        component: () => import('../views/Admin/AdminPengelola/Rfid/List.vue'),
       },
       {
-        path: "rfid/create",
-        name: "CreateRfid",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Rfid/Create.vue"),
+        path: 'rfid/create',
+        name: 'CreateRfid',
+        component: () => import('../views/Admin/AdminPengelola/Rfid/Create.vue'),
       },
       {
-        path: "rfid/edit/:id",
-        name: "EditRfid",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Rfid/Edit.vue"),
+        path: 'rfid/edit/:id',
+        name: 'EditRfid',
+        component: () => import('../views/Admin/AdminPengelola/Rfid/Edit.vue'),
       },
-
 
       // Jadwal
       //CRUD sesi
       {
-        path: "sesi",
-        name: "ListSesi",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Jadwal/Sesi/List.vue"),
+        path: 'sesi',
+        name: 'ListSesi',
+        component: () => import('../views/Admin/AdminPengelola/Jadwal/Sesi/List.vue'),
       },
       {
-        path: "sesi/create",
-        name: "CreateSesi",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Jadwal/Sesi/Create.vue"),
+        path: 'sesi/create',
+        name: 'CreateSesi',
+        component: () => import('../views/Admin/AdminPengelola/Jadwal/Sesi/Create.vue'),
       },
       {
-        path: "sesi/edit/:id",
-        name: "EditSesi",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Jadwal/Sesi/Edit.vue"),
+        path: 'sesi/edit/:id',
+        name: 'EditSesi',
+        component: () => import('../views/Admin/AdminPengelola/Jadwal/Sesi/Edit.vue'),
       },
       //Jadwal
       {
-        path: "jadwal",
-        name: "ListJadwal",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Jadwal/JadwalTetap/List.vue"),
+        path: 'jadwal',
+        name: 'ListJadwal',
+        component: () => import('../views/Admin/AdminPengelola/Jadwal/JadwalTetap/List.vue'),
       },
       {
-        path: "jadwal/create",
-        name: "CreateJadwal",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Jadwal/JadwalTetap/Create.vue"),
+        path: 'jadwal/create',
+        name: 'CreateJadwal',
+        component: () => import('../views/Admin/AdminPengelola/Jadwal/JadwalTetap/Create.vue'),
       },
       {
-        path: "jadwal/edit/:id",
-        name: "EditJadwal",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Jadwal/JadwalTetap/Edit.vue"),
+        path: 'jadwal/edit/:id',
+        name: 'EditJadwal',
+        component: () => import('../views/Admin/AdminPengelola/Jadwal/JadwalTetap/Edit.vue'),
       },
       {
-        path: "jadwal/detail/:id",
-        name: "DetailJadwal",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Jadwal/JadwalTetap/Detail.vue"),
+        path: 'jadwal/detail/:id',
+        name: 'DetailJadwal',
+        component: () => import('../views/Admin/AdminPengelola/Jadwal/JadwalTetap/Detail.vue'),
       },
 
       // CRUD gedung lantai
       {
-        path: "gedung-lantai",
-        name: "ListGedungLantai",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Ruang/LantaiGedung/List.vue"),
+        path: 'gedung-lantai',
+        name: 'ListGedungLantai',
+        component: () => import('../views/Admin/AdminPengelola/Ruang/LantaiGedung/List.vue'),
       },
       {
-        path: "lantaigedung/create",
-        name: "CreateLantaiGedung",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Ruang/LantaiGedung/Create.vue"),
+        path: 'lantaigedung/create',
+        name: 'CreateLantaiGedung',
+        component: () => import('../views/Admin/AdminPengelola/Ruang/LantaiGedung/Create.vue'),
       },
       {
-        path: "lantaigedung/edit/:id",
-        name: "EditLantaiGedung",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Ruang/LantaiGedung/Edit.vue"),
+        path: 'lantaigedung/edit/:id',
+        name: 'EditLantaiGedung',
+        component: () => import('../views/Admin/AdminPengelola/Ruang/LantaiGedung/Edit.vue'),
       },
       // CRUD Lantai
       {
-        path: "lantai",
-        name: "ListLantai",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Ruang/Lantai/List.vue"),
+        path: 'lantai',
+        name: 'ListLantai',
+        component: () => import('../views/Admin/AdminPengelola/Ruang/Lantai/List.vue'),
       },
       {
-        path: "lantai/create",
-        name: "CreateLantai",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Ruang/Lantai/Create.vue"),
+        path: 'lantai/create',
+        name: 'CreateLantai',
+        component: () => import('../views/Admin/AdminPengelola/Ruang/Lantai/Create.vue'),
       },
       {
-        path: "lantai/edit/:id",
-        name: "EditLantai",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Ruang/Lantai/Edit.vue"),
+        path: 'lantai/edit/:id',
+        name: 'EditLantai',
+        component: () => import('../views/Admin/AdminPengelola/Ruang/Lantai/Edit.vue'),
       },
       // CRUD Gedung
       {
-        path: "gedung",
-        name: "ListGedung",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Ruang/Gedung/List.vue"),
+        path: 'gedung',
+        name: 'ListGedung',
+        component: () => import('../views/Admin/AdminPengelola/Ruang/Gedung/List.vue'),
       },
       {
-        path: "gedung/create",
-        name: "CreateGedung",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Ruang/Gedung/Create.vue"),
+        path: 'gedung/create',
+        name: 'CreateGedung',
+        component: () => import('../views/Admin/AdminPengelola/Ruang/Gedung/Create.vue'),
       },
       {
-        path: "gedung/edit/:id",
-        name: "EditGedung",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Ruang/Gedung/Edit.vue"),
+        path: 'gedung/edit/:id',
+        name: 'EditGedung',
+        component: () => import('../views/Admin/AdminPengelola/Ruang/Gedung/Edit.vue'),
       },
       // CRUD Ruang
       {
-        path: "ruang",
-        name: "ListRuang",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Ruang/Ruang/List.vue"),
+        path: 'ruang',
+        name: 'ListRuang',
+        component: () => import('../views/Admin/AdminPengelola/Ruang/Ruang/List.vue'),
       },
       {
-        path: "ruang/create",
-        name: "CreateRuang",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Ruang/Ruang/Create.vue"),
+        path: 'ruang/create',
+        name: 'CreateRuang',
+        component: () => import('../views/Admin/AdminPengelola/Ruang/Ruang/Create.vue'),
       },
       {
-        path: "ruang/edit/:id",
-        name: "EditRuang",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Ruang/Ruang/Edit.vue"),
+        path: 'ruang/edit/:id',
+        name: 'EditRuang',
+        component: () => import('../views/Admin/AdminPengelola/Ruang/Ruang/Edit.vue'),
       },
       {
-        path: "ruang/detail/:id",
-        name: "DetailRuang",
-        component: () =>
-          import("../views/Admin/AdminPengelola/Ruang/Ruang/Detail.vue"),
+        path: 'ruang/detail/:id',
+        name: 'DetailRuang',
+        component: () => import('../views/Admin/AdminPengelola/Ruang/Ruang/Detail.vue'),
       },
-
     ],
   },
-
 
   // {
   //   path: "/admin-pengelola/dashboard",
@@ -505,11 +461,11 @@ const toast = useToast();
 
 router.beforeEach(async (to, from, next) => {
   const userData = getUserData();
-  const authToken = VueCookies.get("auth_token");
+  const authToken = VueCookies.get('auth_token');
 
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (!userData || !authToken) {
-      next({ name: "Landing" });
+      next({ name: 'Landing' });
       return;
     }
 
@@ -518,26 +474,26 @@ router.beforeEach(async (to, from, next) => {
       // gausa di pake biar lebh aman?
 
       switch (userData.type) {
-        case "dosen":
+        case 'dosen':
           redirectTo(next, userData.jabatan);
           return;
-        case "admin":
-          next({ name: "DashboardAdmin" });
+        case 'admin':
+          next({ name: 'DashboardAdmin' });
           return;
-        case "mahasiswa":
-          next({ name: "DashboardMahasiswa" });
+        case 'mahasiswa':
+          next({ name: 'DashboardMahasiswa' });
           return;
         default:
-          next({ name: "Landing" });
+          next({ name: 'Landing' });
           return;
       }
     }
 
-    if (userData.type === "dosen" && to.meta.requiredJabatan) {
+    if (userData.type === 'dosen' && to.meta.requiredJabatan) {
       try {
         const currentUserData = getUserData();
         if (!currentUserData) {
-          next({ name: "Landing" });
+          next({ name: 'Landing' });
           return;
         }
 
@@ -551,28 +507,28 @@ router.beforeEach(async (to, from, next) => {
 
         next();
       } catch (error) {
-        console.error("Error checking jabatan:", error);
-        window.location.href = "/dosen/dashboard";
+        console.error('Error checking jabatan:', error);
+        window.location.href = '/dosen/dashboard';
         return;
       }
     }
 
-    if (userData.type === "admin" && to.meta.requiredRole) {
+    if (userData.type === 'admin' && to.meta.requiredRole) {
       if (!userData.role || userData.role !== to.meta.requiredRole) {
         toast.error(`Anda tidak memiliki akses ke halaman ini `);
 
         switch (userData.role) {
-          case "superadmin":
-            next({ name: "DashboardSuperadmin" });
+          case 'superadmin':
+            next({ name: 'DashboardSuperadmin' });
             break;
-          case "admin_ta":
-            next({ name: "DashboardAdminTa" });
+          case 'admin_ta':
+            next({ name: 'DashboardAdminTa' });
             break;
-          case "admin_pengelola":
-            next({ name: "DashboardAdminPengelola" });
+          case 'admin_pengelola':
+            next({ name: 'DashboardAdminPengelola' });
             break;
           default:
-            next({ name: "DashboardAdmin" });
+            next({ name: 'DashboardAdmin' });
         }
         return;
       }
@@ -580,20 +536,16 @@ router.beforeEach(async (to, from, next) => {
 
     next();
   } else {
-    if (
-      userData &&
-      authToken &&
-      ["Login", "LoginDosen", "LoginAdmin", "LoginMahasiswa"].includes(to.name)
-    ) {
+    if (userData && authToken && ['Login', 'LoginDosen', 'LoginAdmin', 'LoginMahasiswa'].includes(to.name)) {
       switch (userData.type) {
-        case "dosen":
+        case 'dosen':
           redirectTo(next, userData.jabatan);
           break;
-        case "admin":
-          next({ name: "DashboardAdmin" });
+        case 'admin':
+          next({ name: 'DashboardAdmin' });
           break;
-        case "mahasiswa":
-          next({ name: "DashboardMahasiswa" });
+        case 'mahasiswa':
+          next({ name: 'DashboardMahasiswa' });
           break;
         default:
           next();
@@ -607,20 +559,20 @@ router.beforeEach(async (to, from, next) => {
 
 function redirectTo(next, jabatan) {
   switch (jabatan) {
-    case "Dosen":
-      next({ name: "DashboardDosen" });
+    case 'Dosen':
+      next({ name: 'DashboardDosen' });
       break;
-    case "Kalab":
-      next({ name: "DashboardKalab" });
+    case 'Kalab':
+      next({ name: 'DashboardKalab' });
       break;
-    case "Kaprodi":
-      next({ name: "DashboardKaprodi" });
+    case 'Kaprodi':
+      next({ name: 'DashboardKaprodi' });
       break;
-    case "Petugas":
-      next({ name: "DashboardPetugas" });
+    case 'Petugas':
+      next({ name: 'DashboardPetugas' });
       break;
     default:
-      next({ name: "DashboardDosen" });
+      next({ name: 'DashboardDosen' });
   }
 }
 
