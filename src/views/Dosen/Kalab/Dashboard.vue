@@ -95,6 +95,146 @@
             </p>
           </div>
         </div>
+
+        <!-- Dedicated Category Analysis Section -->
+        <div class="mb-6" v-if="hasCategoryData">
+          <h2 class="text-xl font-semibold text-gray-800 mb-6">📊 Analisis Kategori Laporan</h2>
+          
+          <!-- Category Statistics Summary Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+            <div 
+              v-for="(category, index) in categoryCounts" 
+              :key="category.category_id"
+              class="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+            >
+              <div class="flex items-center justify-between mb-2">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center" 
+                     :style="{ backgroundColor: categoryColors[index % categoryColors.length] + '20' }">
+                  <span class="text-sm font-bold" :style="{ color: categoryColors[index % categoryColors.length] }">
+                    {{ category.count }}
+                  </span>
+                </div>
+                <div class="text-right">
+                  <p class="text-xs text-gray-500">{{ getPercentage(category.count) }}%</p>
+                </div>
+              </div>
+              <h4 class="text-sm font-semibold text-gray-800 mb-1">{{ category.nama }}</h4>
+              <div class="space-y-1">
+                <div class="flex justify-between text-xs">
+                  <span class="text-green-600">Selesai:</span>
+                  <span class="font-medium">{{ category.statusBreakdown?.finished || 0 }}</span>
+                </div>
+                <div class="flex justify-between text-xs">
+                  <span class="text-yellow-600">Terverifikasi:</span>
+                  <span class="font-medium">{{ category.statusBreakdown?.verified || 0 }}</span>
+                </div>
+                <div class="flex justify-between text-xs">
+                  <span class="text-red-600">Belum Terverifikasi:</span>
+                  <span class="font-medium">{{ category.statusBreakdown?.unverified || 0 }}</span>
+                </div>
+                <div class="flex justify-between text-xs">
+                  <span class="text-gray-600">Ditolak:</span>
+                  <span class="font-medium">{{ category.statusBreakdown?.rejected || 0 }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Category Visualization Charts -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Category Bar Chart -->
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+              <h4 class="text-lg font-semibold text-gray-800 mb-4">📈 Distribusi Laporan per Kategori</h4>
+              <div class="h-80">
+                <canvas ref="categoryBarChartRef"></canvas>
+              </div>
+            </div>
+            
+            <!-- Category Pie Chart -->
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+              <h4 class="text-lg font-semibold text-gray-800 mb-4">🥧 Proporsi Kategori Laporan</h4>
+              <div class="h-80">
+                <canvas ref="categoryPieChartRef"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Category Details Table -->
+          <div class="bg-white border border-gray-200 rounded-lg p-6">
+            <h4 class="text-lg font-semibold text-gray-800 mb-4">📋 Detail Laporan per Kategori</h4>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Persentase</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Selesai</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Terverifikasi</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Belum Terverifikasi</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ditolak</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-if="categoryCounts.length === 0">
+                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">Tidak ada data kategori</td>
+                  </tr>
+                  <tr v-for="(category, index) in categoryCounts" :key="category.category_id" class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div 
+                          class="w-4 h-4 rounded-full mr-3" 
+                          :style="{ backgroundColor: categoryColors[index % categoryColors.length] }"
+                        ></div>
+                        <div>
+                          <div class="text-sm font-medium text-gray-900">{{ category.nama }}</div>
+                          <div class="text-xs text-gray-500">ID: {{ category.category_id }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="text-lg font-bold text-gray-900">{{ category.count }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="flex-1 bg-gray-200 rounded-full h-2 mr-2">
+                          <div 
+                            class="h-2 rounded-full"
+                            :style="{ 
+                              width: getPercentage(category.count) + '%',
+                              backgroundColor: categoryColors[index % categoryColors.length]
+                            }"
+                          ></div>
+                        </div>
+                        <span class="text-sm font-medium text-gray-900">{{ getPercentage(category.count) }}%</span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                        {{ category.statusBreakdown?.finished || 0 }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                        {{ category.statusBreakdown?.verified || 0 }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                        {{ category.statusBreakdown?.unverified || 0 }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                        {{ category.statusBreakdown?.rejected || 0 }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
         
         <!-- Grafik Laporan per Periode -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -113,15 +253,7 @@
           </div>
         </div>
         
-        <!-- Distribusi Kategori Laporan -->
-        <div class="mb-6" v-if="hasCategoryData">
-          <h3 class="text-lg font-medium text-gray-800 mb-2">Distribusi Kategori Laporan</h3>
-          <div class="h-80 bg-gray-50 rounded-lg p-4">
-            <canvas ref="categoryChartRef"></canvas>
-          </div>
-        </div>
-        
-        <!-- Recent Reports - Updated table headers -->
+        <!-- Recent Reports -->
         <div class="bg-gray-50 rounded-lg p-4">
           <h3 class="text-lg font-medium text-gray-800 mb-4">Laporan Terbaru</h3>
           <div class="overflow-x-auto">
@@ -130,6 +262,7 @@
                 <tr>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nomor Laporan</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
@@ -137,11 +270,16 @@
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
                 <tr v-if="recentReports.length === 0">
-                  <td colspan="5" class="px-4 py-4 text-center text-gray-500">Tidak ada data</td>
+                  <td colspan="6" class="px-4 py-4 text-center text-gray-500">Tidak ada data</td>
                 </tr>
-                <tr v-for="report in recentReports" :key="report.id" class="hover:bg-gray-50">
-                  <td class="px-4 py-2 whitespace-nowrap">{{ report.nomor_laporan || report.id }}</td>
+                <tr v-for="report in recentReports" :key="report.laporan_id" class="hover:bg-gray-50">
+                  <td class="px-4 py-2 whitespace-nowrap">{{ report.nomor_laporan }}</td>
                   <td class="px-4 py-2 whitespace-nowrap">{{ formatDate(report.created_at) }}</td>
+                  <td class="px-4 py-2 whitespace-nowrap">
+                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                      {{ getCategoryName(report.category_id) }}
+                    </span>
+                  </td>
                   <td class="px-4 py-2 whitespace-nowrap">{{ report.judul || 'Tidak disebutkan' }}</td>
                   <td class="px-4 py-2 whitespace-nowrap">
                     <span 
@@ -149,6 +287,7 @@
                         'px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full',
                         report.status === 'finished' ? 'bg-green-100 text-green-800' : 
                         report.status === 'verified' ? 'bg-yellow-100 text-yellow-800' : 
+                        report.status === 'rejected' ? 'bg-gray-100 text-gray-800' :
                         'bg-red-100 text-red-800'
                       ]"
                     >
@@ -184,19 +323,28 @@ const categoryCounts = ref([]);
 const selectedPeriod = ref("week");
 const trendChartRef = ref(null);
 const statusChartRef = ref(null);
-const categoryChartRef = ref(null);
+const categoryBarChartRef = ref(null);
+const categoryPieChartRef = ref(null);
 const selectedYear = ref(new Date().getFullYear());
 const statusCounts = ref({
   finished: 0,
   verified: 0,
-  unverified: 0
+  unverified: 0,
+  rejected: 0
 });
 const recentReports = ref([]);
 
-// Computed property untuk mengecek apakah ada data kategori
+// Enhanced color palette for categories
+const categoryColors = ref([
+  '#3B82F6', '#EF4444', '#F59E0B', '#10B981', '#8B5CF6',
+  '#F97316', '#06B6D4', '#84CC16', '#EC4899', '#6B7280',
+  '#DC2626', '#059669', '#7C3AED', '#DB2777', '#0891B2'
+]);
+
+// Computed properties
 const hasCategoryData = computed(() => categoryCounts.value.length > 0);
 
-// Buat array tahun, dari tahun sekarang hingga 5 tahun sebelumnya
+// Available years
 const currentYear = new Date().getFullYear();
 const availableYears = Array.from({ length: 6 }, (_, i) => currentYear - i);
 
@@ -208,179 +356,61 @@ const periods = [
 
 let trendChart = null;
 let statusChart = null;
-let categoryChart = null;
-
-// Data dummy untuk memastikan selalu ada data untuk ditampilkan
-const dummyLaporan = [
-  { 
-    id: 1, 
-    nomor_laporan: "LP-2025-001",
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 2).toISOString(),
-    status: "finished",
-    judul: "Kerusakan Peralatan Lab",
-    lokasi: "Ruang Lab Komputer",
-    category_id: 1,
-    deskripsi: "Kerusakan komputer lab nomor 5"
-  },
-  { 
-    id: 2, 
-    nomor_laporan: "LP-2025-002",
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 3).toISOString(),
-    status: "verified",
-    judul: "Masalah AC Server",
-    lokasi: "Ruang Server",
-    category_id: 2,
-    deskripsi: "AC ruang server tidak berfungsi optimal"
-  },
-  { 
-    id: 3, 
-    nomor_laporan: "LP-2025-003",
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 4).toISOString(),
-    status: "unverified",
-    judul: "Peralatan Rusak",
-    lokasi: "Ruang Lab Fisika",
-    category_id: 3,
-    deskripsi: "Alat praktikum rusak"
-  },
-  { 
-    id: 4, 
-    nomor_laporan: "LP-2025-004",
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 10).toISOString(),
-    status: "finished",
-    judul: "Proyektor Rusak",
-    lokasi: "Ruang Kuliah 101",
-    category_id: 4,
-    deskripsi: "Proyektor tidak bisa menyala"
-  },
-  { 
-    id: 5, 
-    nomor_laporan: "LP-2025-005",
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 15).toISOString(),
-    status: "verified",
-    judul: "Kebocoran Pipa",
-    lokasi: "Ruang Lab Kimia",
-    category_id: 1,
-    deskripsi: "Kebocoran pipa air"
-  },
-  { 
-    id: 6, 
-    nomor_laporan: "LP-2025-006",
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 20).toISOString(),
-    status: "finished",
-    judul: "Internet Bermasalah",
-    lokasi: "Perpustakaan Lantai 2",
-    category_id: 2,
-    deskripsi: "Masalah koneksi internet"
-  },
-  { 
-    id: 7, 
-    nomor_laporan: "LP-2025-007",
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 25).toISOString(),
-    status: "unverified",
-    judul: "Sound System Error",
-    lokasi: "Aula Utama",
-    category_id: 3,
-    deskripsi: "Sound system bermasalah saat digunakan"
-  },
-  // Tambahkan data untuk tahun sebelumnya
-  { 
-    id: 8, 
-    nomor_laporan: "LP-2024-008",
-    created_at: new Date(currentYear-1, 2, 15).toISOString(),
-    status: "finished",
-    judul: "Upgrade Software",
-    lokasi: "Ruang Lab Komputer",
-    category_id: 1,
-    deskripsi: "Upgrade software komputer lab"
-  },
-  { 
-    id: 9, 
-    nomor_laporan: "LP-2024-009",
-    created_at: new Date(currentYear-1, 5, 22).toISOString(),
-    status: "finished",
-    judul: "Headset Rusak",
-    lokasi: "Ruang Lab Bahasa",
-    category_id: 4,
-    deskripsi: "Headset rusak 10 unit"
-  }
-];
-
-// Data dummy untuk kategori
-const dummyCategories = [
-  { id: 1, name: "Kerusakan Alat" },
-  { id: 2, name: "Masalah Infrastruktur" },
-  { id: 3, name: "Kerusakan Fasilitas" },
-  { id: 4, name: "Lain-lain" }
-];
+let categoryBarChart = null;
+let categoryPieChart = null;
 
 onMounted(async () => {
-  // Mendapatkan data user
   const encryptedUserData = VueCookies.get("user_session");
   if (encryptedUserData) {
     userData.value = decryptData(encryptedUserData);
   }
   
-  // Fetch kategori
   await fetchCategories();
-  
-  // Fetch laporan dan proses data
   await fetchLaporan();
   
-  // Setup listeners untuk resize
   window.addEventListener("resize", handleResize);
 });
 
 onBeforeUnmount(() => {
-  // Cleanup charts dan event listeners
-  if (trendChart) {
-    trendChart.destroy();
-  }
-  
-  if (statusChart) {
-    statusChart.destroy();
-  }
-  
-  if (categoryChart) {
-    categoryChart.destroy();
-  }
+  [trendChart, statusChart, categoryBarChart, categoryPieChart].forEach(chart => {
+    if (chart) chart.destroy();
+  });
   
   window.removeEventListener("resize", handleResize);
 });
 
 const handleResize = () => {
-  // Redraw charts on resize
   nextTick(() => {
-    if (trendChart) {
-      trendChart.resize();
-    }
-    
-    if (statusChart) {
-      statusChart.resize();
-    }
-    
-    if (categoryChart) {
-      categoryChart.resize();
-    }
+    [trendChart, statusChart, categoryBarChart, categoryPieChart].forEach(chart => {
+      if (chart) chart.resize();
+    });
   });
 };
 
 const fetchCategories = async () => {
   try {
-    // const response = await axios.get("http://pelaporan-d3ti.my.id/api/category", {
     const response = await axios.get("https://v3422040.mhs.d3tiuns.com/api/category", {
-      timeout: 5000
+      timeout: 10000
     });
     
     if (response.data && Array.isArray(response.data)) {
-      categories.value = response.data;
+      categories.value = response.data.map(cat => ({
+        id: cat.category_id,
+        category_id: cat.category_id,
+        name: cat.nama,
+        nama: cat.nama,
+        image_path: cat.image_path,
+        created_at: cat.created_at,
+        updated_at: cat.updated_at
+      }));
       console.log("Categories loaded:", categories.value.length);
     } else {
       throw new Error("Invalid category data format");
     }
   } catch (error) {
     console.error("Error fetching categories:", error);
-    console.warn("Using dummy categories");
-    categories.value = dummyCategories;
+    console.warn("Using empty categories array");
+    categories.value = [];
   }
 };
 
@@ -388,9 +418,8 @@ const fetchLaporan = async () => {
   isLoading.value = true;
   
   try {
-    // const response = await axios.get("http://pelaporan-d3ti.my.id/api/laporan", {
     const response = await axios.get("https://v3422040.mhs.d3tiuns.com/api/laporan", {
-      timeout: 5000 // 5 detik timeout
+      timeout: 10000
     });
     
     if (response.data && Array.isArray(response.data)) {
@@ -401,8 +430,8 @@ const fetchLaporan = async () => {
     }
   } catch (error) {
     console.error("Error fetching laporan data:", error);
-    console.warn("Using dummy laporan data instead");
-    laporanData.value = dummyLaporan;
+    console.warn("Using empty laporan data");
+    laporanData.value = [];
   } finally {
     isLoading.value = false;
     await processData();
@@ -417,18 +446,15 @@ const changePeriod = async (period) => {
 const processData = async () => {
   console.log("Processing data...");
   
-  // Safety check - gunakan dummy data jika tidak ada data
   if (!laporanData.value.length) {
-    console.warn("No laporan data available, using dummy data");
-    laporanData.value = dummyLaporan;
+    console.warn("No laporan data available");
+    totalLaporan.value = 0;
+    categoryCounts.value = [];
+    statusCounts.value = { finished: 0, verified: 0, unverified: 0, rejected: 0 };
+    recentReports.value = [];
+    return;
   }
   
-  if (!categories.value.length) {
-    console.warn("No categories available, using dummy data");
-    categories.value = dummyCategories;
-  }
-  
-  // Tanggal untuk filter data
   const now = new Date();
   let startDate = new Date();
   let endDate = new Date();
@@ -442,7 +468,6 @@ const processData = async () => {
     endDate = new Date(selectedYear.value, 11, 31, 23, 59, 59);
   }
   
-  // Filter laporan berdasarkan periode
   const filteredData = laporanData.value.filter(laporan => {
     try {
       const laporanDate = new Date(laporan.created_at);
@@ -459,56 +484,22 @@ const processData = async () => {
   });
   
   totalLaporan.value = filteredData.length;
-  console.log("Filtered laporan count:", totalLaporan.value);
   
-  // Fix: Perbaiki perhitungan status untuk menangani status baru: unverified, verified, finished
+  // Process status counts with all possible statuses
   statusCounts.value = {
-    // Untuk status "finished"
-    finished: filteredData.filter(item => 
-      item.status === "finished" || 
-      item.status?.toLowerCase() === "finished"
-    ).length,
-    
-    // Untuk status "verified" 
-    verified: filteredData.filter(item => 
-      item.status === "verified" || 
-      item.status?.toLowerCase() === "verified"
-    ).length,
-    
-    // Untuk status "unverified" atau tanpa status
-    unverified: filteredData.filter(item => 
-      !item.status || 
-      item.status === "" || 
-      item.status === "unverified" || 
-      item.status?.toLowerCase() === "unverified"
-    ).length
+    finished: filteredData.filter(item => item.status === "finished").length,
+    verified: filteredData.filter(item => item.status === "verified").length,
+    unverified: filteredData.filter(item => item.status === "unverified").length,
+    rejected: filteredData.filter(item => item.status === "rejected").length
   };
   
-  // Verifikasi total status dengan total laporan
-  const totalStatuses = statusCounts.value.finished + statusCounts.value.verified + statusCounts.value.unverified;
-  
-  // Jika total status tidak sama dengan total laporan, distribusikan item yang tidak terhitung
-  if (totalStatuses !== totalLaporan.value) {
-    console.warn(`Status counts (${totalStatuses}) don't match total count (${totalLaporan.value}). Distributing unaccounted items.`);
-    
-    // Jika ada laporan tapi semua statusCounts.value nol, isi statusCounts.value.unverified dengan totalLaporan.value
-    if (totalStatuses === 0 && totalLaporan.value > 0) {
-      statusCounts.value.unverified = totalLaporan.value;
-    }
-  }
-  
-  // Process category counts
   processCategoryCounts(filteredData);
   
-  // Get recent reports
   recentReports.value = [...filteredData]
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     .slice(0, 5);
   
-  // Tunggu sampai DOM dirender
   await nextTick();
-  
-  // Update chart setelah data diproses
   await updateCharts(filteredData, startDate, endDate);
 };
 
@@ -517,40 +508,68 @@ const processCategoryCounts = (filteredData) => {
   
   // Initialize all categories with zero count
   categories.value.forEach(category => {
-    if (category && category.id !== undefined) {
-      categoryMap.set(category.id, { 
-        id: category.id,
-        name: category.name || `Kategori ${category.id}`, 
-        count: 0 
+    if (category && category.category_id !== undefined) {
+      categoryMap.set(category.category_id, { 
+        category_id: category.category_id,
+        nama: category.nama || `Kategori ${category.category_id}`, 
+        count: 0,
+        statusBreakdown: {
+          finished: 0,
+          verified: 0,
+          unverified: 0,
+          rejected: 0
+        }
       });
     }
   });
   
   // Count laporan for each category
   filteredData.forEach(laporan => {
-    if (laporan && laporan.category_id !== undefined && categoryMap.has(laporan.category_id)) {
+    if (laporan && laporan.category_id !== undefined) {
+      if (!categoryMap.has(laporan.category_id)) {
+        // Create category if not exists
+        categoryMap.set(laporan.category_id, {
+          category_id: laporan.category_id,
+          nama: `Kategori ${laporan.category_id}`,
+          count: 0,
+          statusBreakdown: {
+            finished: 0,
+            verified: 0,
+            unverified: 0,
+            rejected: 0
+          }
+        });
+      }
+      
       const category = categoryMap.get(laporan.category_id);
       category.count++;
+      
+      // Count status breakdown for each category
+      const status = laporan.status;
+      if (status && category.statusBreakdown[status] !== undefined) {
+        category.statusBreakdown[status]++;
+      } else {
+        category.statusBreakdown.unverified++;
+      }
     }
   });
   
-  // Convert to array and sort
+  // Convert to array and sort by count (descending)
   categoryCounts.value = Array.from(categoryMap.values())
-    .filter(cat => cat && cat.name)
+    .filter(cat => cat && cat.nama)
     .sort((a, b) => b.count - a.count);
+    
+  console.log("Category counts processed:", categoryCounts.value);
 };
 
 const updateCharts = async (filteredData, startDate, endDate) => {
-  // Update trend chart
   const trenData = prepareTrendData(filteredData, startDate, endDate);
   await updateTrendChart(trenData);
-  
-  // Update status chart
   await updateStatusChart();
   
-  // Update category chart if categories are available
   if (categoryCounts.value.length > 0) {
-    await updateCategoryChart();
+    await updateCategoryBarChart();
+    await updateCategoryPieChart();
   }
 };
 
@@ -558,16 +577,10 @@ const updateTrendChart = async (trenData) => {
   await nextTick();
   
   try {
-    if (!trendChartRef.value) {
-      console.warn('Trend chart ref is not available');
-      return;
-    }
+    if (!trendChartRef.value) return;
     
     const ctx = trendChartRef.value.getContext('2d');
-    if (!ctx) {
-      console.warn('Could not get canvas context for trend chart');
-      return;
-    }
+    if (!ctx) return;
     
     if (trendChart) {
       trendChart.destroy();
@@ -613,8 +626,6 @@ const updateTrendChart = async (trenData) => {
         }
       }
     });
-    
-    console.log("Trend chart created successfully");
   } catch (error) {
     console.error('Error updating trend chart:', error);
   }
@@ -624,16 +635,10 @@ const updateStatusChart = async () => {
   await nextTick();
   
   try {
-    if (!statusChartRef.value) {
-      console.warn('Status chart ref is not available');
-      return;
-    }
+    if (!statusChartRef.value) return;
     
     const ctx = statusChartRef.value.getContext('2d');
-    if (!ctx) {
-      console.warn('Could not get canvas context for status chart');
-      return;
-    }
+    if (!ctx) return;
     
     if (statusChart) {
       statusChart.destroy();
@@ -642,18 +647,25 @@ const updateStatusChart = async () => {
     statusChart = new Chart(ctx, {
       type: 'doughnut',
       data: {
-        labels: ['Selesai', 'Terverifikasi', 'Belum Terverifikasi'],
+        labels: ['Selesai', 'Terverifikasi', 'Belum Terverifikasi', 'Ditolak'],
         datasets: [{
-          data: [statusCounts.value.finished, statusCounts.value.verified, statusCounts.value.unverified],
+          data: [
+            statusCounts.value.finished, 
+            statusCounts.value.verified, 
+            statusCounts.value.unverified,
+            statusCounts.value.rejected
+          ],
           backgroundColor: [
-            'rgba(34, 197, 94, 0.7)', // green
-            'rgba(234, 179, 8, 0.7)',  // yellow
-            'rgba(239, 68, 68, 0.7)',   // red
+            'rgba(34, 197, 94, 0.7)',   // green
+            'rgba(234, 179, 8, 0.7)',    // yellow
+            'rgba(239, 68, 68, 0.7)',     // red
+            'rgba(107, 114, 128, 0.7)',   // gray
           ],
           borderColor: [
             'rgb(34, 197, 94)',
             'rgb(234, 179, 8)',
             'rgb(239, 68, 68)',
+            'rgb(107, 114, 128)',
           ],
           borderWidth: 1
         }]
@@ -678,71 +690,40 @@ const updateStatusChart = async () => {
         }
       }
     });
-    
-    console.log("Status chart created successfully");
   } catch (error) {
     console.error('Error updating status chart:', error);
   }
 };
 
-const updateCategoryChart = async () => {
+const updateCategoryBarChart = async () => {
   await nextTick();
   
   try {
-    if (!categoryChartRef.value) {
-      console.warn('Category chart ref is not available');
-      return;
+    if (!categoryBarChartRef.value) return;
+    
+    const ctx = categoryBarChartRef.value.getContext('2d');
+    if (!ctx) return;
+    
+    if (categoryBarChart) {
+      categoryBarChart.destroy();
     }
     
-    const ctx = categoryChartRef.value.getContext('2d');
-    if (!ctx) {
-      console.warn('Could not get canvas context for category chart');
-      return;
-    }
-    
-    if (categoryChart) {
-      categoryChart.destroy();
-    }
-    
-    // Limit ke 10 kategori teratas jika terlalu banyak
-    const topCategories = categoryCounts.value
-      .filter(c => c.count > 0)
-      .slice(0, 10);
+    const topCategories = categoryCounts.value.filter(c => c.count > 0).slice(0, 10);
     
     if (topCategories.length === 0) {
       console.warn('No categories with count > 0');
       return;
     }
     
-    // Mempersiapkan data untuk diagram batang
-    const labels = topCategories.map(c => c.name);
-    const counts = topCategories.map(c => c.count);
-    
-    // Warna untuk batang
-    const backgroundColors = [
-      'rgba(54, 162, 235, 0.7)', 
-      'rgba(255, 99, 132, 0.7)',
-      'rgba(255, 206, 86, 0.7)',
-      'rgba(75, 192, 192, 0.7)',
-      'rgba(153, 102, 255, 0.7)',
-      'rgba(255, 159, 64, 0.7)',
-      'rgba(199, 199, 199, 0.7)',
-      'rgba(83, 102, 255, 0.7)',
-      'rgba(255, 99, 255, 0.7)',
-      'rgba(159, 159, 64, 0.7)'
-    ];
-    
-    const borderColors = backgroundColors.map(color => color.replace('0.7', '1'));
-    
-    categoryChart = new Chart(ctx, {
+    categoryBarChart = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: labels,
+        labels: topCategories.map(c => c.nama),
         datasets: [{
           label: 'Jumlah Laporan',
-          data: counts,
-          backgroundColor: backgroundColors.slice(0, counts.length),
-          borderColor: borderColors.slice(0, counts.length),
+          data: topCategories.map(c => c.count),
+          backgroundColor: categoryColors.value.slice(0, topCategories.length),
+          borderColor: categoryColors.value.slice(0, topCategories.length),
           borderWidth: 1
         }]
       },
@@ -774,10 +755,68 @@ const updateCategoryChart = async () => {
         }
       }
     });
-    
-    console.log("Category bar chart created successfully");
   } catch (error) {
-    console.error('Error updating category chart:', error);
+    console.error('Error updating category bar chart:', error);
+  }
+};
+
+const updateCategoryPieChart = async () => {
+  await nextTick();
+  
+  try {
+    if (!categoryPieChartRef.value) return;
+    
+    const ctx = categoryPieChartRef.value.getContext('2d');
+    if (!ctx) return;
+    
+    if (categoryPieChart) {
+      categoryPieChart.destroy();
+    }
+    
+    const topCategories = categoryCounts.value.filter(c => c.count > 0).slice(0, 8);
+    
+    if (topCategories.length === 0) {
+      console.warn('No categories with count > 0');
+      return;
+    }
+    
+    categoryPieChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: topCategories.map(c => c.nama),
+        datasets: [{
+          data: topCategories.map(c => c.count),
+          backgroundColor: categoryColors.value.slice(0, topCategories.length),
+          borderColor: '#ffffff',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 20,
+              usePointStyle: true
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const value = context.raw;
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = total > 0 ? Math.round((value * 100) / total) : 0;
+                return `${context.label}: ${value} (${percentage}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error updating category pie chart:', error);
   }
 };
 
@@ -786,7 +825,6 @@ const prepareTrendData = (data, startDate, endDate) => {
   const counts = [];
   
   if (selectedPeriod.value === "week") {
-    // Data per hari dalam seminggu
     for (let i = 0; i <= 6; i++) {
       const date = new Date(startDate);
       date.setDate(startDate.getDate() + i);
@@ -807,7 +845,6 @@ const prepareTrendData = (data, startDate, endDate) => {
       }
     });
   } else if (selectedPeriod.value === "month") {
-    // Data per minggu dalam sebulan
     for (let i = 0; i < 4; i++) {
       labels.push(`Minggu ${i + 1}`);
       counts.push(0);
@@ -826,10 +863,8 @@ const prepareTrendData = (data, startDate, endDate) => {
       }
     });
   } else if (selectedPeriod.value === "year") {
-    // Data per bulan dalam setahun
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
     
-    // Init all months with zero
     for (let i = 0; i < 12; i++) {
       labels.push(monthNames[i]);
       counts.push(0);
@@ -838,7 +873,6 @@ const prepareTrendData = (data, startDate, endDate) => {
     data.forEach(laporan => {
       try {
         const date = new Date(laporan.created_at);
-        // Hanya hitung jika tahun sesuai dengan yang dipilih
         if (date.getFullYear() === selectedYear.value) {
           const month = date.getMonth();
           if (month >= 0 && month < 12) {
@@ -869,7 +903,6 @@ const formatDate = (dateString) => {
   }
 };
 
-// Function to format status for display
 const formatStatus = (status) => {
   if (!status) return 'Belum Terverifikasi';
   
@@ -880,6 +913,8 @@ const formatStatus = (status) => {
       return 'Terverifikasi';
     case 'unverified':
       return 'Belum Terverifikasi';
+    case 'rejected':
+      return 'Ditolak';
     default:
       return status;
   }
@@ -890,7 +925,16 @@ const truncateText = (text, maxLength) => {
   return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
 };
 
-// Watch perubahan periode dan tahun untuk memperbarui data
+const getCategoryName = (categoryId) => {
+  const category = categories.value.find(cat => cat.category_id === categoryId);
+  return category ? category.nama : 'Tidak Diketahui';
+};
+
+const getPercentage = (count) => {
+  return totalLaporan.value > 0 ? Math.round((count / totalLaporan.value) * 100) : 0;
+};
+
+// Watch for changes
 watch([selectedPeriod, selectedYear], () => {
   processData();
 });

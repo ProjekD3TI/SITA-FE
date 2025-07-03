@@ -5,6 +5,19 @@
         <h2 class="mb-0 font-weight-bold">Tambah Kategori</h2>
       </div>
       <div class="card-body">
+        <!-- Jabatan Status Check -->
+        <div v-if="showJabatanWarning" class="alert alert-warning mb-3">
+          <h6>⚠️ Masalah Jabatan Terdeteksi</h6>
+          <p class="mb-2">
+            <strong>Jabatan di profil:</strong> {{ currentUser?.jabatan }}<br>
+            <strong>Jabatan aktif:</strong> {{ currentJabatan || 'Tidak diketahui' }}
+          </p>
+          <button @click="switchToKalab" class="btn btn-sm btn-warning" :disabled="switchingJabatan">
+            <span v-if="switchingJabatan" class="spinner-border spinner-border-sm mr-1"></span>
+            🔄 Aktifkan Jabatan Kalab
+          </button>
+        </div>
+
         <!-- Display any validation errors -->
         <div v-if="Object.keys(errors).length > 0" class="alert alert-danger">
           <ul class="mb-0">
@@ -24,6 +37,7 @@
               v-model="form.nama" 
               class="form-control" 
               :class="{'is-invalid': errors.nama}" 
+              placeholder="Masukkan nama kategori"
             />
             <div class="invalid-feedback" v-if="errors.nama">
               {{ Array.isArray(errors.nama) ? errors.nama[0] : errors.nama }}
@@ -56,15 +70,16 @@
             <button 
               type="submit" 
               class="btn btn-primary" 
-              :disabled="isSubmitting"
+              :disabled="isSubmitting || !isKalabActive"
             >
               <span v-if="isSubmitting" class="spinner-border spinner-border-sm mr-1"></span>
-              Simpan
+              {{ isSubmitting ? 'Menyimpan...' : 'Simpan' }}
             </button>
             <button 
               type="button" 
               class="btn btn-secondary ml-2"
               @click="$router.push({ path: '/kalab/kategoripelaporan' })"
+              :disabled="isSubmitting"
             >
               Batal
             </button>
@@ -77,8 +92,11 @@
 
 <script>
 import Swal from 'sweetalert2';
+import { decryptData } from "../../../../../services/encrypt";
+import VueCookies from "vue-cookies";
 
 export default {
+  name: 'TambahKategori',
   data() {
     return {
       form: {
@@ -87,14 +105,50 @@ export default {
       },
       imagePreview: null,
       errors: {},
-      isSubmitting: false
+      isSubmitting: false,
+      switchingJabatan: false,
+      currentUser: null,
+      currentJabatan: null,
+      // API Configuration
+      apiConfig: {
+        baseURL: 'https://v3422040.mhs.d3tiuns.com',
+        endpoint: '/api/category/add_category'
+      }
+    }
+  },
+  computed: {
+    isKalabActive() {
+      return this.currentJabatan === 'Kalab' || this.currentUser?.jabatan === 'Kalab';
+    },
+    showJabatanWarning() {
+      return this.currentUser && 
+             this.currentUser.jabatan === 'Kalab' && 
+             this.currentJabatan && 
+             this.currentJabatan !== 'Kalab';
     }
   },
   mounted() {
-    // Check for auth token as soon as component mounts
-    this.checkToken();
+    this.getCurrentUser();
+    this.initializeJabatan();
   },
   methods: {
+    // Get current user from encrypted session
+    getCurrentUser() {
+      try {
+        const encryptedUserData = VueCookies.get("user_session");
+        if (encryptedUserData) {
+          this.currentUser = decryptData(encryptedUserData);
+        }
+      } catch (error) {
+        console.error('Error getting current user:', error);
+        this.currentUser = null;
+      }
+    },
+
+    async initializeJabatan() {
+      await this.checkCurrentJabatan();
+    },
+
     // Get a cookie value by name
     getCookie(name) {
       const cookies = document.cookie.split(';');
@@ -107,81 +161,164 @@ export default {
       return null;
     },
     
-    checkToken() {
-      console.log("============ TOKEN INFORMATION ============");
-      
-      // Get auth_token from cookie and decode it
+    getToken() {
       const encodedToken = this.getCookie('auth_token');
-      const token = encodedToken ? decodeURIComponent(encodedToken) : null;
-      
-      console.log('Cookie auth_token (decoded):', token ? 
-                 (token.length > 20 ? token.substring(0, 10) + '...' + token.substring(token.length - 10) : token) 
-                 : 'Not found');
-      
-      console.log("=========================================");
-      return token;
+      return encodedToken ? decodeURIComponent(encodedToken) : null;
+    },
+
+    // Check current active jabatan
+    async checkCurrentJabatan() {
+      try {
+        const token = this.getToken();
+        if (!token) return;
+
+        const response = await fetch(`${this.apiConfig.baseURL}/api/dosen/current_jabatan`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          this.currentJabatan = data.current_jabatan || data.jabatan || null;
+        }
+      } catch (error) {
+        console.error('Error checking current jabatan:', error);
+      }
+    },
+
+    // Switch to Kalab jabatan
+    async switchToKalab() {
+      try {
+        this.switchingJabatan = true;
+        const token = this.getToken();
+        if (!token) return;
+
+        const response = await fetch(`${this.apiConfig.baseURL}/api/dosen/switch_jabatan`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            jabatan: 'Kalab'
+          })
+        });
+
+        if (response.ok) {
+          this.currentJabatan = 'Kalab';
+          
+          Swal.fire({
+            title: 'Berhasil!',
+            text: 'Jabatan berhasil diubah ke Kalab',
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        } else {
+          const errorData = await response.json();
+          
+          Swal.fire({
+            title: 'Gagal!',
+            text: errorData.message || 'Gagal mengubah jabatan',
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+        }
+      } catch (error) {
+        Swal.fire({
+          title: 'Error!',
+          text: 'Terjadi kesalahan saat mengubah jabatan',
+          icon: 'error',
+          confirmButtonText: 'OK'
+        });
+      } finally {
+        this.switchingJabatan = false;
+      }
     },
     
     handleImageUpload(event) {
       const file = event.target.files[0];
       if (file) {
-        console.log('Selected file:', file);
         this.form.image_path = file;
-        this.imagePreview = URL.createObjectURL(file);
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.imagePreview = e.target.result;
+        };
+        reader.readAsDataURL(file);
+        
+        // Clear any previous image errors
+        if (this.errors.image_path) {
+          delete this.errors.image_path;
+        }
       }
     },
     
-    submitForm() {
-      // Reset errors and set loading state
+    validateForm() {
       this.errors = {};
-      this.isSubmitting = true;
+      let isValid = true;
       
-      // Validate form before submission
-      if (!this.form.nama) {
-        this.errors.nama = "Nama kategori tidak boleh kosong";
-        this.isSubmitting = false;
-        return;
+      // Check jabatan first
+      if (!this.isKalabActive) {
+        this.errors.jabatan = "Jabatan harus diset ke 'Kalab' untuk menambahkan kategori";
+        isValid = false;
       }
       
-      // Validate image if required
+      // Validate nama
+      if (!this.form.nama || this.form.nama.trim() === '') {
+        this.errors.nama = "Nama kategori tidak boleh kosong";
+        isValid = false;
+      } else if (this.form.nama.trim().length < 3) {
+        this.errors.nama = "Nama kategori minimal 3 karakter";
+        isValid = false;
+      }
+      
+      // Validate image
       if (!this.form.image_path) {
         this.errors.image_path = "Gambar kategori diperlukan";
-        this.isSubmitting = false;
-        return;
-      }
-      
-      // Check file type and size
-      if (this.form.image_path) {
+        isValid = false;
+      } else {
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
         const maxSize = 2 * 1024 * 1024; // 2MB
         
-        console.log('File type:', this.form.image_path.type);
-        
         if (!allowedTypes.includes(this.form.image_path.type)) {
           this.errors.image_path = "Format gambar harus JPG, JPEG, atau PNG";
-          this.isSubmitting = false;
-          return;
-        }
-        
-        if (this.form.image_path.size > maxSize) {
+          isValid = false;
+        } else if (this.form.image_path.size > maxSize) {
           this.errors.image_path = "Ukuran gambar maksimal 2MB";
-          this.isSubmitting = false;
-          return;
+          isValid = false;
         }
       }
       
-      // Create form data to send
-      const formData = new FormData();
-      formData.append('nama', this.form.nama.trim());
-      if (this.form.image_path) {
-        formData.append('image_path', this.form.image_path, this.form.image_path.name);
-        console.log('Form data image:', this.form.image_path.name, this.form.image_path.type, this.form.image_path.size);
+      return isValid;
+    },
+
+    async submitForm() {
+      this.isSubmitting = true;
+      
+      // Check jabatan before proceeding
+      if (!this.isKalabActive) {
+        this.isSubmitting = false;
+        Swal.fire({
+          title: 'Jabatan Tidak Sesuai!',
+          text: 'Anda harus mengaktifkan jabatan "Kalab" terlebih dahulu',
+          icon: 'warning',
+          confirmButtonText: 'OK'
+        });
+        return;
       }
       
-      // Get token from cookie (correctly decoded)
-      const encodedToken = this.getCookie('auth_token');
-      const token = encodedToken ? decodeURIComponent(encodedToken) : null;
+      if (!this.validateForm()) {
+        this.isSubmitting = false;
+        return;
+      }
       
+      const token = this.getToken();
       if (!token) {
         this.isSubmitting = false;
         Swal.fire({
@@ -192,101 +329,93 @@ export default {
         });
         return;
       }
+
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('nama', this.form.nama.trim());
+      formData.append('image_path', this.form.image_path, this.form.image_path.name);
       
-      // Use XMLHttpRequest instead of axios
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', '/api/category/add_category', true);
+      // Build request URL
+      const requestURL = `${this.apiConfig.baseURL}${this.apiConfig.endpoint}`;
       
-      // Set request headers
-      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-      // Don't set Content-Type for FormData, browser will handle it with correct boundary
-      
-      // Track upload progress (optional)
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const percentComplete = (event.loaded / event.total) * 100;
-          console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
-        }
-      };
-      
-      // Handle response
-      xhr.onload = () => {
+      try {
+        const response = await fetch(requestURL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+          body: formData
+        });
+        
+        const responseData = await response.json();
         this.isSubmitting = false;
         
-        if (xhr.status >= 200 && xhr.status < 300) {
-          // Success
-          console.log('Success:', xhr.responseText);
-          
+        if (response.ok) {
           Swal.fire({
-            title: 'Success!',
+            title: 'Berhasil!',
             text: 'Kategori berhasil ditambahkan',
             icon: 'success',
-            confirmButtonText: 'OK'
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#2b53e2'
           }).then(() => {
             this.$router.push('/kalab/kategoripelaporan');
           });
-        } else {
-          // Error
-          console.error('Error:', xhr.status, xhr.responseText);
+        } else if (response.status === 403) {
+          // Refresh jabatan status
+          await this.checkCurrentJabatan();
           
-          try {
-            const response = JSON.parse(xhr.responseText);
-            
-            if (response.errors) {
-              this.errors = response.errors;
-              
-              // Check for specific image_path errors
-              if (this.errors.image_path) {
-                console.log('Image path error:', this.errors.image_path);
-                // Ensure error is displayed as string if it's an array
-                if (Array.isArray(this.errors.image_path)) {
-                  this.errors.image_path = this.errors.image_path[0];
-                }
-              }
-            } else {
-              Swal.fire({
-                title: 'Error!',
-                text: response.message || 'Gagal menambahkan kategori',
-                icon: 'error',
-                confirmButtonText: 'OK'
-              });
-            }
-          } catch (e) {
-            Swal.fire({
-              title: 'Error!',
-              text: 'Terjadi kesalahan saat menambahkan kategori',
-              icon: 'error',
-              confirmButtonText: 'OK'
-            });
+          Swal.fire({
+            title: 'Akses Ditolak!',
+            html: `
+              <p>Anda tidak memiliki izin untuk menambahkan kategori.</p>
+              <small><strong>Jabatan aktif:</strong> ${this.currentJabatan || 'Tidak diketahui'}</small><br>
+              <small><strong>Jabatan dibutuhkan:</strong> Kalab</small><br>
+              <small>Silakan pastikan jabatan "Kalab" sudah aktif.</small>
+            `,
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+        } else if (response.status === 401) {
+          Swal.fire({
+            title: 'Error!',
+            text: 'Sesi login Anda telah berakhir. Silakan login kembali.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+          }).then(() => {
+            document.cookie = 'auth_token=; Max-Age=0; path=/';
+            VueCookies.remove('user_session');
+            this.$router.push('/login');
+          });
+        } else if (response.status === 422 && responseData.errors) {
+          this.errors = responseData.errors;
+          
+          if (this.errors.image_path && Array.isArray(this.errors.image_path)) {
+            this.errors.image_path = this.errors.image_path[0];
           }
+        } else {
+          Swal.fire({
+            title: 'Error!',
+            text: responseData.message || `Terjadi kesalahan (${response.status}). Silakan coba lagi.`,
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
         }
-      };
-      
-      // Handle network errors
-      xhr.onerror = () => {
+      } catch (error) {
         this.isSubmitting = false;
-        console.error('Network Error');
-        
         Swal.fire({
-          title: 'Error!',
-          text: 'Terjadi kesalahan jaringan, silakan coba lagi',
+          title: 'Error Jaringan!',
+          text: 'Tidak dapat terhubung ke server. Silakan periksa koneksi internet Anda dan coba lagi.',
           icon: 'error',
           confirmButtonText: 'OK'
         });
-      };
-      
-      // Send the request
-      // console.log('Sending request to:', 'http://pelaporan-d3ti.my.id/api/category/add_category');
-      console.log('Sending request to:', 'https://pelaporan-d3ti-svuns.my.id/api/category/add_category');
-      console.log('With token:', token ? `${token.substring(0, 10)}...${token.substring(token.length - 10)}` : 'No token');
-      xhr.send(formData);
+      }
     }
   }
 }
 </script>
 
 <style scoped>
-/* Card styles */
 .card {
   border-radius: 12px;
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
@@ -315,7 +444,34 @@ export default {
   background-color: #ffffff;
 }
 
-/* Form element styles */
+.badge {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: 0.375rem;
+}
+
+.badge-info {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.badge-warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.d-flex {
+  display: flex;
+}
+
+.align-items-center {
+  align-items: center;
+}
+
+.mr-2 {
+  margin-right: 0.5rem;
+}
+
 .form-group {
   margin-bottom: 1.5rem;
 }
@@ -348,7 +504,6 @@ export default {
   padding: 0.375rem 0;
 }
 
-/* Validation styles */
 .is-invalid {
   border-color: #dc3545 !important;
 }
@@ -374,7 +529,12 @@ export default {
   color: #721c24;
 }
 
-/* Button styles */
+.alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+  color: #856404;
+}
+
 .btn {
   border-radius: 8px;
   padding: 10px 20px;
@@ -394,7 +554,7 @@ export default {
   color: white;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   background-color: #2638c0;
   border-color: #2638c0;
   transform: translateY(-2px);
@@ -415,7 +575,7 @@ export default {
   color: #565b60;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
   background-color: #e9ecef;
   border-color: #e9ecef;
   color: #6c757d;
@@ -423,7 +583,37 @@ export default {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Image preview styles */
+.btn-secondary:disabled {
+  background-color: #d6d8db;
+  border-color: #d6d8db;
+  color: #a6a6a6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-warning {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #212529;
+}
+
+.btn-warning:hover:not(:disabled) {
+  background-color: #e0a800;
+  border-color: #e0a800;
+}
+
+.btn-warning:disabled {
+  background-color: #ffcd39;
+  border-color: #ffcd39;
+  cursor: not-allowed;
+}
+
+.btn-sm {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
 .img-thumbnail {
   max-width: 200px;
   max-height: 200px;
@@ -431,11 +621,6 @@ export default {
   border: 1px solid #e0e0e0;
   margin-top: 0.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-/* Utility classes */
-.d-flex {
-  display: flex;
 }
 
 .ml-2 {
@@ -458,11 +643,18 @@ export default {
   margin-bottom: 0;
 }
 
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
 .text-muted {
   color: #6c757d;
 }
 
-/* Loading spinner */
 .spinner-border {
   display: inline-block;
   width: 1rem;
@@ -474,9 +666,29 @@ export default {
   animation: spinner-border 0.75s linear infinite;
 }
 
+.spinner-border-sm {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
 @keyframes spinner-border {
   to {
     transform: rotate(360deg);
   }
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+.mt-4 {
+  margin-top: 1.5rem;
+}
+
+.form-text {
+  margin-top: 0.25rem;
+  font-size: 0.875em;
 }
 </style>
