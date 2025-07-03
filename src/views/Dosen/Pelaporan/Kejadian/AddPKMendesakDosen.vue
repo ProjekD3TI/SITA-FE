@@ -87,7 +87,7 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="lampiran_link">Lampiran Link <span class="required">*</span></label>
+                            <label for="lampiran_link">Lampiran Link</label>
                             <input
                                 type="url"
                                 id="lampiran_link"
@@ -95,7 +95,6 @@
                                 class="form-control"
                                 :class="{ 'is-invalid': errors.lampiran_link }"
                                 placeholder="https://www.example.com"
-                                required
                             />
                             <div v-if="errors.lampiran_link" class="invalid-feedback">{{ errors.lampiran_link[0] }}</div>
                             <small class="text-muted">Masukkan URL yang valid, contoh: https://www.example.com</small>
@@ -350,13 +349,13 @@ export default {
                 isValid = false;
             }
 
-            if (!this.formData.lampiran_link) {
-                this.errors.lampiran_link = ['Lampiran link harus diisi'];
-                isValid = false;
-            } else if (!this.isValidUrl(this.formData.lampiran_link)) {
-                this.errors.lampiran_link = ['Masukkan URL yang valid, contoh: https://www.example.com'];
-                isValid = false;
-            }
+            // if (!this.formData.lampiran_link) {
+            //     this.errors.lampiran_link = ['Lampiran link harus diisi'];
+            //     isValid = false;
+            // } else if (!this.isValidUrl(this.formData.lampiran_link)) {
+            //     this.errors.lampiran_link = ['Masukkan URL yang valid, contoh: https://www.example.com'];
+            //     isValid = false;
+            // }
 
             if (!this.formData.agreement) {
                 this.errors.agreement = ['Anda harus menyetujui pernyataan untuk melanjutkan'];

@@ -187,7 +187,6 @@ export default {
                 deskripsi: '-', 
                 tanggal_kejadian: '',
                 image_path: [],
-                lampiran_link: '',
                 nama_pelapor: '',
                 ni_pelapor: '',
                 nomor_telepon: '',
