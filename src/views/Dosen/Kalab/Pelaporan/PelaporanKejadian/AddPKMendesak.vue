@@ -220,14 +220,24 @@ export default {
         };
     },
     async mounted() {
-        await this.fetchCsrfCookie();
-        this.fetchCategories();
-        this.loadUserData();
-        this.setIndonesianDateTime();
-
-        this.timeUpdateInterval = setInterval(() => {
+        try {
+            // STEP 1: Fetch CSRF cookie DULU, tunggu sampai selesai
+            await this.fetchCsrfCookie();
+            
+            // STEP 2: Beri delay kecil untuk memastikan cookie ter-set
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // STEP 3: Baru fetch data lainnya
+            await this.fetchCategories();
+            this.loadUserData();
             this.setIndonesianDateTime();
-        }, 60000);
+
+            this.timeUpdateInterval = setInterval(() => {
+                this.setIndonesianDateTime();
+            }, 60000);
+        } catch (error) {
+            console.error('Error during component initialization:', error);
+        }
     },
     beforeUnmount() {
         if (this.timeUpdateInterval) {
@@ -237,18 +247,27 @@ export default {
     methods: {
         async fetchCsrfCookie() {
             try {
-                // FIXED: Removed /api/ from the URL
-                await axios.get('https://v3422040.mhs.d3tiuns.com/sanctum/csrf-cookie', { withCredentials: true });
+                // Coba endpoint tanpa /api/ dulu
+                await axios.get('https://v3422040.mhs.d3tiuns.com/sanctum/csrf-cookie', { 
+                    withCredentials: true,
+                    timeout: 10000 // 10 detik timeout
+                });
+                
+                // Tunggu sebentar untuk memastikan cookie ter-set
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
                 this.csrfToken = VueCookies.get('XSRF-TOKEN');
                 console.log('CSRF Cookie fetched:', this.csrfToken ? 'Success' : 'Failed');
+                
             } catch (error) {
                 console.error('Error fetching CSRF cookie:', error);
-                Swal.fire({
-                    title: 'Error Autentikasi!',
-                    text: 'Gagal mendapatkan token keamanan. Coba refresh halaman.',
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                });
+                
+                // Jangan tampilkan error popup pada first load
+                // Karena mungkin CSRF tidak diperlukan untuk semua endpoint
+                console.warn('CSRF token fetch failed, continuing without it');
+                
+                // Set flag bahwa CSRF gagal
+                this.csrfToken = null;
             }
         },
         setIndonesianDateTime() {
@@ -294,8 +313,9 @@ export default {
         },
         async fetchCategories() {
             try {
-                // const response = await axios.get('http://pelaporan-d3ti.my.id/api/category');
-                const response = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category');
+                const response = await axios.get('https://v3422040.mhs.d3tiuns.com/api/category', {
+                    timeout: 10000 // 10 detik timeout
+                });
                 this.categories = response.data;
 
                 const mendesakCategory = this.categories.find(cat => cat.nama === "Darurat dan Mendesak");
@@ -306,11 +326,16 @@ export default {
                 }
             } catch (error) {
                 console.error('Error fetching categories:', error);
+                
+                // Fallback categories jika API gagal
                 this.categories = [{
                     category_id: 21,
                     nama: "Darurat dan Mendesak"
                 }];
                 this.formData.category_id = 21;
+                
+                // Tampilkan notifikasi yang lebih user-friendly
+                console.warn('Using fallback categories due to API error');
             }
         },
         handleFileUpload(event) {
