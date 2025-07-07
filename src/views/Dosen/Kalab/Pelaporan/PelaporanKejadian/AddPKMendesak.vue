@@ -237,8 +237,8 @@ export default {
     methods: {
         async fetchCsrfCookie() {
             try {
-                // await axios.get('http://pelaporan-d3ti.my.id/sanctum/csrf-cookie', { withCredentials: true });
-                await axios.get('https://v3422040.mhs.d3tiuns.com/api/sanctum/csrf-cookie', { withCredentials: true });
+                // FIXED: Removed /api/ from the URL
+                await axios.get('https://v3422040.mhs.d3tiuns.com/sanctum/csrf-cookie', { withCredentials: true });
                 this.csrfToken = VueCookies.get('XSRF-TOKEN');
                 console.log('CSRF Cookie fetched:', this.csrfToken ? 'Success' : 'Failed');
             } catch (error) {
