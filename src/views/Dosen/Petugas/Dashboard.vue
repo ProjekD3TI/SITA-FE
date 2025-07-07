@@ -71,7 +71,7 @@
         </div>
         <p class="text-lg font-medium text-gray-800">Gagal memuat data</p>
         <p class="text-gray-600">{{ apiErrorMessage }}</p>
-        <button @click="fetchLaporan" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+        <button @click="fetchData" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
           Coba Lagi
         </button>
       </div>
@@ -86,6 +86,51 @@
           <div class="bg-blue-50 p-4 rounded-lg">
             <h3 class="text-lg font-medium text-gray-800 mb-2">Jumlah Laporan</h3>
             <p class="text-3xl font-bold text-blue-600">{{ totalLaporan }}</p>
+          </div>
+        </div>
+
+        <!-- Statistik Kategori Kekerasan -->
+        <div class="bg-white rounded-lg p-6 mb-6 border">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Laporan Berdasarkan Kategori Kekerasan</h3>
+          
+          <div v-if="kekerasanCategories.length === 0" class="text-center py-4">
+            <p class="text-gray-600">Tidak ada kategori kekerasan ditemukan untuk periode ini</p>
+          </div>
+          
+          <div v-else class="space-y-4">
+            <!-- Grid untuk kategori kekerasan -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <div 
+                v-for="category in kekerasanCategories" 
+                :key="category.category_id"
+                class="bg-red-50 border border-red-200 p-4 rounded-lg"
+              >
+                <div class="flex items-center justify-between">
+                  <div class="flex-1">
+                    <h4 class="font-medium text-gray-800 text-sm">{{ category.nama }}</h4>
+                    <p class="text-2xl font-bold text-red-600 mt-1">{{ category.count }}</p>
+                    <div class="mt-2">
+                      <div class="text-xs text-gray-600">
+                        {{ ((category.count / totalLaporan) * 100).toFixed(1) }}% dari total laporan
+                      </div>
+                    </div>
+                  </div>
+                  <div class="text-red-500 ml-2">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chart untuk kategori kekerasan -->
+            <div class="bg-gray-50 rounded-lg p-4">
+              <h4 class="text-md font-medium text-gray-800 mb-3">Distribusi Kategori Kekerasan</h4>
+              <div class="h-64">
+                <canvas ref="categoryChartRef"></canvas>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -107,6 +152,7 @@
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nomor Laporan</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
                 </tr>
               </thead>
@@ -117,7 +163,19 @@
                 <tr v-for="report in recentReports" :key="report.id" class="hover:bg-gray-50">
                   <td class="px-4 py-2 whitespace-nowrap">{{ report.nomor_laporan_kekerasan || `LK-${report.id}` }}</td>
                   <td class="px-4 py-2 whitespace-nowrap">{{ formatDate(report.created_at) }}</td>
-                  <td class="px-4 py-2 whitespace-nowrap">{{ report.judul || 'Tidak disebutkan' }}</td>
+                  <td class="px-4 py-2">{{ report.judul || 'Tidak disebutkan' }}</td>
+                  <td class="px-4 py-2">
+                    <span 
+                      :class="[
+                        'px-2 py-1 text-xs rounded-full',
+                        getCategoryName(report.category_id) && getCategoryName(report.category_id).toLowerCase().includes('kekerasan') 
+                          ? 'bg-red-100 text-red-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      ]"
+                    >
+                      {{ getCategoryName(report.category_id) || 'Tidak dikategorikan' }}
+                    </span>
+                  </td>
                   <td class="px-4 py-2">
                     {{ truncateText(report.deskripsi || 'Tidak ada deskripsi', 50) }}
                   </td>
@@ -138,16 +196,18 @@ import VueCookies from "vue-cookies";
 import axios from "axios";
 import Chart from "chart.js/auto";
 
-// const API_URL = "http://pelaporan-d3ti.my.id/api/laporan_kekerasan";
-const API_URL = "https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan"; // Ganti dengan URL API yang sesuai
+const API_LAPORAN_URL = "https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan";
+const API_CATEGORY_URL = "https://v3422040.mhs.d3tiuns.com/api/category";
 const API_TIMEOUT = 10000; // 10 detik timeout
 
 const userData = ref(null);
 const isLoading = ref(true);
 const totalLaporan = ref(0);
 const laporanData = ref([]);
+const categoriesData = ref([]);
 const selectedPeriod = ref("week");
 const trendChartRef = ref(null);
+const categoryChartRef = ref(null);
 const selectedYear = ref(new Date().getFullYear());
 const statusCounts = ref({
   selesai: 0,
@@ -157,6 +217,7 @@ const statusCounts = ref({
 const recentReports = ref([]);
 const apiError = ref(false);
 const apiErrorMessage = ref("");
+const kekerasanCategories = ref([]);
 
 // Buat array tahun, dari tahun sekarang hingga 5 tahun sebelumnya
 const currentYear = new Date().getFullYear();
@@ -169,6 +230,7 @@ const periods = [
 ];
 
 let trendChart = null;
+let categoryChart = null;
 
 onMounted(async () => {
   // Mendapatkan data user
@@ -177,8 +239,8 @@ onMounted(async () => {
     userData.value = decryptData(encryptedUserData);
   }
   
-  // Fetch laporan dan proses data
-  await fetchLaporan();
+  // Fetch categories dan laporan
+  await fetchData();
   
   // Setup listeners untuk resize
   window.addEventListener("resize", handleResize);
@@ -188,6 +250,9 @@ onBeforeUnmount(() => {
   // Cleanup charts dan event listeners
   if (trendChart) {
     trendChart.destroy();
+  }
+  if (categoryChart) {
+    categoryChart.destroy();
   }
   
   window.removeEventListener("resize", handleResize);
@@ -199,28 +264,46 @@ const handleResize = () => {
     if (trendChart) {
       trendChart.resize();
     }
+    if (categoryChart) {
+      categoryChart.resize();
+    }
   });
 };
 
-const fetchLaporan = async () => {
+const fetchData = async () => {
   isLoading.value = true;
   apiError.value = false;
   apiErrorMessage.value = "";
   
   try {
-    console.log(`Fetching data from: ${API_URL}`);
-    const response = await axios.get(API_URL, {
+    console.log("Fetching categories and reports data...");
+    
+    // Fetch categories first
+    const categoryResponse = await axios.get(API_CATEGORY_URL, {
       timeout: API_TIMEOUT
     });
     
-    if (response.data && Array.isArray(response.data)) {
-      laporanData.value = response.data;
+    if (categoryResponse.data && Array.isArray(categoryResponse.data)) {
+      categoriesData.value = categoryResponse.data;
+      console.log("Categories data loaded successfully:", categoriesData.value.length, "categories");
+    } else {
+      throw new Error("Format data kategori tidak valid");
+    }
+    
+    // Then fetch laporan
+    const laporanResponse = await axios.get(API_LAPORAN_URL, {
+      timeout: API_TIMEOUT
+    });
+    
+    if (laporanResponse.data && Array.isArray(laporanResponse.data)) {
+      laporanData.value = laporanResponse.data;
       console.log("Laporan data loaded successfully:", laporanData.value.length, "laporan");
     } else {
-      throw new Error("Format data tidak valid");
+      throw new Error("Format data laporan tidak valid");
     }
+    
   } catch (error) {
-    console.error("Error fetching laporan data:", error);
+    console.error("Error fetching data:", error);
     apiError.value = true;
     if (error.code === 'ECONNABORTED') {
       apiErrorMessage.value = "Koneksi timeout, server tidak merespon";
@@ -253,6 +336,7 @@ const processData = async () => {
     totalLaporan.value = 0;
     statusCounts.value = { selesai: 0, proses: 0, belum: 0 };
     recentReports.value = [];
+    kekerasanCategories.value = [];
     return;
   }
   
@@ -295,6 +379,9 @@ const processData = async () => {
     proses: filteredData.filter(item => item.status === "Diproses").length,
     belum: filteredData.filter(item => !item.status || item.status === "Belum ditangani").length
   };
+
+  // Process kekerasan categories
+  processKekerasanCategories(filteredData);
   
   // Get recent reports
   recentReports.value = [...filteredData]
@@ -308,10 +395,56 @@ const processData = async () => {
   await updateCharts(filteredData, startDate, endDate);
 };
 
+const processKekerasanCategories = (data) => {
+  console.log("Processing kekerasan categories...");
+  
+  // Get violence categories from the fetched categories
+  const violenceCategories = categoriesData.value.filter(category => 
+    category.nama && category.nama.toLowerCase().includes('kekerasan')
+  );
+  
+  console.log("Found violence categories:", violenceCategories);
+  
+  // Count reports for each violence category
+  const categoryCountMap = new Map();
+  
+  violenceCategories.forEach(category => {
+    categoryCountMap.set(category.category_id, {
+      ...category,
+      count: 0
+    });
+  });
+  
+  // Count reports for each violence category
+  data.forEach(laporan => {
+    if (laporan.category_id && categoryCountMap.has(laporan.category_id)) {
+      const currentCategory = categoryCountMap.get(laporan.category_id);
+      currentCategory.count++;
+      categoryCountMap.set(laporan.category_id, currentCategory);
+    }
+  });
+  
+  // Convert map to array and filter out categories with 0 count, then sort by count (descending)
+  kekerasanCategories.value = Array.from(categoryCountMap.values())
+    .filter(category => category.count > 0)
+    .sort((a, b) => b.count - a.count);
+  
+  console.log("Kekerasan categories processed:", kekerasanCategories.value);
+};
+
+const getCategoryName = (categoryId) => {
+  if (!categoryId || !categoriesData.value) return null;
+  const category = categoriesData.value.find(cat => cat.category_id === categoryId);
+  return category ? category.nama : null;
+};
+
 const updateCharts = async (filteredData, startDate, endDate) => {
   // Update trend chart
   const trenData = prepareTrendData(filteredData, startDate, endDate);
   await updateTrendChart(trenData);
+  
+  // Update category chart
+  await updateCategoryChart();
 };
 
 const updateTrendChart = async (trenData) => {
@@ -377,6 +510,83 @@ const updateTrendChart = async (trenData) => {
     console.log("Trend chart created successfully");
   } catch (error) {
     console.error('Error updating trend chart:', error);
+  }
+};
+
+const updateCategoryChart = async () => {
+  await nextTick();
+  
+  try {
+    if (!categoryChartRef.value || kekerasanCategories.value.length === 0) {
+      console.warn('Category chart ref is not available or no categories');
+      return;
+    }
+    
+    const ctx = categoryChartRef.value.getContext('2d');
+    if (!ctx) {
+      console.warn('Could not get canvas context for category chart');
+      return;
+    }
+    
+    if (categoryChart) {
+      categoryChart.destroy();
+    }
+    
+    // Generate colors for each category
+    const colors = [
+      'rgba(239, 68, 68, 0.8)',   // red-500
+      'rgba(245, 101, 101, 0.8)', // red-400
+      'rgba(248, 113, 113, 0.8)', // red-300
+      'rgba(252, 165, 165, 0.8)', // red-200
+      'rgba(254, 202, 202, 0.8)', // red-100
+      'rgba(220, 38, 38, 0.8)',   // red-600
+      'rgba(185, 28, 28, 0.8)',   // red-700
+    ];
+    
+    categoryChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: kekerasanCategories.value.map(cat => cat.nama),
+        datasets: [{
+          data: kekerasanCategories.value.map(cat => cat.count),
+          backgroundColor: colors.slice(0, kekerasanCategories.value.length),
+          borderColor: colors.slice(0, kekerasanCategories.value.length).map(color => color.replace('0.8', '1')),
+          borderWidth: 2,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              usePointStyle: true,
+              font: {
+                size: 12
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const label = context.label || '';
+                const value = context.parsed;
+                const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `${label}: ${value} (${percentage}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    console.log("Category chart created successfully");
+  } catch (error) {
+    console.error('Error updating category chart:', error);
   }
 };
 
