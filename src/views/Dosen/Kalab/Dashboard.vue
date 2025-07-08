@@ -188,7 +188,6 @@
                         ></div>
                         <div>
                           <div class="text-sm font-medium text-gray-900">{{ category.nama }}</div>
-                          <div class="text-xs text-gray-500">ID: {{ category.category_id }}</div>
                         </div>
                       </div>
                     </td>
