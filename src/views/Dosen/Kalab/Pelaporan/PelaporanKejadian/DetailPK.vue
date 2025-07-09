@@ -224,7 +224,7 @@
                     <i class="fas fa-comment"></i> Tambah Tanggapan
                 </button>
                 <button class="btn-success" @click="finishReport" v-if="laporan.status === 'verified' || laporan.status === 'processed'">
-                    <i class="fas fa-check-circle"></i> Tutup Kasus
+                    <i class="fas fa-check-circle"></i> Tutup Laporan
                 </button>
             </div>
         </div>

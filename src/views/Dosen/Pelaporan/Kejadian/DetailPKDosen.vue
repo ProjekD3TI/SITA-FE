@@ -30,9 +30,9 @@
                         title="Lengkapi atau ubah data laporan">
                         <i class="fas fa-edit"></i> <span>Edit Laporan</span>
                     </button>
-                </div>
-                <div :class="['status-badge', laporan.status]">
-                    {{ formatStatus(laporan.status) }}
+                    <div :class="['status-badge', laporan.status]">
+                        {{ formatStatus(laporan.status) }}
+                    </div>
                 </div>
             </div>
 
@@ -112,8 +112,6 @@
                         <div class="info-value">{{ formatUmur(laporan.umur_pelapor) || '-' }}</div>
                     </div>
                 </div>
-
-                <!-- Add this inside your content-wrapper div after the existing cards/sections -->
 
                 <!-- Terlapor Section -->
                 <div class="detail-card" v-if="terlaporArray && terlaporArray.length > 0">
@@ -199,9 +197,9 @@
                 <div v-else-if="Array.isArray(laporan.tanggapan)" class="tanggapan-list">
                     <div v-for="(item, index) in laporan.tanggapan" :key="index" class="tanggapan-item">
                         <div class="tanggapan-header">
-                            <!-- Add Kalab prefix for items with role "kalab" -->
+                            <!-- Add Dosen prefix for items with role "dosen" -->
                             <span class="tanggapan-user">
-                                {{ item.role === 'kalab' ? 'Kalab - ' : '' }}{{ item.user || 'Admin' }}
+                                {{ item.role === 'dosen' ? 'Dosen - ' : '' }}{{ item.user || 'Admin' }}
                             </span>
                             <span class="tanggapan-time">{{ formatDate(item.timestamp) }}</span>
                         </div>
@@ -215,40 +213,17 @@
                 </p>
             </div>
           
-          <!-- Action Buttons - Tombol untuk admin -->
-          <div class="action-buttons" v-if="isAdmin">
-            <button class="btn btn-secondary" @click="showTanggapanModal = true" v-if="laporan.status !== 'finished'">
-              <i class="fas fa-comment"></i> Tambah Tanggapan
-            </button>
-            <button class="btn btn-success" @click="finishReport" v-if="laporan.status !== 'finished' && laporan.status !== 'unverified'">
-              <i class="fas fa-check-circle"></i> Tutup Kasus
-            </button>
-          </div>
-        </div>
-
-        <!-- Close report confirmation modal -->
-        <div class="modal-overlay" v-if="showCloseModal">
-            <div class="modal-container" @click.stop>
-                <div class="modal-header">
-                    <h3>Konfirmasi Tutup Laporan</h3>
-                    <button class="close-button" @click="showCloseModal = false" :disabled="isClosing">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p>Apakah Anda yakin ingin menutup laporan ini? Laporan yang sudah ditutup akan mendapatkan status Selesai.</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-cancel" @click="showCloseModal = false" :disabled="isClosing">Batal</button>
-                    <button class="btn-success" @click="closeReport" :disabled="isClosing">
-                        <span v-if="isClosing">
-                            <i class="fas fa-spinner fa-spin"></i> Memproses...
-                        </span>
-                        <span v-else>
-                            <i class="fas fa-check"></i> Yakin, Tutup Laporan
-                        </span>
-                    </button>
-                </div>
+            <!-- Action Buttons - Tombol untuk dosen -->
+            <div class="action-buttons" v-if="isAdmin">
+                <button class="btn btn-secondary" @click="showTanggapanModal = true" v-if="laporan.status !== 'finished'">
+                    <i class="fas fa-comment"></i> Tambah Tanggapan
+                </button>
+                <button class="btn btn-success" @click="finishReport" v-if="laporan.status !== 'finished' && laporan.status !== 'unverified'">
+                    <i class="fas fa-check-circle"></i> Tutup Laporan
+                </button>
             </div>
         </div>
+
         <!-- Modal for adding tanggapan -->
         <div class="modal-overlay" v-if="showTanggapanModal">
             <div class="modal-container" @click.stop>
@@ -330,9 +305,9 @@ export default {
         checkAuth() {
             // Get authentication data from cookies
             this.token = this.$cookies.get('auth_token');
-            this.currentUser = this.$cookies.get('user_name') || 'miftahul01';
+            this.currentUser = this.$cookies.get('user_name') || 'Dosen';
             this.userRole = this.$cookies.get('user_role');
-            this.isAdmin = this.userRole === 'admin' || this.userRole === 'superadmin';
+            this.isAdmin = true; // Set to true for dosen to show action buttons
             
             console.log('Auth check:', {
                 token: this.token ? 'exists' : null,
@@ -460,15 +435,62 @@ export default {
         formatDate(dateString) {
             if (!dateString) return '-';
             
-            const options = { 
-                day: 'numeric', 
-                month: 'long', 
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            };
-            
-            return new Date(dateString).toLocaleDateString('id-ID', options);
+            try {
+                let date;
+                
+                // Special case for tanggal_kejadian - Apply timezone adjustment for MySQL format
+                if (typeof dateString === 'string' && this.laporan && dateString === this.laporan.tanggal_kejadian) {
+                    const [datePart, timePart] = dateString.split(' ');
+                    const [year, month, day] = datePart.split('-').map(Number);
+                    const [hours, minutes, seconds] = timePart.split(':').map(Number);
+                    
+                    // For tanggal_kejadian, assume it's UTC and add 7 hours for Jakarta
+                    date = new Date(Date.UTC(year, month-1, day, hours, minutes, seconds));
+                    date.setTime(date.getTime() + (7 * 60 * 60 * 1000)); // Add 7 hours
+                }
+                // For tanggapan timestamps (typically in ISO format)
+                else if (typeof dateString === 'string' && dateString.includes('T')) {
+                    // Parse ISO format but don't add hours because tanggapan timestamps are already in Jakarta time
+                    date = new Date(dateString);
+                }
+                // For all other dates (like created_at, updated_at in MySQL format)
+                else if (typeof dateString === 'string' && dateString.includes(' ')) {
+                    // Parse MySQL date format
+                    const [datePart, timePart] = dateString.split(' ');
+                    const [year, month, day] = datePart.split('-').map(Number);
+                    const [hours, minutes, seconds] = timePart.split(':').map(Number);
+                    
+                    // For regular MySQL dates, assume they're already in local time
+                    date = new Date(year, month-1, day, hours, minutes, seconds);
+                }
+                else {
+                    // Fallback for any other format
+                    date = new Date(dateString);
+                }
+                
+                // Check if date is valid
+                if (isNaN(date.getTime())) {
+                    return '-';
+                }
+                
+                // Format using Indonesian month names
+                const monthNames = [
+                    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+                ];
+                
+                const day = date.getDate();
+                const month = monthNames[date.getMonth()];
+                const year = date.getFullYear();
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                
+                // Return formatted date
+                return `${day} ${month} ${year} pukul ${hours}:${minutes}`;
+            } catch (error) {
+                console.error('Error formatting date:', error);
+                return dateString || '-';
+            }
         },
         
         formatStatus(status) {
@@ -686,7 +708,22 @@ export default {
 
         finishReport() {
             if (!this.checkAuth()) return;
-            this.showCloseModal = true;
+            
+            // Show confirmation dialog
+            Swal.fire({
+                title: 'Tutup Laporan',
+                text: 'Apakah Anda yakin ingin menutup dan menyelesaikan laporan ini?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Tutup Laporan!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.closeReport();
+                }
+            });
         },
         
         async saveTanggapan() {
@@ -706,14 +743,20 @@ export default {
                     return;
                 }
                 
-                console.log('Current tanggapan before adding new:', this.laporan.tanggapan);
+                if (!this.tanggapanText.trim()) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Tanggapan tidak boleh kosong',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                    return;
+                }
                 
-                // Create a new tanggapan object
-                const newTanggapan = {
-                    text: this.tanggapanText,
-                    timestamp: new Date().toISOString(),
-                    user: this.currentUser // Using the current user from cookie
-                };
+                console.log('Current tanggapan before adding new:', this.laporan.tanggapan);
                 
                 // Create/update the tanggapan array
                 let tanggapanArray = [];
@@ -736,7 +779,7 @@ export default {
                                 tanggapanArray = [{
                                     text: this.laporan.tanggapan,
                                     timestamp: this.laporan.updated_at,
-                                    user: 'System'
+                                    user: 'Admin'
                                 }];
                             }
                         } catch (e) {
@@ -744,7 +787,7 @@ export default {
                             tanggapanArray = [{
                                 text: this.laporan.tanggapan,
                                 timestamp: this.laporan.updated_at,
-                                user: 'System'
+                                user: 'Admin'
                             }];
                         }
                     } 
@@ -753,10 +796,18 @@ export default {
                         tanggapanArray = [{
                             text: this.laporan.tanggapan,
                             timestamp: this.laporan.updated_at,
-                            user: 'System'
+                            user: 'Admin'
                         }];
                     }
                 }
+                
+                // Create a new tanggapan object
+                const newTanggapan = {
+                    text: this.tanggapanText,
+                    timestamp: new Date().toISOString(),
+                    user: this.currentUser, // Using the current user from cookie
+                    role: 'dosen' // Set role as dosen to ensure proper display
+                };
                 
                 // Add the new tanggapan to the array
                 tanggapanArray.push(newTanggapan);
@@ -773,11 +824,6 @@ export default {
                     formData.append('status', this.laporan.status);
                 } else {
                     formData.append('status', 'pending');
-                }
-
-                // For debugging, log the FormData
-                for (let pair of formData.entries()) {
-                    console.log(`${pair[0]}: ${pair[1] instanceof Blob ? 'File/Blob data' : pair[1]}`);
                 }
 
                 const response = await axios.post(
@@ -823,13 +869,6 @@ export default {
                     return;
                 }
                 
-                // More detailed error logging for debugging
-                if (error.response) {
-                    console.error('Error response data:', error.response.data);
-                    console.error('Error response status:', error.response.status);
-                    console.error('Error response headers:', error.response.headers);
-                }
-                
                 // Try to get a more specific error message
                 const errorMessage = error.response?.data?.message || 
                                 error.response?.data?.error || 
@@ -851,8 +890,6 @@ export default {
             if (!this.checkAuth()) return;
             
             try {
-                this.isClosing = true;
-                
                 if (!this.laporanId) {
                     Swal.fire({
                         icon: 'error',
@@ -866,22 +903,22 @@ export default {
                     return;
                 }
                 
-                console.log('Closing report:', {
-                    laporanId: this.laporanId
-                });
-                
                 // Make the API call using POST with _method: PUT
                 const formData = new FormData();
                 formData.append('_method', 'PUT');
                 formData.append('status', 'finished');
                 
-                // If there's tanggapan, preserve it
+                // IMPORTANT: Preserve the existing tanggapan data
                 if (this.laporan.tanggapan) {
-                    if (typeof this.laporan.tanggapan === 'string') {
-                        formData.append('tanggapan', this.laporan.tanggapan);
-                    } else {
-                        formData.append('tanggapan', JSON.stringify(this.laporan.tanggapan));
+                    let tanggapanData = this.laporan.tanggapan;
+                    
+                    // If it's already a string (old format), keep it as is
+                    if (typeof tanggapanData !== 'string') {
+                        // If it's an array (new format), convert it to JSON string
+                        tanggapanData = JSON.stringify(tanggapanData);
                     }
+                    
+                    formData.append('tanggapan', tanggapanData);
                 }
 
                 const response = await axios.post(
@@ -905,7 +942,7 @@ export default {
                 Swal.fire({
                     icon: 'success',
                     title: 'Berhasil!',
-                    text: 'Laporan berhasil ditutup dan dinyatakan selesai',
+                    text: 'Laporan berhasil ditutup dan selesai',
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,
@@ -936,9 +973,6 @@ export default {
                     showConfirmButton: false,
                     timer: 3000
                 });
-            } finally {
-                this.isClosing = false;
-                this.showCloseModal = false;
             }
         },
     },
@@ -1015,6 +1049,74 @@ export default {
 </script>
 
 <style scoped>
+/* Action buttons */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.btn {
+    padding: 10px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s;
+    border: 2px solid transparent; /* Default border */
+}
+
+.btn i {
+    margin-right: 8px;
+}
+
+.btn-primary {
+    background-color: #1976d2;
+    color: white;
+    border-color: #1565c0;
+}
+
+.btn-primary:hover {
+    background-color: #1565c0;
+    border-color: #0d47a1;
+}
+
+.btn-secondary {
+    background-color: #f5f5f5;
+    color: #333;
+    border-color: #e0e0e0;
+}
+
+.btn-secondary:hover {
+    background-color: #eeeeee;
+    border-color: #d0d0d0;
+}
+
+.btn-danger {
+    background-color: #dc2626;
+    color: white;
+    border-color: #b91c1c;
+}
+
+.btn-danger:hover {
+    background-color: #b91c1c;
+    border-color: #991b1b;
+}
+
+.btn-success {
+    background-color: #10b981;
+    color: white;
+    border-color: #059669;
+}
+
+.btn-success:hover {
+    background-color: #059669;
+    border-color: #047857;
+}
+
+/* Rest of your existing styles remain the same */
 /* Main container */
 .detail-pk-container {
     padding: 24px;
@@ -1153,10 +1255,9 @@ export default {
 }
 
 .action-btn-container {
-    margin-left: auto; /* Push to right */
     display: flex;
     align-items: center;
-    margin-right: 16px; /* Add space between button and status badge */
+    gap: 12px;
 }
 
 .edit-button {
@@ -1464,6 +1565,14 @@ export default {
     margin-bottom: 20px;
 }
 
+.card h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    color: #333;
+}
+
 .tanggapan-list {
     display: flex;
     flex-direction: column;
@@ -1501,65 +1610,6 @@ export default {
     color: #374151;
     white-space: pre-line;
     margin: 0;
-}
-
-/* Action buttons */
-.action-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 24px;
-}
-
-.btn-primary, .btn-success, .btn-danger, .btn-secondary {
-    padding: 10px 16px;
-    border: none;
-    border-radius: 6px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    transition: background-color 0.2s;
-}
-
-.btn-primary i, .btn-success i, .btn-danger i, .btn-secondary i {
-    margin-right: 8px;
-}
-
-.btn-primary {
-    background-color: #2563eb;
-    color: white;
-}
-
-.btn-primary:hover {
-    background-color: #1d4ed8;
-}
-
-.btn-success {
-    background-color: #059669;
-    color: white;
-}
-
-.btn-success:hover {
-    background-color: #047857;
-}
-
-.btn-danger {
-    background-color: #dc2626;
-    color: white;
-}
-
-.btn-danger:hover {
-    background-color: #b91c1c;
-}
-
-.btn-secondary {
-    background-color: #6b7280;
-    color: white;
-}
-
-.btn-secondary:hover {
-    background-color: #4b5563;
 }
 
 /* Modal */
@@ -1617,6 +1667,7 @@ export default {
     border-radius: 6px;
     font-size: 1rem;
     resize: vertical;
+    font-family: inherit;
 }
 
 .modal-footer {
@@ -1664,9 +1715,50 @@ export default {
         flex-direction: column;
     }
     
-    .btn-primary, .btn-success, .btn-danger, .btn-secondary {
+    .btn {
         width: 100%;
         justify-content: center;
+    }
+    
+    .image-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .edit-button span {
+        display: none; /* Hide text on mobile */
+    }
+    
+    .edit-button {
+        padding: 8px;
+    }
+    
+    .edit-button i {
+        margin-right: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .detail-pk-container {
+        padding: 12px;
+    }
+    
+    .image-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .status-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    
+    .action-btn-container {
+        flex-wrap: wrap;
+        gap: 8px;
     }
 }
 </style>
