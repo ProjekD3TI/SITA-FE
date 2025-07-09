@@ -191,7 +191,7 @@
           <!-- Link Login -->
           <p class="mt-4 text-sm text-gray-600 text-center">
             Already have an account?
-            <a href="/loginmhs" class="text-[#F78052] hover:text-indigo-500">Login here</a>
+            <a href="/mahasiswa/login" class="text-[#F78052] hover:text-indigo-500">Login here</a>
           </p>
         </div>
       </div>
