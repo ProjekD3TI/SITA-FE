@@ -152,7 +152,7 @@
                       <span :class="getStatusColor(item.status_peminjaman, 'inventaris')
                         " class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
                         {{
-                          getStatusText(item.status_peminjaman, "inventaris")
+                        getStatusText(item.status_peminjaman, "inventaris")
                         }}
                       </span>
                     </p>
@@ -230,8 +230,49 @@
           </div>
         </div>
       </div>
-
+      
+      <!-- Aksi Cepat Vertikal -->
       <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-emerald-100">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <i class="fas fa-bolt text-emerald-600 mr-3 text-xl"></i>
+              <div>
+                <h2 class="text-xl font-semibold text-gray-900">
+                  Aksi Cepat
+                </h2>
+                <p class="text-gray-600 text-sm mt-1">
+                  Navigasi cepat ke fitur penting
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="p-6">
+          <section class="flex flex-col gap-4">
+            <router-link to="/mahasiswa/pinjam"
+              class="w-full p-5 bg-blue-50 hover:bg-blue-100 rounded-xl shadow flex flex-col items-start transition-all">
+              <p class="text-blue-700 font-semibold">📅 Ajukan Peminjaman</p>
+              <p class="text-xs text-gray-500">Form peminjaman ruang</p>
+            </router-link>
+
+            <router-link to="/mahasiswa/booking-mahasiswa"
+              class="w-full p-5 bg-yellow-50 hover:bg-yellow-100 rounded-xl shadow flex flex-col items-start transition-all">
+              <p class="text-yellow-700 font-semibold">📄 Lihat Riwayat</p>
+              <p class="text-xs text-gray-500">Cek histori peminjaman</p>
+            </router-link>
+
+            <a href="/mahasiswa/jadwal-mahasiswa" target="_blank"
+              class="w-full p-5 bg-green-50 hover:bg-green-100 rounded-xl shadow flex flex-col items-start transition-all">
+              <p class="text-green-700 font-semibold">📄 Lihat Jadwal</p>
+              <p class="text-xs text-gray-500">Cek Jadwal penggunaan</p>
+            </a>
+          </section>
+        </div>
+      </div>
+
+
+      <!-- <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-emerald-100">
           <div class="flex items-center justify-between">
             <div class="flex items-center">
@@ -298,8 +339,8 @@
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </div> -->
+      <!-- </div> -->
     </div>
   </div>
 </template>

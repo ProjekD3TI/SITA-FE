@@ -64,7 +64,7 @@
                 <select v-model="formData.penanggung_jawab"
                     class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
                     <option value="">Pilih Penanggung Jawab</option>
-                    <option v-for="dosen in dosenList" :key="dosen.id" :value="dosen.id">
+                    <option v-for="dosen in dosenList" :key="dosen.id" :value="Number(dosen.id)">
                         {{ dosen.name }}
                     </option>
                 </select>
@@ -234,14 +234,18 @@ async function fetchDosen() {
     }
 }
 
+
 async function fetchSessions() {
     try {
-        const res = await axios.get("/api/admin_pengelola/session");
+        const res = await axios.get("/api/admin_pengelola/session", {
+            params: { all: true }
+        });
         sessionList.value = res.data.data || [];
     } catch {
         toast.error("Gagal memuat data sesi");
     }
 }
+
 
 async function fetchScheduleDetail() {
     try {
@@ -251,7 +255,7 @@ async function fetchScheduleDetail() {
         formData.id_ruang = d.id_ruang;
         formData.pemakaian = d.pemakaian;
         formData.id_class = d.id_class;
-        formData.penanggung_jawab = d.penanggung_jawab;
+        formData.penanggung_jawab = Number(d.penanggung_jawab);
         formData.start_date = d.start_date;
         formData.end_date = d.end_date;
         formData.sessions = d.sessions.map(s => ({

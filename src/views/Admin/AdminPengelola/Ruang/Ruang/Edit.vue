@@ -1,117 +1,183 @@
 <template>
-    <div class="p-6 max-w-2xl mx-auto">
+    <div class="p-6 max-w-4xl mx-auto">
         <h2 class="text-2xl font-bold mb-6">Edit Ruang</h2>
 
         <div v-if="loading" class="flex justify-center items-center h-64">
             <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
         </div>
 
-        <form v-else @submit.prevent="handleSubmit" class="space-y-4">
-            <div class="space-y-2">
-                <label
-                    class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Nama Ruang
-                </label>
-                <input v-model="formData.nama_ruang" type="text"
-                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Masukkan nama ruang" />
-                <p v-if="errors.nama_ruang" class="text-sm text-red-500">
-                    {{ errors.nama_ruang[0] }}
-                </p>
-            </div>
+        <form v-else @submit.prevent="handleSubmit" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Nama Ruang -->
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none">
+                        Nama Ruang <span class="text-red-500">*</span>
+                    </label>
+                    <input v-model="formData.nama_ruang" type="text"
+                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        placeholder="Masukkan nama ruang" />
+                    <p v-if="errors.nama_ruang" class="text-sm text-red-500">
+                        {{ errors.nama_ruang[0] }}
+                    </p>
+                </div>
 
-            <div class="space-y-2">
-                <label
-                    class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Kapasitas
-                </label>
-                <input v-model="formData.kapasitas" type="number"
-                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Masukkan kapasitas ruang" />
-                <p v-if="errors.kapasitas" class="text-sm text-red-500">
-                    {{ errors.kapasitas[0] }}
-                </p>
-            </div>
+                <!-- Kapasitas -->
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none">
+                        Kapasitas <span class="text-red-500">*</span>
+                    </label>
+                    <input v-model="formData.kapasitas" type="number" min="1"
+                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        placeholder="Masukkan kapasitas ruang" />
+                    <p v-if="errors.kapasitas" class="text-sm text-red-500">
+                        {{ errors.kapasitas[0] }}
+                    </p>
+                </div>
 
-            <div class="space-y-2">
-                <label
-                    class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Dimensi
-                </label>
-                <input v-model="formData.dimensi" type="text"
-                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Contoh: 5x7 meter" />
-                <p v-if="errors.dimensi" class="text-sm text-red-500">
-                    {{ errors.dimensi[0] }}
-                </p>
-            </div>
+                <!-- Gedung -->
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none">
+                        Gedung <span class="text-red-500">*</span>
+                    </label>
+                    <select v-model="formData.id_gedung" @change="onGedungChange"
+                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                        <option value="">Pilih Gedung</option>
+                        <option v-for="gedung in gedungList" :key="gedung.id_gedung" :value="gedung.id_gedung">
+                            {{ gedung.nama_gedung }}
+                        </option>
+                    </select>
+                    <p v-if="errors.id_gedung" class="text-sm text-red-500">
+                        {{ errors.id_gedung[0] }}
+                    </p>
+                </div>
 
+                <!-- Lantai -->
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none">
+                        Lantai <span class="text-red-500">*</span>
+                    </label>
+                    <select v-model="formData.id_lantai" :disabled="!formData.id_gedung || loadingLantai"
+                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50">
+                        <option value="">{{ loadingLantai ? 'Loading...' : 'Pilih Lantai' }}</option>
+                        <option v-for="lantai in lantaiList" :key="lantai.id_lantai" :value="lantai.id_lantai">
+                            {{ lantai.nama_lantai }}
+                        </option>
+                    </select>
+                    <p v-if="errors.id_lantai" class="text-sm text-red-500">
+                        {{ errors.id_lantai[0] }}
+                    </p>
+                </div>
+
+                <!-- Dimensi -->
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none">
+                        Dimensi <span class="text-red-500">*</span>
+                    </label>
+                    <input v-model="formData.dimensi" type="text"
+                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        placeholder="Contoh: 10m x 8m" />
+                    <p v-if="errors.dimensi" class="text-sm text-red-500">
+                        {{ errors.dimensi[0] }}
+                    </p>
+                </div>
+
+                <!-- Status
+                <!-- <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none">
+                        Status <span class="text-red-500">*</span>
+                    </label>
+                    <select v-model="formData.status"
+                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                        <option value="1">Aktif</option>
+                        <option value="0">Tidak Aktif</option>
+                    </select>
+                    <p v-if="errors.status" class="text-sm text-red-500">
+                        {{ errors.status[0] }}
+                    </p>
+                </div> -->
+            </div> 
+
+            <!-- Fasilitas -->
             <div class="space-y-2">
-                <label
-                    class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Fasilitas
+                <label class="text-sm font-medium leading-none">
+                    Fasilitas <span class="text-red-500">*</span>
                 </label>
-                <textarea v-model="formData.fasilitas"
-                    class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Masukkan fasilitas ruang"></textarea>
+                <textarea v-model="formData.fasilitas" rows="4"
+                    class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    placeholder="Masukkan fasilitas yang tersedia di ruang ini"></textarea>
                 <p v-if="errors.fasilitas" class="text-sm text-red-500">
                     {{ errors.fasilitas[0] }}
                 </p>
             </div>
 
-            <div class="space-y-2">
-                <label
-                    class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Gedung
-                </label>
+            <!-- Current Photos -->
+            <div v-if="currentPhotos.length > 0" class="space-y-2">
+                <label class="text-sm font-medium leading-none">Foto Saat Ini:</label>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div v-for="photo in currentPhotos" :key="photo.id" class="relative">
+                        <img :src="`http://localhost:8000/storage/ruang/${photo.foto_path}`" :alt="formData.nama_ruang" 
+    class="w-full h-24 object-cover rounded-md border">
 
-                <SearchableSelect v-model="formData.id_gedung" :options="gedungList" value-key="id_gedung"
-                    label-key="nama_gedung" placeholder="Pilih Gedung" />
-
-                <p v-if="errors.id_gedung" class="text-sm text-red-500">
-                    {{ errors.id_gedung[0] }}
-                </p>
+                    </div>
+                </div>
             </div>
 
+            <!-- Upload New Photos -->
             <div class="space-y-2">
-                <label
-                    class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Status
-                </label>
-                <select v-model="formData.status"
-                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-                    <option :value="1">Tersedia</option>
-                    <option :value="0">Tidak Tersedia</option>
-                </select>
-                <p v-if="errors.status" class="text-sm text-red-500">
-                    {{ errors.status[0] }}
-                </p>
-            </div>
-
-            <div class="space-y-2">
-                <label
-                    class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <label class="text-sm font-medium leading-none">
                     Ganti Foto Ruang (Opsional)
                 </label>
-                <div class="flex items-center gap-2">
-                    <input type="file" ref="fileInput" @change="handleFileChange" multiple accept="image/*"
-                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                <input ref="fileInput" type="file" multiple accept="image/*" @change="handleFileChange"
+                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
+                <p class="text-xs text-gray-500">Upload foto baru untuk mengganti foto yang ada (JPG, PNG, GIF, SVG)</p>
+                <p v-if="errors.foto_ruang" class="text-sm text-red-500">
+                    {{ errors.foto_ruang[0] }}
+                </p>
+
+                <!-- Preview New Images -->
+                <div v-if="previewImages.length > 0" class="space-y-2">
+                    <label class="text-sm font-medium text-blue-600">Preview Foto Baru:</label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div v-for="(image, index) in previewImages" :key="index" class="relative">
+                            <img :src="image" :alt="`Preview ${index + 1}`" 
+                                class="w-full h-24 object-cover rounded-md border border-blue-300">
+                            <button type="button" @click="removeImage(index)"
+                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600">
+                                ×
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <p class="text-xs text-gray-500">
-                    Mengunggah foto baru akan menggantikan semua foto yang ada
-                </p>
-                <p v-if="errors['foto_ruang.0']" class="text-sm text-red-500">
-                    {{ errors["foto_ruang.0"][0] }}
-                </p>
             </div>
 
-            <div v-if="previewImages.length > 0" class="grid grid-cols-3 gap-2 mt-2">
-                <div v-for="(image, index) in previewImages" :key="index" class="relative">
-                    <img :src="image" alt="Preview" class="h-24 w-24 object-cover rounded-md" />
-                    <button @click.prevent="removeImage(index)"
-                        class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
-                        ×
-                    </button>
+            <!-- Preview Changes -->
+            <div v-if="originalData.nama_ruang" class="space-y-3">
+                <!-- Current Data -->
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Data Saat Ini:</h4>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div><strong>Nama:</strong> {{ originalData.nama_ruang }}</div>
+                        <div><strong>Kapasitas:</strong> {{ originalData.kapasitas }} orang</div>
+                        <div><strong>Gedung:</strong> {{ originalData.gedung?.nama_gedung || '-' }}</div>
+                        <div><strong>Lantai:</strong> {{ originalData.lantai?.nama_lantai || '-' }}</div>
+                        <div><strong>Dimensi:</strong> {{ originalData.dimensi }}</div>
+                        <!-- <div><strong>Status:</strong> {{ originalData.status == 1 ? 'Aktif' : 'Tidak Aktif' }}</div> -->
+                        <div class="col-span-2"><strong>Fasilitas:</strong> {{ originalData.fasilitas }}</div>
+                    </div>
+                </div>
+
+                <!-- New Preview -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 class="text-sm font-medium text-blue-900 mb-2">Preview Perubahan:</h4>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div><strong>Nama:</strong> {{ formData.nama_ruang || 'Belum diisi' }}</div>
+                        <div><strong>Kapasitas:</strong> {{ formData.kapasitas || 'Belum diisi' }} orang</div>
+                        <div><strong>Gedung:</strong> {{ getGedungName() || 'Belum dipilih' }}</div>
+                        <div><strong>Lantai:</strong> {{ getLantaiName() || 'Belum dipilih' }}</div>
+                        <div><strong>Dimensi:</strong> {{ formData.dimensi || 'Belum diisi' }}</div>
+                        <!-- <div><strong>Status:</strong> {{ formData.status == 1 ? 'Aktif' : 'Tidak Aktif' }}</div> -->
+                        <div class="col-span-2"><strong>Fasilitas:</strong> {{ formData.fasilitas || 'Belum diisi' }}</div>
+                    </div>
                 </div>
             </div>
 
@@ -136,28 +202,39 @@ import axios from "axios";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 import VueCookies from "vue-cookies";
-import SearchableSelect from "../../../../../components/SearchableSelect.vue";
 
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
 const id = route.params.id;
 const fileInput = ref(null);
-const previewImages = ref([]);
 const isSubmitting = ref(false);
 const loading = ref(true);
+const loadingLantai = ref(false);
 const gedungList = ref([]);
-const timestamp = ref(Date.now());
+const lantaiList = ref([]);
+const currentPhotos = ref([]);
+const previewImages = ref([]);
+const selectedFiles = ref([]);
 
 const formData = reactive({
     nama_ruang: "",
     kapasitas: "",
-    dimensi: "",
     fasilitas: "",
+    dimensi: "",
     id_gedung: "",
-    status: 1,
-    foto_ruang: [],
-    _method: "PUT",
+    id_lantai: "",
+    // status: 1,
+});
+
+const originalData = reactive({
+    nama_ruang: "",
+    kapasitas: "",
+    fasilitas: "",
+    dimensi: "",
+    // status: 1,
+    gedung: null,
+    lantai: null,
 });
 
 const errors = reactive({});
@@ -173,15 +250,23 @@ const fetchGedungList = async () => {
     try {
         setupAxios();
         const response = await axios.get("/api/admin_pengelola/gedung");
-        gedungList.value = response.data.data;
+        gedungList.value = response.data.data || [];
     } catch (error) {
-        console.error("Error fetching gedung list:", error);
-        if (error.response?.status === 401) {
-            toast.error("Sesi anda telah berakhir. Silakan login kembali.");
-            router.push("/login-admin");
-        } else {
-            toast.error("Gagal memuat daftar gedung");
-        }
+        toast.error("Gagal memuat data gedung");
+    }
+};
+
+const fetchLantaiByGedung = async (id_gedung) => {
+    try {
+        loadingLantai.value = true;
+        setupAxios();
+        const response = await axios.get(`/api/lantai/by-gedung/${id_gedung}`);
+        lantaiList.value = response.data.data || [];
+    } catch (error) {
+        toast.error("Gagal memuat data lantai");
+        lantaiList.value = [];
+    } finally {
+        loadingLantai.value = false;
     }
 };
 
@@ -190,18 +275,36 @@ const fetchRuang = async () => {
         loading.value = true;
         setupAxios();
 
-        // Fetch gedung list first
-        await fetchGedungList();
-
         const response = await axios.get(`/api/admin_pengelola/ruang/${id}`);
         const ruang = response.data.data;
 
+        // Store original data for display
+        Object.assign(originalData, {
+            nama_ruang: ruang.nama_ruang || "",
+            kapasitas: ruang.kapasitas || "",
+            fasilitas: ruang.fasilitas || "",
+            dimensi: ruang.dimensi || "",
+            // status: ruang.status || 1,
+            gedung: ruang.gedung,
+            lantai: ruang.lantai,
+        });
+
+        // Set form data
         formData.nama_ruang = ruang.nama_ruang || "";
-        formData.kapasitas = ruang.kapasitas || 0;
-        formData.dimensi = ruang.dimensi || "";
+        formData.kapasitas = ruang.kapasitas || "";
         formData.fasilitas = ruang.fasilitas || "";
+        formData.dimensi = ruang.dimensi || "";
         formData.id_gedung = ruang.id_gedung || "";
-        formData.status = ruang.status !== undefined ? ruang.status : 1;
+        formData.id_lantai = ruang.id_lantai || "";
+        // formData.status = ruang.status || 1;
+
+        // Set current photos
+        currentPhotos.value = response.data.photos || [];
+
+        // Load lantai for selected gedung
+        if (formData.id_gedung) {
+            await fetchLantaiByGedung(formData.id_gedung);
+        }
     } catch (error) {
         if (error.response?.status === 401) {
             toast.error("Sesi anda telah berakhir. Silakan login kembali.");
@@ -217,32 +320,47 @@ const fetchRuang = async () => {
     }
 };
 
+const onGedungChange = () => {
+    formData.id_lantai = "";
+    lantaiList.value = [];
+    if (formData.id_gedung) {
+        fetchLantaiByGedung(formData.id_gedung);
+    }
+};
+
 const handleFileChange = (event) => {
-    const files = event.target.files;
-    if (!files.length) return;
-
-    formData.foto_ruang = Array.from(files);
-
+    const files = Array.from(event.target.files);
+    selectedFiles.value = files;
+    
+    // Create preview images
     previewImages.value = [];
-    for (let i = 0; i < files.length; i++) {
+    files.forEach(file => {
         const reader = new FileReader();
         reader.onload = (e) => {
             previewImages.value.push(e.target.result);
         };
-        reader.readAsDataURL(files[i]);
-    }
+        reader.readAsDataURL(file);
+    });
 };
 
 const removeImage = (index) => {
     previewImages.value.splice(index, 1);
+    selectedFiles.value.splice(index, 1);
+    
+    // Update file input
+    const dt = new DataTransfer();
+    selectedFiles.value.forEach(file => dt.items.add(file));
+    fileInput.value.files = dt.files;
+};
 
-    const newFiles = [...formData.foto_ruang];
-    newFiles.splice(index, 1);
-    formData.foto_ruang = newFiles;
+const getGedungName = () => {
+    const gedung = gedungList.value.find(g => g.id_gedung == formData.id_gedung);
+    return gedung ? gedung.nama_gedung : '';
+};
 
-    if (formData.foto_ruang.length === 0) {
-        fileInput.value.value = "";
-    }
+const getLantaiName = () => {
+    const lantai = lantaiList.value.find(l => l.id_lantai == formData.id_lantai);
+    return lantai ? lantai.nama_lantai : '';
 };
 
 const handleSubmit = async () => {
@@ -252,37 +370,33 @@ const handleSubmit = async () => {
 
         Object.keys(errors).forEach((key) => delete errors[key]);
 
-        const submitData = new FormData();
+        const formDataToSend = new FormData();
+        formDataToSend.append('nama_ruang', formData.nama_ruang);
+        formDataToSend.append('kapasitas', formData.kapasitas);
+        formDataToSend.append('fasilitas', formData.fasilitas);
+        formDataToSend.append('dimensi', formData.dimensi);
+        formDataToSend.append('id_gedung', formData.id_gedung);
+        formDataToSend.append('id_lantai', formData.id_lantai);
+        // formDataToSend.append('status', formData.status);
+        formDataToSend.append('_method', 'PUT');
 
-        submitData.append("_method", "PUT");
-        submitData.append("nama_ruang", String(formData.nama_ruang));
-        submitData.append("kapasitas", String(formData.kapasitas));
-        submitData.append("dimensi", String(formData.dimensi));
-        submitData.append("fasilitas", String(formData.fasilitas));
-        submitData.append("id_gedung", String(formData.id_gedung));
-        submitData.append("status", String(formData.status));
-
-        if (formData.foto_ruang.length > 0) {
-            formData.foto_ruang.forEach((file) => {
-                submitData.append("foto_ruang[]", file);
-            });
-        }
+        // Append files if any
+        selectedFiles.value.forEach((file, index) => {
+            formDataToSend.append(`foto_ruang[${index}]`, file);
+        });
 
         const response = await axios.post(
             `/api/admin_pengelola/ruang/edit/${id}`,
-            submitData,
+            formDataToSend,
             {
                 headers: {
-                    "Content-Type": "multipart/form-data",
+                    'Content-Type': 'multipart/form-data',
                     "X-HTTP-Method-Override": "PUT",
-                },
+                }
             }
         );
 
         toast.success(response.data.message || "Ruang berhasil diupdate");
-
-        timestamp.value = Date.now();
-
         setTimeout(() => {
             router.push(`/admin-pengelola/ruang/`);
         }, 500);
@@ -292,9 +406,8 @@ const handleSubmit = async () => {
                 Object.assign(errors, error.response.data.errors);
             } else if (typeof error.response.data === "object") {
                 Object.assign(errors, error.response.data);
-            } else {
-                toast.error(error.response.data.message || "Validasi gagal");
             }
+            toast.error(error.response.data.message || "Validasi gagal");
         } else if (error.response?.status === 401) {
             toast.error("Sesi anda telah berakhir. Silakan login kembali.");
             router.push("/login-admin");
@@ -306,7 +419,8 @@ const handleSubmit = async () => {
     }
 };
 
-onMounted(() => {
-    fetchRuang();
+onMounted(async () => {
+    await fetchGedungList();
+    await fetchRuang();
 });
 </script>

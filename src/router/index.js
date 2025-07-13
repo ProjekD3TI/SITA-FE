@@ -89,7 +89,7 @@ const routes = [
       {
         path: 'dashboard',
         name: 'DashboardMahasiswa',
-        component: () => import('../views/Mahasiswa/Landing.vue'),
+        component: () => import('../views/Mahasiswa/Dashboard.vue'),
       },
       // {
       //   path: "landing",

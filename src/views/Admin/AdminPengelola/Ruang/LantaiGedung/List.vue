@@ -183,7 +183,7 @@ const headers = [
   { text: "No", value: "no", width: 60 },
   { text: "Nama Gedung", value: "nama_gedung", width: 200 },
   { text: "Nama Lantai", value: "nama_lantai", width: 200 },
-  { text: "Tanggal Dibuat", value: "created_at", width: 150 },
+//   { text: "Tanggal Dibuat", value: "created_at", width: 150 },
   { text: "Aksi", value: "actions", width: 100 },
 ];
 

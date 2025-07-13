@@ -154,36 +154,12 @@
         </div>
 
         <div class="mt-2" v-if="hasAccess(['Kalab', 'Petugas'])">
-          <button
-            class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-            @click="handleDropdownClick(2)">
-            <div class="flex items-center">
-              <i class="fas fa-building text-xl"></i>
-              <span class="ml-3" :class="{ hidden: isCollapsed && !isMobile }">Ruangan</span>
-            </div>
-            <i class="fas" :class="[
-              dropdownStates[2] ? 'fa-chevron-up' : 'fa-chevron-down',
-              { hidden: isCollapsed && !isMobile },
-            ]"></i>
-          </button>
-
-          <div v-if="dropdownStates[2]" class="pl-4 mt-1 space-y-1">
-            <!-- <router-link :to="getRouteByJabatan('ruang')"
-              class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-              @click.native="closeSidebar">
-              <span>Informasi Ruang</span>
-            </router-link> -->
-            <router-link :to="getRouteByJabatan('list-peminjaman')"
-              class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-              @click.native="closeSidebar">
-              <span>List Peminjaman</span>
-            </router-link>
-            <!-- <router-link :to="getRouteByJabatan('kembalikanruang')"
-              class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-              @click.native="closeSidebar">
-              <span>Kembalikan</span>
-            </router-link> -->
-          </div>
+          <router-link :to="getRouteByJabatan('list-peminjaman')"
+            class="w-full flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+            @click.native="closeSidebar">
+            <i class="fas fa-building text-xl"></i>
+            <span class="ml-3" :class="{ hidden: isCollapsed && !isMobile }">List Peminjaman</span>
+          </router-link>
         </div>
 
         <div class="mt-2" v-if="hasAccess(['Kaprodi'])">

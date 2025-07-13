@@ -1,99 +1,101 @@
 <template>
-    <div class="p-6 max-w-4xl mx-auto">
-      <h2 class="text-2xl font-bold mb-6">Booking Ruang</h2>
-  
-      <form @submit.prevent="handleSubmit" class="space-y-6">
-        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <h3 class="text-lg font-semibold mb-4">Informasi Booking</h3>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="space-y-2">
-              <label class="text-sm font-medium text-gray-700">Ruang</label>
-              <select v-model="formData.id_ruang" @change="onRoomChange"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Pilih Ruang</option>
-                <option v-for="ruang in ruangList" :key="ruang.id_ruang" :value="ruang.id_ruang">
-                  {{ ruang.nama_ruang }}
-                </option>
-              </select>
-              <p v-if="errors.id_ruang" class="text-sm text-red-500">{{ errors.id_ruang[0] }}</p>
-            </div>
-  
-            <div class="space-y-2">
-              <label class="text-sm font-medium text-gray-700">Tanggal</label>
-              <input v-model="formData.date" type="date" :min="minDate"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <p v-if="errors.date" class="text-sm text-red-500">{{ errors.date[0] }}</p>
-            </div>
+  <div class="p-6 max-w-4xl mx-auto">
+    <h2 class="text-2xl font-bold mb-6">Booking Ruang</h2>
+
+    <form @submit.prevent="handleSubmit" class="space-y-6">
+      <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <h3 class="text-lg font-semibold mb-4">Informasi Booking</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-gray-700">Ruang</label>
+            <select v-model="formData.id_ruang"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+              <option value="">Pilih Ruang</option>
+              <option v-for="ruang in ruangList" :key="ruang.id_ruang" :value="ruang.id_ruang">
+                {{ ruang.display_name || `${ruang.nama_ruang} -- ${ruang.gedung?.nama_gedung || 'N/A'} --
+                ${ruang.gedung?.lantai?.nama_lantai || 'N/A'}` }}
+              </option>
+            </select>
+            <p v-if="errors.id_ruang" class="text-sm text-red-500">{{ errors.id_ruang[0] }}</p>
           </div>
-  
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <div class="space-y-2">
-              <label class="text-sm font-medium text-gray-700">Sesi Mulai</label>
-              <select v-model="formData.start_session" @change="onStartSessionChange"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Pilih Sesi Mulai</option>
-                <option v-for="session in sessionList" :key="session.id" :value="session.id">
-                  {{ session.name_session }} ({{ formatTime(session.start_time) }} - {{ formatTime(session.end_time) }})
-                </option>
-              </select>
-              <p v-if="errors.start_session" class="text-sm text-red-500">{{ errors.start_session[0] }}</p>
-            </div>
-  
-            <div class="space-y-2">
-              <label class="text-sm font-medium text-gray-700">Sesi Selesai</label>
-              <select v-model="formData.end_session"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Pilih Sesi Selesai</option>
-                <option v-for="session in availableEndSessions" :key="session.id" :value="session.id">
-                  {{ session.name_session }} ({{ formatTime(session.start_time) }} - {{ formatTime(session.end_time) }})
-                </option>
-              </select>
-              <p v-if="errors.end_session" class="text-sm text-red-500">{{ errors.end_session[0] }}</p>
-            </div>
-          </div>
-  
-          <div class="space-y-2 mt-4">
-            <label class="text-sm font-medium text-gray-700">Keterangan</label>
-            <textarea v-model="formData.keterangan" rows="3"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Masukkan keterangan atau tujuan penggunaan ruang"></textarea>
-            <p v-if="errors.keterangan" class="text-sm text-red-500">{{ errors.keterangan[0] }}</p>
-          </div>
-  
-          <div class="space-y-2 mt-4">
-            <label class="text-sm font-medium text-gray-700">File Pendukung (Opsional)</label>
-            <input type="file" @change="onFileChange" accept=".pdf,.jpg,.jpeg,.png"
+
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-gray-700">Tanggal</label>
+            <input v-model="formData.date" type="date" :min="minDate"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <p class="text-xs text-gray-500">Format: PDF, JPG, JPEG, PNG. Maksimal 5MB</p>
-            <p v-if="errors.files" class="text-sm text-red-500">{{ errors.files[0] }}</p>
+            <p v-if="errors.date" class="text-sm text-red-500">{{ errors.date[0] }}</p>
           </div>
         </div>
-  
-        <!-- Preview Booking -->
-        <div v-if="formData.start_session && formData.end_session" class="bg-blue-50 rounded-lg p-4 border border-blue-200">
-          <h4 class="font-medium text-blue-900 mb-2">Preview Booking</h4>
-          <div class="text-sm text-blue-800">
-            <p><strong>Ruang:</strong> {{ getSelectedRoomName() }}</p>
-            <p><strong>Tanggal:</strong> {{ formatDate(formData.date) }}</p>
-            <p><strong>Waktu:</strong> {{ getBookingTimeRange() }}</p>
-            <p><strong>Durasi:</strong> {{ getBookingDuration() }}</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-gray-700">Sesi Mulai</label>
+            <select v-model="formData.start_session" @change="onStartSessionChange"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">Pilih Sesi Mulai</option>
+              <option v-for="session in sessionList" :key="session.id" :value="session.id">
+                {{ session.name_session }} ({{ formatTime(session.start_time) }} - {{ formatTime(session.end_time) }})
+              </option>
+            </select>
+            <p v-if="errors.start_session" class="text-sm text-red-500">{{ errors.start_session[0] }}</p>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-gray-700">Sesi Selesai</label>
+            <select v-model="formData.end_session"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">Pilih Sesi Selesai</option>
+              <option v-for="session in availableEndSessions" :key="session.id" :value="session.id">
+                {{ session.name_session }} ({{ formatTime(session.start_time) }} - {{ formatTime(session.end_time) }})
+              </option>
+            </select>
+            <p v-if="errors.end_session" class="text-sm text-red-500">{{ errors.end_session[0] }}</p>
           </div>
         </div>
-  
-        <div class="flex space-x-2">
-          <button type="submit" :disabled="isSubmitting"
-            class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-            {{ isSubmitting ? "Memproses..." : "Submit Booking" }}
-          </button>
-          <button type="button" @click="resetForm"
-            class="px-6 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
-            Reset
-          </button>
+
+        <div class="space-y-2 mt-4">
+          <label class="text-sm font-medium text-gray-700">Keterangan</label>
+          <textarea v-model="formData.keterangan" rows="3"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Masukkan keterangan atau tujuan penggunaan ruang"></textarea>
+          <p v-if="errors.keterangan" class="text-sm text-red-500">{{ errors.keterangan[0] }}</p>
         </div>
-      </form>
-    </div>
-  </template>
+
+        <div class="space-y-2 mt-4">
+          <label class="text-sm font-medium text-gray-700">File Pendukung </label>
+          <input type="file" @change="onFileChange" accept=".pdf,.jpg,.jpeg,.png"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <p class="text-xs text-gray-500">Format: PDF, JPG, JPEG, PNG. Maksimal 5MB</p>
+          <p v-if="errors.files" class="text-sm text-red-500">{{ errors.files[0] }}</p>
+        </div>
+      </div>
+
+      <!-- Preview Booking -->
+      <div v-if="formData.start_session && formData.end_session"
+        class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+        <h4 class="font-medium text-blue-900 mb-2">Preview Booking</h4>
+        <div class="text-sm text-blue-800">
+          <p><strong>Ruang:</strong> {{ getSelectedRoomName() }}</p>
+          <p><strong>Tanggal:</strong> {{ formatDate(formData.date) }}</p>
+          <p><strong>Waktu:</strong> {{ getBookingTimeRange() }}</p>
+          <p><strong>Durasi:</strong> {{ getBookingDuration() }}</p>
+        </div>
+      </div>
+
+      <div class="flex space-x-2">
+        <button type="submit" :disabled="isSubmitting"
+          class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          {{ isSubmitting ? "Memproses..." : "Submit Booking" }}
+        </button>
+        <button type="button" @click="resetForm"
+          class="px-6 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+          Reset
+        </button>
+      </div>
+    </form>
+  </div>
+</template>
   
   <script setup>
   import { ref, reactive, computed, onMounted } from "vue";
@@ -156,15 +158,22 @@
   const fetchSessions = async () => {
     try {
       setupAxios();
-      const response = await axios.get("/api/mahasiswa/session");
+      const response = await axios.get("/api/mahasiswa/session", {
+        params: {
+          all: 'true'
+        }
+      });
       if (response.data && response.data.data) {
-        sessionList.value = response.data.data.sort((a, b) => a.start_time.localeCompare(b.start_time));
+        sessionList.value = response.data.data.sort((a, b) =>
+          a.start_time.localeCompare(b.start_time)
+        );
       }
     } catch (error) {
       console.error("Error fetching sessions:", error);
       toast.error("Gagal memuat data sesi");
     }
   };
+
   
   const formatTime = (time) => {
     if (!time) return "";

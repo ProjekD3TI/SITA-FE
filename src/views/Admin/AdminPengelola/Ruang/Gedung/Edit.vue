@@ -10,7 +10,7 @@
             <div class="space-y-2">
                 <label
                     class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Nama Gedung
+                    Nama Gedung <span class="text-red-500">*</span>
                 </label>
                 <input v-model="formData.nama_gedung" type="text"
                     class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -23,7 +23,7 @@
             <div class="space-y-2">
                 <label
                     class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Lokasi
+                    Lokasi <span class="text-red-500">*</span>
                 </label>
                 <input v-model="formData.lokasi" type="text"
                     class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -33,18 +33,25 @@
                 </p>
             </div>
 
-            <div class="space-y-2">
-                <label
-                    class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Lantai
-                </label>
+            <!-- Current vs New Preview -->
+            <div v-if="originalData.nama_gedung" class="space-y-3">
+                <!-- Current Data -->
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Data Saat Ini:</h4>
+                    <div class="space-y-1">
+                        <p class="text-sm"><strong>Nama:</strong> {{ originalData.nama_gedung }}</p>
+                        <p class="text-sm"><strong>Lokasi:</strong> {{ originalData.lokasi }}</p>
+                    </div>
+                </div>
 
-                <SearchableSelect v-model="formData.id_lantai" :options="lantaiList" value-key="id_lantai"
-                    label-key="nama_lantai" placeholder="Pilih Lantai" />
-
-                <p v-if="errors.id_lantai" class="text-sm text-red-500">
-                    {{ errors.id_lantai[0] }}
-                </p>
+                <!-- New Preview -->
+                <div v-if="formData.nama_gedung || formData.lokasi" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 class="text-sm font-medium text-blue-900 mb-2">Preview Perubahan:</h4>
+                    <div class="space-y-1">
+                        <p class="text-sm"><strong>Nama:</strong> {{ formData.nama_gedung || 'Belum diisi' }}</p>
+                        <p class="text-sm"><strong>Lokasi:</strong> {{ formData.lokasi || 'Belum diisi' }}</p>
+                    </div>
+                </div>
             </div>
 
             <div class="flex space-x-2">
@@ -68,7 +75,6 @@ import axios from "axios";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 import VueCookies from "vue-cookies";
-import SearchableSelect from "../../../../../components/SearchableSelect.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -76,13 +82,16 @@ const toast = useToast();
 const id = route.params.id;
 const isSubmitting = ref(false);
 const loading = ref(true);
-const lantaiList = ref([]);
 
 const formData = reactive({
     nama_gedung: "",
     lokasi: "",
-    id_lantai: "",
     _method: "PUT",
+});
+
+const originalData = reactive({
+    nama_gedung: "",
+    lokasi: "",
 });
 
 const errors = reactive({});
@@ -94,35 +103,23 @@ const setupAxios = () => {
     }
 };
 
-const fetchLantaiList = async () => {
-    try {
-        setupAxios();
-        const response = await axios.get("/api/admin_pengelola/lantai");
-        lantaiList.value = response.data.data;
-    } catch (error) {
-        console.error("Error fetching lantai list:", error);
-        if (error.response?.status === 401) {
-            toast.error("Sesi anda telah berakhir. Silakan login kembali.");
-            router.push("/login-admin");
-        } else {
-            toast.error("Gagal memuat daftar lantai");
-        }
-    }
-};
-
 const fetchGedung = async () => {
     try {
         loading.value = true;
         setupAxios();
 
-        await fetchLantaiList();
-
         const response = await axios.get(`/api/admin_pengelola/gedung/${id}`);
         const gedung = response.data;
 
+        // Store original data for display
+        Object.assign(originalData, {
+            nama_gedung: gedung.nama_gedung || "",
+            lokasi: gedung.lokasi || "",
+        });
+
+        // Set form data
         formData.nama_gedung = gedung.nama_gedung || "";
         formData.lokasi = gedung.lokasi || "";
-        formData.id_lantai = gedung.id_lantai || "";
     } catch (error) {
         if (error.response?.status === 401) {
             toast.error("Sesi anda telah berakhir. Silakan login kembali.");

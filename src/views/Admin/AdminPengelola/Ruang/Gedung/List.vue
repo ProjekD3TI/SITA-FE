@@ -3,7 +3,7 @@
         <h2 class="text-2xl font-bold mb-6">Daftar Gedung</h2>
 
         <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-            <input v-model="searchTerm" type="text" placeholder="Cari gedung..."
+            <input v-model="searchTerm" type="text" placeholder="Cari gedung atau lokasi..."
                 class="px-3 py-2 border rounded-md w-full md:w-64" @input="onSearch" />
 
             <div class="flex space-x-2 w-full md:w-auto">
@@ -20,6 +20,21 @@
                 @update:options="onOptionsUpdate" :rows-per-page="serverOptions.rowsPerPage" :rows-items="[10, 25, 50]"
                 :pagination="false" hide-footer class="bg-white shadow-md rounded-lg overflow-hidden"
                 empty-message="Tidak ada data gedung" border-cell>
+                
+                <template #item-nama_gedung="item">
+                    <div class="font-medium text-gray-900">{{ item.nama_gedung }}</div>
+                </template>
+
+                <template #item-lokasi="item">
+                    <div class="text-gray-700">{{ item.lokasi }}</div>
+                </template>
+
+                <template #item-created_at="item">
+                    <div class="text-sm text-gray-500">
+                        {{ formatDate(item.created_at) }}
+                    </div>
+                </template>
+
                 <template #item-actions="item">
                     <div class="flex space-x-1">
                         <button @click.stop="goToEdit(item.id_gedung)" class="text-blue-500 hover:text-blue-700 p-1"
@@ -75,13 +90,13 @@
             </div>
         </div>
 
+        <!-- Delete Modal -->
         <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white rounded-lg p-6 max-w-md w-full">
                 <h3 class="text-lg font-medium mb-4">Konfirmasi Hapus</h3>
                 <p class="mb-6">
-                    Apakah Anda yakin ingin menghapus gedung "{{
-                        selectedItem?.nama_gedung
-                    }}"? Tindakan ini tidak dapat dibatalkan.
+                    Apakah Anda yakin ingin menghapus gedung "{{ selectedItem?.nama_gedung }}"? 
+                    Tindakan ini tidak dapat dibatalkan.
                 </p>
                 <div class="flex justify-end space-x-2">
                     <button @click="showDeleteModal = false"
@@ -119,11 +134,11 @@ const selectedItem = ref(null);
 const isDeleting = ref(false);
 
 const headers = [
-    { text: "No", value: "no" },
-    { text: "Nama Gedung", value: "nama_gedung" },
-    { text: "Lokasi", value: "lokasi" },
-    { text: "Lantai", value: "nama_lantai" },
-    { text: "Aksi", value: "actions" },
+    { text: "No", value: "no", width: 60 },
+    { text: "Nama Gedung", value: "nama_gedung", width: 250 },
+    { text: "Lokasi", value: "lokasi", width: 250 },
+    // { text: "Tanggal Dibuat", value: "created_at", width: 150 },
+    { text: "Aksi", value: "actions", width: 100 },
 ];
 
 const serverOptions = reactive({
@@ -141,6 +156,16 @@ const pagination = reactive({
 const setupAxios = () => {
     const token = VueCookies.get("auth_token");
     if (token) axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+};
+
+const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
 };
 
 const fetchGedungList = async () => {

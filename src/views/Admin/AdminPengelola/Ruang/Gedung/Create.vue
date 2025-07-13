@@ -1,12 +1,12 @@
 <template>
     <div class="p-6 max-w-2xl mx-auto">
-        <h2 class="text-2xl font-bold mb-6">Create Gedung</h2>
+        <h2 class="text-2xl font-bold mb-6">Tambah Gedung</h2>
 
         <form @submit.prevent="handleSubmit" class="space-y-4">
             <div class="space-y-2">
                 <label
                     class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Nama Gedung
+                    Nama Gedung <span class="text-red-500">*</span>
                 </label>
                 <input v-model="formData.nama_gedung" type="text"
                     class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -19,7 +19,7 @@
             <div class="space-y-2">
                 <label
                     class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Lokasi
+                    Lokasi <span class="text-red-500">*</span>
                 </label>
                 <input v-model="formData.lokasi" type="text"
                     class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -29,16 +29,13 @@
                 </p>
             </div>
 
-            <div class="space-y-2">
-                <label
-                    class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Lantai
-                </label>
-                <SearchableSelect v-model="formData.id_lantai" :options="lantaiList" value-key="id_lantai"
-                    label-key="nama_lantai" placeholder="Pilih Lantai" />
-                <p v-if="errors.id_lantai" class="text-sm text-red-500">
-                    {{ errors.id_lantai[0] }}
-                </p>
+            <!-- Preview Card -->
+            <div v-if="formData.nama_gedung || formData.lokasi" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 class="text-sm font-medium text-blue-900 mb-2">Preview Gedung:</h4>
+                <div class="space-y-1">
+                    <p class="text-sm"><strong>Nama:</strong> {{ formData.nama_gedung || 'Belum diisi' }}</p>
+                    <p class="text-sm"><strong>Lokasi:</strong> {{ formData.lokasi || 'Belum diisi' }}</p>
+                </div>
             </div>
 
             <div class="flex space-x-2">
@@ -57,22 +54,19 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 import VueCookies from "vue-cookies";
-import SearchableSelect from "../../../../../components/SearchableSelect.vue";
 
 const router = useRouter();
 const toast = useToast();
 const isSubmitting = ref(false);
-const lantaiList = ref([]);
 
 const formData = reactive({
     nama_gedung: "",
     lokasi: "",
-    id_lantai: "",
 });
 
 const errors = reactive({});
@@ -81,22 +75,6 @@ const setupAxios = () => {
     const token = VueCookies.get("auth_token");
     if (token) {
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    }
-};
-
-const fetchLantaiList = async () => {
-    try {
-        setupAxios();
-        const response = await axios.get("/api/admin_pengelola/lantai");
-        lantaiList.value = response.data.data;
-    } catch (error) {
-        console.error("Error fetching lantai list:", error);
-        if (error.response?.status === 401) {
-            toast.error("Sesi anda telah berakhir. Silakan login kembali.");
-            router.push("/login-admin");
-        } else {
-            toast.error("Gagal memuat daftar lantai");
-        }
     }
 };
 
@@ -136,8 +114,4 @@ const handleSubmit = async () => {
         isSubmitting.value = false;
     }
 };
-
-onMounted(() => {
-    fetchLantaiList();
-});
 </script>

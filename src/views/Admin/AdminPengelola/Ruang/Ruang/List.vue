@@ -1,10 +1,10 @@
 <template>
-    <div class="p-6 max-w-5xl mx-auto">
+    <div class="p-6 max-w-7xl mx-auto">
         <h2 class="text-2xl font-bold mb-6">Daftar Ruang</h2>
 
         <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-            <input v-model="searchTerm" type="text" placeholder="Cari ruang..."
-                class="px-3 py-2 border rounded-md w-full md:w-64" @input="onSearch" />
+            <input v-model="searchTerm" type="text" placeholder="Cari ruang, gedung, lantai, atau fasilitas..."
+                class="px-3 py-2 border rounded-md w-full md:w-80" @input="onSearch" />
 
             <div class="flex space-x-2 w-full md:w-auto">
                 <button @click="goToCreate()"
@@ -20,17 +20,46 @@
                 @update:options="onOptionsUpdate" :rows-per-page="serverOptions.rowsPerPage" :rows-items="[10, 25, 50]"
                 :pagination="false" hide-footer class="bg-white shadow-md rounded-lg overflow-hidden"
                 empty-message="Tidak ada data ruang" border-cell>
+                
+                <template #item-nama_ruang="item">
+                    <div class="font-medium text-gray-900">{{ item.nama_ruang }}</div>
+                </template>
+
+                <template #item-gedung_lantai="item">
+                    <div class="text-sm">
+                        <div class="font-medium text-gray-900">{{ item.nama_gedung || '-' }}</div>
+                        <div class="text-gray-500">{{ item.nama_lantai || '-' }}</div>
+                    </div>
+                </template>
+
+                <template #item-kapasitas="item">
+                    <div class="text-center">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {{ item.kapasitas }} orang
+                        </span>
+                    </div>
+                </template>
+
+                <template #item-dimensi="item">
+                    <div class="text-sm text-gray-700">{{ item.dimensi }}</div>
+                </template>
+
+                <template #item-fasilitas="item">
+                    <div class="text-sm text-gray-700 max-w-xs truncate" :title="item.fasilitas">
+                        {{ item.fasilitas }}
+                    </div>
+                </template>
+
                 <template #item-status="item">
-                    <span :class="{
-                        'px-2 py-1 rounded text-xs font-medium': true,
-                        'bg-green-100 text-green-800': item.status === 1,
-                        'bg-red-100 text-red-800': item.status === 0,
-                    }">{{ item.status === 1 ? "Tersedia" : "Tidak Tersedia" }}</span>
+                    <span :class="item.status == 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                        {{ item.status == 1 ? 'Aktif' : 'Tidak Aktif' }}
+                    </span>
                 </template>
 
                 <template #item-actions="item">
                     <div class="flex space-x-1">
-                        <button @click.stop="goToDetail(item.id_ruang)" class="text-gray-500 hover:text-gray-700 p-1"
+                        <button @click.stop="goToDetail(item.id_ruang)" class="text-green-500 hover:text-green-700 p-1"
                             title="Detail">
                             <i class="fas fa-eye"></i>
                         </button>
@@ -87,13 +116,13 @@
             </div>
         </div>
 
+        <!-- Delete Modal -->
         <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white rounded-lg p-6 max-w-md w-full">
                 <h3 class="text-lg font-medium mb-4">Konfirmasi Hapus</h3>
                 <p class="mb-6">
-                    Apakah Anda yakin ingin menghapus ruang "{{
-                        selectedItem?.nama_ruang
-                    }}"? Tindakan ini tidak dapat dibatalkan.
+                    Apakah Anda yakin ingin menghapus ruang "{{ selectedItem?.nama_ruang }}"? 
+                    Tindakan ini tidak dapat dibatalkan.
                 </p>
                 <div class="flex justify-end space-x-2">
                     <button @click="showDeleteModal = false"
@@ -129,16 +158,16 @@ const debounceTimeout = ref(null);
 const showDeleteModal = ref(false);
 const selectedItem = ref(null);
 const isDeleting = ref(false);
-const gedungList = ref([]);
 
 const headers = [
-    { text: "No", value: "no" },
-    { text: "Nama Ruang", value: "nama_ruang" },
-    { text: "Kapasitas", value: "kapasitas" },
-    { text: "Dimensi", value: "dimensi" },
-    { text: "Gedung", value: "gedung_name" },
-    // { text: "Status", value: "status" },
-    { text: "Aksi", value: "actions" },
+    { text: "No", value: "no", width: 60 },
+    { text: "Nama Ruang", value: "nama_ruang", width: 200 },
+    { text: "Gedung/Lantai", value: "gedung_lantai", width: 180 },
+    { text: "Kapasitas", value: "kapasitas", width: 100 },
+    { text: "Dimensi", value: "dimensi", width: 120 },
+    { text: "Fasilitas", value: "fasilitas", width: 200 },
+    // { text: "Status", value: "status", width: 100 },
+    { text: "Aksi", value: "actions", width: 120 },
 ];
 
 const serverOptions = reactive({
@@ -158,22 +187,10 @@ const setupAxios = () => {
     if (token) axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 };
 
-const fetchGedungList = async () => {
-    try {
-        setupAxios();
-        const response = await axios.get("/api/admin_pengelola/gedung");
-        gedungList.value = response.data.data;
-    } catch (error) {
-        console.error("Error fetching gedung list:", error);
-    }
-};
-
 const fetchRuangList = async () => {
     try {
         loading.value = true;
         setupAxios();
-
-        await fetchGedungList();
 
         const params = {
             page: serverOptions.page,
@@ -188,25 +205,17 @@ const fetchRuangList = async () => {
                 ? response.data.data
                 : Object.values(response.data.data);
 
-            ruangList.value = dataArray.map((item, index) => {
-                const gedung = gedungList.value.find(
-                    (g) => g.id_gedung === item.id_gedung
-                );
-                return {
-                    ...item,
-                    no: (serverOptions.page - 1) * serverOptions.rowsPerPage + index + 1,
-                    gedung_name: gedung ? gedung.nama_gedung : "-",
-                };
-            });
+            ruangList.value = dataArray.map((item, index) => ({
+                ...item,
+                no: (serverOptions.page - 1) * serverOptions.rowsPerPage + index + 1,
+            }));
 
-            if (response.data.pagination) {
-                Object.assign(pagination, {
-                    current_page: response.data.pagination.current_page || 1,
-                    per_page: response.data.pagination.per_page || 10,
-                    total: response.data.pagination.total || 0,
-                    last_page: response.data.pagination.last_page || 1,
-                });
-            }
+            Object.assign(pagination, {
+                current_page: response.data.pagination.current_page || 1,
+                per_page: response.data.pagination.per_page || 10,
+                total: response.data.pagination.total || 0,
+                last_page: response.data.pagination.last_page || 1,
+            });
         } else {
             ruangList.value = [];
             toast.error("Format data tidak valid");
@@ -272,10 +281,7 @@ const handleDelete = (item) => {
 };
 
 const deleteRuang = async () => {
-    if (!selectedItem.value || !selectedItem.value.id_ruang) {
-        toast.error("ID ruang tidak ditemukan");
-        return;
-    }
+    if (!selectedItem.value) return;
 
     try {
         isDeleting.value = true;
@@ -292,7 +298,6 @@ const deleteRuang = async () => {
         showDeleteModal.value = false;
     }
 };
-
 
 onMounted(() => {
     fetchRuangList();

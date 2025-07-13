@@ -156,8 +156,9 @@ const headers = [
     { text: "No", value: "no", sortable: true },
     { text: "Ruang", value: "nama_ruang", sortable: true },
     { text: "Tanggal", value: "date", sortable: true },
-    { text: "Sesi Awal", value: "start_time", sortable: true },
-    { text: "Sesi Mulai", value: "end_time", sortable: true },
+    { text: "Sesi Awal", value: "start_session", sortable: true },
+    { text: "Sesi Akhir", value: "end_session", sortable: true },
+    { text: "Keterangan", value: "notes", sortable: true },
     { text: "Status", value: "status", sortable: true },
     // { text: "Aksi", value: "actions", sortable: false },
 ];
@@ -365,7 +366,7 @@ const cancelBooking = async () => {
         isCancelling.value = true;
         setupAxios();
         const response = await axios.post(
-           ' /api/mahasiswa / booking / cancel / ${ selectedItem.value.id }'
+            ' /api/mahasiswa / booking / cancel / ${ selectedItem.value.id }'
         );
         toast.success(response.data.message || "Booking berhasil dibatalkan");
         fetchBookingList();

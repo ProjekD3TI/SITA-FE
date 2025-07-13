@@ -50,19 +50,21 @@
                     </div>
                 </div>
                 <div class="p-6 space-y-3">
-                    <button class="quick-action group">
-                        <div class="flex items-center">
-                            <i class="fas fa-clock text-yellow-600 mr-3"></i>
-                            <div class="text-left">
-                                <p class="font-semibold text-gray-900 group-hover:text-blue-600">Persetujuan Pending</p>
-                                <p class="text-sm text-gray-600">{{ dashboardData.jumlah_peminjaman_pending || 0 }}
-                                    peminjaman menunggu</p>
+                    <router-link to="/kalab/list-peminjaman">
+                        <button class="quick-action group">
+                            <div class="flex items-center">
+                                <i class="fas fa-clock text-yellow-600 mr-3"></i>
+                                <div class="text-left">
+                                    <p class="font-semibold text-gray-900 group-hover:text-blue-600">Persetujuan Pending
+                                    </p>
+                                    <p class="text-sm text-gray-600">{{ dashboardData.jumlah_peminjaman_pending || 0 }}
+                                        peminjaman menunggu</p>
+                                </div>
                             </div>
-                        </div>
-                        <i class="fas fa-chevron-right text-gray-400 group-hover:text-blue-500"></i>
-                    </button>
-
-                    <button class="quick-action group">
+                            <i class="fas fa-chevron-right text-gray-400 group-hover:text-blue-500"></i>
+                        </button>
+                    </router-link>
+                    <!-- <button class="quick-action group">
                         <div class="flex items-center">
                             <i class="fas fa-chart-bar text-blue-600 mr-3"></i>
                             <div class="text-left">
@@ -82,7 +84,7 @@
                             </div>
                         </div>
                         <i class="fas fa-chevron-right text-gray-400 group-hover:text-blue-500"></i>
-                    </button>
+                    </button> -->
                 </div>
             </div>
         </div>

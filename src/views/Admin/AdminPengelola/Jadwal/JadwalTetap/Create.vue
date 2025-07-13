@@ -13,9 +13,11 @@
                         class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
                         <option value="">Pilih Ruang</option>
                         <option v-for="ruang in ruangList" :key="ruang.id_ruang" :value="ruang.id_ruang">
-                            {{ ruang.nama_ruang }}
+                            {{ ruang.display_name || `${ruang.nama_ruang} -- ${ruang.gedung?.nama_gedung || 'N/A'} --
+                            ${ruang.gedung?.lantai?.nama_lantai || 'N/A'}` }}
                         </option>
                     </select>
+
                     <p v-if="errors.id_ruang" class="text-sm text-red-500">
                         {{ errors.id_ruang[0] }}
                     </p>
@@ -39,6 +41,7 @@
                 </div>
             </div>
 
+            <!-- Rest of the form remains the same -->
             <div class="space-y-2">
                 <label
                     class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
@@ -200,18 +203,18 @@ const setupAxios = () => {
     }
 };
 
-const fetchRuang = async () => {
-    try {
-        setupAxios();
-        const response = await axios.get("/api/admin_pengelola/ruang");
-        if (response.data && response.data.data) {
-            ruangList.value = response.data.data;
+    const fetchRuang = async () => {
+        try {
+            setupAxios();
+            const response = await axios.get("/api/admin_pengelola/ruang");
+            if (response.data && response.data.data) {
+                ruangList.value = response.data.data;
+            }
+        } catch (error) {
+            console.error("Error fetching ruang:", error);
+            toast.error("Gagal memuat data ruang");
         }
-    } catch (error) {
-        console.error("Error fetching ruang:", error);
-        toast.error("Gagal memuat data ruang");
-    }
-};
+    };
 
 const fetchKelas = async () => {
     try {
@@ -242,7 +245,11 @@ const fetchDosen = async () => {
 const fetchSessions = async () => {
     try {
         setupAxios();
-        const response = await axios.get("/api/admin_pengelola/session");
+        const response = await axios.get("/api/admin_pengelola/session", {
+            params: {
+                all: 'true'
+            }
+        });
         if (response.data && response.data.data) {
             sessionList.value = response.data.data;
         }

@@ -9,7 +9,8 @@
                     class="w-full px-4 py-3 rounded-xl border border-indigo-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <option value="">— Pilih Ruang —</option>
                     <option v-for="ruang in ruangs" :key="ruang.id_ruang" :value="ruang.id_ruang">
-                        {{ ruang.nama_ruang }}
+                        {{ ruang.display_name || `${ruang.nama_ruang} -- ${ruang.gedung?.nama_gedung || 'N/A'} --
+                            ${ruang.gedung?.lantai?.nama_lantai || 'N/A'}` }}
                     </option>
                 </select>
 
@@ -117,6 +118,7 @@ export default {
             error: ''
         };
     },
+    
     computed: {
         filteredLogs() {
             if (!this.selectedRuangId) return [];
@@ -145,6 +147,7 @@ export default {
             return this.filteredLogs.slice(this.startIndex, this.startIndex + this.perPage);
         }
     },
+    
     methods: {
         changePage(page) {
             if (page < 1 || page > this.totalPages) return;
@@ -152,7 +155,9 @@ export default {
         },
         ruangNamaById(id) {
             const ruang = this.ruangs.find(r => Number(r.id_ruang) === Number(id));
-            return ruang ? ruang.nama_ruang : '';
+            return ruang ? ruang.nama_ruang || 'Tidak dikenal' : '';
+            return gedung ? gedung.nama_gedung || 'Tidak dikenal' : '';
+            return lantai ? lantai.nama_lantai || 'Tidak dikenal' : '';
         },
         async fetchData() {
             this.loading = true;
