@@ -13,11 +13,14 @@
                         class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
                         <option value="">Pilih Ruang</option>
                         <option v-for="ruang in ruangList" :key="ruang.id_ruang" :value="ruang.id_ruang">
-                            {{ ruang.display_name || `${ruang.nama_ruang} -- ${ruang.gedung?.nama_gedung || 'N/A'} --
-                            ${ruang.gedung?.lantai?.nama_lantai || 'N/A'}` }}
+                            {{
+                                ruang.display_name ||
+                                `${ruang.nama_ruang} -- ${ruang.gedung?.nama_gedung || 'N/A'} --
+                            ${ruang.gedung?.lantai?.nama_lantai || 'N/A'}`
+                            }}
                         </option>
-                    </select>
 
+                    </select>
                     <p v-if="errors.id_ruang" class="text-sm text-red-500">
                         {{ errors.id_ruang[0] }}
                     </p>
@@ -41,7 +44,6 @@
                 </div>
             </div>
 
-            <!-- Rest of the form remains the same -->
             <div class="space-y-2">
                 <label
                     class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
@@ -76,24 +78,17 @@
                 <div class="space-y-2">
                     <label
                         class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Tanggal Mulai
+                        Tahun Ajaran
                     </label>
-                    <input v-model="formData.start_date" type="date"
-                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
-                    <p v-if="errors.start_date" class="text-sm text-red-500">
-                        {{ errors.start_date[0] }}
-                    </p>
-                </div>
-
-                <div class="space-y-2">
-                    <label
-                        class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Tanggal Selesai
-                    </label>
-                    <input v-model="formData.end_date" type="date"
-                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
-                    <p v-if="errors.end_date" class="text-sm text-red-500">
-                        {{ errors.end_date[0] }}
+                    <select v-model="formData.id_school_year"
+                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                        <option value="">Pilih Tahun Ajaran</option>
+                        <option v-for="year in schoolYearList" :key="year.id" :value="year.id">
+                            {{ year.name }}
+                        </option>
+                    </select>
+                    <p v-if="errors.id_school_year" class="text-sm text-red-500">
+                        {{ errors.id_school_year[0] }}
                     </p>
                 </div>
             </div>
@@ -183,14 +178,14 @@ const ruangList = ref([]);
 const dosenList = ref([]);
 const kelasList = ref([]);
 const sessionList = ref([]);
+const schoolYearList = ref([]);
 
 const formData = reactive({
     id_ruang: "",
     pemakaian: "",
     id_class: "",
     penanggung_jawab: "",
-    start_date: "",
-    end_date: "",
+    id_school_year: "",
     sessions: [],
 });
 
@@ -203,18 +198,31 @@ const setupAxios = () => {
     }
 };
 
-    const fetchRuang = async () => {
-        try {
-            setupAxios();
-            const response = await axios.get("/api/admin_pengelola/ruang");
-            if (response.data && response.data.data) {
-                ruangList.value = response.data.data;
-            }
-        } catch (error) {
-            console.error("Error fetching ruang:", error);
-            toast.error("Gagal memuat data ruang");
+const fetchRuang = async () => {
+    try {
+        setupAxios();
+        const response = await axios.get("/api/admin_pengelola/ruang");
+        if (response.data && response.data.data) {
+            ruangList.value = response.data.data;
         }
-    };
+    } catch (error) {
+        console.error("Error fetching ruang:", error);
+        toast.error("Gagal memuat data ruang");
+    }
+};
+
+const fetchSchoolYear = async () => {
+    try {
+        setupAxios();
+        const response = await axios.get("/api/admin_pengelola/school_year");
+        if (response.data && response.data.data) {
+            schoolYearList.value = response.data.data;
+        }
+    } catch (error) {
+        console.error("Error fetching ruang:", error);
+        toast.error("Gagal memuat data ruang");
+    }
+};
 
 const fetchKelas = async () => {
     try {
@@ -245,11 +253,7 @@ const fetchDosen = async () => {
 const fetchSessions = async () => {
     try {
         setupAxios();
-        const response = await axios.get("/api/admin_pengelola/session", {
-            params: {
-                all: 'true'
-            }
-        });
+        const response = await axios.get("/api/admin_pengelola/session");
         if (response.data && response.data.data) {
             sessionList.value = response.data.data;
         }
@@ -319,5 +323,6 @@ onMounted(() => {
     fetchDosen();
     fetchKelas();
     fetchSessions();
+    fetchSchoolYear();
 });
 </script>

@@ -72,31 +72,21 @@
                     {{ errors.penanggung_jawab[0] }}
                 </p>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="space-y-2">
-                    <label
-                        class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Tanggal Mulai
-                    </label>
-                    <input v-model="formData.start_date" type="date"
-                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
-                    <p v-if="errors.start_date" class="text-sm text-red-500">
-                        {{ errors.start_date[0] }}
-                    </p>
-                </div>
-
-                <div class="space-y-2">
-                    <label
-                        class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Tanggal Selesai
-                    </label>
-                    <input v-model="formData.end_date" type="date"
-                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
-                    <p v-if="errors.end_date" class="text-sm text-red-500">
-                        {{ errors.end_date[0] }}
-                    </p>
-                </div>
+            <div class="space-y-2">
+                <label
+                    class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Tahun Ajaran
+                </label>
+                <select v-model="formData.id_school_year"
+                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                    <option value="">Pilih Tahun Ajaran</option>
+                    <option v-for="year in schoolYearList" :key="year.id" :value="year.id">
+                        {{ year.name }}
+                    </option>
+                </select>
+                <p v-if="errors.id_school_year" class="text-sm text-red-500">
+                    {{ errors.id_school_year[0] }}
+                </p>
             </div>
 
             <div class="space-y-4">
@@ -187,14 +177,14 @@ const ruangList = ref([]);
 const dosenList = ref([]);
 const kelasList = ref([]);
 const sessionList = ref([]);
+const schoolYearList = ref([]);
 
 const formData = reactive({
     id_ruang: "",
     pemakaian: "",
     id_class: "",
     penanggung_jawab: "",
-    start_date: "",
-    end_date: "",
+    id_school_year: "",
     sessions: [],
 });
 
@@ -204,6 +194,15 @@ function setupAxios() {
     const token = VueCookies.get("auth_token");
     if (token) {
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    }
+}
+
+async function fetchSchoolYears() {
+    try {
+        const res = await axios.get("/api/admin_pengelola/school_year");
+        schoolYearList.value = res.data.data || [];
+    } catch {
+        toast.error("Gagal memuat data tahun ajaran");
     }
 }
 
@@ -256,8 +255,7 @@ async function fetchScheduleDetail() {
         formData.pemakaian = d.pemakaian;
         formData.id_class = d.id_class;
         formData.penanggung_jawab = Number(d.penanggung_jawab);
-        formData.start_date = d.start_date;
-        formData.end_date = d.end_date;
+        formData.id_school_year = d.id_school_year; // Add this line
         formData.sessions = d.sessions.map(s => ({
             day_of_week: s.day_of_week,
             id_session: s.id_session,
@@ -317,6 +315,7 @@ onMounted(async () => {
         fetchKelas(),
         fetchDosen(),
         fetchSessions(),
+        fetchSchoolYears(),
         fetchScheduleDetail(),
     ]);
 });
