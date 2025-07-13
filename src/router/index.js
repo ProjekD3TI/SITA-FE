@@ -366,6 +366,26 @@ const routes = [
         component: () => import('../views/Admin/AdminPengelola/Jadwal/JadwalTetap/Detail.vue'),
       },
 
+      //crud school year
+      {
+        path: "tahun-ajaran",
+        name: "TahunAjaran",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Jadwal/TahunAjaran/List.vue"),
+      },
+      {
+        path: "tahun-ajaran/create",
+        name: "CreateTahunAjaran",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Jadwal/TahunAjaran/Create.vue"),
+      },
+      {
+        path: "tahun-ajaran/edit/:id",
+        name: "EditTahunAjaran",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Jadwal/TahunAjaran/Edit.vue"),
+      },
+
       // CRUD gedung lantai
       {
         path: 'gedung-lantai',

@@ -206,6 +206,11 @@
             </button>
 
             <div v-if="dropdownStates.jadwal" class="pl-4 mt-1 space-y-1" :class="{ hidden: isCollapsed && !isMobile }">
+              <router-link :to="getRouteByRole('tahun-ajaran')"
+                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                @click="closeSidebar">
+                <span>Tahun</span>
+              </router-link>
               <router-link :to="getRouteByRole('sesi')"
                 class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
                 @click="closeSidebar">
