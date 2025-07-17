@@ -92,13 +92,13 @@
           v-if="userMenuOpen"
           class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-20"
         >
-          <!-- <router-link
+          <router-link
             :to="{ name: 'ProfileAdmin' }"
             class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
             <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
             Profile
-          </router-link> -->
+          </router-link>
           <button
             class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
             @click="showLogoutModal"

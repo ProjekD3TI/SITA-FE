@@ -262,6 +262,11 @@ const routes = [
         name: "DashboardAdmin",
         component: () => import("../views/Admin/Dashboard.vue"),
       },
+      {
+        path: "profile",
+        name: "ProfileAdmin",
+        component: () => import("../views/Admin/Profile.vue"),
+      },
       // route yg laen
     ],
   },
@@ -277,7 +282,315 @@ const routes = [
         name: "DashboardSuperadmin",
         component: () => import("../views/Admin/Superadmin/Dashboard.vue"),
       },
+
       // route yg laen
+      {
+        path: "admin",
+        name: "ListAdmin",
+        component: () => import("../views/Admin/Superadmin/Admin/List.vue"),
+      },
+      {
+        path: "admin/create",
+        name: "CreateAdmin",
+        component: () => import("../views/Admin/Superadmin/Admin/Create.vue"),
+      },
+      {
+        path: "admin/edit/:id",
+        name: "EditAdmin",
+        component: () => import("../views/Admin/Superadmin/Admin/Edit.vue"),
+      },
+
+      {
+        path: "dosen",
+        name: "ListDosen",
+        component: () => import("../views/Admin/Superadmin/Dosen/List.vue"),
+      },
+      {
+        path: "dosen/create",
+        name: "CreateDosen",
+        component: () => import("../views/Admin/Superadmin/Dosen/Create.vue"),
+      },
+      {
+        path: "dosen/edit/:id",
+        name: "EditDosen",
+        component: () => import("../views/Admin/Superadmin/Dosen/Edit.vue"),
+      },
+      {
+        path: "bhp",
+        name: "SAListBhp",
+        component: () => import("../views/Admin/AdminPengelola/Bhp/List.vue"),
+      },
+
+      {
+        path: "mahasiswa",
+        name: "ListMahasiswa",
+        component: () => import("../views/Admin/Superadmin/Mahasiswa/List.vue"),
+      },
+      {
+        path: "bhp/create",
+        name: "SACreateBhp",
+        component: () => import("../views/Admin/AdminPengelola/Bhp/Create.vue"),
+      },
+      {
+        path: "bhp/detail/:id",
+        name: "SADetailBhp",
+        component: () => import("../views/Admin/AdminPengelola/Bhp/Detail.vue"),
+      },
+      {
+        path: "bhp/edit/:id",
+        name: "SAEditBhp",
+        component: () => import("../views/Admin/AdminPengelola/Bhp/Edit.vue"),
+      },
+
+      // INVENTARIS
+      //CRUD Tipe
+      {
+        path: "tipe",
+        name: "SAListTipe",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Inventaris/Tipe/List.vue"),
+      },
+      {
+        path: "tipe/create",
+        name: "SACreateTipe",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Inventaris/Tipe/Create.vue"),
+      },
+      {
+        path: "tipe/edit/:id",
+        name: "SAEditTipe",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Inventaris/Tipe/Edit.vue"),
+      },
+      //CRUD merk
+      {
+        path: "merk",
+        name: "SAListMerk",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Inventaris/Merk/List.vue"),
+      },
+      {
+        path: "merk/create",
+        name: "SACreateMerk",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Inventaris/Merk/Create.vue"),
+      },
+      {
+        path: "merk/edit/:id",
+        name: "SAEditMerk",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Inventaris/Merk/Edit.vue"),
+      },
+      //CRUD Jenis Inventaris
+      {
+        path: "jenis-inventaris",
+        name: "SAListJenisInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Inventaris/JenisInventaris/List.vue"
+          ),
+      },
+      {
+        path: "jenis-inventaris/create",
+        name: "SACreateJenisInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Inventaris/JenisInventaris/Create.vue"
+          ),
+      },
+      {
+        path: "jenis-inventaris/edit/:id",
+        name: "SAEditJenisInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Inventaris/JenisInventaris/Edit.vue"
+          ),
+      },
+      {
+        path: "jenis-inventaris/detail/:id",
+        name: "SADetailJenisInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Inventaris/JenisInventaris/Detail.vue"
+          ),
+      },
+      //CRUD  Inventaris
+      {
+        path: "inventaris",
+        name: "SAListInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Inventaris/Inventaris/List.vue"
+          ),
+      },
+      {
+        path: "inventaris/create",
+        name: "SACreateInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Inventaris/Inventaris/Create.vue"
+          ),
+      },
+      {
+        path: "inventaris/edit/:id",
+        name: "SAEditInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Inventaris/Inventaris/Edit.vue"
+          ),
+      },
+      {
+        path: "inventaris/detail/:id",
+        name: "SADetailInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Inventaris/Inventaris/Detail.vue"
+          ),
+      },
+      // RUANG
+      // CRUD Lantai
+      {
+        path: "lantai",
+        name: "SAListLantai",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Lantai/List.vue"),
+      },
+      {
+        path: "lantai/create",
+        name: "SACreateLantai",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Lantai/Create.vue"),
+      },
+      {
+        path: "lantai/edit/:id",
+        name: "SAEditLantai",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Lantai/Edit.vue"),
+      },
+      // CRUD Gedung
+      {
+        path: "gedung",
+        name: "SAListGedung",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Gedung/List.vue"),
+      },
+      {
+        path: "gedung/create",
+        name: "SACreateGedung",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Gedung/Create.vue"),
+      },
+      {
+        path: "gedung/edit/:id",
+        name: "SAEditGedung",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Gedung/Edit.vue"),
+      },
+      // CRUD Ruang
+      {
+        path: "ruang",
+        name: "SAListRuang",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Ruang/List.vue"),
+      },
+      {
+        path: "ruang/create",
+        name: "SACreateRuang",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Ruang/Create.vue"),
+      },
+      {
+        path: "ruang/edit/:id",
+        name: "SAEditRuang",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Ruang/Edit.vue"),
+      },
+      {
+        path: "ruang/detail/:id",
+        name: "SADetailRuang",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Ruang/Ruang/Detail.vue"),
+      },
+      //peminjaman bhp
+      {
+        path: "peminjaman-bhp",
+        name: "SAListPeminjamanBhp",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Bhp/ListPeminjaman.vue"
+          ),
+      },
+      {
+        path: "peminjaman-bhp/create",
+        name: "SACreatePeminjamanBhp",
+        component: () =>
+          import("../views/Admin/AdminPengelola/Peminjaman/Bhp/Peminjaman.vue"),
+      },
+      {
+        path: "peminjaman-bhp/detail/:id",
+        name: "SADetailPeminjamanBhp",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Bhp/DetailPeminjaman.vue"
+          ),
+      },
+      {
+        path: "peminjaman-bhp/edit/:id",
+        name: "SAEditPeminjamanBhp",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Bhp/EditPeminjaman.vue"
+          ),
+      },
+      {
+        path: "peminjaman-bhp/kembalikan/:id",
+        name: "SAKembalikanPeminjamanBhp",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Bhp/KembalikanPeminjaman.vue"
+          ),
+      },
+      //peminjaman inventaris
+      {
+        path: "peminjaman-inventaris/create",
+        name: "SACreatePeminjamanInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Inventaris/Peminjaman.vue"
+          ),
+      },
+      {
+        path: "peminjaman-inventaris",
+        name: "SAListPeminjamanInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Inventaris/ListPeminjaman.vue"
+          ),
+      },
+      {
+        path: "peminjaman-inventaris/edit/:id",
+        name: "SAEditPeminjamanInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Inventaris/EditPeminjaman.vue"
+          ),
+      },
+      {
+        path: "peminjaman-inventaris/detail/:id",
+        name: "SADetailPeminjamanInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Inventaris/DetailPeminjaman.vue"
+          ),
+      },
+      {
+        path: "peminjaman-inventaris/kembalikan/:id",
+        name: "SAKembalikanPeminjamanInventaris",
+        component: () =>
+          import(
+            "../views/Admin/AdminPengelola/Peminjaman/Inventaris/KembalikanPeminjaman.vue"
+          ),
+      },
     ],
   },
 
@@ -663,6 +976,10 @@ router.beforeEach(async (to, from, next) => {
     }
 
     if (userData.type === "admin" && to.meta.requiredRole) {
+      if (userData.role === "superadmin") {
+        next();
+        return;
+      }
       if (!userData.role || userData.role !== to.meta.requiredRole) {
         toast.error(`Anda tidak memiliki akses ke halaman ini `);
 

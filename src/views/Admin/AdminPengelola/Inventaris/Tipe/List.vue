@@ -32,7 +32,7 @@
       :loading="loading"
       :server-options="serverOptions"
       :server-items-length="pagination.total"
-      @update:options="onOptionsUpdate"
+      @update:server-options="onServerOptionsUpdate"
       :rows-per-page="serverOptions.rowsPerPage"
       :rows-items="[10, 25, 50]"
       :pagination="false"
@@ -148,7 +148,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onBeforeUnmount, computed } from "vue";
+import {
+  ref,
+  reactive,
+  onMounted,
+  onBeforeUnmount,
+  computed,
+  nextTick,
+} from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
@@ -169,16 +176,19 @@ const selectedItem = ref(null);
 const isDeleting = ref(false);
 const activeActionMenu = ref(null);
 const bottomRowIds = ref([]);
+const tableKey = ref(0);
 
 const headers = [
-  { text: "No", value: "no" },
-  { text: "Nama Tipe", value: "nama_tipe" },
+  { text: "No", value: "no", sortable: true },
+  { text: "Nama Tipe", value: "nama_tipe", sortable: true },
   { text: "Aksi", value: "actions" },
 ];
 
 const serverOptions = reactive({
   page: 1,
   rowsPerPage: 10,
+  sortBy: null,
+  sortType: null,
 });
 
 const pagination = reactive({
@@ -213,7 +223,10 @@ const fetchTipeList = async () => {
       page: serverOptions.page,
       per_page: serverOptions.rowsPerPage,
     };
-
+    if (serverOptions.sortBy && serverOptions.sortType) {
+      params.sort_by = serverOptions.sortBy;
+      params.sort_type = serverOptions.sortType;
+    }
     if (searchTerm.value) {
       params.search = searchTerm.value;
     }
@@ -247,9 +260,37 @@ const fetchTipeList = async () => {
   }
 };
 
-const onOptionsUpdate = async (options) => {
-  serverOptions.page = options.page || 1;
-  serverOptions.rowsPerPage = options.rowsPerPage || 10;
+const onServerOptionsUpdate = async (options) => {
+  if (options.page !== undefined) {
+    serverOptions.page = options.page;
+  }
+  if (options.rowsPerPage !== undefined) {
+    serverOptions.rowsPerPage = options.rowsPerPage;
+  }
+
+  if (options.sortBy !== undefined && options.sortType !== undefined) {
+    const newSortBy = options.sortBy;
+    const newSortType = options.sortType;
+
+    if (serverOptions.sortBy === newSortBy) {
+      if (serverOptions.sortType === "asc") {
+        serverOptions.sortType = "desc";
+      } else if (serverOptions.sortType === "desc") {
+        serverOptions.sortBy = null;
+        serverOptions.sortType = null;
+      } else {
+        serverOptions.sortType = "asc";
+      }
+    } else {
+      serverOptions.sortBy = newSortBy;
+      serverOptions.sortType = "asc";
+    }
+  }
+
+  tableKey.value++;
+
+  await nextTick();
+
   await fetchTipeList();
 };
 

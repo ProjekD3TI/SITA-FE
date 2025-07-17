@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 max-w-6xl mx-auto">
+  <div class="p-6 max-w-5xl mx-auto">
     <h2 class="text-2xl font-bold mb-6">Daftar Peminjaman Inventaris</h2>
 
     <div class="grid grid-cols-1 gap-4 mb-4">
@@ -159,7 +159,27 @@
             v-if="item.inventaris_data && item.inventaris_data.length > 0"
             class="text-sm"
           >
-            <div class="flex flex-wrap gap-1">
+            <div
+              v-if="expandedItems[item.id_peminjaman_inventaris]"
+              class="flex flex-col gap-1"
+            >
+              <div class="flex flex-wrap gap-2">
+                <span
+                  v-for="(inventaris, index) in item.inventaris_data"
+                  :key="index"
+                  class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium"
+                >
+                  {{ inventaris.no_inventaris }}
+                </span>
+              </div>
+              <button
+                @click.stop="toggleExpand(item.id_peminjaman_inventaris)"
+                class="text-blue-600 text-xs mt-1 hover:text-blue-800 transition flex items-center gap-1 self-start"
+              >
+                <i class="fas fa-chevron-up"></i> Sembunyikan
+              </button>
+            </div>
+            <div v-else class="flex flex-wrap gap-2">
               <span
                 v-for="(inventaris, index) in item.inventaris_data.slice(0, 3)"
                 :key="index"
@@ -167,18 +187,13 @@
               >
                 {{ inventaris.no_inventaris }}
               </span>
-              <span
+              <button
                 v-if="item.inventaris_data.length > 3"
-                class="inline-block bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium cursor-pointer"
-                :title="`+${
-                  item.inventaris_data.length - 3
-                } inventaris lainnya: ${item.inventaris_data
-                  .slice(3)
-                  .map((inv) => inv.no_inventaris)
-                  .join(', ')}`"
+                @click.stop="toggleExpand(item.id_peminjaman_inventaris)"
+                class="inline-block bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium cursor-pointer hover:bg-gray-200 transition"
               >
                 +{{ item.inventaris_data.length - 3 }} lainnya
-              </span>
+              </button>
             </div>
           </div>
           <div v-else class="text-gray-400 text-sm italic">Tidak ada data</div>
@@ -360,6 +375,7 @@ const debounceTimeout = ref(null);
 const dateDebounceTimeout = ref(null);
 const tableKey = ref(0);
 const showFilterDropdown = ref(false);
+const expandedItems = ref({});
 
 const headers = [
   { text: "No", value: "no", sortable: true },
@@ -435,6 +451,13 @@ const clearAllFilters = () => {
   filters.end_date = "";
   serverOptions.page = 1;
   fetchPeminjamanList();
+};
+
+const toggleExpand = (id) => {
+  expandedItems.value = {
+    ...expandedItems.value,
+    [id]: !expandedItems.value[id],
+  };
 };
 
 const extractInventarisData = (detailPeminjamanInventaris) => {

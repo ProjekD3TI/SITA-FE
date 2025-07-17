@@ -175,6 +175,22 @@
         </p>
       </div>
 
+      <div class="space-y-2">
+        <label
+          class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          Tanggal Pengembalian (Perkiraan)
+        </label>
+        <input
+          v-model="formData.tanggal_pengembalian"
+          type="date"
+          class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        />
+        <p v-if="errors.tanggal_pengembalian" class="text-sm text-red-500">
+          {{ errors.tanggal_pengembalian[0] }}
+        </p>
+      </div>
+
       <div class="flex space-x-2">
         <button
           type="submit"
@@ -241,6 +257,7 @@ const formData = ref({
   tipe_peminjam: "",
   kegunaan: "",
   tanggal_pinjam: "",
+  tanggal_pengembalian: "",
 });
 
 const inventarisList = ref([]);
@@ -299,12 +316,13 @@ const fetchPeminjamanDetail = async () => {
       tipe_peminjam: peminjaman.tipe_peminjam,
       kegunaan: peminjaman.kegunaan,
       tanggal_pinjam: peminjaman.tanggal_pinjam,
+      tanggal_pengembalian: peminjaman.tanggal_pengembalian,
     };
   } catch (error) {
     console.error("Error fetching peminjaman detail:", error);
     if (error.response?.status === 401) {
       toast.error("Sesi anda telah berakhir. Silakan login kembali.");
-      router.push("/admin-login");
+      router.push("/login-admin");
     } else if (error.response?.status === 404) {
       toast.error("Peminjaman tidak ditemukan");
       router.go(-1);
@@ -348,7 +366,7 @@ const fetchInventaris = async (searchQuery = "") => {
     console.error("Error fetching inventaris:", error);
     if (error.response?.status === 401) {
       toast.error("Sesi anda telah berakhir. Silakan login kembali.");
-      router.push("/admin-login");
+      router.push("/login-admin");
     }
   } finally {
     isLoadingInventaris.value = false;
@@ -377,7 +395,7 @@ const fetchMahasiswaAndDosen = async () => {
     console.error("Error fetching data:", error);
     if (error.response?.status === 401) {
       toast.error("Sesi anda telah berakhir. Silakan login kembali.");
-      router.push("/admin-login");
+      router.push("/login-admin");
     }
   }
 };
@@ -411,10 +429,17 @@ const handleSubmit = async () => {
     form.append("tipe_peminjam", formData.value.tipe_peminjam);
     form.append("kegunaan", formData.value.kegunaan);
     form.append("tanggal_pinjam", formData.value.tanggal_pinjam);
+    form.append("tanggal_pengembalian", formData.value.tanggal_pengembalian);
 
-    const response = await axios.put(
+    const response = await axios.post(
       `/api/admin_pengelola/peminjaman_inventaris/edit/${peminjamanId}`,
-      form
+      form,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          "X-HTTP-Method-Override": "PUT",
+        },
+      }
     );
 
     toast.success(
@@ -426,7 +451,7 @@ const handleSubmit = async () => {
 
     if (error.response?.status === 401) {
       toast.error("Sesi anda telah berakhir. Silakan login kembali.");
-      router.push("/admin-login");
+      router.push("/login-admin");
     } else if (
       error.response?.status === 400 ||
       error.response?.status === 422

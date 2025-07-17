@@ -72,6 +72,12 @@
             </p>
           </div>
           <div>
+            <p class="text-sm text-gray-600">Tanggal Kembali (Perkiraan)</p>
+            <p class="font-medium">
+              {{ formatDate(peminjamanData.tanggal_pengembalian) }}
+            </p>
+          </div>
+          <div>
             <p class="text-sm text-gray-600">Tanggal Kembali</p>
             <p class="font-medium">
               {{ formatDate(peminjamanData.tanggal_kembali) }}

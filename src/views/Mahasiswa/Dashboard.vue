@@ -28,6 +28,89 @@
       </div>
     </div>
 
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div
+        class="bg-white rounded-xl shadow border border-gray-100 p-6 flex items-center"
+      >
+        <div class="flex-shrink-0">
+          <i class="fas fa-box text-blue-500 text-3xl mr-4"></i>
+        </div>
+        <div>
+          <div class="text-gray-500 text-sm">Inventaris Dipinjam</div>
+          <div class="text-2xl font-bold text-blue-600">
+            {{ dashboardData.peminjaman_inventaris_dipinjam || 0 }}
+          </div>
+        </div>
+      </div>
+      <div
+        class="bg-white rounded-xl shadow border border-gray-100 p-6 flex items-center"
+      >
+        <div class="flex-shrink-0">
+          <i class="fas fa-undo text-yellow-500 text-3xl mr-4"></i>
+        </div>
+        <div>
+          <div class="text-gray-500 text-sm">
+            Inventaris Dikembalikan Sebagian
+          </div>
+          <div class="text-2xl font-bold text-yellow-600">
+            {{ dashboardData.peminjaman_inventaris_dikembalikan_sebagian || 0 }}
+          </div>
+        </div>
+      </div>
+      <div
+        class="bg-white rounded-xl shadow border border-gray-100 p-6 flex items-center"
+      >
+        <div class="flex-shrink-0">
+          <i class="fas fa-check-circle text-green-500 text-3xl mr-4"></i>
+        </div>
+        <div>
+          <div class="text-gray-500 text-sm">Inventaris Selesai</div>
+          <div class="text-2xl font-bold text-green-600">
+            {{ dashboardData.peminjaman_inventaris_selesai || 0 }}
+          </div>
+        </div>
+      </div>
+      <div
+        class="bg-white rounded-xl shadow border border-gray-100 p-6 flex items-center"
+      >
+        <div class="flex-shrink-0">
+          <i class="fas fa-shopping-cart text-emerald-500 text-3xl mr-4"></i>
+        </div>
+        <div>
+          <div class="text-gray-500 text-sm">BHP Dipinjam</div>
+          <div class="text-2xl font-bold text-emerald-600">
+            {{ dashboardData.peminjaman_bhp_dipinjam || 0 }}
+          </div>
+        </div>
+      </div>
+      <div
+        class="bg-white rounded-xl shadow border border-gray-100 p-6 flex items-center"
+      >
+        <div class="flex-shrink-0">
+          <i class="fas fa-undo text-yellow-500 text-3xl mr-4"></i>
+        </div>
+        <div>
+          <div class="text-gray-500 text-sm">BHP Dikembalikan Sebagian</div>
+          <div class="text-2xl font-bold text-yellow-600">
+            {{ dashboardData.peminjaman_bhp_dikembalikan_sebagian || 0 }}
+          </div>
+        </div>
+      </div>
+      <div
+        class="bg-white rounded-xl shadow border border-gray-100 p-6 flex items-center"
+      >
+        <div class="flex-shrink-0">
+          <i class="fas fa-check-circle text-green-500 text-3xl mr-4"></i>
+        </div>
+        <div>
+          <div class="text-gray-500 text-sm">BHP Selesai</div>
+          <div class="text-2xl font-bold text-green-600">
+            {{ dashboardData.peminjaman_bhp_selesai || 0 }}
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
       <div
         @click="navigateToInventarisList"

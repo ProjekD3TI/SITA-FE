@@ -184,6 +184,22 @@
         <label
           class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
         >
+          Tanggal Pengembalian
+        </label>
+        <input
+          v-model="formData.tanggal_pengembalian"
+          type="date"
+          class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        />
+        <p v-if="errors.tanggal_pengembalian" class="text-sm text-red-500">
+          {{ errors.tanggal_pengembalian[0] }}
+        </p>
+      </div>
+
+      <div class="space-y-2">
+        <label
+          class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
           Jumlah Penggunaan
         </label>
         <input
@@ -257,6 +273,7 @@ const formData = reactive({
   tipe_peminjam: "",
   kegunaan: "",
   tanggal_pinjam: "",
+  tanggal_pengembalian: "",
   jumlah_penggunaan: "",
 });
 
@@ -363,6 +380,7 @@ const fetchPeminjamanBhp = async () => {
     formData.tipe_peminjam = peminjamanBhp.tipe_peminjam || "";
     formData.kegunaan = peminjamanBhp.kegunaan || "";
     formData.tanggal_pinjam = peminjamanBhp.tanggal_pinjam || "";
+    formData.tanggal_pengembalian = peminjamanBhp.tanggal_pengembalian || "";
     formData.jumlah_penggunaan = peminjamanBhp.jumlah_penggunaan || "";
 
     if (formData.id_bhp) {

@@ -37,7 +37,7 @@
         :loading="loading"
         :server-options="serverOptions"
         :server-items-length="pagination.total"
-        @update:options="onOptionsUpdate"
+        @update:server-options="onServerOptionsUpdate"
         :rows-per-page="serverOptions.rowsPerPage"
         :rows-items="[10, 25, 50]"
         :pagination="false"
@@ -45,6 +45,8 @@
         class="bg-white shadow-md rounded-lg overflow-hidden"
         empty-message="Tidak ada data BHP"
         border-cell
+        server-side-sort
+        :key="tableKey"
       >
         <template #item-peruntukan="item">
           <span
@@ -168,7 +170,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, nextTick } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
@@ -185,20 +187,23 @@ const searchTerm = ref("");
 const debounceTimeout = ref(null);
 const showDeleteModal = ref(false);
 const selectedItem = ref(null);
+const tableKey = ref(0);
 const isDeleting = ref(false);
 
 const headers = [
-  { text: "No", value: "no" },
-  { text: "Nama BHP", value: "nama_bhp" },
-  { text: "Kondisi Bagus", value: "kondisi_bagus" },
-  { text: "Kondisi Rusak", value: "kondisi_rusak" },
-  { text: "Peruntukan", value: "peruntukan" },
+  { text: "No", value: "no", sortable: true },
+  { text: "Nama BHP", value: "nama_bhp", sortable: true },
+  { text: "Kondisi Bagus", value: "kondisi_bagus", sortable: true },
+  { text: "Kondisi Rusak", value: "kondisi_rusak", sortable: true },
+  { text: "Peruntukan", value: "peruntukan", sortable: true },
   { text: "Aksi", value: "actions" },
 ];
 
 const serverOptions = reactive({
   page: 1,
   rowsPerPage: 10,
+  sortBy: null,
+  sortType: null,
 });
 
 const pagination = reactive({
@@ -231,6 +236,10 @@ const fetchBhpList = async () => {
       per_page: serverOptions.rowsPerPage,
       ...(searchTerm.value && { search: searchTerm.value }),
     };
+    if (serverOptions.sortBy && serverOptions.sortType) {
+      params.sort_by = serverOptions.sortBy;
+      params.sort_type = serverOptions.sortType;
+    }
 
     const response = await axios.get("/api/admin_pengelola/bhp", { params });
 
@@ -274,9 +283,37 @@ const onSearch = () => {
   }, 300);
 };
 
-const onOptionsUpdate = async (options) => {
-  serverOptions.page = options.page || 1;
-  serverOptions.rowsPerPage = options.rowsPerPage || 10;
+const onServerOptionsUpdate = async (options) => {
+  if (options.page !== undefined) {
+    serverOptions.page = options.page;
+  }
+  if (options.rowsPerPage !== undefined) {
+    serverOptions.rowsPerPage = options.rowsPerPage;
+  }
+
+  if (options.sortBy !== undefined && options.sortType !== undefined) {
+    const newSortBy = options.sortBy;
+    const newSortType = options.sortType;
+
+    if (serverOptions.sortBy === newSortBy) {
+      if (serverOptions.sortType === "asc") {
+        serverOptions.sortType = "desc";
+      } else if (serverOptions.sortType === "desc") {
+        serverOptions.sortBy = null;
+        serverOptions.sortType = null;
+      } else {
+        serverOptions.sortType = "asc";
+      }
+    } else {
+      serverOptions.sortBy = newSortBy;
+      serverOptions.sortType = "asc";
+    }
+  }
+
+  tableKey.value++;
+
+  await nextTick();
+
   await fetchBhpList();
 };
 

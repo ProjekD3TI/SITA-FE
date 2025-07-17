@@ -81,65 +81,25 @@
               :class="{ hidden: isCollapsed && !isMobile }"
             >
               <router-link
-                to="/superadmin/users"
+                to="/superadmin/admin"
                 class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors min-w-0"
                 @click="closeSidebar"
               >
-                <span class="truncate">Create Dosen</span>
+                <span class="truncate">Manajemen Admin</span>
               </router-link>
               <router-link
-                to="/superadmin/create-user"
+                to="/superadmin/dosen"
                 class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
                 @click="closeSidebar"
               >
-                <span>Create Admin</span>
+                <span>Manajemen Dosen</span>
               </router-link>
-            </div>
-          </div>
-        </template>
-
-        <template v-if="['superadmin', 'admin_ta'].includes(userRole)">
-          <div class="mt-2">
-            <button
-              class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors group"
-              @click="handleDropdownClick('test')"
-            >
-              <div class="flex items-center min-w-0 flex-1">
-                <i class="fas fa-graduation-cap text-xl flex-shrink-0"></i>
-                <span
-                  class="ml-3 truncate"
-                  :class="{ hidden: isCollapsed && !isMobile }"
-                >
-                  test
-                </span>
-              </div>
-              <i
-                class="fas flex-shrink-0 ml-2 transition-transform"
-                :class="[
-                  dropdownStates.test ? 'fa-chevron-up' : 'fa-chevron-down',
-                  { hidden: isCollapsed && !isMobile },
-                ]"
-              ></i>
-            </button>
-
-            <div
-              v-if="dropdownStates.test"
-              class="pl-4 mt-1 space-y-1"
-              :class="{ hidden: isCollapsed && !isMobile }"
-            >
               <router-link
-                :to="getRouteByRole('test')"
+                to="/superadmin/mahasiswa"
                 class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
                 @click="closeSidebar"
               >
-                <span>test1</span>
-              </router-link>
-              <router-link
-                :to="getRouteByRole('test-schedules')"
-                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-                @click="closeSidebar"
-              >
-                <span>test2</span>
+                <span>Manajemen Mahasiswa</span>
               </router-link>
             </div>
           </div>

@@ -63,25 +63,6 @@
           </div>
 
           <div class="space-y-2">
-            <label class="text-sm font-medium"
-              >Kondisi Akhir Pengembalian</label
-            >
-            <select
-              v-model="formData.kondisi_akhir_pengembalian"
-              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              required
-            >
-              <option value="">Pilih Kondisi</option>
-              <option value="baik">Baik</option>
-              <option value="rusak">Rusak</option>
-              <option value="hilang">Hilang</option>
-            </select>
-            <p class="text-xs text-gray-500">
-              Kondisi ini akan diterapkan untuk semua item yang dipilih
-            </p>
-          </div>
-
-          <div class="space-y-2">
             <label class="text-sm font-medium">Catatan Pengembalian</label>
             <textarea
               v-model="formData.catatan_pengembalian"
@@ -146,6 +127,11 @@
                       <th
                         class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                       >
+                        Kondisi Akhir
+                      </th>
+                      <th
+                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Status
                       </th>
                     </tr>
@@ -172,7 +158,19 @@
                           "-"
                         }}
                       </td>
-
+                      <td class="px-4 py-3 whitespace-nowrap">
+                        <select
+                          v-model="itemConditions[item.id_inventaris]"
+                          class="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          :disabled="
+                            !selectedItems.includes(item.id_inventaris)
+                          "
+                        >
+                          <option value="baik">Baik</option>
+                          <option value="rusak">Rusak</option>
+                          <option value="hilang">Hilang</option>
+                        </select>
+                      </td>
                       <td class="px-4 py-3 whitespace-nowrap">
                         <span
                           class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
@@ -199,11 +197,7 @@
             <button
               type="submit"
               class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-              :disabled="
-                isSubmitting ||
-                selectedItems.length === 0 ||
-                !formData.kondisi_akhir_pengembalian
-              "
+              :disabled="isSubmitting || selectedItems.length === 0"
             >
               <span v-if="isSubmitting" class="mr-2">
                 <svg
@@ -253,13 +247,12 @@ const inventoryItems = ref([]);
 const loading = ref(true);
 const isSubmitting = ref(false);
 const validationError = ref("");
-
 const selectedItems = ref([]);
+const itemConditions = ref({});
 
 const formData = ref({
   tanggal_kembali: new Date().toISOString().split("T")[0],
   catatan_pengembalian: "",
-  kondisi_akhir_pengembalian: "",
 });
 
 const formatDate = (dateString) => {
@@ -290,14 +283,24 @@ const selectAllItems = () => {
 };
 
 watch(
-  [selectedItems, () => formData.value.kondisi_akhir_pengembalian],
-  ([newSelectedItems, newKondisi]) => {
+  availableItems,
+  (newItems) => {
+    newItems.forEach((item) => {
+      if (!itemConditions.value[item.id_inventaris]) {
+        itemConditions.value[item.id_inventaris] = "baik";
+      }
+    });
+  },
+  { immediate: true }
+);
+
+watch(
+  selectedItems,
+  (newSelectedItems) => {
     validationError.value = "";
     if (newSelectedItems.length === 0) {
       validationError.value =
         "Silakan pilih minimal satu item untuk dikembalikan";
-    } else if (!newKondisi) {
-      validationError.value = "Silakan pilih kondisi akhir pengembalian";
     }
   },
   { deep: true }
@@ -351,42 +354,45 @@ const handleSubmit = async () => {
     return;
   }
 
-  if (!formData.value.kondisi_akhir_pengembalian) {
-    validationError.value = "Silakan pilih kondisi akhir pengembalian";
-    return;
-  }
-
   isSubmitting.value = true;
   validationError.value = "";
 
   try {
     setupAxios();
 
-    const payload = {
-      id_inventaris: selectedItems.value,
-      tanggal_kembali: formData.value.tanggal_kembali,
-      catatan_pengembalian: formData.value.catatan_pengembalian,
-      kondisi_akhir_pengembalian: formData.value.kondisi_akhir_pengembalian,
-    };
+    const conditionGroups = {};
+    selectedItems.value.forEach((itemId) => {
+      const condition = itemConditions.value[itemId] || "baik";
+      if (!conditionGroups[condition]) {
+        conditionGroups[condition] = [];
+      }
+      conditionGroups[condition].push(itemId);
+    });
 
-    const response = await axios.put(
-      `/api/admin_pengelola/peminjaman_inventaris/pengembalian/${id.value}`,
-      payload
-    );
+    for (const [condition, itemIds] of Object.entries(conditionGroups)) {
+      const payload = {
+        id_inventaris: itemIds,
+        tanggal_kembali: formData.value.tanggal_kembali,
+        catatan_pengembalian: formData.value.catatan_pengembalian,
+        kondisi_akhir_pengembalian: condition,
+      };
 
-    if (response.data.status === "success") {
-      toast.success(
-        response.data.message || "Pengembalian inventaris berhasil diproses"
+      const response = await axios.put(
+        `/api/admin_pengelola/peminjaman_inventaris/pengembalian/${id.value}`,
+        payload
       );
 
-      router.push(`/admin-pengelola/peminjaman-inventaris/detail/${id.value}`);
-    } else if (response.data.status === "warning") {
-      toast.warning(response.data.message);
-      await fetchPeminjamanDetail();
-      selectedItems.value = [];
-    } else {
-      toast.error(response.data.message || "Gagal memproses pengembalian");
+      if (response.data.status === "warning") {
+        toast.warning(response.data.message);
+      } else if (response.data.status !== "success") {
+        throw new Error(
+          response.data.message || "Gagal memproses pengembalian"
+        );
+      }
     }
+
+    toast.success("Pengembalian inventaris berhasil diproses");
+    router.push(`/admin-pengelola/peminjaman-inventaris/detail/${id.value}`);
   } catch (error) {
     console.error("Error processing return:", error);
     if (error.response?.status === 401) {
@@ -405,7 +411,7 @@ const handleSubmit = async () => {
       toast.error("Data peminjaman tidak ditemukan");
       router.push("/admin-pengelola/peminjaman-inventaris");
     } else {
-      toast.error("Gagal memproses pengembalian inventaris");
+      toast.error(error.message || "Gagal memproses pengembalian inventaris");
     }
   } finally {
     isSubmitting.value = false;

@@ -80,9 +80,17 @@
             <p class="text-sm text-gray-600">Tanggal Pinjam</p>
             <p class="font-medium">{{ formatDate(infoUmum.tanggal_pinjam) }}</p>
           </div>
-          <div class="md:col-span-2">
+          <div>
             <p class="text-sm text-gray-600">Kegunaan</p>
             <p class="font-medium">{{ infoUmum.kegunaan }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600">
+              Tanggal Pengembalian (Perkiraan)
+            </p>
+            <p class="font-medium">
+              {{ formatDate(infoUmum.tanggal_pengembalian) }}
+            </p>
           </div>
         </div>
       </div>
