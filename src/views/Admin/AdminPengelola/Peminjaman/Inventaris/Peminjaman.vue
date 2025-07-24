@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 max-w-2xl mx-auto">
+  <div class="p-6 bg-gray-50 rounded-lg max-w-2xl mx-auto">
     <h2 class="text-2xl font-bold mb-6">Create Peminjaman Inventaris</h2>
 
     <form @submit.prevent="handleSubmit" class="space-y-4">
@@ -160,7 +160,7 @@
               ></path>
             </svg>
           </span>
-          {{ isSubmitting ? "Memproses..." : "Create" }}
+          {{ isSubmitting ? "Memproses..." : "Proses Peminjaman" }}
         </button>
         <button
           type="button"

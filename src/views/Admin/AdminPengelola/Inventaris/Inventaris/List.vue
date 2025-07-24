@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 max-w-5xl mx-auto overflow-hidden">
+  <div class="p-6 max-w-5xl bg-gray-50 mx-auto overflow-hidden">
     <h2 class="text-2xl font-bold mb-6">Daftar Inventaris</h2>
 
     <div class="grid grid-cols-1 gap-4 mb-4">

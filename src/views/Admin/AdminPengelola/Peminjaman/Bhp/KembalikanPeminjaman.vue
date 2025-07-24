@@ -312,7 +312,7 @@ const fetchPeminjamanDetail = async () => {
       `/api/admin_pengelola/peminjaman_bhp/${id.value}`
     );
 
-    peminjamanData.value = response.data;
+    peminjamanData.value = response.data.data;
 
     if (peminjamanData.value.status_pengembalian === "selesai") {
       toast.info("BHP ini sudah dikembalikan sepenuhnya");

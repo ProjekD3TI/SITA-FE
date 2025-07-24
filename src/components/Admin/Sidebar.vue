@@ -9,7 +9,7 @@
     </button>
 
     <aside
-      class="fixed left-0 top-0 h-screen bg-indigo-600 text-white transition-all duration-300 z-40"
+      class="fixed left-0 top-0 h-screen bg-white text-white border-r-2 transition-all duration-300 z-40"
       :class="{
         'w-64': !isCollapsed,
         'w-16': isCollapsed && !isMobile,
@@ -17,23 +17,31 @@
       }"
     >
       <div
-        class="flex items-center justify-between h-16 px-4 border-b border-indigo-700"
+        class="flex items-center justify-between h-16 px-4 border-b border-indigo-100"
       >
         <router-link
           to="/admin/dashboard"
           class="font-bold text-xl truncate"
           v-if="!isCollapsed || isMobile"
         >
-          Admin Panel
+          <span class="flex items-center justify-center">
+            <img
+              class="w-1/2"
+              src="../../assets/images/D3TI.png"
+              alt="d3ti"
+              srcset=""
+            />
+          </span>
         </router-link>
         <button
-          class="p-1 hover:bg-indigo-700 rounded-md transition-colors"
+          class="p-1 bg-white hover:bg-indigo-100 rounded-md transition-colors"
           @click="toggleSidebar"
         >
           <i
             :class="[
               'fas',
               isCollapsed && !isMobile ? 'fa-chevron-right' : 'fa-chevron-left',
+              'text-indigo-500',
             ]"
           ></i>
         </button>
@@ -42,11 +50,14 @@
       <nav class="flex flex-col p-2 overflow-y-auto h-[calc(100vh-4rem)]">
         <router-link
           :to="getDashboardRoute()"
-          class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+          class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-100 transition-colors"
+          :class="{ 'bg-indigo-100': isDashboardActive() }"
           @click="closeSidebar"
         >
-          <i class="fas fa-tachometer-alt text-xl"></i>
-          <span class="ml-3" :class="{ hidden: isCollapsed && !isMobile }"
+          <i class="fas fa-tachometer-alt text-black text-xl"></i>
+          <span
+            class="ml-3 text-black"
+            :class="{ hidden: isCollapsed && !isMobile }"
             >Dashboard</span
           >
         </router-link>
@@ -54,20 +65,21 @@
         <template v-if="userRole === 'superadmin'">
           <div class="mt-2">
             <button
-              class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors group"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-100 transition-colors group"
+              :class="{ 'bg-indigo-100': isUserManagementActive() }"
               @click="handleDropdownClick('users')"
             >
               <div class="flex items-center min-w-0 flex-1">
-                <i class="fas fa-users text-xl flex-shrink-0"></i>
+                <i class="fas fa-users text-black text-xl flex-shrink-0"></i>
                 <span
-                  class="ml-3 truncate"
+                  class="ml-3 truncate text-black"
                   :class="{ hidden: isCollapsed && !isMobile }"
                 >
                   User Management
                 </span>
               </div>
               <i
-                class="fas flex-shrink-0 ml-2 transition-transform"
+                class="fas flex-shrink-0 ml-2 transition-transform text-black"
                 :class="[
                   dropdownStates.users ? 'fa-chevron-up' : 'fa-chevron-down',
                   { hidden: isCollapsed && !isMobile },
@@ -82,21 +94,30 @@
             >
               <router-link
                 to="/superadmin/admin"
-                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors min-w-0"
+                class="flex items-center text-black px-3 py-2 rounded-md hover:bg-indigo-100 transition-colors min-w-0"
+                :class="{
+                  'bg-indigo-100': $route.path === '/superadmin/admin',
+                }"
                 @click="closeSidebar"
               >
                 <span class="truncate">Manajemen Admin</span>
               </router-link>
               <router-link
                 to="/superadmin/dosen"
-                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                class="flex items-center text-black px-3 py-2 rounded-md hover:bg-indigo-100 transition-colors"
+                :class="{
+                  'bg-indigo-100': $route.path === '/superadmin/dosen',
+                }"
                 @click="closeSidebar"
               >
                 <span>Manajemen Dosen</span>
               </router-link>
               <router-link
                 to="/superadmin/mahasiswa"
-                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                class="flex items-center text-black px-3 py-2 rounded-md hover:bg-indigo-100 transition-colors"
+                :class="{
+                  'bg-indigo-100': $route.path === '/superadmin/mahasiswa',
+                }"
                 @click="closeSidebar"
               >
                 <span>Manajemen Mahasiswa</span>
@@ -108,13 +129,14 @@
         <template v-if="['superadmin', 'admin_pengelola'].includes(userRole)">
           <div class="mt-2">
             <button
-              class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors group"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-100 transition-colors group"
+              :class="{ 'bg-indigo-100': isInventarisActive() }"
               @click="handleDropdownClick('inventaris')"
             >
               <div class="flex items-center min-w-0 flex-1">
-                <i class="fas fa-wrench text-xl flex-shrink-0"></i>
+                <i class="fas fa-wrench text-black text-xl flex-shrink-0"></i>
                 <span
-                  class="ml-3 truncate"
+                  class="ml-3 truncate text-black"
                   :class="{ hidden: isCollapsed && !isMobile }"
                 >
                   Inventaris
@@ -127,6 +149,7 @@
                     ? 'fa-chevron-up'
                     : 'fa-chevron-down',
                   { hidden: isCollapsed && !isMobile },
+                  'text-black',
                 ]"
               ></i>
             </button>
@@ -138,28 +161,32 @@
             >
               <router-link
                 :to="getRouteByRole('merk')"
-                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                class="flex items-center text-black px-3 py-2 rounded-md hover:bg-indigo-100 transition-colors"
+                :class="{ 'bg-indigo-100': isRouteActive('merk') }"
                 @click="closeSidebar"
               >
                 <span> Merk</span>
               </router-link>
               <router-link
                 :to="getRouteByRole('tipe')"
-                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                class="flex items-center text-black px-3 py-2 rounded-md hover:bg-indigo-100 transition-colors"
+                :class="{ 'bg-indigo-100': isRouteActive('tipe') }"
                 @click="closeSidebar"
               >
                 <span> Tipe</span>
               </router-link>
               <router-link
                 :to="getRouteByRole('jenis-inventaris')"
-                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                class="flex items-center text-black px-3 py-2 rounded-md hover:bg-indigo-100 transition-colors"
+                :class="{ 'bg-indigo-100': isRouteActive('jenis-inventaris') }"
                 @click="closeSidebar"
               >
                 <span> Jenis Inventaris</span>
               </router-link>
               <router-link
                 :to="getRouteByRole('inventaris')"
-                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                class="flex items-center text-black px-3 py-2 rounded-md hover:bg-indigo-100 transition-colors"
+                :class="{ 'bg-indigo-100': isRouteActive('inventaris') }"
                 @click="closeSidebar"
               >
                 <span> Inventaris</span>
@@ -172,11 +199,14 @@
           <div class="mt-2">
             <router-link
               :to="getRouteByRole('bhp')"
-              class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+              class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-100 transition-colors"
+              :class="{ 'bg-indigo-100': isRouteActive('bhp') }"
               @click="closeSidebar"
             >
-              <i class="fas fa-inbox text-xl"></i>
-              <span class="ml-3" :class="{ hidden: isCollapsed && !isMobile }"
+              <i class="fas fa-inbox text-black text-xl"></i>
+              <span
+                class="ml-3 text-black"
+                :class="{ hidden: isCollapsed && !isMobile }"
                 >BHP</span
               >
             </router-link>
@@ -186,20 +216,21 @@
         <template v-if="['superadmin', 'admin_pengelola'].includes(userRole)">
           <div class="mt-2">
             <button
-              class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors group"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-100 transition-colors group"
+              :class="{ 'bg-indigo-100': isRuangActive() }"
               @click="handleDropdownClick('ruang')"
             >
               <div class="flex items-center min-w-0 flex-1">
-                <i class="fas fa-house text-xl flex-shrink-0"></i>
+                <i class="fas fa-house text-black text-xl flex-shrink-0"></i>
                 <span
-                  class="ml-3 truncate"
+                  class="ml-3 truncate text-black"
                   :class="{ hidden: isCollapsed && !isMobile }"
                 >
                   Ruang
                 </span>
               </div>
               <i
-                class="fas flex-shrink-0 ml-2 transition-transform"
+                class="fas flex-shrink-0 ml-2 transition-transform text-black"
                 :class="[
                   dropdownStates.ruang ? 'fa-chevron-up' : 'fa-chevron-down',
                   { hidden: isCollapsed && !isMobile },
@@ -214,21 +245,24 @@
             >
               <router-link
                 :to="getRouteByRole('ruang')"
-                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                class="flex items-center px-3 py-2 rounded-md text-black hover:bg-indigo-100 transition-colors"
+                :class="{ 'bg-indigo-100': isRouteActive('ruang') }"
                 @click="closeSidebar"
               >
                 <span> Ruang</span>
               </router-link>
               <router-link
                 :to="getRouteByRole('gedung')"
-                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                class="flex items-center px-3 py-2 rounded-md text-black hover:bg-indigo-100 transition-colors"
+                :class="{ 'bg-indigo-100': isRouteActive('gedung') }"
                 @click="closeSidebar"
               >
                 <span> Gedung</span>
               </router-link>
               <router-link
                 :to="getRouteByRole('lantai')"
-                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                class="flex items-center px-3 py-2 rounded-md text-black hover:bg-indigo-100 transition-colors"
+                :class="{ 'bg-indigo-100': isRouteActive('lantai') }"
                 @click="closeSidebar"
               >
                 <span> Lantai</span>
@@ -240,20 +274,23 @@
         <template v-if="['superadmin', 'admin_pengelola'].includes(userRole)">
           <div class="mt-2">
             <button
-              class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors group"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-indigo-100 transition-colors group"
+              :class="{ 'bg-indigo-100': isPeminjamanActive() }"
               @click="handleDropdownClick('peminjaman')"
             >
               <div class="flex items-center min-w-0 flex-1">
-                <i class="fas fa-shopping-cart text-xl flex-shrink-0"></i>
+                <i
+                  class="fas fa-shopping-cart text-black text-xl flex-shrink-0"
+                ></i>
                 <span
-                  class="ml-3 truncate"
+                  class="ml-3 text-black truncate"
                   :class="{ hidden: isCollapsed && !isMobile }"
                 >
                   Peminjaman
                 </span>
               </div>
               <i
-                class="fas flex-shrink-0 ml-2 transition-transform"
+                class="fas flex-shrink-0 ml-2 transition-transform text-black"
                 :class="[
                   dropdownStates.peminjaman
                     ? 'fa-chevron-up'
@@ -270,14 +307,18 @@
             >
               <router-link
                 :to="getRouteByRole('peminjaman-inventaris')"
-                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                class="flex items-center px-3 py-2 rounded-md text-black hover:bg-indigo-100 transition-colors"
+                :class="{
+                  'bg-indigo-100': isRouteActive('peminjaman-inventaris'),
+                }"
                 @click="closeSidebar"
               >
                 <span> Inventaris</span>
               </router-link>
               <router-link
                 :to="getRouteByRole('peminjaman-bhp')"
-                class="flex items-center px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                class="flex items-center px-3 py-2 rounded-md text-black hover:bg-indigo-100 transition-colors"
+                :class="{ 'bg-indigo-100': isRouteActive('peminjaman-bhp') }"
                 @click="closeSidebar"
               >
                 <span> Bhp</span>
@@ -394,6 +435,53 @@ const getRouteByRole = (routeName) => {
     default:
       return `/admin/${routeName}`;
   }
+};
+
+const isDashboardActive = () => {
+  const currentPath = router.currentRoute.value.path;
+  const dashboardRoutes = [
+    "/admin/dashboard",
+    "/superadmin/dashboard",
+    "/admin-ta/dashboard",
+    "/admin-pengelola/dashboard",
+  ];
+  return dashboardRoutes.includes(currentPath);
+};
+
+const isRouteActive = (routeName) => {
+  const currentPath = router.currentRoute.value.path;
+  const expectedRoute = getRouteByRole(routeName);
+
+  return (
+    currentPath === expectedRoute || currentPath.startsWith(expectedRoute + "/")
+  );
+};
+
+const isUserManagementActive = () => {
+  const currentPath = router.currentRoute.value.path;
+  const userRoutes = [
+    "/superadmin/admin",
+    "/superadmin/dosen",
+    "/superadmin/mahasiswa",
+  ];
+  return userRoutes.some(
+    (route) => currentPath === route || currentPath.startsWith(route + "/")
+  );
+};
+
+const isInventarisActive = () => {
+  const inventarisRoutes = ["merk", "tipe", "jenis-inventaris", "inventaris"];
+  return inventarisRoutes.some((route) => isRouteActive(route));
+};
+
+const isRuangActive = () => {
+  const ruangRoutes = ["ruang", "gedung", "lantai"];
+  return ruangRoutes.some((route) => isRouteActive(route));
+};
+
+const isPeminjamanActive = () => {
+  const peminjamanRoutes = ["peminjaman-inventaris", "peminjaman-bhp"];
+  return peminjamanRoutes.some((route) => isRouteActive(route));
 };
 
 onMounted(() => {

@@ -2,9 +2,11 @@
   <div class="min-h-screen bg-gray-50 p-6">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">Dashboard Admin</h1>
+      <h1 class="text-3xl font-bold text-gray-900">
+        Dashboard Admin Pengelola
+      </h1>
       <p class="text-gray-600 mt-2">
-        Selamat datang di dashboard admin pengelola.
+        Selamat datang di dashboard Admin Pengelola.
       </p>
     </div>
 
@@ -14,9 +16,9 @@
         class="group relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
       >
         <div class="flex items-center justify-center mb-3">
-          <i class="fas fa-box text-2xl"></i>
+          <i class="fas fa-clipboard-list text-2xl"></i>
         </div>
-        <h3 class="font-semibold text-center">Create Peminjaman Inventaris</h3>
+        <h3 class="font-semibold text-center">Tambah Peminjaman Inventaris</h3>
         <div
           class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"
         ></div>
@@ -27,9 +29,9 @@
         class="group relative overflow-hidden bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
       >
         <div class="flex items-center justify-center mb-3">
-          <i class="fas fa-plus text-2xl"></i>
+          <i class="fas fa-warehouse text-2xl"></i>
         </div>
-        <h3 class="font-semibold text-center">Create Inventaris</h3>
+        <h3 class="font-semibold text-center">Tambah Inventaris</h3>
         <div
           class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"
         ></div>
@@ -40,9 +42,9 @@
         class="group relative overflow-hidden bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
       >
         <div class="flex items-center justify-center mb-3">
-          <i class="fas fa-file-alt text-2xl"></i>
+          <i class="fas fa-clipboard-list text-2xl"></i>
         </div>
-        <h3 class="font-semibold text-center">Create Peminjaman BHP</h3>
+        <h3 class="font-semibold text-center">Tambah Peminjaman BHP</h3>
         <div
           class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"
         ></div>
@@ -55,7 +57,7 @@
         <div class="flex items-center justify-center mb-3">
           <i class="fas fa-shopping-cart text-2xl"></i>
         </div>
-        <h3 class="font-semibold text-center">Create BHP</h3>
+        <h3 class="font-semibold text-center">Tambah BHP</h3>
         <div
           class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"
         ></div>

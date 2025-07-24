@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 max-w-5xl mx-auto">
+  <div class="p-6 max-w-5xl bg-gray-50 mx-auto">
     <h2 class="text-2xl font-bold mb-6">Daftar BHP</h2>
 
     <div
