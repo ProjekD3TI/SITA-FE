@@ -1,0 +1,19 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: portal_frontend_app
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    volumes:
+      # Mount file .env langsung dari host agar perubahan realtime terbaca di dalam container tanpa restart docker
+      - ${HOME}/app-config/fe/.env:/app/.env:ro
+    networks:
+      - portal_network
+
+networks:
+  portal_network:
+    name: portal_network
+    driver: bridge

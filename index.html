@@ -17,6 +17,38 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
     <title>Portal D3 TI UNS</title>
+    <script>
+      (function () {
+        try {
+          var xhr = new XMLHttpRequest();
+          xhr.open('GET', '/env.txt', false);
+          xhr.send(null);
+          if (xhr.status === 200 && xhr.responseText) {
+            window.__ENV__ = window.__ENV__ || {};
+            var lines = xhr.responseText.split('\n');
+            for (var i = 0; i < lines.length; i++) {
+              var line = lines[i].trim();
+              if (line && line.indexOf('#') !== 0) {
+                var eqIdx = line.indexOf('=');
+                if (eqIdx !== -1) {
+                  var key = line.substring(0, eqIdx).trim();
+                  var val = line.substring(eqIdx + 1).trim();
+                  if (
+                    (val.charAt(0) === '"' && val.charAt(val.length - 1) === '"') ||
+                    (val.charAt(0) === "'" && val.charAt(val.length - 1) === "'")
+                  ) {
+                    val = val.slice(1, -1);
+                  }
+                  window.__ENV__[key] = val;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          // Fallback to build-time env if /env.txt is not available
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>

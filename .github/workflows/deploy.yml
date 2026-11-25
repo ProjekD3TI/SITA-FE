@@ -1,42 +1,51 @@
+name: 🚀 CI/CD Deploy with Docker Compose
+
 on:
   push:
-    branches: [tugas-akhir]
-name: 🚀 Deploy Vue frontend
+    branches:
+      - main
+      - tugas-akhir
+  workflow_dispatch:
+
 jobs:
-  web-deploy:
-    name: 🎉 Build and Deploy Vue
-    runs-on: ubuntu-latest
+  deploy:
+    name: 🐳 Deploy to Self-Hosted Server
+    runs-on: self-hosted
 
     steps:
-      - name: 🚚 Checkout code
+      - name: 🚚 Checkout Code
         uses: actions/checkout@v4
 
-      - name: 🧰 Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.15.0'
-
-      - name: 📦 Install dependencies
-        run: npm install
-
-      - name: 🔐 Generate and write .env
+      - name: ⚙️ Setup Environment (.env)
         run: |
-          echo "VITE_ENCRYPTION_KEY=$(openssl rand --hex 32)" > .env
-          echo "VITE_API_BASE_URL=https://v3423085.mhs.d3tiuns.com/api/" >> .env
-          cat .env
+          echo "Menghubungkan file .env dari $HOME/app-config/fe/.env..."
+          if [ -f "$HOME/app-config/fe/.env" ]; then
+            ln -sf "$HOME/app-config/fe/.env" .env
+            echo "✅ Symlink .env berhasil dibuat dari ~/app-config/fe/.env"
+          elif [ -f .env ]; then
+            echo "ℹ️ ~/app-config/fe/.env tidak ditemukan, menggunakan .env yang sudah ada di direktori kerja."
+          else
+            echo "❌ ERROR: File .env tidak ditemukan di $HOME/app-config/fe/.env maupun di direktori kerja!"
+            echo "Pastikan folder ~/app-config/fe/ sudah dibuat dan file .env sudah di-upload."
+            exit 1
+          fi
 
-      - name: 🛠️ Build Vue project
-        run: npm run build
+      - name: 🏗️ Build & Run Docker Containers
+        run: |
+          echo "Menjalankan docker compose up..."
+          docker compose up -d --build
 
-      - name: 📂 Upload dist folder via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp
-          port: ${{ secrets.FTP_PORT }}
-          local-dir: dist/
-          exclude: |
-            **/.git*
-            **/node_modules/*
+      - name: ⏳ Wait for Containers to be Ready
+        run: |
+          echo "Menunggu layanan frontend siap..."
+          sleep 5
+
+      - name: 🔍 Check Container Status
+        run: |
+          docker compose ps
+
+      - name: 🧹 Cleanup Dangling Docker Images
+        if: always()
+        run: |
+          echo "Membersihkan image Docker yang tidak terpakai..."
+          docker image prune -f

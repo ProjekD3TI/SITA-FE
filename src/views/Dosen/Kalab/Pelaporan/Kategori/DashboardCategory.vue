@@ -182,6 +182,7 @@
   <script>
   import axios from 'axios';
   import Swal from 'sweetalert2';
+  import { getEnv } from '@/utils/env';
   
   export default {
     data() {
@@ -288,7 +289,7 @@
       },
       getCategoryImageUrl(image_path) {
         if (!image_path) return "";
-        return `${import.meta.env.VITE_API_BASE_URL}/storage/category/${image_path}`;
+        return `${getEnv("VITE_API_BASE_URL", import.meta.env.VITE_API_BASE_URL)}/storage/category/${image_path}`;
       },
     },
     created() {
